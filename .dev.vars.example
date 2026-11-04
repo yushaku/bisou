@@ -1,0 +1,5 @@
+# Copy to .dev.vars for local dev. Never commit .dev.vars.
+ENVIRONMENT=development
+OTP_PEPPER=dev-pepper-change-me
+# Leave RESEND_API_KEY unset locally: the OTP code is then printed to the dev log.
+# RESEND_API_KEY=re_placeholder
