@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Bisou System Architecture",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "system-architecture.html"
+  },
+  "components": [
+    {
+      "id": "phone",
+      "type": "frontend",
+      "label": "Phone PWA",
+      "sublabel": "iPhone / Android",
+      "pos": [
+        40,
+        280
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "React + Vite"
+    },
+    {
+      "id": "assets",
+      "type": "cloud",
+      "label": "Static assets",
+      "sublabel": "app shell, SPA",
+      "pos": [
+        280,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Hono API",
+      "sublabel": "Worker /api/*",
+      "pos": [
+        280,
+        280
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "tag": "Web Crypto"
+    },
+    {
+      "id": "secrets",
+      "type": "security",
+      "label": "Secrets",
+      "sublabel": "pepper + API key",
+      "pos": [
+        520,
+        100
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "database",
+      "label": "D1",
+      "sublabel": "SQLite data",
+      "pos": [
+        280,
+        460
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "database",
+      "label": "R2",
+      "sublabel": "private photos",
+      "pos": [
+        520,
+        460
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "resend",
+      "type": "external",
+      "label": "Resend",
+      "sublabel": "mail API, free",
+      "pos": [
+        760,
+        280
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "inbox",
+      "type": "external",
+      "label": "User inbox",
+      "sublabel": "reads 6 digit code",
+      "pos": [
+        760,
+        460
+      ],
+      "size": [
+        150,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Cloudflare free plan (workers.dev)",
+      "wraps": [
+        "assets",
+        "api",
+        "secrets",
+        "d1",
+        "r2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "phone-assets",
+      "from": "phone",
+      "to": "assets",
+      "label": "app shell",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "phone-api",
+      "from": "phone",
+      "to": "api",
+      "label": "HTTPS + cookie",
+      "variant": "emphasis"
+    },
+    {
+      "id": "secrets-api",
+      "from": "secrets",
+      "to": "api",
+      "label": "bindings",
+      "variant": "security"
+    },
+    {
+      "id": "api-d1",
+      "from": "api",
+      "to": "d1",
+      "label": "SQL",
+      "labelDy": 24
+    },
+    {
+      "id": "api-r2",
+      "from": "api",
+      "to": "r2",
+      "label": "WebP objects"
+    },
+    {
+      "id": "api-resend",
+      "from": "api",
+      "to": "resend",
+      "label": "fetch OTP mail"
+    },
+    {
+      "id": "resend-inbox",
+      "from": "resend",
+      "to": "inbox",
+      "label": "SMTP",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "One Worker",
+      "items": [
+        "Workers assets serve the SPA",
+        "Only /api/* runs Hono",
+        "Service worker caches the shell, never /api"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data",
+      "items": [
+        "D1 holds users, sessions, couples, journal, wishes",
+        "R2 photos only via the Worker after a couple check"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Auth",
+      "items": [
+        "Email OTP via Resend from mail.yuchi-education.com",
+        "Session cookie bisou_session, 90 days, sliding"
+      ]
+    }
+  ]
+}

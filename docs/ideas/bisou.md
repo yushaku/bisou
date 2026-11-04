@@ -36,4 +36,4 @@ Out: everything in Not Doing.
 
 ## Decisions
 - OTP mail is sent from `mail.yuchi-education.com` through Resend free.
-- The UI ships in Vietnamese and English (Vietnamese default, follows the browser language, switchable in settings).
+- The UI ships in Vietnamese and English (follows the browser language: vi for Vietnamese browsers, en otherwise; switchable in the app).

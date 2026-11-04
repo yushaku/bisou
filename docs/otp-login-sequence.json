@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Bisou OTP Login Sequence",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "otp-login-sequence.html",
+    "viewBox": [
+      1080,
+      690
+    ],
+    "column_fit": "spread"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "on the phone"
+    },
+    {
+      "id": "pwa",
+      "type": "frontend",
+      "label": "Bisou PWA",
+      "sublabel": "React UI"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Hono API",
+      "sublabel": "Worker /api"
+    },
+    {
+      "id": "d1",
+      "type": "database",
+      "label": "D1",
+      "sublabel": "otp + sessions"
+    },
+    {
+      "id": "resend",
+      "type": "external",
+      "label": "Resend",
+      "sublabel": "mail API"
+    }
+  ],
+  "segments": [
+    {
+      "from": 165,
+      "to": 332,
+      "label": "Request code"
+    },
+    {
+      "from": 347,
+      "to": 486,
+      "label": "Verify code"
+    },
+    {
+      "from": 497,
+      "to": 578,
+      "label": "Use session"
+    }
+  ],
+  "messages": [
+    {
+      "id": "enter-email",
+      "from": "user",
+      "to": "pwa",
+      "y": 180,
+      "label": "enter email"
+    },
+    {
+      "id": "request-code",
+      "from": "pwa",
+      "to": "api",
+      "y": 208,
+      "label": "POST /api/auth/request",
+      "variant": "emphasis",
+      "note": "Origin must match host"
+    },
+    {
+      "id": "rate-store",
+      "from": "api",
+      "to": "d1",
+      "y": 236,
+      "label": "rate limit + store HMAC",
+      "variant": "security"
+    },
+    {
+      "id": "send-mail",
+      "from": "api",
+      "to": "resend",
+      "y": 264,
+      "label": "send 6 digit code"
+    },
+    {
+      "id": "generic-ok",
+      "from": "api",
+      "to": "pwa",
+      "y": 292,
+      "label": "200 ok (generic)",
+      "variant": "return"
+    },
+    {
+      "id": "mail-arrives",
+      "from": "resend",
+      "to": "user",
+      "y": 320,
+      "label": "mail to inbox",
+      "variant": "dashed"
+    },
+    {
+      "id": "type-code",
+      "from": "user",
+      "to": "pwa",
+      "y": 362,
+      "label": "type code in app"
+    },
+    {
+      "id": "verify-code",
+      "from": "pwa",
+      "to": "api",
+      "y": 390,
+      "label": "POST /api/auth/verify",
+      "variant": "emphasis"
+    },
+    {
+      "id": "check-code",
+      "from": "api",
+      "to": "d1",
+      "y": 418,
+      "label": "count attempt, check HMAC",
+      "variant": "security"
+    },
+    {
+      "id": "create-session",
+      "from": "api",
+      "to": "d1",
+      "y": 446,
+      "label": "user + session hash"
+    },
+    {
+      "id": "set-cookie",
+      "from": "api",
+      "to": "pwa",
+      "y": 474,
+      "label": "Set-Cookie bisou_session",
+      "variant": "return"
+    },
+    {
+      "id": "get-me",
+      "from": "pwa",
+      "to": "api",
+      "y": 512,
+      "label": "GET /api/me + cookie",
+      "variant": "emphasis"
+    },
+    {
+      "id": "load-session",
+      "from": "api",
+      "to": "d1",
+      "y": 540,
+      "label": "lookup SHA-256, slide",
+      "variant": "security"
+    },
+    {
+      "id": "me-user",
+      "from": "api",
+      "to": "pwa",
+      "y": 568,
+      "label": "200 user",
+      "variant": "return"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "api",
+      "from": 208,
+      "to": 297,
+      "type": "backend"
+    },
+    {
+      "participant": "api",
+      "from": 390,
+      "to": 479,
+      "type": "backend"
+    },
+    {
+      "participant": "api",
+      "from": 512,
+      "to": 573,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "No redirect",
+      "items": [
+        "Code is typed inside the installed PWA",
+        "Works in iOS standalone mode"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Code rules",
+      "items": [
+        "HMAC-SHA256 with OTP_PEPPER",
+        "10 min, 5 attempts, 1 per 60 s, 5 per hour"
+      ]
+    },
+    {
+      "dot": "orange",
+      "title": "Session",
+      "items": [
+        "32 random bytes, only SHA-256 in D1",
+        "HttpOnly Secure SameSite=Lax, 90 days sliding"
+      ]
+    }
+  ]
+}
