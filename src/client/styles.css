@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/* Catppuccin: Latte for light, Frappe for dark, following prefers-color-scheme. */
+:root {
+  color-scheme: light dark;
+  --ctp-rosewater: #dc8a78;
+  --ctp-pink: #ea76cb;
+  --ctp-mauve: #8839ef;
+  --ctp-red: #d20f39;
+  --ctp-peach: #fe640b;
+  --ctp-green: #40a02b;
+  --ctp-blue: #1e66f5;
+  --ctp-lavender: #7287fd;
+  --ctp-text: #4c4f69;
+  --ctp-subtext1: #5c5f77;
+  --ctp-subtext0: #6c6f85;
+  --ctp-overlay1: #8c8fa1;
+  --ctp-overlay0: #9ca0b0;
+  --ctp-surface2: #acb0be;
+  --ctp-surface1: #bcc0cc;
+  --ctp-surface0: #ccd0da;
+  --ctp-base: #eff1f5;
+  --ctp-mantle: #e6e9ef;
+  --ctp-crust: #dce0e8;
+  /* Primary actions: mauve on Latte keeps white text readable, pink on Frappe. */
+  --ctp-accent: #8839ef;
+  --ctp-on-accent: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ctp-rosewater: #f2d5cf;
+    --ctp-pink: #f4b8e4;
+    --ctp-mauve: #ca9ee6;
+    --ctp-red: #e78284;
+    --ctp-peach: #ef9f76;
+    --ctp-green: #a6d189;
+    --ctp-blue: #8caaee;
+    --ctp-lavender: #babbf1;
+    --ctp-text: #c6d0f5;
+    --ctp-subtext1: #b5bfe2;
+    --ctp-subtext0: #a5adce;
+    --ctp-overlay1: #838ba7;
+    --ctp-overlay0: #737994;
+    --ctp-surface2: #626880;
+    --ctp-surface1: #51576d;
+    --ctp-surface0: #414559;
+    --ctp-base: #303446;
+    --ctp-mantle: #292c3c;
+    --ctp-crust: #232634;
+    --ctp-accent: #f4b8e4;
+    --ctp-on-accent: #303446;
+  }
+}
+
+@theme inline {
+  --color-rosewater: var(--ctp-rosewater);
+  --color-pink: var(--ctp-pink);
+  --color-mauve: var(--ctp-mauve);
+  --color-red: var(--ctp-red);
+  --color-peach: var(--ctp-peach);
+  --color-green: var(--ctp-green);
+  --color-blue: var(--ctp-blue);
+  --color-lavender: var(--ctp-lavender);
+  --color-text: var(--ctp-text);
+  --color-subtext1: var(--ctp-subtext1);
+  --color-subtext0: var(--ctp-subtext0);
+  --color-overlay1: var(--ctp-overlay1);
+  --color-overlay0: var(--ctp-overlay0);
+  --color-surface2: var(--ctp-surface2);
+  --color-surface1: var(--ctp-surface1);
+  --color-surface0: var(--ctp-surface0);
+  --color-base: var(--ctp-base);
+  --color-mantle: var(--ctp-mantle);
+  --color-crust: var(--ctp-crust);
+  --color-accent: var(--ctp-accent);
+  --color-on-accent: var(--ctp-on-accent);
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--ctp-base);
+    color: var(--ctp-text);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    min-height: 100dvh;
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+      env(safe-area-inset-left);
+  }
+  /* 16px inputs stop iOS Safari from zooming on focus. */
+  input,
+  button {
+    font-size: 16px;
+  }
+}

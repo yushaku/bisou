@@ -1,0 +1,53 @@
+import { cloudflare } from "@cloudflare/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig, type PluginOption } from "vite";
+import { VitePWA } from "vite-plugin-pwa";
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+    cloudflare(),
+    // The PWA plugin only concerns the browser build, not the Worker bundle.
+    ...clientOnly(VitePWA({
+      registerType: "autoUpdate",
+      injectRegister: false,
+      // The glob below already precaches every icon.
+      includeManifestIcons: false,
+      manifest: {
+        name: "Bisou",
+        short_name: "Bisou",
+        description: "Bisou",
+        lang: "vi",
+        start_url: "/",
+        scope: "/",
+        display: "standalone",
+        orientation: "portrait",
+        background_color: "#eff1f5",
+        theme_color: "#ea76cb",
+        icons: [
+          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+      workbox: {
+        // App shell only: never cache the API.
+        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api\//],
+        runtimeCaching: [],
+        cleanupOutdatedCaches: true,
+      },
+    })),
+  ],
+});
+
+function clientOnly(plugins: PluginOption[]): PluginOption[] {
+  return plugins.map((plugin) =>
+    plugin && typeof plugin === "object" && "name" in plugin
+      ? { ...plugin, applyToEnvironment: (env: { name: string }) => env.name === "client" }
+      : plugin,
+  );
+}
