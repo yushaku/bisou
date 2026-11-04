@@ -1,9 +1,13 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { ApiError, User } from "../../shared/types";
 import { api } from "../api";
-import { LanguageToggle } from "../components/LanguageToggle";
-import { Heart, PrimaryButton, Screen, TextButton } from "../components/ui";
-import { inputClass } from "../components/styles";
+import { BrandMark } from "../components/bisou/BrandMark";
+import { LanguageToggle } from "../components/bisou/LanguageToggle";
+import { OtpInput } from "../components/bisou/OtpInput";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import { useI18n, type Translate } from "../i18n";
 
 const RESEND_SECONDS = 60;
@@ -36,6 +40,7 @@ export function Login({ onSignedIn }: { onSignedIn: (user: User) => void }) {
   const [devNote, setDevNote] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const codeRef = useRef<HTMLInputElement>(null);
+  const errorId = useId();
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -100,92 +105,87 @@ export function Login({ onSignedIn }: { onSignedIn: (user: User) => void }) {
     if (digits.length === 6) void verify(digits);
   }
 
+  const errorLine = error && (
+    <p id={errorId} role="alert" className="text-base text-destructive">
+      {error}
+    </p>
+  );
+
   return (
-    <Screen>
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
       <div className="flex justify-end">
         <LanguageToggle />
       </div>
-      <div className="mt-10 flex flex-col items-center text-center">
-        <div className="flex size-20 items-center justify-center rounded-3xl bg-pink text-on-accent shadow-lg">
-          <Heart className="size-11" />
-        </div>
-        <h1 className="mt-5 text-3xl font-bold">{t("appName")}</h1>
-        <p className="mt-2 text-subtext0">{t("login.subtitle")}</p>
+
+      <div className="mt-8 flex flex-col items-center text-center">
+        <BrandMark className="size-16" />
+        <h1 className="mt-4 font-heading text-4xl">{t("appName")}</h1>
+        <p className="mt-2 text-lg text-muted-foreground">{t("login.subtitle")}</p>
       </div>
 
-      {step === "email" ? (
-        <form onSubmit={onEmailSubmit} className="mt-10 flex flex-col gap-3" noValidate>
-          <label htmlFor="email" className="text-sm font-medium text-subtext1">
-            {t("login.email")}
-          </label>
-          <input
-            id="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            required
-            value={email}
-            placeholder={t("login.emailPlaceholder")}
-            onChange={(e) => setEmail(e.target.value)}
-            className={inputClass + " bg-mantle"}
-          />
-          {error && (
-            <p role="alert" className="text-sm text-red">
-              {error}
-            </p>
-          )}
-          <PrimaryButton type="submit" disabled={busy || email.trim() === ""}>
-            {busy ? t("login.sending") : t("login.sendCode")}
-          </PrimaryButton>
-        </form>
-      ) : (
-        <form onSubmit={onCodeSubmit} className="mt-10 flex flex-col gap-3">
-          <p className="text-center text-sm text-subtext0">{t("login.codeSentTo", { email: email.trim() })}</p>
-          <label htmlFor="code" className="text-sm font-medium text-subtext1">
-            {t("login.code")}
-          </label>
-          <input
-            id="code"
-            ref={codeRef}
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]*"
-            maxLength={12}
-            value={code}
-            placeholder="000000"
-            onChange={(e) => onCodeChange(e.target.value)}
-            className={inputClass + " bg-mantle text-center font-mono text-2xl tracking-[0.5em]"}
-          />
-          {error && (
-            <p role="alert" className="text-sm text-red">
-              {error}
-            </p>
-          )}
-          {devNote && <p className="rounded-xl bg-surface0 p-3 text-xs text-subtext1">{devNote}</p>}
-          <PrimaryButton type="submit" disabled={busy || code.length !== 6}>
-            {busy ? t("login.verifying") : t("login.verify")}
-          </PrimaryButton>
-          <div className="mt-2 flex items-center justify-between">
-            <TextButton
-              type="button"
-              onClick={() => {
-                setStep("email");
-                setError(null);
-                setDevNote(null);
-              }}
-            >
-              {t("login.changeEmail")}
-            </TextButton>
-            <TextButton type="button" disabled={busy || cooldown > 0} onClick={() => void requestCode()}>
-              {cooldown > 0 ? t("login.resendIn", { seconds: cooldown }) : t("login.resend")}
-            </TextButton>
-          </div>
-        </form>
-      )}
-    </Screen>
+      <Card className="mt-8 px-5 py-5">
+        {step === "email" ? (
+          <form onSubmit={onEmailSubmit} className="flex flex-col gap-3" noValidate>
+            <Label htmlFor="email">{t("login.email")}</Label>
+            <Input
+              id="email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+              value={email}
+              placeholder={t("login.emailPlaceholder")}
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? errorId : undefined}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {errorLine}
+            <Button type="submit" size="lg" className="mt-1" loading={busy} disabled={email.trim() === ""}>
+              {busy ? t("login.sending") : t("login.sendCode")}
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={onCodeSubmit} className="flex flex-col gap-3">
+            <p className="text-base text-muted-foreground">{t("login.codeSentTo", { email: email.trim() })}</p>
+            <Label htmlFor="code">{t("login.code")}</Label>
+            <OtpInput
+              id="code"
+              ref={codeRef}
+              value={code}
+              onChange={onCodeChange}
+              disabled={busy}
+              invalid={Boolean(error)}
+              aria-describedby={error ? errorId : undefined}
+            />
+            {errorLine}
+            {devNote && <p className="rounded-lg bg-muted p-3 text-sm">{devNote}</p>}
+            <Button type="submit" size="lg" className="mt-1" loading={busy} disabled={code.length !== 6}>
+              {busy ? t("login.verifying") : t("login.verify")}
+            </Button>
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4">
+              <Button
+                type="button"
+                variant="link"
+                className="h-11"
+                disabled={busy}
+                onClick={() => {
+                  setStep("email");
+                  setError(null);
+                  setDevNote(null);
+                }}
+              >
+                {t("login.changeEmail")}
+              </Button>
+              <Button type="button" variant="link" className="h-11" disabled={busy || cooldown > 0} onClick={() => void requestCode()}>
+                {cooldown > 0 ? t("login.resendIn", { seconds: cooldown }) : t("login.resend")}
+              </Button>
+            </div>
+          </form>
+        )}
+      </Card>
+    </main>
   );
 }

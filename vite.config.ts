@@ -1,11 +1,18 @@
+import { fileURLToPath } from "node:url";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type PluginOption } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { themeHead } from "./scripts/theme-bootstrap.ts";
+import palettes from "./src/client/theme/palettes.json" with { type: "json" };
 
 export default defineConfig({
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src/client", import.meta.url)) },
+  },
   plugins: [
+    { name: "bisou-palettes", transformIndexHtml: () => themeHead(palettes) },
     react(),
     tailwindcss(),
     cloudflare(),
@@ -24,7 +31,7 @@ export default defineConfig({
         scope: "/",
         display: "standalone",
         orientation: "portrait",
-        background_color: "#eff1f5",
+        background_color: "#e6e9ef",
         theme_color: "#ea76cb",
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
@@ -33,8 +40,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell only: never cache the API.
-        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest}"],
+        // App shell only (fonts included, for offline): never cache the API.
+        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [],

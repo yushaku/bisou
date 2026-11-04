@@ -1,0 +1,60 @@
+/*
+ * Backgrounds (data-bg on <html>), independent of the colour theme. Each pattern is a
+ * mask over a token colour, so it follows every theme. CSS and inline SVG only.
+ *
+ * Extension point for a photo background (later, uploaded to R2): set data-bg="photo" and
+ * --bg-photo: url(...) on <html>. The layer below then shows the photo under a scrim made
+ * of --background, so text contrast stays the theme's own. Register it in themes.ts.
+ */
+
+html {
+  background-color: var(--background);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--bg-ink, transparent);
+  opacity: var(--bg-opacity, 0);
+  mask-image: var(--bg-mask, none);
+  mask-size: var(--bg-size, auto);
+  mask-repeat: repeat;
+}
+
+:root[data-bg="paper"] {
+  --bg-ink: var(--foreground);
+  --bg-opacity: 0.04;
+  --bg-size: 180px 180px;
+  --bg-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1.6 1.1'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+:root[data-bg="dots"] {
+  --bg-ink: var(--foreground);
+  --bg-opacity: 0.14;
+  --bg-size: 22px 22px;
+  --bg-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='11' cy='11' r='1.4'/%3E%3C/svg%3E");
+}
+
+:root[data-bg="hearts"] {
+  --bg-ink: var(--primary);
+  --bg-opacity: 0.09;
+  --bg-size: 56px 56px;
+  --bg-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath transform='translate(6 7) scale(0.5)' d='M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.9 4.5c2.1 0 3.6 1.1 4.6 2.6.9-1.5 2.5-2.6 4.6-2.6 3.9 0 6 3.9 4.5 7.3C19.5 16.4 12 21 12 21z'/%3E%3Cpath transform='translate(34 33) scale(0.5) rotate(-12 12 12)' d='M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.9 4.5c2.1 0 3.6 1.1 4.6 2.6.9-1.5 2.5-2.6 4.6-2.6 3.9 0 6 3.9 4.5 7.3C19.5 16.4 12 21 12 21z'/%3E%3C/svg%3E");
+}
+
+:root[data-bg="photo"] body::before {
+  background: var(--bg-photo, none) center / cover no-repeat;
+  opacity: 1;
+  mask-image: none;
+}
+:root[data-bg="photo"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: color-mix(in oklab, var(--background) 82%, transparent);
+}

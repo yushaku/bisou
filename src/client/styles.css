@@ -1,99 +1,114 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "./theme/fonts.css";
+@import "./theme/personalities.css";
+@import "./theme/backgrounds.css";
 
-/* Catppuccin: Latte for light, Frappe for dark, following prefers-color-scheme. */
-:root {
-  color-scheme: light dark;
-  --ctp-rosewater: #dc8a78;
-  --ctp-pink: #ea76cb;
-  --ctp-mauve: #8839ef;
-  --ctp-red: #d20f39;
-  --ctp-peach: #fe640b;
-  --ctp-green: #40a02b;
-  --ctp-blue: #1e66f5;
-  --ctp-lavender: #7287fd;
-  --ctp-text: #4c4f69;
-  --ctp-subtext1: #5c5f77;
-  --ctp-subtext0: #6c6f85;
-  --ctp-overlay1: #8c8fa1;
-  --ctp-overlay0: #9ca0b0;
-  --ctp-surface2: #acb0be;
-  --ctp-surface1: #bcc0cc;
-  --ctp-surface0: #ccd0da;
-  --ctp-base: #eff1f5;
-  --ctp-mantle: #e6e9ef;
-  --ctp-crust: #dce0e8;
-  /* Primary actions: mauve on Latte keeps white text readable, pink on Frappe. */
-  --ctp-accent: #8839ef;
-  --ctp-on-accent: #ffffff;
+/* Dark utilities follow the .dark class that the theme script sets for dark themes. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --font-sans: var(--font-sans-family);
+  --font-heading: var(--font-display-family);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-control: var(--control-radius);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ctp-rosewater: #f2d5cf;
-    --ctp-pink: #f4b8e4;
-    --ctp-mauve: #ca9ee6;
-    --ctp-red: #e78284;
-    --ctp-peach: #ef9f76;
-    --ctp-green: #a6d189;
-    --ctp-blue: #8caaee;
-    --ctp-lavender: #babbf1;
-    --ctp-text: #c6d0f5;
-    --ctp-subtext1: #b5bfe2;
-    --ctp-subtext0: #a5adce;
-    --ctp-overlay1: #838ba7;
-    --ctp-overlay0: #737994;
-    --ctp-surface2: #626880;
-    --ctp-surface1: #51576d;
-    --ctp-surface0: #414559;
-    --ctp-base: #303446;
-    --ctp-mantle: #292c3c;
-    --ctp-crust: #232634;
-    --ctp-accent: #f4b8e4;
-    --ctp-on-accent: #303446;
+/* Personality hooks shared by primitives and Bisou components (values in theme/personalities.css). */
+@utility edge {
+  border-width: var(--edge-width);
+  border-style: solid;
+  border-color: var(--edge-color);
+}
+@utility edge-control {
+  border-width: var(--edge-width);
+  border-style: solid;
+  border-color: var(--control-edge-color);
+}
+@utility edge-ink {
+  border-width: var(--edge-width);
+  border-style: solid;
+  border-color: var(--ink-edge);
+}
+@utility elevate {
+  box-shadow: var(--shadow-rest);
+}
+@utility elevate-sm {
+  box-shadow: var(--shadow-rest-sm);
+}
+@utility press {
+  transition-property: transform, box-shadow, background-color, color, border-color, opacity;
+  transition-duration: var(--duration);
+  transition-timing-function: var(--ease);
+  &:active:not(:disabled, [aria-disabled="true"]) {
+    transform: var(--press-transform);
+    box-shadow: var(--press-shadow);
   }
 }
 
-@theme inline {
-  --color-rosewater: var(--ctp-rosewater);
-  --color-pink: var(--ctp-pink);
-  --color-mauve: var(--ctp-mauve);
-  --color-red: var(--ctp-red);
-  --color-peach: var(--ctp-peach);
-  --color-green: var(--ctp-green);
-  --color-blue: var(--ctp-blue);
-  --color-lavender: var(--ctp-lavender);
-  --color-text: var(--ctp-text);
-  --color-subtext1: var(--ctp-subtext1);
-  --color-subtext0: var(--ctp-subtext0);
-  --color-overlay1: var(--ctp-overlay1);
-  --color-overlay0: var(--ctp-overlay0);
-  --color-surface2: var(--ctp-surface2);
-  --color-surface1: var(--ctp-surface1);
-  --color-surface0: var(--ctp-surface0);
-  --color-base: var(--ctp-base);
-  --color-mantle: var(--ctp-mantle);
-  --color-crust: var(--ctp-crust);
-  --color-accent: var(--ctp-accent);
-  --color-on-accent: var(--ctp-on-accent);
-}
-
 @layer base {
-  html,
-  body {
-    background-color: var(--ctp-base);
-    color: var(--ctp-text);
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    color: var(--foreground);
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
   }
   body {
     min-height: 100dvh;
-    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-      env(safe-area-inset-left);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   /* 16px inputs stop iOS Safari from zooming on focus. */
   input,
+  textarea,
+  select,
   button {
     font-size: 16px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 }

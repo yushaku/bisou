@@ -5,5 +5,8 @@
     { "path": "./tsconfig.worker.json" },
     { "path": "./tsconfig.node.json" },
     { "path": "./test/tsconfig.json" }
-  ]
+  ],
+  "compilerOptions": {
+    "paths": { "@/*": ["./src/client/*"] }
+  }
 }

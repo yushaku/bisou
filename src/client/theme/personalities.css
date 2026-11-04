@@ -1,0 +1,175 @@
+/*
+ * Personalities (data-style on <html>). Same components and layout; only these variables
+ * and the few rules below change.
+ *
+ *   --font-sans-family / --font-display-family   body and display faces
+ *   --display-weight, --display-tracking          display type
+ *   --radius                                      shadcn radius scale (sm..4xl derive from it)
+ *   --control-radius                              buttons, inputs, toggles
+ *   --edge-width, --edge-color, --control-edge-color   card and field outlines
+ *   --ink-edge                                    outline on filled buttons and badges
+ *   --field-bg, --outline-fill                    input fill; outline button and toggle fill
+ *   --shadow-rest, --shadow-rest-sm               resting shadow (sticker only)
+ *   --press-transform, --press-shadow             :active feedback
+ *   --ease, --duration                            motion feel
+ *   --icon-stroke                                 lucide stroke width
+ *   --photo-*                                     photo frame treatment
+ */
+
+:root,
+:root[data-style="journal"] {
+  --font-sans-family: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-display-family: "Lora Variable", ui-serif, Georgia, serif;
+  --display-weight: 600;
+  --display-tracking: -0.01em;
+  --radius: 0.375rem;
+  --control-radius: 0.375rem;
+  --edge-width: 1px;
+  --edge-color: var(--border);
+  --control-edge-color: var(--input);
+  --ink-edge: transparent;
+  --field-bg: var(--card);
+  --outline-fill: var(--card);
+  --shadow-rest: none;
+  --shadow-rest-sm: none;
+  --press-transform: scale(0.98);
+  --press-shadow: none;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration: 180ms;
+  --icon-stroke: 1.5;
+  --photo-pad: 0.375rem;
+  --photo-pad-bottom: 1.25rem;
+  --photo-radius: 2px;
+  --photo-bg: var(--card);
+  --photo-edge: 1px solid var(--border);
+  --photo-tilt: 1.5deg;
+  --photo-tape: color-mix(in oklab, var(--warning) 45%, transparent);
+}
+
+:root[data-style="soft"] {
+  --font-sans-family: "Nunito Variable", ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-display-family: "Nunito Variable", ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --display-weight: 800;
+  --display-tracking: -0.015em;
+  --radius: 1.25rem;
+  --control-radius: 9999px;
+  --edge-width: 1px;
+  --edge-color: transparent;
+  --control-edge-color: var(--input);
+  --ink-edge: transparent;
+  --field-bg: var(--muted);
+  --outline-fill: var(--muted);
+  --shadow-rest: none;
+  --shadow-rest-sm: none;
+  --press-transform: scale(0.95);
+  --press-shadow: none;
+  --ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration: 320ms;
+  --icon-stroke: 2.25;
+  --photo-pad: 0px;
+  --photo-pad-bottom: 0px;
+  --photo-radius: 1rem;
+  --photo-bg: var(--muted);
+  --photo-edge: 0 solid transparent;
+  --photo-tilt: 0deg;
+  --photo-tape: transparent;
+}
+
+:root[data-style="sticker"] {
+  --font-sans-family: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-display-family: "Baloo 2 Variable", ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --display-weight: 800;
+  --display-tracking: -0.01em;
+  --radius: 0.875rem;
+  --control-radius: 0.75rem;
+  --edge-width: 2px;
+  --edge-color: var(--foreground);
+  --control-edge-color: var(--foreground);
+  --ink-edge: var(--foreground);
+  --field-bg: var(--card);
+  --outline-fill: var(--card);
+  --shadow-rest: 4px 4px 0 0 var(--foreground);
+  --shadow-rest-sm: 2px 2px 0 0 var(--foreground);
+  --press-transform: translate(2px, 2px);
+  --press-shadow: 0 0 0 0 var(--foreground);
+  --ease: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  --duration: 240ms;
+  --icon-stroke: 2.5;
+  --photo-pad: 0px;
+  --photo-pad-bottom: 0px;
+  --photo-radius: 0.625rem;
+  --photo-bg: var(--muted);
+  --photo-edge: 2px solid var(--foreground);
+  --photo-tilt: 2deg;
+  --photo-tape: transparent;
+}
+
+/* Dark sticker: full-strength light ink glows, so outlines step down to muted-foreground
+   and the shadow drops into the darkest tone instead. */
+:root.dark[data-style="sticker"] {
+  --edge-color: var(--muted-foreground);
+  --control-edge-color: var(--muted-foreground);
+  --ink-edge: var(--muted-foreground);
+  --photo-edge: 2px solid var(--muted-foreground);
+  --shadow-rest: 4px 4px 0 0 color-mix(in oklab, var(--background) 55%, black);
+  --shadow-rest-sm: 2px 2px 0 0 color-mix(in oklab, var(--background) 55%, black);
+  --press-shadow: 0 0 0 0 color-mix(in oklab, var(--background) 55%, black);
+}
+
+@layer base {
+  svg.lucide {
+    stroke-width: var(--icon-stroke);
+  }
+}
+
+@layer components {
+  /* Display type: titles, the counter, the pair code. */
+  .font-heading {
+    font-weight: var(--display-weight);
+    letter-spacing: var(--display-tracking);
+  }
+
+  /* Journal: photos as taped prints, tilted alternately. */
+  .photo-frame {
+    position: relative;
+    padding: var(--photo-pad) var(--photo-pad) var(--photo-pad-bottom);
+    border-radius: var(--photo-radius);
+    border: var(--photo-edge);
+    background-color: var(--photo-bg);
+    box-shadow: var(--shadow-rest-sm);
+  }
+  .photo-frame > img,
+  .photo-frame > [data-slot="photo"] {
+    border-radius: calc(var(--photo-radius) * 0.6);
+  }
+  .photo-frame[data-tilt="left"] {
+    rotate: calc(var(--photo-tilt) * -1);
+  }
+  .photo-frame[data-tilt="right"] {
+    rotate: var(--photo-tilt);
+  }
+  :root[data-style="journal"] .photo-frame[data-tape]::before {
+    content: "";
+    position: absolute;
+    top: -0.5rem;
+    left: 50%;
+    width: 3.5rem;
+    height: 1rem;
+    translate: -50% 0;
+    rotate: -3deg;
+    background-color: var(--photo-tape);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-style] {
+    --duration: 0ms;
+    --press-transform: none;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

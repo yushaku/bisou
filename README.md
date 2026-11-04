@@ -1,6 +1,6 @@
 # Bisou
 
-A private PWA for one couple: shared journal and wish jar. This is step 1, the login spike: email OTP login inside an installable PWA, UI in Vietnamese and English.
+A private PWA for one couple: shared journal and wish jar. Email OTP login and profile editing work today. The design system previews the upcoming couple, journal and wish screens in Vietnamese and English.
 
 One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. Data lives in D1. Free plan only.
 
@@ -15,6 +15,8 @@ One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and th
 
 ## Local setup
 
+Use Node.js 24 or newer (the design checks run TypeScript directly).
+
 ```sh
 pnpm install
 cp .dev.vars.example .dev.vars
@@ -24,6 +26,8 @@ pnpm dev
 
 Open http://localhost:5173. Without `RESEND_API_KEY` in `.dev.vars` no mail is sent: the code is printed in the `pnpm dev` log.
 
+Open http://localhost:5173/design for the development-only component gallery and three sample screens. See [the design system guide](docs/design-system.md) for tokens, themes and component boundaries.
+
 ## Scripts
 
 | Script | What it does |
@@ -31,7 +35,7 @@ Open http://localhost:5173. Without `RESEND_API_KEY` in `.dev.vars` no mail is s
 | `pnpm dev` | Vite and the Worker together (local D1 in `.wrangler/state`) |
 | `pnpm build` | Builds the client (`dist/client`, with service worker) and the Worker (`dist/bisou`) |
 | `pnpm typecheck` | `tsc --noEmit` for client, Worker, Vite config and tests |
-| `pnpm test` | API tests (Vitest in workerd, Resend mocked) |
+| `pnpm test` | API tests (Vitest in workerd, Resend mocked), then design-system checks (Node) |
 | `pnpm icons` | Regenerates the PNG icons from `assets/*.svg` |
 | `pnpm db:migrate:local` | Applies migrations to the local D1 |
 | `pnpm run deploy` | Builds, then `wrangler deploy` (needs the setup below) |
