@@ -112,7 +112,7 @@ export async function purgePhotos(env: Env, rows: { id: string; couple_id: strin
   if (!rows.length) return;
   try {
     await env.PHOTOS.delete(rows.flatMap(photoKeys));
-    await env.DB.prepare(`DELETE FROM photos WHERE id IN (${rows.map(() => "?").join(",")}) AND entry_id IS NULL`)
+    await env.DB.prepare(`DELETE FROM photos WHERE id IN (${rows.map(() => "?").join(",")}) AND entry_id IS NULL AND wish_id IS NULL`)
       .bind(...rows.map((row) => row.id)).run();
   } catch {
     console.error("[bisou] photo purge failed", rows.length);

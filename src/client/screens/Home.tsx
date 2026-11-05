@@ -1,13 +1,14 @@
 import { BookHeart, CalendarHeart, ChevronRight } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import type { ApiError, Couple } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
 import { DaysCounter } from "../components/bisou/DaysCounter";
 import { EmptyState } from "../components/bisou/EmptyState";
+import { WishTeaser } from "../components/bisou/WishTeaser";
 import { PageHeader } from "../components/bisou/PageHeader";
 import { useI18n, type Translate } from "../i18n";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
@@ -48,6 +49,7 @@ function startDateError(t: Translate, status: number, error: ApiError | null): s
 
 export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
+  const [, navigate] = useLocation();
   const [picking, setPicking] = useState(false);
   // Stays mounted after the first open so the sheet can animate closed.
   const [sheetLoaded, setSheetLoaded] = useState(false);
@@ -101,6 +103,8 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
         </span>
         <ChevronRight className="size-5 shrink-0" aria-hidden="true" />
       </Link>
+
+      <div className="mt-4"><WishTeaser onOpen={() => navigate("/wishes")} /></div>
 
       {sheetLoaded && (
         <Suspense fallback={null}>

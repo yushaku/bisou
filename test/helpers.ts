@@ -13,6 +13,9 @@ export async function explain(sql: string, ...binds: unknown[]): Promise<string[
 export async function resetDb() {
   await env.DB.batch([
     env.DB.prepare("DELETE FROM photos"),
+    env.DB.prepare("DELETE FROM wish_spins"),
+    env.DB.prepare("DELETE FROM wish_claims"),
+    env.DB.prepare("DELETE FROM wishes"),
     env.DB.prepare("DELETE FROM journal_entries"),
     env.DB.prepare("DELETE FROM join_attempts"),
     env.DB.prepare("DELETE FROM pair_codes"),

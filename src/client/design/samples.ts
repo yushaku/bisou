@@ -67,18 +67,20 @@ export const MILESTONES: Milestone[] = [
   { id: "m4", date: "2025-09-01", title: "Dọn về chung nhà", icon: "home", note: "Căn hộ nhỏ có ban công trồng húng quế." },
 ];
 
+const wishDefaults = { link: null, photoId: null, status: "open" as const, receivedOn: null, note: null, createdAt: 0, updatedAt: 0 };
+
 export const MY_WISHES: Wish[] = [
-  { id: "w1", title: "Chuyến đi Hội An hai ngày một đêm", price: 3_200_000, priority: 3, link: "https://example.com/hoi-an", photo: PHOTOS.hoiAn },
-  { id: "w2", title: "Bó hoa cẩm tú cầu Đà Lạt", price: 350_000, priority: 2, photo: PHOTOS.daLat },
-  { id: "w3", title: "Bộ phin cà phê sứ trắng", price: 280_000, priority: 1, link: "https://example.com/phin", photo: PHOTOS.coffee },
-  { id: "w4", title: "Máy ảnh film Kodak Ektar H35", price: 1_150_000, priority: 2 },
+  { ...wishDefaults, id: "w1", title: "Chuyến đi Hội An hai ngày một đêm", price: 3_200_000, priority: 3, link: "https://example.com/hoi-an", photo: PHOTOS.hoiAn },
+  { ...wishDefaults, id: "w2", title: "Bó hoa cẩm tú cầu Đà Lạt", price: 350_000, priority: 2, photo: PHOTOS.daLat },
+  { ...wishDefaults, id: "w3", title: "Bộ phin cà phê sứ trắng", price: 280_000, priority: 1, link: "https://example.com/phin", photo: PHOTOS.coffee },
+  { ...wishDefaults, id: "w4", title: "Máy ảnh film Kodak Ektar H35", price: 1_150_000, priority: 2 },
 ];
 
 // The partner's jar, only reachable through a spin.
 export const PARTNER_WISHES: Wish[] = [
-  { id: "p1", title: "Áo len cổ lọ màu kem", price: 450_000, priority: 2 },
-  { id: "p2", title: "Tai nghe chống ồn", price: 2_490_000, priority: 3 },
-  { id: "p3", title: "Bữa tối ở quán phở gia truyền", price: 180_000, priority: 1, photo: PHOTOS.pho },
+  { ...wishDefaults, id: "p1", title: "Áo len cổ lọ màu kem", price: 450_000, priority: 2 },
+  { ...wishDefaults, id: "p2", title: "Tai nghe chống ồn", price: 2_490_000, priority: 3 },
+  { ...wishDefaults, id: "p3", title: "Bữa tối ở quán phở gia truyền", price: 180_000, priority: 1, photo: PHOTOS.pho },
 ];
 
 export const PAIR_CODE = "HN7K2Q";

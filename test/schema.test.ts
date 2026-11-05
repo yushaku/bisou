@@ -30,7 +30,7 @@ describe("journal query plans", () => {
     {
       name: "AC1, AC12 (R1, R17): attached photo with membership",
       sql: `SELECT p.couple_id FROM photos p JOIN couple_members m ON m.couple_id = p.couple_id
-        WHERE p.id = ? AND m.user_id = ? AND p.entry_id IS NOT NULL`,
+        WHERE p.id = ? AND m.user_id = ? AND (p.entry_id IS NOT NULL OR p.wish_id IS NOT NULL)`,
       binds: ["photo", "user"],
       indexes: ["sqlite_autoindex_photos_1", "sqlite_autoindex_couple_members_"],
     },
@@ -43,13 +43,13 @@ describe("journal query plans", () => {
     },
     {
       name: "AC12 (R17): pending photo cap",
-      sql: "SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL",
+      sql: "SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND wish_id IS NULL",
       binds: ["user"],
-      indexes: ["COVERING INDEX photos_uploader"],
+      indexes: ["photos_uploader"],
     },
     {
       name: "AC10, AC12 (R11, R17): expired or detached photo sweep",
-      sql: "SELECT id, couple_id FROM photos WHERE entry_id IS NULL AND created_at <= ? LIMIT 500",
+      sql: "SELECT id, couple_id FROM photos WHERE entry_id IS NULL AND wish_id IS NULL AND created_at <= ? LIMIT 500",
       binds: [100],
       indexes: ["photos_unattached"],
     },
@@ -160,5 +160,19 @@ describe("photo test fixtures", () => {
       return new Response(null, { status: 201 });
     });
     expect((await call("POST", "/api/photos", { form: photoForm(full, thumb, { thumb: "image/webp" }) })).status).toBe(201);
+  });
+});
+
+
+describe("wish query plans", () => {
+  it.each([
+    ["AC1 (R1): paired membership", `SELECT m.couple_id, (SELECT x.user_id FROM couple_members x WHERE x.couple_id = m.couple_id AND x.user_id != m.user_id) AS partner_id FROM couple_members m WHERE m.user_id = ?`, ["user"]],
+    ["AC1 (R2): owner list", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.owner_id = ? AND w.couple_id = ? AND w.status = ? ORDER BY w.created_at DESC, w.id DESC`, ["user", "couple", "open"]],
+    ["AC1 (R2): owner wish", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.id = ? AND w.owner_id = ?`, ["wish", "user"]],
+    ["AC9 (R16): deleted claim notice", `UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), wish_id = NULL WHERE wish_id = ?1`, ["wish"]],
+    ["AC13 (R6): detach photo", `UPDATE photos SET wish_id = NULL, created_at = 0 WHERE wish_id = ? RETURNING id, couple_id`, ["wish"]],
+  ])("%s uses indexed searches", async (_name, sql, binds) => {
+    const plan = (await explain(sql as string, ...binds)).join("\n");
+    expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });

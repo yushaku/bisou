@@ -41,7 +41,7 @@ export function SpinCard({ partnerName, wishes, initialBudget, initialState, onC
   function spin(e?: FormEvent) {
     e?.preventDefault();
     if (budget <= 0 || state.step === "spinning") return;
-    const fits = wishes.filter((w) => w.price <= budget);
+    const fits = wishes.filter((w) => w.price !== null && w.price <= budget);
     setState({ step: "spinning" });
     timer.current = setTimeout(
       () => {
@@ -105,7 +105,7 @@ export function SpinCard({ partnerName, wishes, initialBudget, initialState, onC
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-semibold leading-snug">{state.wish.title}</h3>
-                <p className="font-heading text-lg tabular-nums">{formatVnd(state.wish.price, locale)}</p>
+                <p className="font-heading text-lg tabular-nums">{formatVnd(state.wish.price ?? 0, locale)}</p>
                 <WishPriority priority={state.wish.priority} />
               </div>
             </div>

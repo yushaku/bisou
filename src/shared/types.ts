@@ -45,7 +45,13 @@ export type ApiErrorCode =
   | "photo_too_large"
   | "unsupported_photo_type"
   | "too_many_pending_photos"
-  | "not_author";
+  | "not_author"
+  | "wish_title_invalid"
+  | "wish_price_invalid"
+  | "wish_link_invalid"
+  | "invalid_budget"
+  | "already_claimed"
+  | "wish_received";
 
 export interface ApiError {
   error: ApiErrorCode;
@@ -114,4 +120,24 @@ export interface EntryInput {
 
 export interface PhotoUploadResponse {
   photo: { id: string };
+}
+
+export type WishPriority = 1 | 2 | 3;
+
+export interface WishInput {
+  title: string;
+  price: number | null;
+  link: string | null;
+  priority?: WishPriority;
+  photoId: string | null;
+}
+
+export interface Wish extends WishInput {
+  id: string;
+  priority: WishPriority;
+  status: "open" | "received";
+  receivedOn: string | null;
+  note: string | null;
+  createdAt: number;
+  updatedAt: number;
 }

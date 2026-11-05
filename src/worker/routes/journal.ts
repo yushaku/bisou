@@ -51,7 +51,7 @@ journal.post("/", limitEntryBody, async (c) => {
   const coupleId = c.get("journalCoupleId");
   if (photoIds.length) {
     const { results } = await db.prepare(`SELECT id FROM photos WHERE id IN (${photoIds.map(() => "?").join(",")})
-      AND uploader_id = ? AND couple_id = ? AND entry_id IS NULL AND created_at > ?`)
+      AND uploader_id = ? AND couple_id = ? AND entry_id IS NULL AND wish_id IS NULL AND created_at > ?`)
       .bind(...photoIds, userId, coupleId, now - PENDING_PHOTO_TTL).all();
     if (results.length !== photoIds.length) return c.json({ error: "photo_invalid" }, 400);
   }
@@ -60,7 +60,7 @@ journal.post("/", limitEntryBody, async (c) => {
     db.prepare(`INSERT INTO journal_entries (id, couple_id, author_id, entry_date, body, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(id, coupleId, userId, date, text, now, now),
     ...photoIds.map((photoId, position) => db.prepare(`UPDATE photos SET entry_id = ?, position = ?
-      WHERE id = ? AND entry_id IS NULL AND uploader_id = ? AND created_at > ?`)
+      WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND created_at > ?`)
       .bind(id, position, photoId, userId, now - PENDING_PHOTO_TTL)),
   ]);
   if (changes.slice(1).some((result) => result.meta.changes === 0)) {
@@ -85,7 +85,7 @@ journal.put("/:id", limitEntryBody, async (c) => {
   const { date, text, photoIds } = parsed.input;
   if (photoIds.length) {
     const { results } = await db.prepare(`SELECT id FROM photos WHERE id IN (${photoIds.map(() => "?").join(",")})
-      AND couple_id = ? AND (entry_id = ? OR (entry_id IS NULL AND uploader_id = ? AND created_at > ?))`)
+      AND couple_id = ? AND (entry_id = ? OR (entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND created_at > ?))`)
       .bind(...photoIds, current.couple_id, id, userId, now - PENDING_PHOTO_TTL).all();
     if (results.length !== photoIds.length) return c.json({ error: "photo_invalid" }, 400);
   }
@@ -99,7 +99,7 @@ journal.put("/:id", limitEntryBody, async (c) => {
     db.prepare(`UPDATE photos SET entry_id = NULL, position = NULL, created_at = 0 WHERE entry_id = ?${keep}`)
       .bind(id, ...photoIds),
     ...photoIds.map((photoId, position) => db.prepare(`UPDATE photos SET entry_id = ?, position = ?
-      WHERE id = ? AND (entry_id = ? OR (entry_id IS NULL AND uploader_id = ? AND created_at > ?))
+      WHERE id = ? AND (entry_id = ? OR (entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND created_at > ?))
       AND EXISTS (SELECT 1 FROM journal_entries WHERE id = ? AND author_id = ?)`)
       .bind(id, position, photoId, id, userId, now - PENDING_PHOTO_TTL, id, userId)),
   ]);

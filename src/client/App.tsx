@@ -6,6 +6,7 @@ import { BrandMark } from "./components/bisou/BrandMark";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
 import { Home } from "./screens/Home";
+import { Wishes } from "./screens/Wishes";
 import { Journal } from "./screens/Journal";
 import { Login } from "./screens/Login";
 import { Onboarding } from "./screens/Onboarding";
@@ -132,6 +133,9 @@ function SignedIn({
   if (!couple || !paired) return <Pairing {...session} couple={couple} onCouple={onCouple} />;
   return (
     <Switch>
+      <Route path="/wishes">
+        <Wishes {...session} couple={couple} />
+      </Route>
       <Route path="/journal">
         <Journal {...session} couple={couple} />
       </Route>

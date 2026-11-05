@@ -17,9 +17,9 @@ export interface SessionProps {
   onSignedOut: () => void;
 }
 
-/* Tabs with a screen behind them; wishes and "us" join when they are built. */
-const LIVE_TABS: readonly TabId[] = ["home", "journal"];
-const TAB_PATH: Partial<Record<TabId, string>> = { home: "/", journal: "/journal" };
+/* Tabs with a screen behind them. */
+const LIVE_TABS: readonly TabId[] = ["home", "journal", "wishes"];
+const TAB_PATH: Partial<Record<TabId, string>> = { home: "/", journal: "/journal", wishes: "/wishes" };
 
 /* Animated where the browser supports view transitions and motion is welcome; instant otherwise. */
 function switchTab(path: string, dir: 1 | -1, navigate: (to: string) => void) {

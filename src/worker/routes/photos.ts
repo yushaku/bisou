@@ -22,7 +22,7 @@ photos.post("/", async (c, next) => {
 }), async (c) => {
   const userId = c.get("user").id;
   const now = Date.now();
-  const pending = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND created_at > ?")
+  const pending = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND wish_id IS NULL AND created_at > ?")
     .bind(userId, now - PENDING_PHOTO_TTL).first<number>("n");
   if (pending! >= MAX_PENDING_PHOTOS_PER_USER) {
     return c.json({ error: "too_many_pending_photos" }, 429);
@@ -61,7 +61,7 @@ photos.post("/", async (c, next) => {
     const failed = puts.find((result) => result.status === "rejected");
     if (failed?.status === "rejected") throw failed.reason;
     const inserted = await c.env.DB.prepare(`INSERT INTO photos (id, couple_id, uploader_id, created_at)
-      SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND created_at > ?) < ?`)
+      SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND wish_id IS NULL AND created_at > ?) < ?`)
       .bind(id, c.get("photoCoupleId"), userId, now, userId, now - PENDING_PHOTO_TTL, MAX_PENDING_PHOTOS_PER_USER).run();
     if (!inserted.meta.changes) {
       await c.env.PHOTOS.delete(keys);
@@ -77,7 +77,7 @@ photos.post("/", async (c, next) => {
 photos.delete("/:id", async (c) => {
   // Claim the pending photo before deleting objects so a racing save cannot attach it.
   const row = await c.env.DB.prepare(`UPDATE photos SET created_at = 0
-    WHERE id = ? AND uploader_id = ? AND entry_id IS NULL RETURNING id, couple_id`)
+    WHERE id = ? AND uploader_id = ? AND entry_id IS NULL AND wish_id IS NULL RETURNING id, couple_id`)
     .bind(c.req.param("id"), c.get("user").id).first<{ id: string; couple_id: string }>();
   if (!row) return c.json({ error: "not_found" }, 404);
   await purgePhotos(c.env, [row]);
@@ -88,7 +88,7 @@ photos.get("/:id/:size", async (c) => {
   const { id, size } = c.req.param();
   if (size !== "full" && size !== "thumb") return c.json({ error: "not_found" }, 404);
   const row = await c.env.DB.prepare(`SELECT p.couple_id FROM photos p JOIN couple_members m ON m.couple_id = p.couple_id
-    WHERE p.id = ? AND m.user_id = ? AND p.entry_id IS NOT NULL`)
+    WHERE p.id = ? AND m.user_id = ? AND (p.entry_id IS NOT NULL OR p.wish_id IS NOT NULL)`)
     .bind(id, c.get("user").id).first<{ couple_id: string }>();
   if (!row) return c.json({ error: "not_found" }, 404);
   const object = await c.env.PHOTOS.get(photoKey(row.couple_id, id, size));

@@ -1,5 +1,7 @@
 import type {
   ApiError,
+  Wish,
+  WishInput,
   CoupleResponse,
   EntryInput,
   JournalEntry,
@@ -37,6 +39,10 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  wishes: () => call<{ open: Wish[]; received: Wish[] }>("GET", "/api/wishes"),
+  createWish: (input: WishInput) => call<{ wish: Wish }>("POST", "/api/wishes", input),
+  updateWish: (id: string, input: WishInput) => call<{ wish: Wish }>("PUT", `/api/wishes/${encodeURIComponent(id)}`, input),
+  deleteWish: (id: string) => call<{ ok: true }>("DELETE", `/api/wishes/${encodeURIComponent(id)}`),
   me: () => call<MeResponse>("GET", "/api/me"),
   updateMe: (patch: { displayName?: string; locale?: Locale }) =>
     call<{ user: User }>("PATCH", "/api/me", patch),
