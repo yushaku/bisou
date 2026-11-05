@@ -40,6 +40,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // A new deploy takes over open tabs at once; main.tsx reloads the page when it does.
+        skipWaiting: true,
+        clientsClaim: true,
         // App shell only (fonts included, for offline): never cache the API.
         globPatterns: ["**/*.{js,css,html,svg,png,webp,webmanifest,woff2}"],
         navigateFallback: "/index.html",
