@@ -10,7 +10,7 @@ One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and th
 - `src/client`: React app. `i18n/vi.ts` is the source dictionary, `i18n/en.ts` must have the same keys.
 - `src/shared`: types used by both sides.
 - `migrations`: D1 migrations (`wrangler d1 migrations`).
-- `assets/*.svg`: icon sources, rendered to `public/` by `pnpm icons`.
+- `assets/`: brand artwork, exported to `public/` and `src/client/assets/brand-heart.webp` by `pnpm icons`.
 - `test`: API tests running inside the Workers runtime (`@cloudflare/vitest-plugin`).
 
 ## Local setup
@@ -36,7 +36,7 @@ Open http://localhost:5173/design for the development-only component gallery and
 | `pnpm build` | Builds the client (`dist/client`, with service worker) and the Worker (`dist/bisou`) |
 | `pnpm typecheck` | `tsc --noEmit` for client, Worker, Vite config and tests |
 | `pnpm test` | API tests (Vitest in workerd, Resend mocked), then design-system checks (Node) |
-| `pnpm icons` | Regenerates the PNG icons from `assets/*.svg` |
+| `pnpm icons` | Exports the in-app logo, PNG favicons and install icons from the brand artwork |
 | `pnpm db:migrate:local` | Applies migrations to the local D1 |
 | `pnpm run deploy` | Builds, then `wrangler deploy` (needs the setup below) |
 
