@@ -1,11 +1,18 @@
 import { Hono } from "hono";
-import { DISPLAY_NAME_MAX, isLocale } from "../../shared/types";
+import { DISPLAY_NAME_MAX, isLocale, type MeResponse } from "../../shared/types";
 import type { AppEnv } from "../env";
 import { rowToUser, type UserRow } from "../lib/users";
 
 export const me = new Hono<AppEnv>();
 
-me.get("/", (c) => c.json({ user: c.get("user") }));
+me.get("/", async (c) => {
+  const user = c.get("user");
+  const coupleId = await c.env.DB.prepare("SELECT couple_id FROM couple_members WHERE user_id = ?")
+    .bind(user.id)
+    .first<string>("couple_id");
+  const body: MeResponse = { user, coupleId: coupleId ?? null };
+  return c.json(body);
+});
 
 me.patch("/", async (c) => {
   let body: Record<string, unknown>;

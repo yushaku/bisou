@@ -26,11 +26,19 @@ export type ApiErrorCode =
   | "unauthorized"
   | "forbidden_origin"
   | "not_found"
-  | "server_error";
+  | "server_error"
+  | "already_in_couple"
+  | "already_paired"
+  | "not_in_couple"
+  | "pair_code_invalid"
+  | "pair_code_expired"
+  | "own_pair_code"
+  | "couple_full"
+  | "invalid_start_date";
 
 export interface ApiError {
   error: ApiErrorCode;
-  /** Seconds until a new code can be requested (rate_limited only). */
+  /** Seconds until the action is allowed again (rate_limited only). */
   retryAfter?: number;
   /** Attempts left for the current code (invalid_code only). */
   attemptsLeft?: number;
@@ -42,4 +50,28 @@ export interface RequestCodeResponse {
   devNote?: string;
 }
 
-export const DISPLAY_NAME_MAX = 50;
+export const DISPLAY_NAME_MAX = 40;
+
+export interface CoupleMember {
+  id: string;
+  displayName: string | null;
+}
+
+export interface Couple {
+  id: string;
+  /** First day together, "YYYY-MM-DD", or null until a partner sets it. */
+  startDate: string | null;
+  /** Ordered by join time: the creator first. */
+  members: CoupleMember[];
+  /** Live pair code, only while the caller is alone in the couple. */
+  pendingCode?: { code: string; expiresAt: number };
+}
+
+export interface CoupleResponse {
+  couple: Couple | null;
+}
+
+export interface MeResponse {
+  user: User;
+  coupleId: string | null;
+}
