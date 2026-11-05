@@ -1,5 +1,5 @@
 import { Flag } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,8 +26,23 @@ export interface Entry {
 /* Long entries clamp to five lines; the toggle only appears when there is more to read. */
 const CLAMP_AT = 220;
 
-/* showDate: off in the day feed, where the day heading already says it. id: lets the feed scroll to and focus the card. */
-export function EntryCard({ entry, showDate = true, id, className }: { entry: Entry; showDate?: boolean; id?: string; className?: string }) {
+/*
+ * showDate: off in the day feed, where the day heading already says it. id: lets the feed scroll
+ * to and focus the card. actions: a control at the header's end, only on the author's own entries.
+ */
+export function EntryCard({
+  entry,
+  showDate = true,
+  id,
+  actions,
+  className,
+}: {
+  entry: Entry;
+  showDate?: boolean;
+  id?: string;
+  actions?: ReactNode;
+  className?: string;
+}) {
   const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const bodyId = useId();
@@ -52,6 +67,7 @@ export function EntryCard({ entry, showDate = true, id, className }: { entry: En
             {t("milestone.label")}
           </Badge>
         )}
+        {actions}
       </header>
 
       {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}

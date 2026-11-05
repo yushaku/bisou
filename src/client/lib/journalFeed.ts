@@ -26,6 +26,11 @@ export function upsertEntry(state: JournalPage, entry: JournalEntry): JournalPag
   return { entries: merge(state.entries, [entry]), nextCursor: state.nextCursor };
 }
 
+/** A deleted entry leaves at once; groupByDay then drops its day if nothing else is in it. */
+export function removeEntry(state: JournalPage, id: string): JournalPage {
+  return { entries: state.entries.filter((e) => e.id !== id), nextCursor: state.nextCursor };
+}
+
 /**
  * A fresh page 1 (app back in front): it is the truth for its range, so loaded entries in that
  * range that it lacks were deleted. Older loaded entries stay, and so does the older cursor:

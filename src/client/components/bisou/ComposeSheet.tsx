@@ -23,6 +23,8 @@ interface ComposeSheetProps {
   onOpenChange: (open: boolean) => void;
   author: Person;
   partnerName: string;
+  /* The author's own entry to change (R10); omit to write a new one. */
+  entry?: JournalEntry;
   onSaved: (entry: JournalEntry) => void;
   onSignedOut: () => void;
 }
@@ -62,7 +64,8 @@ export function ComposeSheet({ open, onOpenChange, ...form }: ComposeSheetProps)
   return (
     <Drawer open={open} onOpenChange={onOpenChange} dismissible={!lock}>
       <DrawerContent aria-describedby={undefined} onEscapeKeyDown={guard} onPointerDownOutside={guard}>
-        <ComposeForm {...form} onLock={setLock} onClose={requestClose} onDone={() => onOpenChange(false)} />
+        {/* Keyed by entry, so switching between new and edit never carries a form over. */}
+        <ComposeForm key={form.entry?.id ?? "new"} {...form} onLock={setLock} onClose={requestClose} onDone={() => onOpenChange(false)} />
       </DrawerContent>
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent showCloseButton={false}>
@@ -91,13 +94,13 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 }
 
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
-function ComposeForm({ author, partnerName, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
+function ComposeForm({ author, partnerName, entry, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
   const ids = useId();
   const [now] = useState(Date.now);
   const max = maxDay(now);
-  const [date, setDate] = useState(() => defaultDay(now));
-  const [text, setText] = useState("");
+  const [date, setDate] = useState(() => entry?.date ?? defaultDay(now));
+  const [text, setText] = useState(entry?.text ?? "");
   const [dirty, setDirty] = useState(false);
   const [picking, setPicking] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -106,7 +109,8 @@ function ComposeForm({ author, partnerName, onSaved, onSignedOut, onLock, onClos
   const [saving, setSaving] = useState(false);
   const [cropping, setCropping] = useState<CropRequest | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const queue = useUploadQueue();
+  // An edited entry keeps its photos as they are; to frame one again, remove it and add it anew.
+  const queue = useUploadQueue(entry?.photoIds);
 
   useEffect(() => onLock(saving ? "saving" : dirty ? "dirty" : null), [dirty, saving, onLock]);
   useEffect(() => () => onLock(null), [onLock]);
@@ -173,11 +177,8 @@ function ComposeForm({ author, partnerName, onSaved, onSignedOut, onLock, onClos
     if (block || saving) return;
     setSaving(true);
     setFormError(null);
-    const res = await api.createEntry({
-      date,
-      text: entryText(text),
-      photoIds: queue.items.map((i) => i.photoId ?? ""),
-    });
+    const input = { date, text: entryText(text), photoIds: queue.items.map((i) => i.photoId ?? "") };
+    const res = entry ? await api.updateEntry(entry.id, input) : await api.createEntry(input);
     setSaving(false);
     if (res.ok) {
       setDirty(false);
@@ -193,7 +194,7 @@ function ComposeForm({ author, partnerName, onSaved, onSignedOut, onLock, onClos
     <>
       <form onSubmit={(e) => void save(e)} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
         <DrawerHeader className="flex-row items-center gap-2 px-5 pt-2 pb-3 text-left">
-          <DrawerTitle className="min-w-0 flex-1 font-heading text-2xl">{t("compose.new")}</DrawerTitle>
+          <DrawerTitle className="min-w-0 flex-1 font-heading text-2xl">{t(entry ? "compose.edit" : "compose.new")}</DrawerTitle>
           <Button type="button" variant="ghost" size="icon" aria-label={t("common.close")} disabled={saving} onClick={onClose}>
             <X aria-hidden="true" />
           </Button>

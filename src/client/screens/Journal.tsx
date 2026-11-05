@@ -1,4 +1,4 @@
-import { BookHeart, ChevronLeft, PencilLine, Plus } from "lucide-react";
+import { BookHeart, ChevronLeft, Ellipsis, PencilLine, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -8,13 +8,14 @@ import { api, photoUrl } from "../api";
 import { AppShell } from "../components/bisou/AppShell";
 import type { Person } from "../components/bisou/CoupleAvatars";
 import { EmptyState } from "../components/bisou/EmptyState";
+import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard, type Entry } from "../components/bisou/EntryCard";
 import { PageHeader } from "../components/bisou/PageHeader";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
 import { useI18n, type Translate } from "../i18n";
 import { formatDay, formatTime } from "../lib/format";
-import { addPage, groupByDay, refreshFirstPage, upsertEntry } from "../lib/journalFeed";
+import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../lib/journalFeed";
 
 // The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
 const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
@@ -74,9 +75,19 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
   // Stays mounted after the first open so the sheet can animate closed.
   const [composeLoaded, setComposeLoaded] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
-  const write = () => {
+  // Own entry being edited in the sheet; null writes a new one.
+  const [editing, setEditing] = useState<JournalEntry | null>(null);
+  // Own entry whose edit and delete actions are open.
+  const [acting, setActing] = useState<JournalEntry | null>(null);
+  const write = (entry: JournalEntry | null = null) => {
+    setEditing(entry);
     setComposeLoaded(true);
     setComposing(true);
+  };
+
+  const onDeleted = (id: string) => {
+    setFeed((f) => f && removeEntry(f, id));
+    toast.success(t("entry.deleted"));
   };
 
   // A saved entry joins the loaded feed in its place without a refetch; the partner sees it on their next refresh.
@@ -211,7 +222,7 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
           icon={BookHeart}
           title={t("journal.emptyTitle")}
           description={t("journal.emptyBody")}
-          action={{ label: t("compose.first"), onClick: write, icon: Plus }}
+          action={{ label: t("compose.first"), onClick: () => write(), icon: Plus }}
         />
       )}
 
@@ -222,9 +233,31 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
               <h2 id={`day-${group.date}`} className="font-heading text-xl">
                 <time dateTime={group.date}>{formatDay(group.date, locale)}</time>
               </h2>
-              {group.entries.map((e) => (
-                <EntryCard key={e.id} id={`entry-${e.id}`} entry={toCard(e, people, t, locale)} showDate={false} />
-              ))}
+              {group.entries.map((e) => {
+                const card = toCard(e, people, t, locale);
+                return (
+                  <EntryCard
+                    key={e.id}
+                    id={`entry-${e.id}`}
+                    entry={card}
+                    showDate={false}
+                    // Only the author changes or deletes an entry (R10, R11); the server checks it again.
+                    actions={
+                      e.authorId === user.id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="-my-2 -mr-2"
+                          aria-label={t("entry.options", { name: card.author.name, time: card.time ?? "" })}
+                          onClick={() => setActing(e)}
+                        >
+                          <Ellipsis aria-hidden="true" />
+                        </Button>
+                      )
+                    }
+                  />
+                );
+              })}
             </section>
           ))}
 
@@ -258,13 +291,15 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
 
           {/* In thumb reach above the home indicator, as the tab bar is on other screens. */}
           <div className="sticky bottom-0 z-20 -mx-4 -mb-4 mt-auto border-t bg-background px-4 pt-3 pb-[max(--spacing(4),env(safe-area-inset-bottom))]">
-            <Button size="lg" className="w-full" onClick={write}>
+            <Button size="lg" className="w-full" onClick={() => write()}>
               <PencilLine aria-hidden="true" />
               {t("compose.write")}
             </Button>
           </div>
         </>
       )}
+
+      <EntryActions entry={acting} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
 
       {composeLoaded && (
         <Suspense fallback={null}>
@@ -273,6 +308,7 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
             onOpenChange={setComposing}
             author={me}
             partnerName={partnerName}
+            entry={editing ?? undefined}
             onSaved={onSaved}
             onSignedOut={onSignedOut}
           />

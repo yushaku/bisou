@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, photoUrl } from "../src/client/api";
-import { addPage, groupByDay, refreshFirstPage, upsertEntry } from "../src/client/lib/journalFeed";
+import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../src/client/lib/journalFeed";
 import type { EntryInput, JournalEntry } from "../src/shared/types";
 
 // Client data layer only: fetch is mocked, no Worker involved.
@@ -137,6 +137,21 @@ describe("journal feed state", () => {
     const next = refreshFirstPage(loaded, { entries: [fresh, rain, first], nextCursor: "c-first" });
     expect(ids(next.entries)).toEqual(["fresh", "rain", "first", "lake"]);
     expect(next.nextCursor).toBe("deep");
+  });
+
+  it("AC10 (R11): a deleted entry leaves the feed and its day goes when it was the last one", () => {
+    const loaded = { entries: [rain, lunch, first, lake], nextCursor: "deep" };
+    const gone = removeEntry(loaded, "first");
+    expect(ids(gone.entries)).toEqual(["rain", "lunch", "lake"]);
+    expect(gone.nextCursor).toBe("deep");
+    expect(groupByDay(gone.entries).map((g) => g.date)).toEqual(["2026-11-06", "2023-02-12"]);
+    expect(groupByDay(removeEntry(gone, "rain").entries)[0]?.entries.map((e) => e.id)).toEqual(["lunch"]);
+  });
+
+  it("AC9 (R10): an edit that moves the day keeps the entry once, under its new day, in written order", () => {
+    const loaded = { entries: [rain, lunch, first], nextCursor: null };
+    const moved = upsertEntry(loaded, { ...first, date: "2026-11-06", updatedAt: 9_000 });
+    expect(groupByDay(moved.entries).map((g) => [g.date, ids(g.entries)])).toEqual([["2026-11-06", ["rain", "lunch", "first"]]]);
   });
 
   it("a refresh that returns the whole journal replaces everything", () => {
