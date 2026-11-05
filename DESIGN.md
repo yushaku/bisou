@@ -12,5 +12,6 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Journal và Sticker vẫn là lựa chọn riêng. Không trộn đặc trưng của chúng vào Soft hoặc tạo một phong cách riêng cho từng màn hình.
 - Bảng màu, phong cách và nền phải tiếp tục độc lập, dùng chung component. Thêm theme không được kéo theo một bản UI riêng.
 - Ảnh nhật ký giữ chất ảnh thật. Minh hoạ đôi chỉ là trang trí, không thay ảnh đại diện hay giả làm danh tính của người dùng.
+- Thẻ nhật ký đặt lời kể và dòng ghi chú trước lưới ảnh, sau phần người viết và tiêu đề kỷ niệm nếu có.
 - Logo là trái tim nỉ màu đào, giữ màu nhận diện khi đổi theme; không tô lại theo màu hành động.
 - Lời giao diện gần gũi, ngắn và cụ thể: “Góc nhỏ của hai đứa”, “Một điều ước nhỏ”, “Mở hũ”. Không đưa lời giới thiệu design system vào luồng sản phẩm
