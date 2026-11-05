@@ -2,6 +2,7 @@ import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PHOTO_SIZES, PHOTO_UPLOAD_MAX_BYTES } from "../src/shared/journal";
 import { app } from "../src/worker/app";
+import { PENDING_PHOTO_TTL } from "../src/worker/lib/time";
 import { checkPhotoBytes, purgePhotos } from "../src/worker/lib/photos";
 import { call, explain, jpeg, ORIGIN, paired, photoForm, resetDb, upload, user, webp } from "./helpers";
 
@@ -85,20 +86,49 @@ describe("private photo upload and serving", () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(bytes);
   });
 
-  it("AC12 (R16): refuses JPEG APP1 and WebP EXIF or XMP in either rendition", async () => {
+  it("AC12 (R16): refuses WebP EXIF or XMP in either rendition", async () => {
     const { a } = await paired();
     for (const size of ["full", "thumb"] as const) {
-      for (const kind of ["jpeg", "VP8", "VP8L", "VP8X"] as const) {
+      for (const kind of ["VP8", "VP8L", "VP8X"] as const) {
         for (const xmp of [false, true]) {
-          const bytes = kind === "jpeg" ? jpeg({ width: 300, height: 300, exif: true }) : webp({ width: 300, height: 300, kind, exif: true });
-          if (xmp) bytes.set(new TextEncoder().encode(kind === "jpeg" ? "XMP!" : "XMP "), kind === "jpeg" ? 6 : bytes.length - 14);
+          const bytes = webp({ width: 300, height: 300, kind, exif: true });
+          if (xmp) bytes.set(new TextEncoder().encode("XMP "), bytes.length - 14);
           const form = photoForm(full(), thumb());
-          form.set(size, new File([bytes], size, { type: kind === "jpeg" ? "image/jpeg" : "image/webp" }));
+          form.set(size, new File([bytes], size, { type: "image/webp" }));
           await error(await call("POST", "/api/photos", { cookie: a.cookie, form }), 400, "photo_invalid");
         }
       }
     }
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(0);
+  });
+
+  it("AC12 (R16): strips every Exif GPS and XMP APP1 segment from both stored JPEG renditions", async () => {
+    const { a, couple } = await paired();
+    // Little-endian TIFF: IFD0 points to a GPS IFD with a north latitude reference.
+    const exif = new Uint8Array([69, 120, 105, 102, 0, 0, 73, 73, 42, 0, 8, 0, 0, 0,
+      1, 0, 0x25, 0x88, 4, 0, 1, 0, 0, 0, 26, 0, 0, 0, 0, 0, 0, 0,
+      1, 0, 1, 0, 2, 0, 2, 0, 0, 0, 78, 0, 0, 0, 0, 0, 0, 0]);
+    const xmp = new TextEncoder().encode('http://ns.adobe.com/xap/1.0/\0<x:xmpmeta exif:GPSLatitude="10,46N"/>');
+    const segment = (data: Uint8Array) => [0xff, 0xe1, (data.length + 2) >> 8, (data.length + 2) & 255, ...data];
+    const addMetadata = (clean: Uint8Array) => new Uint8Array([
+      ...clean.subarray(0, 2), ...segment(exif), ...clean.subarray(2, 15), ...segment(xmp), ...segment(exif), ...clean.subarray(15),
+    ]);
+    const id = await upload(a, photoForm(addMetadata(full()), addMetadata(thumb())));
+    for (const [size, clean] of [["full", full()], ["thumb", thumb()]] as const) {
+      const stored = new Uint8Array(await (await env.PHOTOS.get(key(couple.id, id, size)))!.arrayBuffer());
+      expect(stored).toEqual(clean);
+      expect(stored.some((byte, i) => byte === 0xff && stored[i + 1] === 0xe1)).toBe(false);
+      expect(new TextDecoder().decode(stored)).not.toContain("Exif");
+      expect(new TextDecoder().decode(stored)).not.toContain("GPSLatitude");
+    }
+  });
+
+  it("AC12 (R16): refuses JPEGs truncated in APP1, scan headers, or before the end marker", async () => {
+    const { a } = await paired();
+    const bytes = jpeg({ width: 300, height: 300, exif: true });
+    for (const truncated of [full().subarray(0, -2), bytes.subarray(0, 8), bytes.subarray(0, -5), bytes.subarray(0, -2), bytes.subarray(0, -1)]) {
+      await error(await call("POST", "/api/photos", { cookie: a.cookie, form: photoForm(truncated, thumb()) }), 400, "photo_invalid");
+    }
   });
 
   it.each([
@@ -143,6 +173,65 @@ describe("private photo upload and serving", () => {
     await upload(b);
     await attach(couple.id, a.id, ids[0]!);
     await upload(a);
+  });
+
+  it.each(["expired", "boundary", "purge"])("AC12 (R17): twelve %s rows do not use live pending slots", async (kind) => {
+    const { a } = await paired();
+    for (let i = 0; i < 12; i++) await upload(a);
+    const createdAt = kind === "purge" ? 0 : Date.now() - PENDING_PHOTO_TTL - (kind === "expired" ? 1 : 0);
+    await env.DB.prepare("UPDATE photos SET created_at = ?").bind(createdAt).run();
+    await upload(a);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(13);
+  });
+
+  it("removes only the uploader's unattached photo and frees its slot", async () => {
+    const { a, b, couple } = await paired();
+    const id = await upload(a);
+    for (let i = 1; i < 12; i++) await upload(a);
+    const path = `/api/photos/${id}`;
+    await error(await call("DELETE", path), 401, "unauthorized");
+    await error(await call("DELETE", path, { cookie: a.cookie, origin: "https://outsider.example" }), 403, "forbidden_origin");
+    await error(await call("DELETE", path, { cookie: b.cookie }), 404, "not_found");
+    await error(await call("DELETE", "/api/photos/missing", { cookie: a.cookie }), 404, "not_found");
+    const res = await call("DELETE", path, { cookie: a.cookie });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(id).first()).toBeNull();
+    for (const size of ["full", "thumb"]) expect(await env.PHOTOS.head(key(couple.id, id, size))).toBeNull();
+    await error(await call("DELETE", path, { cookie: a.cookie }), 404, "not_found");
+    const attached = await upload(a);
+    await attach(couple.id, a.id, attached);
+    await error(await call("DELETE", `/api/photos/${attached}`, { cookie: a.cookie }), 404, "not_found");
+    expect(await env.PHOTOS.head(key(couple.id, attached, "full"))).not.toBeNull();
+  });
+
+  it("expires a removed photo before R2 deletion so a racing save cannot attach it", async () => {
+    const { a } = await paired();
+    const id = await upload(a);
+    const batch = env.DB.batch.bind(env.DB);
+    const removeObjects = env.PHOTOS.delete.bind(env.PHOTOS);
+    vi.spyOn(env.DB, "batch").mockImplementationOnce(async (statements) => {
+      let saved: D1Result[] = [];
+      vi.spyOn(env.PHOTOS, "delete").mockImplementationOnce(async (keys) => {
+        saved = await batch(statements);
+        await removeObjects(keys);
+      });
+      expect((await call("DELETE", `/api/photos/${id}`, { cookie: a.cookie })).status).toBe(200);
+      return saved;
+    });
+    await error(await call("POST", "/api/journal", { cookie: a.cookie, body: { date: "2026-11-05", text: "", photoIds: [id] } }), 400, "photo_invalid");
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(0);
+  });
+
+  it("keeps failed photo deletion marked for the sweep without using a pending slot", async () => {
+    const { a } = await paired();
+    const id = await upload(a);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
+    expect((await call("DELETE", `/api/photos/${id}`, { cookie: a.cookie })).status).toBe(200);
+    expect(await env.DB.prepare("SELECT created_at FROM photos WHERE id = ?").bind(id).first("created_at")).toBe(0);
+    expect((await call("DELETE", `/api/photos/${id}`, { cookie: a.cookie })).status).toBe(200);
+    expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(id).first()).toBeNull();
   });
 
   it("AC12 (R17): concurrent uploads cannot exceed the pending cap or leave extra objects", async () => {
@@ -202,11 +291,11 @@ describe("photo header bounds", () => {
     }
   });
 
-  it("AC12 (R16): detects metadata after JPEG dimensions and after WebP image data", () => {
+  it("AC12 (R16): strips APP1 after JPEG dimensions and rejects metadata after WebP image data", () => {
     const clean = full();
     const app1 = jpeg({ width: 300, height: 300, exif: true }).subarray(2, 12);
     const bytes = new Uint8Array([...clean.subarray(0, 15), ...app1, ...clean.subarray(15)]);
-    expect(checkPhotoBytes(bytes, "image/jpeg")).toBeNull();
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 1440, bytes: clean });
     for (const kind of ["VP8", "VP8L", "VP8X"] as const) {
       const metadata = webp({ width: 300, height: 300, kind, exif: true });
       metadata[20] = kind === "VP8X" ? 0 : metadata[20]!;
@@ -230,12 +319,19 @@ describe("photo header bounds", () => {
 });
 
 describe("photo mutation query plans", () => {
-  it("AC12 (R17): the atomic pending cap uses the covering uploader index", async () => {
+  it("AC12 (R17): the atomic pending cap uses the uploader index", async () => {
     const plan = await explain(`INSERT INTO photos (id, couple_id, uploader_id, created_at)
-      SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL) < ?`,
-    "photo", "couple", "user", 1, "user", 12);
-    expect(plan).toContain("SEARCH photos USING COVERING INDEX photos_uploader (uploader_id=? AND entry_id=?)");
+      SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND created_at > ?) < ?`,
+    "photo", "couple", "user", 1, "user", 0, 12);
+    expect(plan).toContain("SEARCH photos USING INDEX photos_uploader (uploader_id=? AND entry_id=?)");
     expect(plan.filter((line) => /SCAN|TEMP B-TREE/.test(line))).toEqual(["SCAN CONSTANT ROW"]);
+  });
+
+  it("counts live pending rows using the uploader index and claims deletion by primary key", async () => {
+    const count = await explain("SELECT COUNT(*) AS n FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND created_at > ?", "user", 1);
+    expect(count).toEqual(["SEARCH photos USING INDEX photos_uploader (uploader_id=? AND entry_id=?)"]);
+    const deletion = await explain("UPDATE photos SET created_at = 0 WHERE id = ? AND uploader_id = ? AND entry_id IS NULL RETURNING id, couple_id", "photo", "user");
+    expect(deletion).toEqual(["SEARCH photos USING INDEX sqlite_autoindex_photos_1 (id=?)"]);
   });
 
   it("AC10, AC12 (R11, R17): purge deletes pending rows by primary key", async () => {

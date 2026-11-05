@@ -1,5 +1,5 @@
 // Turns a picked photo into the two square renditions the server stores, and uploads them.
-// Only the chosen square ever leaves the phone, re-encoded, so no EXIF or location goes with it (R16, R18).
+// Only the chosen square leaves the phone, re-encoded; the server strips JPEG metadata (R16, R18).
 import { PHOTO_SIZES } from "../../shared/journal";
 import type { ApiError, PhotoUploadResponse } from "../../shared/types";
 import type { ApiResult } from "../api";

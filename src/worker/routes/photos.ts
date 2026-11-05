@@ -3,8 +3,8 @@ import { bodyLimit } from "hono/body-limit";
 import { PHOTO_SIZES, PHOTO_TYPES, PHOTO_UPLOAD_MAX_BYTES } from "../../shared/journal";
 import type { AppEnv } from "../env";
 import { findMembership } from "../lib/couples";
-import { checkPhotoBytes, photoKey } from "../lib/photos";
-import { MAX_PENDING_PHOTOS_PER_USER } from "../lib/time";
+import { checkPhotoBytes, photoKey, purgePhotos } from "../lib/photos";
+import { MAX_PENDING_PHOTOS_PER_USER, PENDING_PHOTO_TTL } from "../lib/time";
 
 export const photos = new Hono<AppEnv & { Variables: { photoCoupleId: string } }>();
 
@@ -21,8 +21,9 @@ photos.post("/", async (c, next) => {
   onError: (c) => c.json({ error: "photo_too_large" }, 413),
 }), async (c) => {
   const userId = c.get("user").id;
-  const pending = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM photos WHERE uploader_id = ? AND entry_id IS NULL")
-    .bind(userId).first<number>("n");
+  const now = Date.now();
+  const pending = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND created_at > ?")
+    .bind(userId, now - PENDING_PHOTO_TTL).first<number>("n");
   if (pending! >= MAX_PENDING_PHOTOS_PER_USER) {
     return c.json({ error: "too_many_pending_photos" }, 429);
   }
@@ -47,7 +48,7 @@ photos.post("/", async (c, next) => {
     if (!dimensions || dimensions.side > PHOTO_SIZES[size].side) {
       return c.json({ error: "photo_invalid" }, 400);
     }
-    parts.push({ size, bytes, type: file.type, side: dimensions.side });
+    parts.push({ size, bytes: dimensions.bytes, type: file.type, side: dimensions.side });
   }
   if (parts[1]!.side > parts[0]!.side) {
     return c.json({ error: "photo_invalid" }, 400);
@@ -60,8 +61,8 @@ photos.post("/", async (c, next) => {
     const failed = puts.find((result) => result.status === "rejected");
     if (failed?.status === "rejected") throw failed.reason;
     const inserted = await c.env.DB.prepare(`INSERT INTO photos (id, couple_id, uploader_id, created_at)
-      SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL) < ?`)
-      .bind(id, c.get("photoCoupleId"), userId, Date.now(), userId, MAX_PENDING_PHOTOS_PER_USER).run();
+      SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND created_at > ?) < ?`)
+      .bind(id, c.get("photoCoupleId"), userId, now, userId, now - PENDING_PHOTO_TTL, MAX_PENDING_PHOTOS_PER_USER).run();
     if (!inserted.meta.changes) {
       await c.env.PHOTOS.delete(keys);
       return c.json({ error: "too_many_pending_photos" }, 429);
@@ -71,6 +72,16 @@ photos.post("/", async (c, next) => {
     throw err;
   }
   return c.json({ photo: { id } }, 201);
+});
+
+photos.delete("/:id", async (c) => {
+  // Claim the pending photo before deleting objects so a racing save cannot attach it.
+  const row = await c.env.DB.prepare(`UPDATE photos SET created_at = 0
+    WHERE id = ? AND uploader_id = ? AND entry_id IS NULL RETURNING id, couple_id`)
+    .bind(c.req.param("id"), c.get("user").id).first<{ id: string; couple_id: string }>();
+  if (!row) return c.json({ error: "not_found" }, 404);
+  await purgePhotos(c.env, [row]);
+  return c.json({ ok: true });
 });
 
 photos.get("/:id/:size", async (c) => {

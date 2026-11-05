@@ -6,23 +6,37 @@ export function photoKey(coupleId: string, id: string, size: PhotoSize): string 
 }
 
 // Header checks only; the client re-encodes the cropped pixels before uploading.
-export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number } | null {
+export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number; bytes: Uint8Array } | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let width = 0;
   let height = 0;
   if (type === "image/jpeg") {
-    if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff) return null;
+    if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff
+      || bytes[bytes.length - 2] !== 0xff || bytes[bytes.length - 1] !== 0xd9) return null;
+    const kept: Uint8Array[] = [];
+    let start = 0;
+    let removed = 0;
     let offset = 2;
     let scanned = false;
     while (offset < bytes.length) {
+      const markerStart = offset;
       if (bytes[offset++] !== 0xff) return null;
       while (bytes[offset] === 0xff) offset++;
       const marker = bytes[offset++];
-      if (marker === undefined || marker === 0xe1 || marker === 0xd9) return null;
+      if (marker === undefined || marker === 0 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) return null;
       if (offset + 2 > bytes.length) return null;
       const length = view.getUint16(offset);
       if (length < 2 || offset + length > bytes.length) return null;
-      if (marker === 0xda) { scanned = true; break; }
+      if (marker === 0xda) {
+        if (length < 6 || offset + length > bytes.length - 2) return null;
+        scanned = true;
+        break;
+      }
+      if (marker === 0xe1) {
+        kept.push(bytes.subarray(start, markerStart));
+        start = offset + length;
+        removed += start - markerStart;
+      }
       if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) {
         if (length < 8 || width !== 0) return null;
         height = view.getUint16(offset + 3);
@@ -31,6 +45,16 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
       offset += length;
     }
     if (!scanned) return null;
+    if (removed) {
+      kept.push(bytes.subarray(start));
+      const stripped = new Uint8Array(bytes.length - removed);
+      let position = 0;
+      for (const chunk of kept) {
+        stripped.set(chunk, position);
+        position += chunk.length;
+      }
+      bytes = stripped;
+    }
   } else if (type === "image/webp") {
     const tag = (offset: number) => String.fromCharCode(...bytes.subarray(offset, offset + 4));
     if (bytes.length < 12 || tag(0) !== "RIFF" || tag(8) !== "WEBP" || view.getUint32(4, true) + 8 !== bytes.length) return null;
@@ -69,7 +93,7 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
   } else {
     return null;
   }
-  return width > 0 && width === height ? { side: width } : null;
+  return width > 0 && width === height ? { side: width, bytes } : null;
 }
 
 export async function purgePhotos(env: Env, rows: { id: string; couple_id: string }[]): Promise<void> {

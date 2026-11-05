@@ -55,6 +55,7 @@ export const api = {
   createEntry: (input: EntryInput) => call<{ entry: JournalEntry }>("POST", "/api/journal", input),
   updateEntry: (id: string, input: EntryInput) =>
     call<{ entry: JournalEntry }>("PUT", `/api/journal/${encodeURIComponent(id)}`, input),
+  deletePhoto: (id: string) => call<{ ok: true }>("DELETE", `/api/photos/${encodeURIComponent(id)}`),
   deleteEntry: (id: string) => call<{ ok: true }>("DELETE", `/api/journal/${encodeURIComponent(id)}`),
 };
 

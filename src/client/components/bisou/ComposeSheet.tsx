@@ -181,6 +181,7 @@ function ComposeForm({ author, partnerName, entry, onSaved, onSignedOut, onLock,
     const res = entry ? await api.updateEntry(entry.id, input) : await api.createEntry(input);
     setSaving(false);
     if (res.ok) {
+      queue.saved();
       setDirty(false);
       onSaved(res.data.entry);
       onDone();

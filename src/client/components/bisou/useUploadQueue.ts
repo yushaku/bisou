@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { photoUrl } from "@/api";
+import { api, photoUrl } from "@/api";
 import type { MessageKey } from "@/i18n";
 import { startable, uploadErrorKey, type PhotoState } from "@/lib/compose";
 import { uploadPhoto, type Renditions } from "@/lib/photo";
@@ -26,6 +26,7 @@ export function useUploadQueue(existing: string[] = []) {
     existing.map((id) => ({ localId: id, previewUrl: photoUrl(id, "thumb"), state: "done", progress: 1, photoId: id })),
   );
   const aborts = useRef(new Map<string, AbortController>());
+  const uploaded = useRef(new Map<string, string>());
   const ownUrls = useRef(new Set<string>());
 
   const patch = useCallback((localId: string, change: Partial<QueuedPhoto>) => {
@@ -41,9 +42,14 @@ export function useUploadQueue(existing: string[] = []) {
       patch(id, { state: "uploading", progress: 0, error: undefined });
       void uploadPhoto(renditions, (progress) => patch(id, { progress }), controller.signal).then((res) => {
         aborts.current.delete(id);
-        if (controller.signal.aborted) return;
-        if (res.ok) patch(id, { state: "done", progress: 1, photoId: res.data.photo.id, renditions: undefined });
-        else patch(id, { state: "failed", error: uploadErrorKey(res.error?.error) });
+        if (controller.signal.aborted) {
+          if (res.ok) void api.deletePhoto(res.data.photo.id);
+          return;
+        }
+        if (res.ok) {
+          uploaded.current.set(id, res.data.photo.id);
+          patch(id, { state: "done", progress: 1, photoId: res.data.photo.id, renditions: undefined });
+        } else patch(id, { state: "failed", error: uploadErrorKey(res.error?.error) });
       });
     }
   }, [items, patch]);
@@ -63,20 +69,25 @@ export function useUploadQueue(existing: string[] = []) {
   const remove = useCallback(
     (item: QueuedPhoto) => {
       aborts.current.get(item.localId)?.abort();
+      const photoId = uploaded.current.get(item.localId);
+      if (photoId) void api.deletePhoto(photoId);
+      uploaded.current.delete(item.localId);
       forget(item.previewUrl);
       setItems((list) => list.filter((i) => i.localId !== item.localId));
     },
     [forget],
   );
 
-  // Uploads stop and previews are freed when the sheet goes away; uploaded but unsaved photos are swept by the server.
+  // Cleanup is best effort; the server sweep handles uploads whose response never arrived.
   useEffect(
     () => () => {
       for (const c of aborts.current.values()) c.abort();
+      for (const photoId of uploaded.current.values()) void api.deletePhoto(photoId);
+      uploaded.current.clear();
       for (const url of ownUrls.current) URL.revokeObjectURL(url);
     },
     [],
   );
 
-  return { items, add, retry, remove };
+  return { items, add, retry, remove, saved: () => uploaded.current.clear() };
 }
