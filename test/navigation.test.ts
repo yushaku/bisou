@@ -13,7 +13,6 @@ describe("creation requests carried by browser history", () => {
   );
 });
 
-
 describe("subpage and tab history", () => {
   it.each([
     ["/settings", "/journal", "/journal", undefined, "back"],
@@ -26,7 +25,7 @@ describe("subpage and tab history", () => {
     ["/journal", undefined, "/wishes", undefined, "push"],
     ["/settings", undefined, "/", undefined, "replace"],
     ["/events", undefined, "/", undefined, "replace"],
-  ] as const)("carry-over 4: %s from %s to %s (create %s) uses %s", (location, from, path, create, move) => {
+  ] as const)("%s from %s to %s (create %s) uses %s", (location, from, path, create, move) => {
     expect(tabMove(location, from, path, create)).toBe(move);
   });
 });

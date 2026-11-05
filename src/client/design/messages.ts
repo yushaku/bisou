@@ -5,7 +5,6 @@ import { useI18n } from "@/i18n";
 const vi = {
   title: "Hệ thống thiết kế Bisou",
   intro: "Hướng A · Vải mềm, kem–đào và những điểm nhấn len. Bảng màu và nền đổi độc lập.",
-  homeEntry: "Một chiều cà phê cùng nhau.",
   controls: "Tuỳ chọn hiển thị",
   previewOnly: "Đây là bản xem trước giao diện, thay đổi không được lưu.",
   screens: "Màn hình mẫu",
@@ -56,7 +55,6 @@ type DesignKey = keyof typeof vi;
 const en: Record<DesignKey, string> = {
   title: "Bisou design system",
   intro: "Direction A · Soft fabric, warm peach and little wool details. Palette and background change independently.",
-  homeEntry: "An afternoon over coffee, together.",
   controls: "Display options",
   previewOnly: "This is a design preview. Changes are not saved.",
   screens: "Sample screens",
