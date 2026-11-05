@@ -26,15 +26,15 @@ export interface Entry {
 /* Long entries clamp to five lines; the toggle only appears when there is more to read. */
 const CLAMP_AT = 220;
 
-/* showDate: off in the day feed, where the day heading already says it. */
-export function EntryCard({ entry, showDate = true, className }: { entry: Entry; showDate?: boolean; className?: string }) {
+/* showDate: off in the day feed, where the day heading already says it. id: lets the feed scroll to and focus the card. */
+export function EntryCard({ entry, showDate = true, id, className }: { entry: Entry; showDate?: boolean; id?: string; className?: string }) {
   const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const bodyId = useId();
   const long = entry.body.length > CLAMP_AT;
 
   return (
-    <Card className={cn("gap-4 px-4 py-4", className)}>
+    <Card id={id} tabIndex={id ? -1 : undefined} className={cn("gap-4 px-4 py-4 outline-none focus-visible:ring-3 focus-visible:ring-ring", className)}>
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <PersonAvatar person={entry.author} size="sm" />
         <div className="min-w-0 flex-1">

@@ -1,5 +1,6 @@
-import { BookHeart, ChevronLeft } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { BookHeart, ChevronLeft, PencilLine, Plus } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Link } from "wouter";
 import { toDayString } from "../../shared/days";
 import type { Couple, JournalEntry, JournalPage, Locale, User } from "../../shared/types";
@@ -13,7 +14,10 @@ import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
 import { useI18n, type Translate } from "../i18n";
 import { formatDay, formatTime } from "../lib/format";
-import { addPage, groupByDay, refreshFirstPage } from "../lib/journalFeed";
+import { addPage, groupByDay, refreshFirstPage, upsertEntry } from "../lib/journalFeed";
+
+// The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
+const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
 
 interface JournalProps {
   user: User;
@@ -62,6 +66,33 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
     ]),
   );
   const names = couple.members.map((m) => people.get(m.id)?.name ?? "?");
+  const me = people.get(user.id) ?? { name: user.displayName ?? "?", tone: "primary" };
+  const partner = couple.members.find((m) => m.id !== user.id);
+  const partnerName = (partner && people.get(partner.id)?.name) ?? "?";
+
+  const [composing, setComposing] = useState(false);
+  // Stays mounted after the first open so the sheet can animate closed.
+  const [composeLoaded, setComposeLoaded] = useState(false);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const write = () => {
+    setComposeLoaded(true);
+    setComposing(true);
+  };
+
+  // A saved entry joins the loaded feed in its place without a refetch; the partner sees it on their next refresh.
+  const onSaved = (entry: JournalEntry) => {
+    setFeed((f) => (f ? upsertEntry(f, entry) : { entries: [entry], nextCursor: null }));
+    setFocusId(entry.id);
+    toast.success(t("compose.saved", { day: formatDay(entry.date, locale) }));
+  };
+
+  useEffect(() => {
+    if (!focusId) return;
+    const el = document.getElementById(`entry-${focusId}`);
+    el?.scrollIntoView({ block: "center" });
+    el?.focus({ preventScroll: true });
+    setFocusId(null);
+  }, [focusId, feed]);
 
   // A 401 leaves the journal; its data goes with the session.
   const refresh = useCallback(async () => {
@@ -176,7 +207,12 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
       )}
 
       {feed && feed.entries.length === 0 && (
-        <EmptyState icon={BookHeart} title={t("journal.emptyTitle")} description={t("journal.emptyBody")} />
+        <EmptyState
+          icon={BookHeart}
+          title={t("journal.emptyTitle")}
+          description={t("journal.emptyBody")}
+          action={{ label: t("compose.first"), onClick: write, icon: Plus }}
+        />
       )}
 
       {feed && feed.entries.length > 0 && (
@@ -187,7 +223,7 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
                 <time dateTime={group.date}>{formatDay(group.date, locale)}</time>
               </h2>
               {group.entries.map((e) => (
-                <EntryCard key={e.id} entry={toCard(e, people, t, locale)} showDate={false} />
+                <EntryCard key={e.id} id={`entry-${e.id}`} entry={toCard(e, people, t, locale)} showDate={false} />
               ))}
             </section>
           ))}
@@ -219,7 +255,28 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
           ) : (
             <p className="pb-4 text-sm text-muted-foreground">{t("journal.end")}</p>
           )}
+
+          {/* In thumb reach above the home indicator, as the tab bar is on other screens. */}
+          <div className="sticky bottom-0 z-20 -mx-4 -mb-4 mt-auto border-t bg-background px-4 pt-3 pb-[max(--spacing(4),env(safe-area-inset-bottom))]">
+            <Button size="lg" className="w-full" onClick={write}>
+              <PencilLine aria-hidden="true" />
+              {t("compose.write")}
+            </Button>
+          </div>
         </>
+      )}
+
+      {composeLoaded && (
+        <Suspense fallback={null}>
+          <ComposeSheet
+            open={composing}
+            onOpenChange={setComposing}
+            author={me}
+            partnerName={partnerName}
+            onSaved={onSaved}
+            onSignedOut={onSignedOut}
+          />
+        </Suspense>
       )}
     </AppShell>
   );
