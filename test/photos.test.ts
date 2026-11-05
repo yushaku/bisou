@@ -42,7 +42,7 @@ describe("private photo upload and serving", () => {
     await error(await call("POST", "/api/photos", { cookie: a.cookie, origin: "https://outsider.example", form: photoForm(full(), thumb()) }), 403, "forbidden_origin");
   });
 
-  it("AC12, AC1 (R1, R16, R17): keeps both renditions private until attached and serves exact bytes to either partner", async () => {
+  it("R20: serves exact bytes privately to either partner with at most one day of cache freshness (AC12, R1, R16, R17)", async () => {
     const { a, b, couple } = await paired();
     const id = await upload(a);
     const outsider = await user("Lan");
@@ -63,7 +63,7 @@ describe("private photo upload and serving", () => {
         expect(new Uint8Array(await res.arrayBuffer())).toEqual(bytes);
         expect(res.headers.get("Content-Type")).toBe("image/jpeg");
         expect(res.headers.get("Content-Length")).toBe(String(bytes.length));
-        expect(res.headers.get("Cache-Control")).toBe("private, max-age=31536000, immutable");
+        expect(res.headers.get("Cache-Control")).toBe("private, max-age=86400");
         expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
         await error(await call("GET", `/api/photos/${id}/${size}`, { cookie: outsider.cookie }), 404, "not_found");
       }
@@ -282,6 +282,61 @@ describe("private photo upload and serving", () => {
 });
 
 describe("photo header bounds", () => {
+  // Real 8x8 RGB JPEGs encoded with sharp, with baseline and progressive scans.
+  const baseline = Uint8Array.from(atob("/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAgDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAABv/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/ALUAVK3/2Q=="), (c) => c.charCodeAt(0));
+  const progressive = Uint8Array.from(atob("/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wgARCAAIAAgDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAX/xAAUAQEAAAAAAAAAAAAAAAAAAAAF/9oADAMBAAIQAxAAAAG0Clf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAEFAn//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/AX//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/AX//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAY/An//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/IX//2gAMAwEAAgADAAAAEPf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAEDAQE/EH//xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EH//xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oACAEBAAE/EH//2Q=="), (c) => c.charCodeAt(0));
+  const segment = (marker: number, data: string) => {
+    const payload = new TextEncoder().encode(data);
+    return [0xff, marker, (payload.length + 2) >> 8, (payload.length + 2) & 255, ...payload];
+  };
+
+  it("R16: refuses APPn or COM between progressive scans, including Exif APP1 (AC12)", async () => {
+    const { a } = await paired();
+    expect(checkPhotoBytes(progressive, "image/jpeg")).toEqual({ side: 8, bytes: progressive });
+    const firstScan = progressive.findIndex((byte, i) => byte === 0xff && progressive[i + 1] === 0xda);
+    const nextScan = progressive.findIndex((byte, i) => i > firstScan && byte === 0xff && progressive[i + 1] === 0xda);
+    expect(nextScan).toBeGreaterThan(firstScan);
+    for (const marker of [...Array.from({ length: 16 }, (_, i) => 0xe0 + i), 0xfe]) {
+      const bytes = new Uint8Array([...progressive.subarray(0, nextScan), 0xff,
+        ...segment(marker, "Exif\0\0GPS location"), ...progressive.subarray(nextScan)]);
+      expect(checkPhotoBytes(bytes, "image/jpeg")).toBeNull();
+      await error(await call("POST", "/api/photos", { cookie: a.cookie, form: photoForm(bytes, bytes) }), 400, "photo_invalid");
+    }
+  });
+
+  it("R16: refuses an appended second JPEG even when the last bytes are EOI (AC12)", async () => {
+    const { a } = await paired();
+    const bytes = new Uint8Array([...baseline, ...baseline]);
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toBeNull();
+    await error(await call("POST", "/api/photos", { cookie: a.cookie, form: photoForm(bytes, bytes) }), 400, "photo_invalid");
+  });
+
+  it("R16: drops APP13 IPTC, COM, MPF and every other unapproved APPn before scans (AC12)", () => {
+    for (const marker of [...Array.from({ length: 16 }, (_, i) => 0xe0 + i).filter((m) => m !== 0xe0 && m !== 0xee), 0xfe]) {
+      const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(marker, "MPF\0private location"), ...baseline.subarray(2)]);
+      expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
+    }
+  });
+
+  it("R16: keeps JFIF, ICC APP2 and Adobe with fill bytes in an APP0, APP1 and APP2 mix (AC12)", () => {
+    const jfif = segment(0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0");
+    const icc = segment(0xe2, "ICC_PROFILE\0\x01\x01color profile");
+    const adobe = segment(0xee, "Adobe\0\x64\0\0\0\0\0");
+    const kept = [...jfif, 0xff, ...icc, ...adobe];
+    const bytes = new Uint8Array([...baseline.subarray(0, 2), ...jfif, 0xff, 0xff,
+      ...segment(0xe1, "Exif\0\0GPS location"), 0xff, ...icc, ...segment(0xe2, "MPF\0"), ...adobe, ...baseline.subarray(2)]);
+    const clean = new Uint8Array([...baseline.subarray(0, 2), ...kept, ...baseline.subarray(2)]);
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: clean });
+  });
+
+  it("R16: accepts a canvas-like baseline JPEG byte-identically apart from removed metadata (AC12)", () => {
+    const clean = new Uint8Array([...baseline.subarray(0, 2), ...segment(0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0"), ...baseline.subarray(2)]);
+    expect(checkPhotoBytes(clean, "image/jpeg")).toEqual({ side: 8, bytes: clean });
+    const bytes = new Uint8Array([...clean.subarray(0, 2), ...segment(0xed, "Photoshop 3.0\0location"),
+      ...segment(0xfe, "private comment"), ...clean.subarray(2)]);
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: clean });
+  });
+
   it("AC12, AC13 (R16, R18): rejects truncated JPEG and WebP headers without throwing", () => {
     for (const [bytes, type, headerEnd] of [
       [full(), "image/jpeg", 25],

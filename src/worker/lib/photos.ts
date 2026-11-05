@@ -9,7 +9,7 @@ export function photoKeys(row: { id: string; couple_id: string }): string[] {
   return [photoKey(row.couple_id, row.id, "full"), photoKey(row.couple_id, row.id, "thumb")];
 }
 
-// Header checks, plus dropping JPEG APP1 (Exif, XMP); the client re-encodes the cropped pixels before uploading.
+// Header checks and metadata removal; the client re-encodes the cropped pixels before uploading.
 export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number; bytes: Uint8Array } | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let width = 0;
@@ -33,10 +33,18 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
       if (length < 2 || offset + length > bytes.length) return null;
       if (marker === 0xda) {
         if (length < 6 || offset + length > bytes.length - 2) return null;
+        // Refuse metadata between scans and appended images without decoding pixels (R16).
+        for (let i = offset + length; i < bytes.length - 2; i++) {
+          if (bytes[i] !== 0xff) continue;
+          const next = bytes[i + 1]!;
+          if ((next >= 0xe0 && next <= 0xef) || next === 0xfe || next === 0xd9) return null;
+        }
         scanned = true;
         break;
       }
-      if (marker === 0xe1) {
+      const icc = marker === 0xe2 && length >= 16
+        && String.fromCharCode(...bytes.subarray(offset + 2, offset + 14)) === "ICC_PROFILE\0";
+      if (marker === 0xfe || (marker >= 0xe0 && marker <= 0xef && marker !== 0xe0 && marker !== 0xee && !icc)) {
         kept.push(bytes.subarray(start, markerStart));
         start = offset + length;
         removed += start - markerStart;

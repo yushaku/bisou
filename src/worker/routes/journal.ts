@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { FEED_PAGE_SIZE } from "../../shared/journal";
 import type { AppEnv } from "../env";
 import { findMembership } from "../lib/couples";
@@ -7,6 +8,10 @@ import { PENDING_PHOTO_TTL } from "../lib/time";
 import { purgePhotos } from "../lib/photos";
 
 export const journal = new Hono<AppEnv & { Variables: { journalCoupleId: string } }>();
+const limitEntryBody = bodyLimit({
+  maxSize: 16 * 1024,
+  onError: (c) => c.json({ error: "body_too_large" }, 413),
+});
 
 journal.use("*", async (c, next) => {
   const mine = await findMembership(c.env.DB, c.get("user").id);
@@ -36,7 +41,7 @@ journal.get("/", async (c) => {
   });
 });
 
-journal.post("/", async (c) => {
+journal.post("/", limitEntryBody, async (c) => {
   const now = Date.now();
   const parsed = validateEntry(await c.req.json().catch(() => null), now);
   if ("error" in parsed) return c.json(parsed, 400);
@@ -67,7 +72,7 @@ journal.post("/", async (c) => {
   return c.json({ entry }, 201);
 });
 
-journal.put("/:id", async (c) => {
+journal.put("/:id", limitEntryBody, async (c) => {
   const db = c.env.DB;
   const id = c.req.param("id");
   const userId = c.get("user").id;

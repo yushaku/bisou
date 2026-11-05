@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EntryInput, JournalEntry, JournalPage } from "../src/shared/types";
 import { HOUR, PENDING_PHOTO_TTL } from "../src/worker/lib/time";
 import { photoKey } from "../src/worker/lib/photos";
-import { call, paired, resetDb, upload, user, type TestUser } from "./helpers";
+import { app } from "../src/worker/app";
+import { call, ORIGIN, paired, resetDb, upload, user, type TestUser } from "./helpers";
 
 const NOW = Date.parse("2026-11-07T09:00:00Z");
 const input = (overrides: Partial<EntryInput> = {}): EntryInput => ({ date: "2026-11-05", text: "Our evening", photoIds: [], ...overrides });
@@ -158,6 +159,35 @@ describe("journal edit and delete", () => {
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe("journal create and feed", () => {
+  it.each(["POST", "PUT"])("R4: %s accepts 16 KB JSON and rejects larger bodies before saving", async (method) => {
+    const { a } = await paired();
+    const entry = await create(a);
+    const path = method === "POST" ? "/api/journal" : `/api/journal/${entry.id}`;
+    const json = JSON.stringify(input({ text: "😀".repeat(2000) }));
+    const body = json + " ".repeat(16 * 1024 - new TextEncoder().encode(json).length);
+    for (const contentLength of [true, false]) {
+      for (const extra of [0, 1]) {
+        const bytes = new TextEncoder().encode(body + " ".repeat(extra));
+        const headers = new Headers({ Cookie: a.cookie, Origin: ORIGIN, "Content-Type": "application/json" });
+        if (contentLength) headers.set("Content-Length", String(bytes.length));
+        const res = await app.request(`${ORIGIN}${path}`, {
+          method, headers,
+          body: contentLength ? bytes : new ReadableStream({ start(controller) {
+            controller.enqueue(bytes.subarray(0, 8192));
+            controller.enqueue(bytes.subarray(8192));
+            controller.close();
+          } }),
+        }, env);
+        if (extra) await error(res, 413, "body_too_large");
+        else expect(res.status).toBe(method === "POST" ? 201 : 200);
+        expect(res.headers.get("Cache-Control")).toBe("no-store");
+      }
+    }
+    const entries = (await page(a)).entries;
+    expect(entries).toHaveLength(method === "POST" ? 3 : 1);
+    expect(entries.find((row) => row.id === entry.id)?.text).toBe(method === "POST" ? entry.text : "😀".repeat(2000));
+  });
+
   it("AC1 (R1, R2): requires a session and a paired couple, isolating another couple's feed", async () => {
     await error(await call("GET", "/api/journal"), 401, "unauthorized");
     const lone = await user("Lan");
