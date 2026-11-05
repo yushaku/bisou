@@ -1,14 +1,12 @@
-import { BookHeart, CalendarHeart, ChevronRight } from "lucide-react";
+import { CalendarHeart } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Link, useLocation } from "wouter";
 import type { Couple } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
 import { DaysCounter } from "../components/bisou/DaysCounter";
 import { EmptyState } from "../components/bisou/EmptyState";
-import { WishTeaser } from "../components/bisou/WishTeaser";
 import { PageHeader } from "../components/bisou/PageHeader";
 import { useI18n } from "../i18n";
 import { startDateError } from "../lib/startDate";
@@ -45,7 +43,6 @@ function useNow(): Date {
 
 export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
-  const [, navigate] = useLocation();
   const [picking, setPicking] = useState(false);
   // Stays mounted after the first open so the sheet can animate closed.
   const [sheetLoaded, setSheetLoaded] = useState(false);
@@ -87,20 +84,6 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
           action={{ label: t("startDate.set"), onClick: pick }}
         />
       )}
-
-      <Link
-        href="/journal"
-        className="press mt-6 flex items-center gap-4 rounded-xl edge elevate bg-card p-4 text-card-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring"
-      >
-        <BookHeart className="size-6 shrink-0" aria-hidden="true" />
-        <span className="min-w-0 flex-1">
-          <span className="block font-heading text-xl">{t("journal.title")}</span>
-          <span className="block text-sm text-muted-foreground">{t("journal.open")}</span>
-        </span>
-        <ChevronRight className="size-5 shrink-0" aria-hidden="true" />
-      </Link>
-
-      <div className="mt-4"><WishTeaser onOpen={() => navigate("/wishes")} /></div>
 
       {sheetLoaded && (
         <Suspense fallback={null}>
