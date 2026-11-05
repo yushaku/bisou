@@ -119,6 +119,7 @@ export const vi = {
   "pairing.enterHint": "Người ấy đã gửi mã cho bạn.",
   "pairing.or": "hoặc",
   "pairing.codeTitle": "Mã của bạn đây",
+  "pairing.expiredTitle": "Tạo mã mới cho người ấy",
   "pairing.waiting": "Đang chờ người ấy nhập mã...",
   "pairing.share": "Chia sẻ",
   "pairing.shareText": "Ghép đôi với mình trên Bisou nhé! Mã của mình: {code}",

@@ -120,6 +120,7 @@ export const en: Messages = {
   "pairing.enterHint": "Your partner sent you a code.",
   "pairing.or": "or",
   "pairing.codeTitle": "Here is your code",
+  "pairing.expiredTitle": "Make a new code for your partner",
   "pairing.waiting": "Waiting for your partner to enter the code...",
   "pairing.share": "Share",
   "pairing.shareText": "Pair with me on Bisou! My code: {code}",

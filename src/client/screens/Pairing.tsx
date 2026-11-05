@@ -209,7 +209,7 @@ function WaitingView({
 
   return (
     <>
-      <PageHeader title={t("pairing.codeTitle")} />
+      <PageHeader title={t(expired ? "pairing.expiredTitle" : "pairing.codeTitle")} />
       <Card className="px-5 py-5">
         {!expired && pending ? (
           <PairCodeDisplay code={pending.code} expiresAt={pending.expiresAt}>
