@@ -5,6 +5,8 @@
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // Daily cleanup of expired rows at 20:00 UTC (03:00 in Vietnam).
+  "triggers": { "crons": ["0 20 * * *"] },
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
