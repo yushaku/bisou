@@ -170,3 +170,11 @@ export function photoForm(
   form.set("thumb", new File([thumb], "thumb", { type: types.thumb ?? "image/jpeg" }));
   return form;
 }
+
+export async function upload(who: TestUser, form = photoForm(
+  jpeg({ width: 1440, height: 1440 }), jpeg({ width: 480, height: 480 }),
+)): Promise<string> {
+  const res = await call("POST", "/api/photos", { cookie: who.cookie, form });
+  expect(res.status).toBe(201);
+  return (await res.json<{ photo: { id: string } }>()).photo.id;
+}
