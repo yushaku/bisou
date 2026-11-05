@@ -1,5 +1,5 @@
 import { BookHeart, Ellipsis, PencilLine, Plus } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { toDayString } from "../../shared/days";
 import type { Couple, JournalEntry, JournalPage, Locale } from "../../shared/types";
@@ -15,6 +15,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import { useI18n, type Translate } from "../i18n";
 import { formatDay, formatTime } from "../lib/format";
 import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../lib/journalFeed";
+import { TabMemory } from "../lib/tabMemory";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
@@ -50,8 +51,12 @@ function toCard(e: JournalEntry, people: Map<string, Person>, t: Translate, loca
 export function Journal({ couple, ...session }: JournalProps) {
   const { user, onSignedOut } = session;
   const { t, locale } = useI18n();
+  const memory = useContext(TabMemory);
   // null until the first page arrives; never shown as an empty journal while loading or failed.
-  const [feed, setFeed] = useState<JournalPage | null>(null);
+  const [feed, setFeed] = useState<JournalPage | null>(() => memory?.journal ?? null);
+  useLayoutEffect(() => {
+    if (memory) memory.journal = feed;
+  }, [feed, memory]);
   const [firstLoad, setFirstLoad] = useState<"loading" | "error">("loading");
   const [more, setMore] = useState<"idle" | "loading" | "error">("idle");
   const [stale, setStale] = useState(false);
@@ -144,7 +149,6 @@ export function Journal({ couple, ...session }: JournalProps) {
   };
 
   useEffect(() => {
-    window.scrollTo(0, 0);
     void refresh();
   }, [refresh]);
 

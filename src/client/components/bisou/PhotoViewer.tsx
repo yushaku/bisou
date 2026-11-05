@@ -1,8 +1,9 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import type { KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useI18n } from "@/i18n";
+import { swipedPhotoIndex } from "@/lib/photoSwipe";
 import type { Photo } from "./PhotoGrid";
 
 interface PhotoViewerProps {
@@ -17,14 +18,46 @@ interface PhotoViewerProps {
 
 /*
  * Full screen photo on the house Dialog. The square is contained, never cropped further;
- * previous and next by buttons or arrow keys, Escape or the close button to leave.
+ * previous and next by swipe, buttons or arrow keys, Escape or the close button to leave.
  */
 export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: PhotoViewerProps) {
   const { t } = useI18n();
   const total = photos?.length ?? 0;
   const photo = photos?.[index];
+  const drag = useRef<{ id: number; x: number; y: number; axis: "x" | "y" | null; reduced: boolean } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const cancelDrag = () => {
+    drag.current = null;
+    setDragging(false);
+    setOffset(0);
+  };
   const go = (to: number) => {
+    cancelDrag();
     if (to >= 0 && to < total) onIndex(to);
+  };
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (!e.isPrimary || e.button !== 0 || total < 2) return;
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, axis: null, reduced: matchMedia("(prefers-reduced-motion: reduce)").matches };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragging(true);
+  };
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    const start = drag.current;
+    if (!start || start.id !== e.pointerId) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    // Lock the first deliberate direction, so a vertical gesture cannot turn into a swipe.
+    if (!start.axis && Math.max(Math.abs(dx), Math.abs(dy)) >= 8) start.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    if (start.axis !== "x" || start.reduced) return;
+    const width = e.currentTarget.clientWidth;
+    setOffset(Math.max(index === total - 1 ? 0 : -width, Math.min(index === 0 ? 0 : width, dx)));
+  };
+  const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    const start = drag.current;
+    if (!start || start.id !== e.pointerId) return;
+    if (start.axis === "x") go(swipedPhotoIndex(index, total, e.clientX - start.x, e.clientY - start.y, e.currentTarget.clientWidth));
+    else cancelDrag();
   };
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "ArrowLeft") go(index - 1);
@@ -32,7 +65,12 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
   };
 
   return (
-    <Dialog open={!!photo} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!photo} onOpenChange={(open) => {
+      if (!open) {
+        cancelDrag();
+        onClose();
+      }
+    }}>
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
@@ -51,7 +89,36 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
             </Button>
           </DialogClose>
         </div>
-        {photo && <img src={photo.src} alt={photo.alt} className="min-h-0 w-full flex-1 object-contain" />}
+        {photo && (
+          <div
+            className="min-h-0 w-full flex-1 touch-pan-y touch-pinch-zoom overflow-hidden"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={cancelDrag}
+            onLostPointerCapture={cancelDrag}
+          >
+            <div
+              className="flex h-full transition-transform duration-(--duration) ease-(--ease) motion-reduce:transition-none"
+              style={{
+                transform: `translateX(calc(${-index * 100}% + ${offset}px))`,
+                transitionProperty: dragging ? "none" : undefined,
+              }}
+            >
+              {photos?.map((item, i) => (
+                <img
+                  key={item.src + i}
+                  src={item.src}
+                  alt={i === index ? item.alt : ""}
+                  aria-hidden={i !== index}
+                  draggable={false}
+                  loading={i === index ? "eager" : "lazy"}
+                  className="h-full min-w-0 w-full shrink-0 object-contain select-none"
+                />
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex items-center justify-center gap-6 px-4 pt-2 pb-[max(--spacing(4),env(safe-area-inset-bottom))]">
           <Button variant="outline" size="icon-lg" aria-label={t("viewer.previous")} disabled={index === 0} onClick={() => go(index - 1)}>
             <ChevronLeft aria-hidden="true" />

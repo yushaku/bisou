@@ -77,8 +77,6 @@ export function EntryCard({
 
       {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}
 
-      <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="px-1" />
-
       {entry.body && (
         <div>
           <p
@@ -103,6 +101,8 @@ export function EntryCard({
       )}
 
       {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
+
+      <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="px-1" />
     </Card>
   );
 }
