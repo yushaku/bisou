@@ -10,6 +10,9 @@ import palettes from "./src/client/theme/palettes.json" with { type: "json" };
 export default defineConfig({
   // `pnpm dev:phone` serves the dev server through a cloudflared quick tunnel.
   server: { allowedHosts: [".trycloudflare.com"] },
+  // Deps used only inside lazy chunks (compose, crop, calendar). Pre-bundled at startup so the
+  // dev server never answers their first lazy import with "Outdated Optimize Dep" (blank page).
+  optimizeDeps: { include: ["react-day-picker", "react-day-picker/locale", "react-easy-crop"] },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src/client", import.meta.url)) },
   },
