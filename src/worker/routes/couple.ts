@@ -33,6 +33,7 @@ couple.get("/", async (c) => {
 // Create a couple with the caller as the only member, plus a pair code.
 couple.post("/", async (c) => {
   const user = c.get("user");
+  if (user.displayName === null) return c.json({ error: "name_required" }, 400);
   const db = c.env.DB;
   const now = Date.now();
   if (await findMembership(db, user.id)) return c.json({ error: "already_in_couple" }, 409);
@@ -92,6 +93,7 @@ couple.post("/code", async (c) => {
 
 couple.post("/join", async (c) => {
   const user = c.get("user");
+  if (user.displayName === null) return c.json({ error: "name_required" }, 400);
   const db = c.env.DB;
   const now = Date.now();
   const body = await readJson(c.req.raw);

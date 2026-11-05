@@ -141,6 +141,7 @@ export const vi = {
   "startDate.hint": "Ngày này được tính là ngày thứ 1.",
   "startDate.save": "Lưu ngày",
   "startDate.saved": "Đã lưu ngày bắt đầu",
+  "error.name_required": "Chọn tên hiển thị trước khi ghép đôi nhé.",
   "error.pair_code_invalid": "Mã không đúng. Kiểm tra lại với người ấy nhé.",
   "error.pair_code_expired": "Mã đã hết hạn. Nhờ người ấy tạo mã mới.",
   "error.own_pair_code": "Đây là mã của bạn. Hãy gửi nó cho người ấy.",

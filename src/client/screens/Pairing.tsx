@@ -28,6 +28,7 @@ interface PairingProps extends SessionProps {
 function joinError(t: Translate, status: number, error: ApiError | null): string {
   if (status === 0) return t("error.network");
   switch (error?.error) {
+    case "name_required":
     case "pair_code_invalid":
     case "pair_code_expired":
     case "own_pair_code":
@@ -60,7 +61,7 @@ export function Pairing({ couple: current, onCouple, ...session }: PairingProps)
       const again = await api.couple();
       if (again.ok) onCouple(again.data.couple);
       setView("waiting");
-    } else toast.error(res.status === 0 ? t("error.network") : t("error.generic"));
+    } else toast.error(joinError(t, res.status, res.error));
   }
 
   return (

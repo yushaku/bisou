@@ -357,7 +357,7 @@ describe("sliding session expiry", () => {
 });
 
 describe("PATCH /api/me", () => {
-  it("updates display name and locale", async () => {
+  it("R4 / AC2: sets and renames a display name, trimming outer spaces", async () => {
     const { cookie } = await login("patch@example.com");
     const res = await call("PATCH", "/api/me", { cookie, body: { displayName: "  Mai  ", locale: "vi" } });
     expect(res.status).toBe(200);
@@ -365,8 +365,35 @@ describe("PATCH /api/me", () => {
     expect(user.displayName).toBe("Mai");
     expect(user.locale).toBe("vi");
 
-    const cleared = await call("PATCH", "/api/me", { cookie, body: { displayName: "" } });
-    expect((await cleared.json<{ user: { displayName: null } }>()).user.displayName).toBeNull();
+    const renamed = await call("PATCH", "/api/me", { cookie, body: { displayName: "  An Nguyen  " } });
+    expect(renamed.status).toBe(200);
+    expect((await renamed.json<{ user: { displayName: string } }>()).user.displayName).toBe("An Nguyen");
+    expect(await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
+      .bind("patch@example.com").first("display_name")).toBe("An Nguyen");
+  });
+
+  describe.each([null, "Mai"])("with stored display name %j", (storedName) => {
+    it.each([null, "", "   ", "x".repeat(41)])("R4 / AC2: rejects displayName %j without changing the stored name", async (displayName) => {
+      const { cookie } = await login("invalid-name@example.com");
+      if (storedName !== null) {
+        const setup = await call("PATCH", "/api/me", { cookie, body: { displayName: storedName } });
+        expect(setup.status).toBe(200);
+      }
+
+      const res = await call("PATCH", "/api/me", { cookie, body: { displayName } });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "invalid_body" });
+      expect(await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
+        .bind("invalid-name@example.com").first("display_name")).toBe(storedName);
+    });
+  });
+
+  it.each([1, 40])("R4 / AC2: accepts a %i character name after trimming", async (length) => {
+    const { cookie } = await login("boundary@example.com");
+    const displayName = "x".repeat(length);
+    const res = await call("PATCH", "/api/me", { cookie, body: { displayName: `  ${displayName}  ` } });
+    expect(res.status).toBe(200);
+    expect((await res.json<{ user: { displayName: string } }>()).user.displayName).toBe(displayName);
   });
 
   it("rejects invalid values", async () => {

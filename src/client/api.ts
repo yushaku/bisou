@@ -27,7 +27,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 
 export const api = {
   me: () => call<MeResponse>("GET", "/api/me"),
-  updateMe: (patch: { displayName?: string | null; locale?: Locale }) =>
+  updateMe: (patch: { displayName?: string; locale?: Locale }) =>
     call<{ user: User }>("PATCH", "/api/me", patch),
   requestCode: (email: string, lang: Locale) =>
     call<RequestCodeResponse>("POST", "/api/auth/request", { email, lang }),

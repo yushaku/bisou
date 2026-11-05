@@ -77,6 +77,17 @@ function otherCode(code: string): string {
 const count = (table: string) => env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table}`).first<number>("n");
 
 describe("POST /api/couple (create)", () => {
+  it("R4: rejects a nameless user without creating a couple or code", async () => {
+    const { cookie } = await login("nameless@example.com");
+    const res = await call("POST", "/api/couple", { cookie });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "name_required" });
+    expect(await count("couples")).toBe(0);
+    expect(await count("couple_members")).toBe(0);
+    expect(await count("pair_codes")).toBe(0);
+    expect(await count("join_attempts")).toBe(0);
+  });
+
   it("creates a couple with the caller alone and a 24 h code from the no look-alike alphabet", async () => {
     const a = await user("An");
     const couple = await create(a);
@@ -167,6 +178,20 @@ describe("DELETE /api/couple", () => {
 });
 
 describe("POST /api/couple/join", () => {
+  it("R4: rejects a nameless user without joining or consuming the code", async () => {
+    const a = await user("An");
+    const created = await create(a);
+    const { cookie } = await login("nameless@example.com");
+    const res = await call("POST", "/api/couple/join", { cookie, body: { code: created.pendingCode!.code } });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "name_required" });
+    expect(await getCouple(a)).toEqual(created);
+    expect(await count("couples")).toBe(1);
+    expect(await count("couple_members")).toBe(1);
+    expect(await count("pair_codes")).toBe(1);
+    expect(await count("join_attempts")).toBe(0);
+  });
+
   it("joins with a valid code: both see the same couple, the code is gone", async () => {
     const { a, b, couple, code } = await paired();
     expect(couple.members).toEqual([

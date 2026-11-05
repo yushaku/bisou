@@ -142,6 +142,7 @@ export const en: Messages = {
   "startDate.hint": "This day counts as day 1.",
   "startDate.save": "Save date",
   "startDate.saved": "Start date saved",
+  "error.name_required": "Choose a display name before pairing.",
   "error.pair_code_invalid": "That code doesn't match. Check it with your partner.",
   "error.pair_code_expired": "That code has expired. Ask your partner for a new one.",
   "error.own_pair_code": "That's your own code. Send it to your partner.",

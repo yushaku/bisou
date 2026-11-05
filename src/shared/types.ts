@@ -27,6 +27,7 @@ export type ApiErrorCode =
   | "forbidden_origin"
   | "not_found"
   | "server_error"
+  | "name_required"
   | "already_in_couple"
   | "already_paired"
   | "not_in_couple"

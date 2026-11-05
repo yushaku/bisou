@@ -29,12 +29,10 @@ me.patch("/", async (c) => {
 
   if ("displayName" in body) {
     const v = body.displayName;
-    if (v === null) displayName = null;
-    else if (typeof v === "string") {
-      const trimmed = v.trim();
-      if (trimmed.length > DISPLAY_NAME_MAX) return c.json({ error: "invalid_body" }, 400);
-      displayName = trimmed === "" ? null : trimmed;
-    } else return c.json({ error: "invalid_body" }, 400);
+    if (typeof v !== "string") return c.json({ error: "invalid_body" }, 400);
+    const trimmed = v.trim();
+    if (!trimmed || trimmed.length > DISPLAY_NAME_MAX) return c.json({ error: "invalid_body" }, 400);
+    displayName = trimmed;
   }
   if ("locale" in body) {
     if (!isLocale(body.locale)) return c.json({ error: "invalid_body" }, 400);
