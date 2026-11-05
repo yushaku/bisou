@@ -1,14 +1,18 @@
 # Bisou
 
-A private PWA for one couple. Sign in with an emailed 6 digit code, choose a display name, pair with an invite code or link, see your days together and next milestone, and keep a shared journal of words and photos by day. Display names can be changed but cannot be cleared. The app supports Vietnamese and English; the wish jar is planned and can be previewed in the development gallery.
+A private PWA for one couple. Sign in with an emailed 6 digit code, choose a display name, pair with an invite code or link, see your days together and next milestone, and keep a shared journal and private wish jars. Display names can be changed but cannot be cleared. The app supports Vietnamese and English.
 
 The journal opens from Home, groups entries by day with the newest first, and loads older days as you scroll. Each entry can contain up to 2000 characters and 4 photos, with each photo cropped to a square by its author. Only the author can edit or permanently delete an entry and its photos. Both partners can read it; deleted photos may remain in the partner's browser cache for up to one day before becoming stale.
+
+Each partner keeps a private wish jar with optional prices, links and one photo per wish. Spin the other jar within a VND budget, up to 20 times per rolling 24 hours, and claim a priced wish in secret. Marking your own wish received creates a shared journal entry in your current app language, with an optional note and up to four photos. The Claims screen shows received gifts; deleting a received wish removes its claim silently. Deleting an open claimed wish leaves a one-time notice, removed after display acknowledgement or by daily cleanup once 30 days old.
+
+Switching tabs restores their scroll positions and keeps loaded journal pages for the current session. Journal text appears before its photos, and the photo viewer supports horizontal swipes as well as its buttons and arrow keys.
 
 One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. D1 stores entries and photo records; the private R2 bucket `bisou`, bound as `PHOTOS` in `wrangler.jsonc`, stores the cropped photos. Free plan only.
 
 ## Layout
 
-- `src/worker`: the Worker. `app.ts` mounts one route module per area: `auth`, `me`, `couple`, `journal` and `photos`.
+- `src/worker`: the Worker. `app.ts` mounts one route module per area: `auth`, `me`, `couple`, `journal`, `photos` and `wishes`.
 - `src/client`: React app. `i18n/vi.ts` is the source dictionary, `i18n/en.ts` must have the same keys.
 - `src/shared`: types used by both sides.
 - `migrations`: D1 migrations (`wrangler d1 migrations`).

@@ -13,11 +13,17 @@
 
 ### Fixed
 
+- Save received-wish memories in the language shown in the app, and refuse new claims when a wish's price has been removed.
+- Keep deleted-wish notices until shown and acknowledged, expire unread notices after 30 days, and remove received claims silently when their wish is deleted.
+- Show a loading state for received wishes and a full-width square photo in spin results.
 - Remove private JPEG metadata and refuse metadata between scans or appended images; journal JSON requests are limited to 16 KB.
 - A partner's browser may show a deleted photo from its cache for up to one day, then stops once it refreshes.
 
 ### Changed
 
+- Restore each tab's scroll position and loaded journal pages while switching tabs.
+- Swipe horizontally through photos in the viewer.
+- Show journal text before its photos.
 - Display names can be changed but can no longer be cleared.
 - A name is required before pairing.
 
