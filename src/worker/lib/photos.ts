@@ -9,7 +9,7 @@ export function photoKeys(row: { id: string; couple_id: string }): string[] {
   return [photoKey(row.couple_id, row.id, "full"), photoKey(row.couple_id, row.id, "thumb")];
 }
 
-// Header checks only; the client re-encodes the cropped pixels before uploading.
+// Header checks, plus dropping JPEG APP1 (Exif, XMP); the client re-encodes the cropped pixels before uploading.
 export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number; bytes: Uint8Array } | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let width = 0;
