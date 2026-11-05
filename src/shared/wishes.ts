@@ -1,4 +1,4 @@
-import type { ApiErrorCode, WishInput, WishPriority } from "./types";
+import type { ApiErrorCode, Locale, WishInput, WishPriority } from "./types";
 
 export const WISH_TITLE_MAX = 100;
 export const WISH_LINK_MAX = 2048;
@@ -26,4 +26,10 @@ export function validateWish(body: unknown): { input: WishInput & { priority: Wi
   const photoId = value.photoId ?? null;
   if (photoId !== null && (typeof photoId !== "string" || !photoId)) return { error: "photo_invalid" };
   return { input: { title: value.title.trim(), price, link, priority, photoId } };
+}
+
+
+export function receivedText(locale: Locale, title: string, note: string): string {
+  const trimmed = note.trim();
+  return `${locale === "vi" ? "Đã nhận: " : "Received: "}${title}${trimmed ? `. ${trimmed}` : ""}`;
 }

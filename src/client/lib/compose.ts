@@ -73,6 +73,7 @@ const SAVE_ERRORS: Partial<Record<ApiErrorCode, MessageKey>> = {
   photo_invalid: "compose.photoExpired",
   not_author: "compose.notAuthor",
   not_found: "compose.gone",
+  wish_received: "wish.alreadyReceived",
 };
 
 /** Message for a refused save; anything unexpected keeps the form and asks to try again. */

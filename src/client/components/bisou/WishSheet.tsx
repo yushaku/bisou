@@ -26,12 +26,13 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut }: {
   const [link, setLink] = useState(wish?.link ?? "");
   const [priority, setPriority] = useState<WishPriority>(wish?.priority ?? 2);
   const [dirty, setDirty] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [discard, setDiscard] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queue = useUploadQueue(wish?.photoId ? [wish.photoId] : []);
   const input = { title, price: parseVnd(price), link: link.trim() || null, priority, photoId: queue.items[0]?.photoId ?? null };
-  const block = wishSaveBlock(input, queue.items);
+  const block = preparing ? "compose.waitPhotos" : wishSaveBlock(input, queue.items);
   const change = () => { setDirty(true); setError(null); };
   const close = () => { if (!saving) { if (dirty) setDiscard(true); else onClose(); } };
 
@@ -68,7 +69,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut }: {
                 {t(n === 1 ? "wish.priority1" : n === 2 ? "wish.priority2" : "wish.priority3")}
               </label>)}
             </fieldset>
-            <PhotoPicker queue={queue} max={1} saving={saving} onChange={change} />
+            <PhotoPicker queue={queue} onPreparingChange={setPreparing} max={1} saving={saving} onChange={change} />
           </fieldset>
           <div className="flex flex-col gap-2 border-t bg-popover px-5 pt-3 pb-5">
             <p role="alert" className="text-sm text-destructive empty:hidden">{error ?? (dirty && block ? t(block) : null)}</p>

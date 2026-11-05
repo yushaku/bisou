@@ -1,5 +1,5 @@
 import { ImagePlus, RotateCw, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import { fitSquare } from "@/lib/compose";
@@ -7,34 +7,41 @@ import { decodePhoto, renderSquare, type Area } from "@/lib/photo";
 import { PhotoCropDialog, type CropRequest } from "./PhotoCropDialog";
 import type { useUploadQueue } from "./useUploadQueue";
 
-export function PhotoPicker({ queue, max, saving, onChange: change }: {
+export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingChange }: {
   queue: ReturnType<typeof useUploadQueue>;
   max: number;
   saving: boolean;
   onChange: () => void;
+  onPreparingChange?: (preparing: boolean) => void;
 }) {
   const { t } = useI18n();
   const [preparing, setPreparing] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [cropping, setCropping] = useState<CropRequest | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const mounted = useRef(true);
+  const cancelCrop = useRef<(() => void) | null>(null);
+  useEffect(() => { onPreparingChange?.(preparing); }, [preparing, onPreparingChange]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; cancelCrop.current?.(); onPreparingChange?.(false); };
+  }, [onPreparingChange]);
   /* The square the author frames in the crop step, or null when they skip the photo. */
   const frame = (file: File, bitmap: ImageBitmap, index: number, total: number) =>
     new Promise<Area | null>((resolve) => {
       const url = URL.createObjectURL(file);
-      setCropping({
-        url,
-        index,
-        total,
-        done: (area) => {
-          URL.revokeObjectURL(url);
-          setCropping(null);
-          resolve(area && fitSquare(area, bitmap));
-        },
-      });
+      const done = (area: Area | null) => {
+        URL.revokeObjectURL(url);
+        cancelCrop.current = null;
+        if (mounted.current) setCropping(null);
+        resolve(area && fitSquare(area, bitmap));
+      };
+      cancelCrop.current = () => done(null);
+      setCropping({ url, index, total, done });
     });
 
   async function addFiles(files: File[]) {
+    if (preparing) return;
     const { take, refused } = { take: Math.max(0, Math.min(files.length, max - queue.items.length)), refused: files.length > max - queue.items.length };
     const messages: string[] = refused ? [t(max === 1 ? "wish.photoLimit" : "compose.limit")] : [];
     setPhotoError(refused ? messages.join(" ") : null);
@@ -44,6 +51,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change }: {
     // One photo at a time: a phone holds a single full size bitmap in memory, never four.
     const chosen = files.slice(0, take);
     for (const [index, file] of chosen.entries()) {
+      if (!mounted.current) break;
       let bitmap: ImageBitmap;
       try {
         bitmap = await decodePhoto(file);
@@ -51,17 +59,20 @@ export function PhotoPicker({ queue, max, saving, onChange: change }: {
         messages.push(t("compose.photoUnreadable", { name: file.name }));
         continue;
       }
+      if (!mounted.current) { bitmap.close(); break; }
       const area = await frame(file, bitmap, index, chosen.length);
       if (!area) {
         bitmap.close();
         continue;
       }
       try {
-        queue.add(await renderSquare(bitmap, area));
+        const renditions = await renderSquare(bitmap, area);
+        if (mounted.current) queue.add(renditions);
       } catch {
         messages.push(t("compose.photoUnreadable", { name: file.name }));
       }
     }
+    if (!mounted.current) return;
     setPreparing(false);
     setPhotoError(messages.length ? messages.join(" ") : null);
   }

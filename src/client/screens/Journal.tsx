@@ -32,6 +32,7 @@ function toCard(e: JournalEntry, people: Map<string, Person>, t: Translate, loca
   const written = toDayString(new Date(e.createdAt));
   return {
     id: e.id,
+    source: e.source,
     date: e.date,
     author: people.get(e.authorId) ?? { name: "?", tone: "secondary" },
     body: e.text,

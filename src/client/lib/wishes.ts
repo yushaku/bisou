@@ -1,12 +1,13 @@
 import { validateWish } from "../../shared/wishes";
 import type { ApiErrorCode, WishInput } from "../../shared/types";
-import type { MessageKey } from "../i18n";
+import type { MessageKey } from "../i18n/vi";
 import type { PhotoState } from "./compose";
 
 export function parseVnd(input: string): number | null {
-  const digits = input.replace(/[.,\s]/g, "");
-  if (!digits) return null;
-  return /^\d+$/.test(digits) ? Number(digits) : NaN;
+  const value = input.trim();
+  if (!value) return null;
+  if (!/^\d+$/.test(value) && !/^\d{1,3}([.,\s])\d{3}(?:\1\d{3})*$/.test(value)) return NaN;
+  return Number(value.replace(/[.,\s]/g, ""));
 }
 
 export function wishSaveBlock(input: WishInput, photos: { state: PhotoState }[]): MessageKey | null {

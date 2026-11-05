@@ -1,5 +1,14 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "received.action": "Mình đã nhận",
+  "received.confirm": "Lưu vào nhật ký của hai đứa. Điều ước sẽ chuyển sang Đã nhận và không thể hoàn tác.",
+  "received.day": "Ngày nhận",
+  "received.note": "Ghi chú (không bắt buộc)",
+  "received.save": "Xác nhận đã nhận",
+  "received.empty": "Chưa có điều ước nào được nhận.",
+  "received.journal": "Mở nhật ký",
+  "received.on": "Đã nhận ngày {date}",
+  "entry.fromWish": "Từ một điều ước",
   "spin.entry": "Một bất ngờ cho {name}",
   "spin.entryHint": "Để hũ chọn một điều ước nhỏ.",
   "spin.limit": "Hôm nay đã quay đủ rồi. Quay tiếp từ {time}.",

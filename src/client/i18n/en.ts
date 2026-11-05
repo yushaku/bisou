@@ -1,6 +1,15 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "received.action": "Mark received",
+  "received.confirm": "Save this to our journal. The wish will move to Received and cannot be moved back.",
+  "received.day": "Received day",
+  "received.note": "Note (optional)",
+  "received.save": "Confirm received",
+  "received.empty": "No wishes received yet.",
+  "received.journal": "Open journal",
+  "received.on": "Received on {date}",
+  "entry.fromWish": "Made from a wish",
   "spin.entry": "A surprise for {name}",
   "spin.entryHint": "Let the jar choose a little wish.",
   "spin.limit": "You have used your spins. Try again from {time}.",

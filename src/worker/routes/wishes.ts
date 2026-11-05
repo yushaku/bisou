@@ -1,5 +1,7 @@
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
+import { receivedText } from "../../shared/wishes";
+import { entriesWithPhotos, findEntry, validateEntry } from "../lib/journal";
 import type { AppEnv } from "../env";
 import { isUniqueViolation } from "../lib/couples";
 import { CLAIM_SELECT, toClaim, pickWeighted, reserveSpin, type ClaimRow } from "../lib/wishes";
@@ -123,7 +125,8 @@ wishes.post("/:id/claim", async (c) => {
     throw error;
   }
   const row = await db.prepare(`${CLAIM_SELECT} WHERE c.id = ? AND c.claimer_id = ?`).bind(id, claimer).first<ClaimRow>();
-  return c.json({ claim: toClaim(row!) }, 201);
+  if (!row) return c.json({ error: "not_found" }, 404);
+  return c.json({ claim: toClaim(row) }, 201);
 });
 
 wishes.get("/claims", async (c) => {
@@ -143,4 +146,52 @@ wishes.delete("/claims/:id", async (c) => {
   if (result.meta.changes) return c.json({ ok: true });
   const row = await db.prepare(`${CLAIM_SELECT} WHERE c.id = ? AND c.claimer_id = ?`).bind(id, claimer).first<ClaimRow>();
   return row?.status === "received" ? c.json({ error: "wish_received" }, 409) : c.json({ error: "not_found" }, 404);
+});
+
+
+wishes.post("/:id/received", limitBody, async (c) => {
+  const db = c.env.DB;
+  const owner = c.get("user").id;
+  const couple = c.get("wishCoupleId");
+  const id = c.req.param("id");
+  const current = await findWish(db, id, owner, couple);
+  if (!current) return c.json({ error: "not_found" }, 404);
+  if (current.status === "received") return c.json({ error: "wish_received" }, 409);
+  const body = await c.req.json().catch(() => null);
+  if (!body || typeof body !== "object" || typeof body.note !== "string") return c.json({ error: "invalid_body" }, 400);
+  const now = Date.now();
+  const note = body.note.trim();
+  const parsed = validateEntry({ date: body.date, photoIds: body.photoIds, text: receivedText(c.get("user").locale, current.title, note) }, now);
+  if ("error" in parsed) return c.json(parsed, 400);
+  const { date, text, photoIds } = parsed.input;
+  if (photoIds.length) {
+    const { results } = await db.prepare(`SELECT id FROM photos WHERE id IN (${photoIds.map(() => "?").join(",")})
+      AND uploader_id = ? AND couple_id = ? AND entry_id IS NULL AND wish_id IS NULL AND created_at > ?`)
+      .bind(...photoIds, owner, couple, now - PENDING_PHOTO_TTL).all();
+    if (results.length !== photoIds.length) return c.json({ error: "photo_invalid" }, 400);
+  }
+  const entryId = crypto.randomUUID();
+  const changes = await db.batch([
+    db.prepare(`INSERT INTO journal_entries (id, couple_id, author_id, entry_date, body, source, created_at, updated_at)
+      SELECT ?, couple_id, owner_id, ?, ?, 'wish', ?, ? FROM wishes WHERE id = ? AND owner_id = ? AND status = 'open'`)
+      .bind(entryId, date, text, now, now, id, owner),
+    ...photoIds.map((photoId, position) => db.prepare(`UPDATE photos SET entry_id = ?, position = ?
+      WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND couple_id = ? AND created_at > ?
+      AND EXISTS (SELECT 1 FROM journal_entries WHERE id = ?)`)
+      .bind(entryId, position, photoId, owner, couple, now - PENDING_PHOTO_TTL, entryId)),
+    db.prepare(`UPDATE wishes SET status = 'received', received_on = ?, note = ?, updated_at = ?
+      WHERE id = ? AND owner_id = ? AND status = 'open' AND (SELECT COUNT(*) FROM photos WHERE entry_id = ?) = ?`)
+      .bind(date, note, now, id, owner, entryId, photoIds.length),
+    // Failed attachment leaves no partial journal entry, even if the Worker stops after this batch.
+    db.prepare(`DELETE FROM journal_entries WHERE id = ? AND (SELECT COUNT(*) FROM photos WHERE entry_id = ?) != ?`)
+      .bind(entryId, entryId, photoIds.length),
+  ]);
+  if (!changes[changes.length - 2]!.meta.changes) {
+    return changes[0]!.meta.changes === 0 ? c.json({ error: "wish_received" }, 409) : c.json({ error: "photo_invalid" }, 400);
+  }
+  const row = await findEntry(db, entryId, owner);
+  const wish = await findWish(db, id, owner, couple);
+  if (!row || !wish) return c.json({ error: "not_found" }, 404);
+  const [entry] = await entriesWithPhotos(db, [row]);
+  return c.json({ wish: toWish(wish), entry }, 201);
 });

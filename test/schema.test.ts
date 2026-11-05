@@ -176,6 +176,9 @@ describe("wish query plans", () => {
     ["AC8 (R15): release", `DELETE FROM wish_claims WHERE id = ? AND claimer_id = ? AND EXISTS (SELECT 1 FROM wishes w WHERE w.id = wish_claims.wish_id AND w.status = 'open')`, ["claim", "user"]],
     ["AC5 (R11): spin quota", `SELECT COUNT(*), MIN(created_at) FROM wish_spins WHERE user_id = ?`, ["user"]],
     ["AC10 (R24): remove old spins", `DELETE FROM wish_spins WHERE created_at <= ?`, [100]],
+    ["AC12 (R20): receipt journal insert", `INSERT INTO journal_entries (id, couple_id, author_id, entry_date, body, source, created_at, updated_at) SELECT ?, couple_id, owner_id, ?, ?, 'wish', ?, ? FROM wishes WHERE id = ? AND owner_id = ? AND status = 'open'`, ["entry", "2023-02-12", "Received: Scarf", 100, 100, "wish", "user"]],
+    ["AC11 (R19): receipt status", `UPDATE wishes SET status = 'received', received_on = ?, note = ?, updated_at = ? WHERE id = ? AND owner_id = ? AND status = 'open' AND (SELECT COUNT(*) FROM photos WHERE entry_id = ?) = ?`, ["2023-02-12", "", 100, "wish", "user", "entry", 0]],
+    ["AC12 (R20): failed attachment rollback", `DELETE FROM journal_entries WHERE id = ? AND (SELECT COUNT(*) FROM photos WHERE entry_id = ?) != ?`, ["entry", "entry", 1]],
     ["AC13 (R6): detach photo", `UPDATE photos SET wish_id = NULL, created_at = 0 WHERE wish_id = ? RETURNING id, couple_id`, ["wish"]],
   ])("%s uses indexed searches", async (_name, sql, binds) => {
     const plan = (await explain(sql as string, ...binds)).join("\n");

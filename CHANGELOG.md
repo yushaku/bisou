@@ -4,6 +4,8 @@
 
 ### Added
 
+- Keep a private wish jar with optional photos, spin your partner's jar within a budget, and secretly claim a wish.
+- Mark a wish received to keep a shared journal memory with a note and up to four photos.
 - Open the shared journal from Home: entries grouped by day, newest first, with older days loading as you scroll.
 - Write up to 2000 characters and add up to 4 photos per entry, each cropped to a square by the author before upload.
 - Edit or permanently delete your own entries and their photos; both partners can read them.

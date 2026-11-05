@@ -159,3 +159,9 @@ export interface Claim {
   photoId: string | null;
   createdAt: number;
 }
+
+export interface ReceiveWishInput {
+  date: string;
+  note: string;
+  photoIds: string[];
+}
