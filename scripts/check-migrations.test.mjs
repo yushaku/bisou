@@ -32,6 +32,17 @@ test("allows additive SQL, comments, quoted keywords and filtered updates", () =
   `), []);
 });
 
+test("allows ON CONFLICT DO UPDATE upserts without WHERE", () => {
+  assert.deepEqual(detectDestructiveSql("INSERT INTO t (id, x) VALUES (1, 1) ON CONFLICT (id) DO UPDATE SET x = excluded.x;"), []);
+});
+
+test("still flags a plain UPDATE without WHERE after an upsert", () => {
+  assert.deepEqual(detectDestructiveSql(`
+    INSERT INTO t (id, x) VALUES (1, 1) ON CONFLICT (id) DO UPDATE SET x = excluded.x;
+    UPDATE t SET x = 1;
+  `), [{ line: 3, reason: "UPDATE without WHERE" }]);
+});
+
 test("WHERE inside strings, comments, identifiers or subqueries does not filter an UPDATE", () => {
   for (const sql of [
     "UPDATE users SET note = 'WHERE';",
@@ -62,7 +73,7 @@ test("allows dropping an index only when its table is definitely created earlier
   ]) assert.equal(detectDestructiveSql(sql).length, 1, sql);
 });
 
-const listing = "Wrangler banner\nMigrations to be applied:\n┌────────────────┐\n│ Name           │\n├────────────────┤\n│ 0001_auth.sql  │\n│ 0002_safe.sql  │\n└────────────────┘\n";
+const listing = "Wrangler banner\nMigrations to be applied:\n┌────────────────┐\n│ Name           │\n├────────────────┤\n│ 0001_auth.sql  │\n├────────────────┤\n│ 0002_safe.sql  │\n└────────────────┘\n";
 
 test("parses Wrangler tables with ANSI colors and CRLF", () => {
   assert.deepEqual(parsePendingMigrations(`\u001b[32m${listing}\u001b[0m`.replaceAll("\n", "\r\n")), ["0001_auth.sql", "0002_safe.sql"]);

@@ -81,7 +81,7 @@ export function detectDestructiveSql(sql) {
         if (words[table.end] === "DROP") reason = "DROP COLUMN";
         if (words[table.end] === "RENAME") reason = "ALTER TABLE RENAME";
       }
-      if (words[i] === "UPDATE" && words[i - 1] !== "ON" && !["OF", "ON"].includes(words[i + 1])) {
+      if (words[i] === "UPDATE" && !["ON", "DO"].includes(words[i - 1]) && !["OF", "ON"].includes(words[i + 1])) {
         let depth = 0;
         let filtered = false;
         for (const word of words.slice(i + 1)) {
