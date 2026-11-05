@@ -21,7 +21,7 @@ Market check (Nov 2026): Wishlove (Vietnam, launched Sep 2026) already has pairi
 - [ ] Both partners actually open the app without push notifications. Use it for 2 weeks and see.
 
 ## MVP Scope
-In: OTP login, pairing code, days-together counter, journal entries with photos, milestone timeline, wish jar (create, budget spin, secret claim, mark done with photo, auto journal entry), installable PWA with Catppuccin theme.
+In: OTP login, pairing code, days-together counter, journal entries with photos, milestone timeline, wish jar (create, budget spin, secret claim, mark done with photo, auto journal entry), installable PWA. The approved visual direction and theme rules live in [DESIGN.md](../../DESIGN.md).
 
 Out: everything in Not Doing.
 

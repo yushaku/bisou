@@ -26,7 +26,7 @@ pnpm dev
 
 Open http://localhost:5173. Without `RESEND_API_KEY` in `.dev.vars` no mail is sent: the code is printed in the `pnpm dev` log.
 
-Open http://localhost:5173/design for the development-only component gallery and three sample screens. See [the design system guide](docs/design-system.md) for tokens, themes and component boundaries.
+Open http://localhost:5173/design for the development-only component gallery and three sample screens. Read [DESIGN.md](DESIGN.md) before changing UI; it defines the approved visual direction, tokens, component reuse and verification requirements for contributors and agents.
 
 ## Scripts
 

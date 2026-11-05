@@ -15,7 +15,7 @@ Status legend: **built** = todo step 1 (login spike), **planned** = later todo s
 
 | Part | Technology | Notes |
 |---|---|---|
-| Client | React + Vite + TypeScript PWA, Tailwind v4 | Installable on iPhone and Android. Catppuccin Latte (light) / Frappe (dark). vi + en. |
+| Client | React + Vite + TypeScript PWA, Tailwind v4 | Installable on iPhone and Android. vi + en. UI follows [DESIGN.md](../DESIGN.md). |
 | Server | One Cloudflare Worker, Hono, built with `@cloudflare/vite-plugin` | Serves static assets and `/api/*`. Free plan: Web Crypto only, no native hashing libs. |
 | Data | D1 (SQLite), binding `DB`, migrations in `/migrations` | Times are Unix epoch milliseconds. |
 | Photos | R2, private bucket (planned binding `PHOTOS`) | Served only through the Worker after session and couple checks. |
@@ -114,8 +114,8 @@ R2 key layout: `couples/<coupleId>/<kind>/<uuid>.<webp|jpg>` where `kind` is `jo
 ## 8. PWA and service worker
 
 - `vite-plugin-pwa`, `registerType: autoUpdate`, manifest `display: standalone`, portrait, icons 192/512/maskable plus `apple-touch-icon.png`.
-- Workbox precaches the built shell only (`js, css, html, svg, png, webmanifest`). `navigateFallback: /index.html` with `/api/` denied; no runtime caching. Data and photos always come from the network; offline shows the shell only.
-- Theme: Catppuccin Latte / Frappe via Tailwind v4 theme tokens, following `prefers-color-scheme`.
+- Workbox precaches the built shell, including bundled illustrations and fonts (`js, css, html, svg, png, webp, webmanifest, woff2`). `navigateFallback: /index.html` with `/api/` denied; no runtime caching. User data and uploaded photos come from the network; offline shows the shell only.
+- Theme: semantic tokens with independent palette, style and background choices; light/dark/system mode. Defaults and extension rules live in [DESIGN.md](../DESIGN.md).
 
 ## 9. Configuration and secrets
 
