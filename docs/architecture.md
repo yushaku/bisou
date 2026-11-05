@@ -115,7 +115,7 @@ R2 key layout: `couples/<coupleId>/<kind>/<uuid>.<webp|jpg>` where `kind` is `jo
 
 - `vite-plugin-pwa`, `registerType: autoUpdate`, manifest `display: standalone`, portrait, icons 192/512/maskable plus `apple-touch-icon.png`.
 - Workbox precaches the built shell, including bundled illustrations and fonts (`js, css, html, svg, png, webp, webmanifest, woff2`). `navigateFallback: /index.html` with `/api/` denied; no runtime caching. User data and uploaded photos come from the network; offline shows the shell only.
-- Theme: semantic tokens with independent palette, style and background choices; light/dark/system mode. Defaults and extension rules live in [DESIGN.md](../DESIGN.md).
+- Theme: semantic tokens with independent palette, style and background choices; light/dark/system mode. Visual direction follows [DESIGN.md](../DESIGN.md); defaults and palette definitions live in `src/client/theme`.
 
 ## 9. Configuration and secrets
 
