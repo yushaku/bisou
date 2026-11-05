@@ -31,16 +31,14 @@ export function EntryCard({ entry, showDate = true, className }: { entry: Entry;
 
   return (
     <Card className={cn("gap-4 px-4 py-4", className)}>
-      <header className="flex items-center gap-3">
+      <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <PersonAvatar person={entry.author} size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{entry.author.name}</p>
-          {showDate && (
-            <p className="text-sm text-muted-foreground">
-              <time dateTime={entry.date}>{formatDay(entry.date, locale, "weekday")}</time>
-            </p>
-          )}
         </div>
+        {showDate && (
+          <time dateTime={entry.date} className="text-sm text-muted-foreground">{formatDay(entry.date, locale, "numeric")}</time>
+        )}
         {entry.milestone && (
           <Badge variant="secondary" className="shrink-0">
             <Flag aria-hidden="true" />

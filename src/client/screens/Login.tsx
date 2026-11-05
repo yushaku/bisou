@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import type { ApiError, User } from "../../shared/types";
 import { api } from "../api";
+import couple from "../assets/couple.webp";
 import { BrandMark } from "../components/bisou/BrandMark";
 import { LanguageToggle } from "../components/bisou/LanguageToggle";
 import { OtpInput } from "../components/bisou/OtpInput";
@@ -117,9 +118,12 @@ export function Login({ onSignedIn }: { onSignedIn: (user: User) => void }) {
         <LanguageToggle />
       </div>
 
-      <div className="mt-8 flex flex-col items-center text-center">
-        <BrandMark className="size-16" />
-        <h1 className="mt-4 font-heading text-4xl">{t("appName")}</h1>
+      <div className="mt-6 flex flex-col items-center text-center">
+        <img src={couple} alt="" width={640} height={466} className="h-44 w-60 object-contain" />
+        <div className="mt-4 flex items-center gap-2">
+          <BrandMark className="size-8" />
+          <h1 className="font-heading text-4xl">{t("appName")}</h1>
+        </div>
         <p className="mt-2 text-lg text-muted-foreground">{t("login.subtitle")}</p>
       </div>
 

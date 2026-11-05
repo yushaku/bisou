@@ -15,7 +15,7 @@ const SCREENS: SampleScreen[] = ["home", "journal", "wishes"];
 
 /*
  * URL parameters (used by the screenshot script, handy by hand too):
- *   ?style=journal|soft|sticker  &theme=latte|frappe|macchiato|mocha  &bg=plain|paper|dots|hearts
+ *   ?style=journal|soft|sticker  &theme=<palette id>  &bg=linen|plain|paper|dots|hearts
  *   &lang=vi|en  &screen=home|journal|wishes (renders that sample screen alone, full size)
  */
 function useUrlParams(): SampleScreen | null {

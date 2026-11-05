@@ -20,14 +20,14 @@ export function themeHead(palettes: Palettes) {
         try { p = JSON.parse(localStorage.getItem("bisou.theme") || "{}") || {}; } catch {}
         const light = ${JSON.stringify(ids("light"))};
         const dark = ${JSON.stringify(ids("dark"))};
-        const lt = light.includes(p.lightTheme) ? p.lightTheme : "latte";
-        const dt = dark.includes(p.darkTheme) ? p.darkTheme : "frappe";
+        const lt = light.includes(p.lightTheme) ? p.lightTheme : "peach";
+        const dt = dark.includes(p.darkTheme) ? p.darkTheme : "cocoa";
         const sysDark = !!window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
         const isDark = p.mode === "dark" || (p.mode !== "light" && sysDark);
         const r = document.documentElement;
         r.dataset.theme = isDark ? dt : lt;
-        r.dataset.style = ["journal", "soft", "sticker"].includes(p.style) ? p.style : "journal";
-        r.dataset.bg = ["plain", "paper", "dots", "hearts"].includes(p.background) ? p.background : "plain";
+        r.dataset.style = ["journal", "soft", "sticker"].includes(p.style) ? p.style : "soft";
+        r.dataset.bg = ["linen", "plain", "paper", "dots", "hearts"].includes(p.background) ? p.background : "linen";
         r.classList.toggle("dark", isDark);
       })();`,
       injectTo: "head-prepend" as const,

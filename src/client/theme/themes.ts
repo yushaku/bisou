@@ -28,6 +28,7 @@ export type Mode = (typeof MODES)[number];
 
 /* Backgrounds (theme/backgrounds.css). "photo" is reserved for an uploaded photo later. */
 export const BACKGROUNDS = [
+  { id: "linen", labelKey: "bg.linen" },
   { id: "plain", labelKey: "bg.plain" },
   { id: "paper", labelKey: "bg.paper" },
   { id: "dots", labelKey: "bg.dots" },
@@ -55,10 +56,10 @@ export interface ThemePrefs {
 export const THEME_STORAGE_KEY = "bisou.theme";
 export const DEFAULT_PREFS: ThemePrefs = {
   mode: "system",
-  lightTheme: "latte",
-  darkTheme: "frappe",
-  background: "plain",
-  style: "journal",
+  lightTheme: "peach",
+  darkTheme: "cocoa",
+  background: "linen",
+  style: "soft",
 };
 
 const has = <T extends { id: string }>(list: readonly T[], id: unknown): id is T["id"] =>

@@ -37,7 +37,7 @@ export function AppShell({ title, onOpenSettings, tabs, children, className }: A
       <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 w-full max-w-md items-center gap-2 px-4">
           <BrandMark className="size-6 shrink-0" />
-          <span className="min-w-0 flex-1 truncate font-heading text-lg">{title ?? t("appName")}</span>
+          <span className="min-w-0 flex-1 truncate font-heading text-2xl">{title ?? t("appName")}</span>
           {onOpenSettings && (
             <Button variant="ghost" size="icon" aria-label={t("settings.open")} onClick={onOpenSettings}>
               <Settings />
@@ -46,12 +46,12 @@ export function AppShell({ title, onOpenSettings, tabs, children, className }: A
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-8">{children}</main>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4">{children}</main>
 
       {tabs && (
         <nav
           aria-label={t("nav.label")}
-          className="sticky bottom-0 z-30 border-t-(length:--edge-width) border-(--edge-color) bg-card pb-[env(safe-area-inset-bottom)]"
+          className="sticky bottom-0 z-30 rounded-t-xl border-t-(length:--edge-width) border-(--edge-color) bg-card elevate pb-[env(safe-area-inset-bottom)]"
         >
           <ul className="mx-auto grid w-full max-w-md grid-cols-4">
             {TABS.map((id) => {
@@ -71,7 +71,7 @@ export function AppShell({ title, onOpenSettings, tabs, children, className }: A
                     <span
                       className={cn(
                         "flex h-8 w-14 items-center justify-center rounded-control",
-                        active && "bg-accent text-accent-foreground",
+                        active && "bg-accent text-accent-foreground elevate-sm",
                       )}
                     >
                       <Icon className="size-5" aria-hidden="true" />

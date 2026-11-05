@@ -1,6 +1,6 @@
 /*
  * Backgrounds (data-bg on <html>), independent of the colour theme. Each pattern is a
- * mask over a token colour, so it follows every theme. CSS and inline SVG only.
+ * mask over a token colour, so it follows every theme. Linen uses a subtle raster weave.
  *
  * Extension point for a photo background (later, uploaded to R2): set data-bg="photo" and
  * --bg-photo: url(...) on <html>. The layer below then shows the photo under a scrim made
@@ -9,6 +9,17 @@
 
 html {
   background-color: var(--background);
+}
+
+:root[data-bg="linen"] body::before {
+  background: url("../assets/linen.webp") repeat;
+  background-size: 256px 256px;
+  opacity: 0.2;
+  mix-blend-mode: multiply;
+}
+:root.dark[data-bg="linen"] body::before {
+  opacity: 0.045;
+  mix-blend-mode: screen;
 }
 
 body::before {

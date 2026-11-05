@@ -88,7 +88,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, className }: {
 
       <Field label={t("settings.darkTheme")}>
         {(id) => (
-          <ToggleGroup type="single" variant="outline" spacing={1} className="w-full" aria-labelledby={id} value={prefs.darkTheme}
+          <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-2" aria-labelledby={id} value={prefs.darkTheme}
             onValueChange={(v) => { const th = DARK_THEMES.find((x) => x.id === v); if (th) setPrefs({ darkTheme: th.id }); }}>
             {DARK_THEMES.map((th) => (
               <ToggleGroupItem key={th.id} value={th.id} className={cn(item, "flex-col gap-1 py-1.5 h-14")}>
@@ -102,7 +102,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, className }: {
 
       <Field label={t("settings.background")}>
         {(id) => (
-          <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-4" aria-labelledby={id} value={prefs.background}
+          <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-3" aria-labelledby={id} value={prefs.background}
             onValueChange={(v) => { const b = BACKGROUNDS.find((x) => x.id === v); if (b) setPrefs({ background: b.id }); }}>
             {BACKGROUNDS.map((b) => (
               <ToggleGroupItem key={b.id} value={b.id} className="px-1">{t(b.labelKey)}</ToggleGroupItem>

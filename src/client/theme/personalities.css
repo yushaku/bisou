@@ -9,7 +9,7 @@
  *   --edge-width, --edge-color, --control-edge-color   card and field outlines
  *   --ink-edge                                    outline on filled buttons and badges
  *   --field-bg, --outline-fill                    input fill; outline button and toggle fill
- *   --shadow-rest, --shadow-rest-sm               resting shadow (sticker only)
+ *   --shadow-rest, --shadow-rest-sm               surface and control depth
  *   --press-transform, --press-shadow             :active feedback
  *   --ease, --duration                            motion feel
  *   --icon-stroke                                 lucide stroke width
@@ -51,28 +51,37 @@
   --font-display-family: "Nunito Variable", ui-rounded, ui-sans-serif, system-ui, sans-serif;
   --display-weight: 800;
   --display-tracking: -0.015em;
-  --radius: 1.25rem;
-  --control-radius: 9999px;
+  --radius: 1rem;
+  --control-radius: 0.875rem;
   --edge-width: 1px;
-  --edge-color: transparent;
+  --edge-color: color-mix(in oklab, var(--border) 65%, var(--card));
   --control-edge-color: var(--input);
-  --ink-edge: transparent;
-  --field-bg: var(--muted);
-  --outline-fill: var(--muted);
-  --shadow-rest: none;
-  --shadow-rest-sm: none;
-  --press-transform: scale(0.95);
-  --press-shadow: none;
-  --ease: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --duration: 320ms;
-  --icon-stroke: 2.25;
+  --ink-edge: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --field-bg: var(--card);
+  --outline-fill: var(--card);
+  --surface-highlight: color-mix(in oklab, var(--card) 45%, white);
+  --surface-shade: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --material-wash: color-mix(in oklab, var(--card) 90%, transparent);
+  --shadow-rest: inset 0 1px 1px var(--surface-highlight), 0 2px 3px var(--surface-shade), 0 8px 20px var(--surface-shade);
+  --shadow-rest-sm: inset 0 1px 1px color-mix(in oklab, var(--surface-highlight) 50%, transparent), inset 0 -2px 2px var(--surface-shade), 0 3px 5px var(--surface-shade);
+  --press-transform: translateY(1px) scale(0.98);
+  --press-shadow: inset 0 2px 3px var(--surface-shade);
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration: 180ms;
+  --icon-stroke: 1.8;
   --photo-pad: 0px;
   --photo-pad-bottom: 0px;
-  --photo-radius: 1rem;
+  --photo-radius: 0.75rem;
   --photo-bg: var(--muted);
   --photo-edge: 0 solid transparent;
   --photo-tilt: 0deg;
   --photo-tape: transparent;
+}
+
+:root.dark[data-style="soft"] {
+  --surface-highlight: color-mix(in oklab, var(--card) 93%, white);
+  --surface-shade: color-mix(in oklab, black 20%, transparent);
+  --material-wash: color-mix(in oklab, var(--card) 98%, transparent);
 }
 
 :root[data-style="sticker"] {
@@ -123,6 +132,11 @@
 }
 
 @layer components {
+  :root[data-style="soft"] [data-slot="card"] {
+    background-image: linear-gradient(var(--material-wash), var(--material-wash)), url("../assets/linen.webp");
+    background-size: auto, 256px 256px;
+  }
+
   /* Display type: titles, the counter, the pair code. */
   .font-heading {
     font-weight: var(--display-weight);

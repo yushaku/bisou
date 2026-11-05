@@ -31,8 +31,8 @@ export default defineConfig({
         scope: "/",
         display: "standalone",
         orientation: "portrait",
-        background_color: "#e6e9ef",
-        theme_color: "#ea76cb",
+        background_color: palettes.peach.tokens.background,
+        theme_color: palettes.peach.tokens.background,
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
@@ -41,7 +41,7 @@ export default defineConfig({
       },
       workbox: {
         // App shell only (fonts included, for offline): never cache the API.
-        globPatterns: ["**/*.{js,css,html,svg,png,webmanifest,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,webp,webmanifest,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [],

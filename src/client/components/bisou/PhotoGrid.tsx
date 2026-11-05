@@ -32,7 +32,7 @@ export function PhotoGrid({ photos, className }: { photos: Photo[]; className?: 
             data-tilt={i % 2 === 0 ? "left" : "right"}
             data-tape={i === 0 ? "" : undefined}
           >
-            <div data-slot="photo" className={cn("relative overflow-hidden bg-muted", shown.length === 1 ? "aspect-[4/3]" : lead ? "h-full min-h-40" : "aspect-square")}>
+            <div data-slot="photo" className={cn("relative overflow-hidden bg-muted", shown.length <= 2 ? "aspect-[4/3]" : lead ? "h-full min-h-40" : "aspect-square")}>
               <img
                 src={photo.src}
                 alt={photo.alt}

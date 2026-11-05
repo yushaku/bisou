@@ -1,4 +1,4 @@
-import { ChevronRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { AppShell, type TabId } from "@/components/bisou/AppShell";
@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/bisou/PageHeader";
 import { SettingsSheet } from "@/components/bisou/SettingsSheet";
 import { SpinCard } from "@/components/bisou/SpinCard";
 import { WishCard } from "@/components/bisou/WishCard";
+import { WishTeaser } from "@/components/bisou/WishTeaser";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import { formatDay } from "@/lib/format";
@@ -34,7 +35,7 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
         },
       }}
     >
-      {screen === "home" && <HomeScreen onSeeAll={() => setScreen("journal")} />}
+      {screen === "home" && <HomeScreen onOpenWishes={() => setScreen("wishes")} />}
       {screen === "journal" && <JournalScreen />}
       {screen === "wishes" && <WishesScreen />}
       <SettingsSheet open={settings} onOpenChange={setSettings} />
@@ -51,26 +52,23 @@ function SectionTitle({ children, action }: { children: ReactNode; action?: Reac
   );
 }
 
-function HomeScreen({ onSeeAll }: { onSeeAll: () => void }) {
+function HomeScreen({ onOpenWishes }: { onOpenWishes: () => void }) {
   const { t } = useI18n();
+  const d = useDesignT();
   return (
     <>
-      <h1 className="sr-only">{t("nav.home")}</h1>
-      <DaysCounter startDate={START_DATE} people={COUPLE} today={TODAY} className="mt-2" />
-      <SectionTitle
-        action={
-          <Button variant="ghost" size="sm" className="-mr-2" onClick={onSeeAll}>
-            {t("home.seeAll")}
-            <ChevronRight aria-hidden="true" />
-          </Button>
-        }
-      >
-        {t("home.latest")}
-      </SectionTitle>
-      <div className="flex flex-col gap-4">
-        {ENTRIES.slice(0, 2).map((e) => (
-          <EntryCard key={e.id} entry={e} />
-        ))}
+      <div className="mt-2 mb-3">
+        <h1 className="font-heading text-2xl">{t("home.ourCorner")}</h1>
+        <p className="mt-1 text-base text-muted-foreground">{COUPLE.map((person) => person.name).join(" & ")}</p>
+      </div>
+      <DaysCounter startDate={START_DATE} people={COUPLE} today={TODAY} />
+      <div className="mt-4 mb-3 flex items-center justify-between gap-2">
+        <h2 className="font-heading text-xl">{t("home.latest")}</h2>
+        <Button size="icon" aria-label={t("journal.new")} onClick={() => toast.info(d("previewOnly"))}><Plus /></Button>
+      </div>
+      <EntryCard entry={{ ...ENTRIES[0]!, body: d("homeEntry"), photos: [...ENTRIES[0]!.photos].reverse() }} />
+      <div className="mt-4">
+        <WishTeaser onOpen={onOpenWishes} />
       </div>
     </>
   );

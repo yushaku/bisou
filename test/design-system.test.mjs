@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { themeHead } from "../scripts/theme-bootstrap.ts";
 import palettes from "../src/client/theme/palettes.json" with { type: "json" };
 import { DEFAULT_PREFS, THEMES, parsePrefs, resolveTheme } from "../src/client/theme/themes.ts";
-import { daysBetween, nextAnniversary, parseDay, formatVnd } from "../src/client/lib/format.ts";
+import { daysBetween, nextAnniversary, parseDay, formatDay, formatVnd } from "../src/client/lib/format.ts";
 
 test("invalid saved preferences recover without mixing light and dark palettes", () => {
   for (const raw of [null, "broken", "null", "[]", "42", '"text"']) {
@@ -48,7 +48,25 @@ test("pre-paint theme works when browser storage is blocked", () => {
     localStorage: { getItem() { throw new Error("blocked"); } },
     window: {}, document: { documentElement: root },
   });
-  assert.equal(root.dataset.theme, "latte");
+  assert.equal(root.dataset.theme, DEFAULT_PREFS.lightTheme);
+  assert.equal(root.dataset.style, DEFAULT_PREFS.style);
+  assert.equal(root.dataset.bg, DEFAULT_PREFS.background);
+});
+
+test("the fabric preset resolves before paint and existing choices are retained", () => {
+  const root = { dataset: {}, classList: { toggle() {} } };
+  for (const systemDark of [false, true]) {
+    runInNewContext(themeHead(palettes)[1].children, {
+      localStorage: { getItem: () => null },
+      window: { matchMedia: () => ({ matches: systemDark }) },
+      document: { documentElement: root },
+    });
+    assert.equal(root.dataset.theme, resolveTheme(DEFAULT_PREFS, systemDark));
+    assert.equal(root.dataset.style, "soft");
+    assert.equal(root.dataset.bg, "linen");
+  }
+  const saved = { mode: "dark", lightTheme: "latte", darkTheme: "mocha", style: "journal", background: "paper" };
+  assert.deepEqual(parsePrefs(JSON.stringify(saved)), saved);
 });
 
 test("every palette supplies the same semantic tokens with readable text pairs", () => {
@@ -70,6 +88,11 @@ test("every palette supplies the same semantic tokens with readable text pairs",
       const b = luminance(tokens[bg]);
       assert.ok((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 4.5, `${id}: ${fg}/${bg}`);
     }
+    for (const [fg, bg] of [["input", "card"], ["ring", "background"]]) {
+      const a = luminance(tokens[fg]);
+      const b = luminance(tokens[bg]);
+      assert.ok((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3, `${id}: ${fg}/${bg}`);
+    }
   }
 });
 
@@ -79,6 +102,9 @@ test("the counter counts calendar days across timezones and DST", () => {
     for (const zone of ["Asia/Ho_Chi_Minh", "America/New_York"]) {
       process.env.TZ = zone;
       assert.equal(parseDay("2026-11-04").getDate(), 4);
+      for (const locale of ["vi", "en"]) {
+        assert.equal(formatDay("2023-02-14", locale, "numeric"), "14/02/2023");
+      }
       assert.equal(daysBetween(parseDay("2023-02-14"), parseDay("2026-11-04")) + 1, 1360);
       assert.equal(daysBetween(parseDay("2026-03-07"), parseDay("2026-03-09")), 2);
       assert.equal(daysBetween(parseDay("2026-10-31"), parseDay("2026-11-02")), 2);
