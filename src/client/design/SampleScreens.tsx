@@ -25,8 +25,16 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
   const [screen, setScreen] = useState<SampleScreen>(initial);
   const [settings, setSettings] = useState(false);
   const { t } = useI18n();
+  const d = useDesignT();
+  const tabs = {
+    active: settings ? undefined : SCREEN_TAB[screen],
+    onSelect: (tab: TabId) => {
+      if (tab === "home" || tab === "journal" || tab === "wishes") { setScreen(tab); setSettings(false); }
+    },
+    onCreate: (tab: "journal" | "wishes") => { setScreen(tab); setSettings(false); toast.info(d("previewOnly")); },
+  };
   if (settings) return (
-    <AppShell title={t("settings.title")} className={cn(framed && "min-h-full")} action={
+    <AppShell tabs={tabs} title={t("settings.title")} className={cn(framed && "min-h-full")} action={
       <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => setSettings(false)}><ArrowLeft /></Button>
     }>
       <AppearanceSettings />
@@ -36,13 +44,7 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
     <AppShell
       className={cn(framed && "min-h-full")}
       onOpenSettings={() => setSettings(true)}
-      tabs={{
-        active: SCREEN_TAB[screen],
-        onSelect: (tab) => {
-          if (tab === "home" || tab === "journal" || tab === "wishes") setScreen(tab);
-          else setSettings(true);
-        },
-      }}
+      tabs={tabs}
     >
       {screen === "home" && <HomeScreen onOpenWishes={() => setScreen("wishes")} />}
       {screen === "journal" && <JournalScreen />}

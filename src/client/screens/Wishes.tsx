@@ -17,6 +17,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { wishErrorKey } from "../lib/wishes";
+import { useCreateRequest } from "../lib/useTabNavigation";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
@@ -49,6 +50,8 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     window.addEventListener("online", visible);
     return () => { document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
   }, [refresh]);
+
+  useCreateRequest("wishes", () => { setView("jar"); setEditing(null); });
 
   async function remove() {
     if (!acting || busy) return;
@@ -88,9 +91,6 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     {jar && <>
       {jar.open.length === 0 ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => setEditing(null), icon: Plus }} /> :
         <div className="flex flex-col gap-3 pb-6">{jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)} />)}</div>}
-      <div className="pointer-events-none sticky bottom-[calc(--spacing(19)+env(safe-area-inset-bottom))] z-20 mt-auto flex justify-end">
-        <Button size="lg" className="pointer-events-auto elevate" onClick={() => setEditing(null)}><Plus aria-hidden="true" />{t("wishes.add")}</Button>
-      </div>
     </>}
     </>}
     {editing !== undefined && <Suspense fallback={null}><WishSheet key={editing?.id ?? "new"} wish={editing} onClose={() => setEditing(undefined)} onSignedOut={session.onSignedOut} onSaved={(wish) => {

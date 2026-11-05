@@ -140,25 +140,23 @@ function SignedIn({
   else if (couple === undefined) content = <LoadingScreen />;
   else if (!couple || !paired) content = <Pairing {...session} couple={couple} onCouple={onCouple} />;
   else content = (
-    <TabMemory value={tabMemory}>
-      <Switch location={settingsOpen ? historyState?.settingsFrom ?? "/" : location}>
-        <Route path="/wishes">
-          <Wishes {...session} couple={couple} />
-        </Route>
-        <Route path="/journal">
-          <Journal {...session} couple={couple} />
-        </Route>
-        <Route>
-          <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
-        </Route>
-      </Switch>
-    </TabMemory>
+    <Switch location={settingsOpen ? historyState?.settingsFrom ?? "/" : location}>
+      <Route path="/wishes">
+        <Wishes {...session} couple={couple} />
+      </Route>
+      <Route path="/journal">
+        <Journal {...session} couple={couple} />
+      </Route>
+      <Route>
+        <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
+      </Route>
+    </Switch>
   );
   return (
-    <>
+    <TabMemory value={tabMemory}>
       {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
       <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
       {settingsOpen && <Settings {...session} couple={couple} onCouple={onCouple} />}
-    </>
+    </TabMemory>
   );
 }

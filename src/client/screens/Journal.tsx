@@ -1,4 +1,4 @@
-import { BookHeart, Ellipsis, PencilLine, Plus } from "lucide-react";
+import { BookHeart, Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { toDayString } from "../../shared/days";
@@ -16,6 +16,7 @@ import { useI18n, type Translate } from "../i18n";
 import { formatDay, formatTime } from "../lib/format";
 import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../lib/journalFeed";
 import { TabMemory } from "../lib/tabMemory";
+import { useCreateRequest } from "../lib/useTabNavigation";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
@@ -89,6 +90,8 @@ export function Journal({ couple, ...session }: JournalProps) {
     setComposeLoaded(true);
     setComposing(true);
   };
+
+  useCreateRequest("journal", () => write());
 
   // Kept after closing, so focus can go back to the tile of the photo last shown.
   const [viewer, setViewer] = useState<{ entry: JournalEntry; index: number; open: boolean } | null>(null);
@@ -288,14 +291,6 @@ export function Journal({ couple, ...session }: JournalProps) {
           ) : (
             <p className="pb-4 text-sm text-muted-foreground">{t("journal.end")}</p>
           )}
-
-          {/* Floats in thumb reach just above the tab bar (h-16 plus the home indicator). */}
-          <div className="pointer-events-none sticky bottom-[calc(--spacing(19)+env(safe-area-inset-bottom))] z-20 mt-auto flex justify-end">
-            <Button size="lg" className="pointer-events-auto elevate" onClick={() => write()}>
-              <PencilLine aria-hidden="true" />
-              {t("compose.write")}
-            </Button>
-          </div>
         </>
       )}
 

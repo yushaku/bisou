@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
 import { api } from "../api";
+import { BottomBar } from "../components/bisou/AppShell";
 import { CoupleAvatars, PersonAvatar, type Person } from "../components/bisou/CoupleAvatars";
 import { SettingsGroup, SettingsRow } from "../components/bisou/SettingsGroup";
 import { AppearanceSettings } from "../components/bisou/ThemeControls";
@@ -14,6 +15,7 @@ import { Label } from "../components/ui/label";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { startDateError } from "../lib/startDate";
+import { useTabNavigation } from "../lib/useTabNavigation";
 import type { SessionProps } from "./SignedInShell";
 
 const StartDateSheet = lazy(() => import("../components/bisou/StartDateSheet").then((m) => ({ default: m.StartDateSheet })));
@@ -24,6 +26,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
 }) {
   const { t, locale } = useI18n();
   const [, navigate] = useLocation();
+  const navigation = useTabNavigation();
   const sheetButton = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const dateButton = useRef<HTMLButtonElement>(null);
@@ -71,7 +74,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   }
 
   return (
-    <div className="flex min-h-dvh flex-col pb-[env(safe-area-inset-bottom)]">
+    <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 w-full max-w-md items-center gap-3 px-4">
           <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => {
@@ -81,7 +84,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
           <h1 ref={heading} tabIndex={-1} className="font-heading text-2xl outline-none">{t("settings.title")}</h1>
         </div>
       </header>
-      <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-3 pb-6">
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
           {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={{ name: user.displayName ?? user.email, tone: "primary" }} />}
           <div className="min-w-0">
@@ -131,6 +134,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
           }} value={couple.startDate} onSave={saveStartDate} />
         </Suspense>}
       </main>
+      {paired && <BottomBar {...navigation} />}
     </div>
   );
 }
