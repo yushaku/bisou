@@ -2,6 +2,7 @@ import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EntryInput, JournalEntry, JournalPage } from "../src/shared/types";
 import { HOUR, PENDING_PHOTO_TTL } from "../src/worker/lib/time";
+import { photoKey } from "../src/worker/lib/photos";
 import { call, paired, resetDb, upload, user, type TestUser } from "./helpers";
 
 const NOW = Date.parse("2026-11-07T09:00:00Z");
@@ -26,6 +27,133 @@ beforeEach(async () => {
   await resetDb();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
+});
+
+describe("journal edit and delete", () => {
+  it("AC9 (R10): only the author can edit and changing the day preserves creation time and origin", async () => {
+    const { a, b } = await paired();
+    const entry = await create(a);
+    vi.setSystemTime(NOW + HOUR);
+    await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ text: "not mine" }) }), 403, "not_author");
+    expect((await page(a)).entries[0]).toEqual(entry);
+    const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ date: "2023-02-12", text: "  Fixed typo  " }) });
+    expect(res.status).toBe(200);
+    const changed = (await res.json<{ entry: JournalEntry }>()).entry;
+    expect(changed).toEqual({ ...entry, date: "2023-02-12", text: "Fixed typo", updatedAt: NOW + HOUR });
+    expect((await page(b)).entries[0]).toEqual(changed);
+  });
+
+  it("AC1, AC9, AC10 (R1, R10, R11): foreign and unknown entry ids reveal nothing", async () => {
+    const { a } = await paired();
+    const entry = await create(a);
+    const outsider = await user("Lan");
+    for (const method of ["PUT", "DELETE"]) {
+      for (const id of [entry.id, "unknown"]) {
+        const res = await call(method, `/api/journal/${id}`, { cookie: outsider.cookie, body: method === "PUT" ? input() : undefined });
+        expect(res.status).toBe(404);
+      }
+      await error(await call(method, "/api/journal/unknown", { cookie: a.cookie, body: method === "PUT" ? input() : undefined }), 404, "not_found");
+    }
+    expect((await page(a)).entries[0]).toEqual(entry);
+  });
+
+  it("AC7, AC9 (R3, R4, R7, R8, R10): edits enforce the same shape, date, text and empty rules", async () => {
+    const { a } = await paired();
+    const entry = await create(a);
+    for (const [body, code] of [
+      [{}, "invalid_body"], [input({ date: "2026-11-08" }), "invalid_entry_date"],
+      [input({ date: "1899-12-31" }), "invalid_entry_date"], [input({ text: "x".repeat(2001) }), "entry_text_too_long"],
+      [input({ text: " " }), "entry_empty"], [input({ photoIds: ["a", "b", "c", "d", "e"] }), "too_many_photos"],
+      [input({ photoIds: ["a", "a"] }), "invalid_body"],
+    ] as const) {
+      await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body }), 400, code);
+    }
+    expect((await page(a)).entries[0]).toEqual(entry);
+    for (const date of ["1900-01-01", "2026-11-07"]) {
+      expect((await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ date }) })).status).toBe(200);
+    }
+  });
+
+  it("AC9, AC12 (R10, R17): keeps, reorders, adds and removes photos with both removed objects purged", async () => {
+    const { a, b, couple } = await paired();
+    const first = await upload(a);
+    const second = await upload(a);
+    const added = await upload(a);
+    const entry = await create(a, input({ photoIds: [first, second] }));
+    const photoIds = [added, second];
+    const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ photoIds }) });
+    expect(res.status).toBe(200);
+    expect((await res.json<{ entry: JournalEntry }>()).entry.photoIds).toEqual(photoIds);
+    expect((await page(b)).entries[0]?.photoIds).toEqual(photoIds);
+    for (const size of ["full", "thumb"] as const) {
+      expect(await env.PHOTOS.head(photoKey(couple.id, first, size))).toBeNull();
+      await error(await call("GET", `/api/photos/${first}/${size}`, { cookie: b.cookie }), 404, "not_found");
+    }
+    expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(first).first()).toBeNull();
+    const cleared = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input() });
+    expect(cleared.status).toBe(200);
+    expect((await page(b)).entries[0]?.photoIds).toEqual([]);
+  });
+
+  it("AC1, AC9, AC12 (R1, R10, R17): rejects another entry's photos, partner pending photos and expired uploads on edit", async () => {
+    const { a, b } = await paired();
+    const partner = await upload(b);
+    const attached = await upload(a);
+    const expired = await upload(a);
+    await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?").bind(NOW - PENDING_PHOTO_TTL, expired).run();
+    await create(a, input({ photoIds: [attached] }));
+    const entry = await create(a);
+    for (const photoId of [partner, attached, expired, "unknown"]) {
+      await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ photoIds: [photoId] }) }), 400, "photo_invalid");
+    }
+    expect((await page(a)).entries.find((row) => row.id === entry.id)).toEqual(entry);
+  });
+
+  it("AC10 (R11, R20): only the author deletes the entry, both renditions and all photo rows", async () => {
+    const { a, b, couple } = await paired();
+    const photoIds = [await upload(a), await upload(a)];
+    const entry = await create(a, input({ photoIds }));
+    await error(await call("DELETE", `/api/journal/${entry.id}`, { cookie: b.cookie }), 403, "not_author");
+    expect((await page(b)).entries[0]).toEqual(entry);
+    const res = await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    expect((await page(b)).entries).toEqual([]);
+    for (const id of photoIds) {
+      for (const size of ["full", "thumb"] as const) {
+        await error(await call("GET", `/api/photos/${id}/${size}`, { cookie: b.cookie }), 404, "not_found");
+        expect(await env.PHOTOS.head(photoKey(couple.id, id, size))).toBeNull();
+      }
+    }
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(0);
+  });
+
+  it("AC10 (R11, R17): a failed R2 purge never leaves deleted photos readable", async () => {
+    const { a, b } = await paired();
+    const photoId = await upload(a);
+    const entry = await create(a, input({ photoIds: [photoId] }));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
+    expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie })).status).toBe(200);
+    expect(log).toHaveBeenCalledWith("[bisou] photo purge failed", 1);
+    for (const size of ["full", "thumb"]) await error(await call("GET", `/api/photos/${photoId}/${size}`, { cookie: b.cookie }), 404, "not_found");
+    expect(await env.DB.prepare("SELECT entry_id, position, created_at FROM photos WHERE id = ?").bind(photoId).first())
+      .toEqual({ entry_id: null, position: null, created_at: 0 });
+  });
+
+  it("AC9, AC10 (R10, R11): a concurrent delete and edit cannot resurrect the entry or attach a new photo to it", async () => {
+    const { a } = await paired();
+    const entry = await create(a);
+    const photoId = await upload(a);
+    const [edited, deleted] = await Promise.all([
+      call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ photoIds: [photoId] }) }),
+      call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie }),
+    ]);
+    expect([200, 404]).toContain(edited.status);
+    expect(deleted.status).toBe(200);
+    expect((await page(a)).entries).toEqual([]);
+    await error(await call("GET", `/api/photos/${photoId}/full`, { cookie: a.cookie }), 404, "not_found");
+  });
 });
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 

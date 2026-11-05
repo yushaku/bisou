@@ -4,6 +4,7 @@ import type { AppEnv } from "../env";
 import { findMembership } from "../lib/couples";
 import { entriesWithPhotos, entryCursor, findEntry, readCursor, validateEntry, type EntryRow } from "../lib/journal";
 import { PENDING_PHOTO_TTL } from "../lib/time";
+import { purgePhotos } from "../lib/photos";
 
 export const journal = new Hono<AppEnv & { Variables: { journalCoupleId: string } }>();
 
@@ -64,4 +65,61 @@ journal.post("/", async (c) => {
   const row = await findEntry(db, id, userId);
   const [entry] = await entriesWithPhotos(db, [row!]);
   return c.json({ entry }, 201);
+});
+
+journal.put("/:id", async (c) => {
+  const db = c.env.DB;
+  const id = c.req.param("id");
+  const userId = c.get("user").id;
+  const current = await findEntry(db, id, userId);
+  if (!current) return c.json({ error: "not_found" }, 404);
+  if (current.author_id !== userId) return c.json({ error: "not_author" }, 403);
+  const now = Date.now();
+  const parsed = validateEntry(await c.req.json().catch(() => null), now);
+  if ("error" in parsed) return c.json(parsed, 400);
+  const { date, text, photoIds } = parsed.input;
+  if (photoIds.length) {
+    const { results } = await db.prepare(`SELECT id FROM photos WHERE id IN (${photoIds.map(() => "?").join(",")})
+      AND couple_id = ? AND (entry_id = ? OR (entry_id IS NULL AND uploader_id = ? AND created_at > ?))`)
+      .bind(...photoIds, current.couple_id, id, userId, now - PENDING_PHOTO_TTL).all();
+    if (results.length !== photoIds.length) return c.json({ error: "photo_invalid" }, 400);
+  }
+  const { results: previousPhotos } = await db.prepare("SELECT id, couple_id FROM photos WHERE entry_id = ?")
+    .bind(id).all<{ id: string; couple_id: string }>();
+  const removed = previousPhotos.filter((photo) => !photoIds.includes(photo.id));
+  const keep = photoIds.length ? ` AND id NOT IN (${photoIds.map(() => "?").join(",")})` : "";
+  const [updated] = await db.batch([
+    db.prepare("UPDATE journal_entries SET entry_date = ?, body = ?, updated_at = ? WHERE id = ? AND author_id = ?")
+      .bind(date, text, now, id, userId),
+    db.prepare(`UPDATE photos SET entry_id = NULL, position = NULL, created_at = 0 WHERE entry_id = ?${keep}`)
+      .bind(id, ...photoIds),
+    ...photoIds.map((photoId, position) => db.prepare(`UPDATE photos SET entry_id = ?, position = ?
+      WHERE id = ? AND (entry_id = ? OR (entry_id IS NULL AND uploader_id = ? AND created_at > ?))
+      AND EXISTS (SELECT 1 FROM journal_entries WHERE id = ? AND author_id = ?)`)
+      .bind(id, position, photoId, id, userId, now - PENDING_PHOTO_TTL, id, userId)),
+  ]);
+  if (!updated?.meta.changes) return c.json({ error: "not_found" }, 404);
+  await purgePhotos(c.env, removed);
+  const row = await findEntry(db, id, userId);
+  if (!row) return c.json({ error: "not_found" }, 404);
+  // shortcut: a raced photo attach returns the stored subset, upgrade if users report missing photos.
+  const [entry] = await entriesWithPhotos(db, [row]);
+  return c.json({ entry });
+});
+
+journal.delete("/:id", async (c) => {
+  const db = c.env.DB;
+  const id = c.req.param("id");
+  const userId = c.get("user").id;
+  const current = await findEntry(db, id, userId);
+  if (!current) return c.json({ error: "not_found" }, 404);
+  if (current.author_id !== userId) return c.json({ error: "not_author" }, 403);
+  const { results: photos } = await db.prepare("SELECT id, couple_id FROM photos WHERE entry_id = ?")
+    .bind(id).all<{ id: string; couple_id: string }>();
+  await db.batch([
+    db.prepare("UPDATE photos SET entry_id = NULL, position = NULL, created_at = 0 WHERE entry_id = ?").bind(id),
+    db.prepare("DELETE FROM journal_entries WHERE id = ? AND author_id = ?").bind(id, userId),
+  ]);
+  await purgePhotos(c.env, photos);
+  return c.json({ ok: true });
 });
