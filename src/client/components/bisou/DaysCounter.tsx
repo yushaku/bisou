@@ -1,8 +1,10 @@
 import { CalendarHeart } from "lucide-react";
+import { daysTogether, nextMilestone, toDayString, type Milestone } from "../../../shared/days";
+import type { Locale } from "../../../shared/types";
 import couple from "@/assets/couple.webp";
 import { Card } from "@/components/ui/card";
-import { useI18n } from "@/i18n";
-import { daysBetween, formatDay, formatNumber, nextAnniversary, parseDay } from "@/lib/format";
+import { useI18n, type Translate } from "@/i18n";
+import { formatDay, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Person } from "./CoupleAvatars";
 
@@ -10,17 +12,31 @@ interface DaysCounterProps {
   /* First day together, "YYYY-MM-DD". */
   startDate: string;
   people?: [Person, Person];
-  /* Injected for the /design page and tests; defaults to now. */
+  /* Injected for the /design page and tests; defaults to now, read in the device's calendar. */
   today?: Date;
   className?: string;
 }
 
+function milestoneText(t: Translate, locale: Locale, m: Milestone): string {
+  const date = formatDay(m.date, locale, "short");
+  const days = formatNumber(m.daysLeft, locale);
+  if (m.kind === "days") {
+    const n = formatNumber(m.days, locale);
+    if (m.daysLeft === 0) return t("days.hundredToday", { n });
+    if (m.daysLeft === 1) return t("days.nextHundredTomorrow", { n });
+    return t("days.nextHundred", { n, date, days });
+  }
+  if (m.daysLeft === 0) return t("days.anniversaryToday", { years: m.years });
+  if (m.daysLeft === 1) return t("days.nextAnniversaryTomorrow", { years: m.years });
+  return t("days.nextAnniversary", { years: m.years, date, days });
+}
+
 export function DaysCounter({ startDate, people, today = new Date(), className }: DaysCounterProps) {
   const { t, locale } = useI18n();
-  const start = parseDay(startDate);
-  // Day one counts as 1, the way couples count it.
-  const days = daysBetween(start, today) + 1;
-  const next = nextAnniversary(start, today);
+  const day = toDayString(today);
+  // Day one counts as 1, the way couples count it (see shared/days.ts).
+  const days = Math.max(1, daysTogether(startDate, day));
+  const next = nextMilestone(startDate, day);
 
   return (
     <Card className={cn("gap-0 p-2", className)}>
@@ -36,17 +52,7 @@ export function DaysCounter({ startDate, people, today = new Date(), className }
         </div>
         <p className="mt-3 flex items-start gap-2 border-t border-border/70 pt-3 text-sm text-pretty">
           <CalendarHeart className="size-5 shrink-0 text-primary" aria-hidden="true" />
-          <span>
-            {days <= 1
-              ? t("days.today")
-              : next.daysLeft === 0
-                ? t("days.anniversaryToday", { years: next.years })
-                : t("days.nextAnniversary", {
-                    years: next.years,
-                    date: formatDay(next.date, locale, "short"),
-                    days: formatNumber(next.daysLeft, locale),
-                  })}
-          </span>
+          <span>{milestoneText(t, locale, next)}</span>
         </p>
       </div>
     </Card>

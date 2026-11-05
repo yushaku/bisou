@@ -1,97 +1,114 @@
-import { CircleCheck, LogOut } from "lucide-react";
-import { useState, type FormEvent } from "react";
-import { DISPLAY_NAME_MAX, type Locale, type User } from "../../shared/types";
+import { CalendarHeart, PencilLine } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { toast } from "sonner";
+import type { ApiError, Couple } from "../../shared/types";
 import { api } from "../api";
-import { AppShell } from "../components/bisou/AppShell";
+import { Celebration } from "../components/bisou/Celebration";
+import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
+import { DaysCounter } from "../components/bisou/DaysCounter";
+import { EmptyState } from "../components/bisou/EmptyState";
 import { PageHeader } from "../components/bisou/PageHeader";
-import { SettingsSheet } from "../components/bisou/SettingsSheet";
 import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { useI18n } from "../i18n";
+import { useI18n, type Translate } from "../i18n";
+import { SignedInShell, type SessionProps } from "./SignedInShell";
 
-// Placeholder home for the login spike: proves the session, nothing more.
-export function Home({ user, onUser, onSignedOut }: { user: User; onUser: (u: User) => void; onSignedOut: () => void }) {
+// The calendar (react-day-picker and its locales) loads on first use, outside the main bundle.
+const StartDateSheet = lazy(() => import("../components/bisou/StartDateSheet").then((m) => ({ default: m.StartDateSheet })));
+
+interface HomeProps extends SessionProps {
+  couple: Couple;
+  onCouple: (couple: Couple | null) => void;
+  /* True right after pairing: plays the celebration once. */
+  celebrate: boolean;
+  onCelebrated: () => void;
+}
+
+/* "Today" in the device's calendar; moves on at local midnight and when the app comes back. */
+function useNow(): Date {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const id = setTimeout(() => setNow(new Date()), tomorrow.getTime() - now.getTime() + 1000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") setNow(new Date());
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearTimeout(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [now]);
+  return now;
+}
+
+function startDateError(t: Translate, status: number, error: ApiError | null): string {
+  if (status === 0) return t("error.network");
+  return error?.error === "invalid_start_date" ? t("error.invalid_start_date") : t("error.generic");
+}
+
+export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
-  const [name, setName] = useState(user.displayName ?? "");
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
+  // Stays mounted after the first open so the sheet can animate closed.
+  const [sheetLoaded, setSheetLoaded] = useState(false);
+  const pick = () => {
+    setSheetLoaded(true);
+    setPicking(true);
+  };
+  const now = useNow();
 
-  async function save(e: FormEvent) {
-    e.preventDefault();
-    setStatus("saving");
-    const res = await api.updateMe({ displayName: name });
-    if (res.ok) {
-      onUser(res.data.user);
-      setName(res.data.user.displayName ?? "");
-      setStatus("saved");
-    } else setStatus("error");
+  // Creator first on both phones, so each partner keeps the same tint everywhere.
+  const tones: Person["tone"][] = ["primary", "secondary"];
+  const people = couple.members.slice(0, 2).map((m, i) => ({
+    name: (m.id === session.user.id ? session.user.displayName : m.displayName) ?? "?",
+    tone: tones[i] ?? "primary",
+  })) as [Person, Person];
+
+  async function saveStartDate(day: string): Promise<string | null> {
+    const res = await api.setStartDate(day);
+    if (!res.ok) return startDateError(t, res.status, res.error);
+    onCouple(res.data.couple);
+    toast.success(t("startDate.saved"));
+    return null;
   }
-
-  async function changeLocale(locale: Locale) {
-    const res = await api.updateMe({ locale });
-    if (res.ok) onUser(res.data.user);
-  }
-
-  async function logout() {
-    await api.logout();
-    onSignedOut();
-  }
-
-  const logoutButton = (
-    <Button type="button" variant="ghost" className="self-center" onClick={() => void logout()}>
-      <LogOut aria-hidden="true" />
-      {t("home.logout")}
-    </Button>
-  );
 
   return (
-    <AppShell onOpenSettings={() => setSettingsOpen(true)}>
-      <PageHeader
-        title={t("home.hello", { name: user.displayName ?? user.email })}
-        description={t("home.signedInAs", { email: user.email })}
-      />
+    <SignedInShell {...session}>
+      <PageHeader title={t("home.ourCorner")} className="pb-2" />
+      <div className="mb-4 flex items-center gap-3">
+        <CoupleAvatars people={people} size="sm" />
+        <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: people[0].name, b: people[1].name })}</p>
+      </div>
 
-      <Card className="px-5 py-5">
-        <form onSubmit={save} className="flex flex-col gap-3">
-          <h2 className="font-heading text-xl">{t("home.profile")}</h2>
-          <Label htmlFor="displayName">{t("home.displayName")}</Label>
-          <Input
-            id="displayName"
-            value={name}
-            maxLength={DISPLAY_NAME_MAX}
-            autoComplete="nickname"
-            placeholder={t("home.displayNamePlaceholder")}
-            onChange={(e) => {
-              setName(e.target.value);
-              setStatus("idle");
-            }}
-          />
-          {status === "saved" && (
-            <p role="status" className="flex items-center gap-2 text-base">
-              <CircleCheck className="size-5 text-success" aria-hidden="true" />
-              {t("home.saved")}
-            </p>
-          )}
-          {status === "error" && (
-            <p role="alert" className="text-base text-destructive">
-              {t("error.generic")}
-            </p>
-          )}
-          <Button type="submit" loading={status === "saving"}>
-            {status === "saving" ? t("home.saving") : t("home.save")}
+      {couple.startDate ? (
+        <>
+          <DaysCounter startDate={couple.startDate} people={people} today={now} />
+          <Button variant="ghost" className="mt-3 self-center" onClick={pick}>
+            <PencilLine aria-hidden="true" />
+            {t("startDate.edit")}
           </Button>
-        </form>
-      </Card>
+        </>
+      ) : (
+        <EmptyState
+          icon={CalendarHeart}
+          title={t("startDate.prompt")}
+          action={{ label: t("startDate.set"), onClick: pick }}
+        />
+      )}
 
-      <p className="mt-6 text-base text-muted-foreground">{t("home.comingSoon")}</p>
-
-      <div className="mt-auto flex justify-center pt-10">{logoutButton}</div>
-
-      <SettingsSheet open={settingsOpen} onOpenChange={setSettingsOpen} onLocaleChange={(l) => void changeLocale(l)}>
-        {logoutButton}
-      </SettingsSheet>
-    </AppShell>
+      {sheetLoaded && (
+        <Suspense fallback={null}>
+          <StartDateSheet open={picking} onOpenChange={setPicking} value={couple.startDate} onSave={saveStartDate} />
+        </Suspense>
+      )}
+      <Celebration
+        open={celebrate}
+        onOpenChange={(open) => {
+          if (!open) onCelebrated();
+        }}
+        title={t("paired.title")}
+        body={t("paired.body", { a: people[0].name, b: people[1].name })}
+      />
+    </SignedInShell>
   );
 }

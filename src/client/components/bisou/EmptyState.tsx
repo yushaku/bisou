@@ -20,7 +20,7 @@ export function EmptyState({ title, icon: Icon, action, className }: EmptyStateP
         className,
       )}
     >
-      <p className="flex items-center gap-3 text-lg">
+      <p className="flex items-center gap-3 text-lg text-pretty">
         {Icon && <Icon className="size-6 shrink-0 text-muted-foreground" aria-hidden="true" />}
         {title}
       </p>

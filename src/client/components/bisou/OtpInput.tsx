@@ -9,15 +9,22 @@ interface OtpInputProps {
   length?: number;
   disabled?: boolean;
   invalid?: boolean;
+  /* "digits" for login codes; "pairCode" for the 6 letter and digit pairing code. */
+  kind?: "digits" | "pairCode";
   ref?: Ref<HTMLInputElement>;
   "aria-describedby"?: string;
 }
+
+const INPUT_ATTRS = {
+  digits: { inputMode: "numeric", autoComplete: "one-time-code", pattern: "[0-9]*" },
+  pairCode: { inputMode: "text", autoComplete: "off", autoCapitalize: "characters", autoCorrect: "off", spellCheck: false },
+} as const;
 
 /*
  * Six boxes drawn over one real input. One input keeps iOS one-time-code autofill, paste,
  * select-all and screen readers working; the boxes are only the picture of its value.
  */
-export function OtpInput({ id, value, onChange, length = 6, disabled, invalid, ref, ...aria }: OtpInputProps) {
+export function OtpInput({ id, value, onChange, length = 6, disabled, invalid, kind = "digits", ref, ...aria }: OtpInputProps) {
   const chars = value.slice(0, length).split("");
   const caret = Math.min(chars.length, length - 1);
 
@@ -43,9 +50,7 @@ export function OtpInput({ id, value, onChange, length = 6, disabled, invalid, r
         id={id}
         ref={ref}
         type="text"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        pattern="[0-9]*"
+        {...INPUT_ATTRS[kind]}
         maxLength={length * 2}
         value={value}
         disabled={disabled}

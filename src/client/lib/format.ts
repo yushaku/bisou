@@ -29,29 +29,3 @@ export function formatDay(day: string | Date, locale: Locale, style: "long" | "s
           : { day: "numeric", month: "long", year: "numeric" };
   return new Intl.DateTimeFormat(TAGS[locale], options).format(date);
 }
-
-const DAY_MS = 86_400_000;
-
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
-}
-
-/* Whole calendar days from start to end (DST safe). */
-export function daysBetween(start: Date, end: Date): number {
-  return Math.round((startOfDay(end).getTime() - startOfDay(start).getTime()) / DAY_MS);
-}
-
-export interface Anniversary {
-  years: number;
-  date: Date;
-  daysLeft: number;
-}
-
-/* The next yearly anniversary on or after today. */
-export function nextAnniversary(start: Date, today: Date): Anniversary {
-  const on = (years: number) => new Date(start.getFullYear() + years, start.getMonth(), start.getDate());
-  let years = Math.max(1, today.getFullYear() - start.getFullYear());
-  if (daysBetween(today, on(years)) < 0) years += 1;
-  const date = on(years);
-  return { years, date, daysLeft: daysBetween(today, date) };
-}

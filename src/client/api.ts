@@ -1,4 +1,4 @@
-import type { ApiError, Locale, RequestCodeResponse, User } from "../shared/types";
+import type { ApiError, CoupleResponse, Locale, MeResponse, RequestCodeResponse, User } from "../shared/types";
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: ApiError | null };
 
@@ -26,7 +26,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
-  me: () => call<{ user: User }>("GET", "/api/me"),
+  me: () => call<MeResponse>("GET", "/api/me"),
   updateMe: (patch: { displayName?: string | null; locale?: Locale }) =>
     call<{ user: User }>("PATCH", "/api/me", patch),
   requestCode: (email: string, lang: Locale) =>
@@ -34,4 +34,10 @@ export const api = {
   verifyCode: (email: string, code: string, lang: Locale) =>
     call<{ user: User }>("POST", "/api/auth/verify", { email, code, lang }),
   logout: () => call<{ ok: true }>("POST", "/api/auth/logout"),
+  couple: () => call<CoupleResponse>("GET", "/api/couple"),
+  createCouple: () => call<CoupleResponse>("POST", "/api/couple"),
+  newPairCode: () => call<CoupleResponse>("POST", "/api/couple/code"),
+  cancelCouple: () => call<CoupleResponse>("DELETE", "/api/couple"),
+  joinCouple: (code: string) => call<CoupleResponse>("POST", "/api/couple/join", { code }),
+  setStartDate: (startDate: string) => call<CoupleResponse>("PATCH", "/api/couple", { startDate }),
 };

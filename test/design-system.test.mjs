@@ -4,7 +4,8 @@ import { test } from "node:test";
 import { themeHead } from "../scripts/theme-bootstrap.ts";
 import palettes from "../src/client/theme/palettes.json" with { type: "json" };
 import { DEFAULT_PREFS, THEMES, parsePrefs, resolveTheme } from "../src/client/theme/themes.ts";
-import { daysBetween, nextAnniversary, parseDay, formatDay, formatVnd } from "../src/client/lib/format.ts";
+import { parseDay, formatDay, formatVnd } from "../src/client/lib/format.ts";
+import { daysBetween, daysTogether, nextMilestone } from "../src/shared/days.ts";
 
 test("invalid saved preferences recover without mixing light and dark palettes", () => {
   for (const raw of [null, "broken", "null", "[]", "42", '"text"']) {
@@ -105,9 +106,9 @@ test("the counter counts calendar days across timezones and DST", () => {
       for (const locale of ["vi", "en"]) {
         assert.equal(formatDay("2023-02-14", locale, "numeric"), "14/02/2023");
       }
-      assert.equal(daysBetween(parseDay("2023-02-14"), parseDay("2026-11-04")) + 1, 1360);
-      assert.equal(daysBetween(parseDay("2026-03-07"), parseDay("2026-03-09")), 2);
-      assert.equal(daysBetween(parseDay("2026-10-31"), parseDay("2026-11-02")), 2);
+      assert.equal(daysTogether("2023-02-14", "2026-11-04"), 1360);
+      assert.equal(daysBetween("2026-03-07", "2026-03-09"), 2);
+      assert.equal(daysBetween("2026-10-31", "2026-11-02"), 2);
     }
   } finally {
     if (previous === undefined) delete process.env.TZ;
@@ -115,11 +116,10 @@ test("the counter counts calendar days across timezones and DST", () => {
   }
 });
 
-test("anniversaries include today and roll leap-day anniversaries to March 1", () => {
-  const start = parseDay("2023-02-14");
-  assert.equal(nextAnniversary(start, parseDay("2026-02-14")).daysLeft, 0);
-  assert.equal(nextAnniversary(start, parseDay("2026-02-15")).years, 4);
-  assert.equal(nextAnniversary(parseDay("2024-02-29"), parseDay("2025-02-28")).daysLeft, 1);
+test("anniversaries include today and keep leap-day anniversaries on Feb 28", () => {
+  assert.equal(nextMilestone("2023-02-14", "2026-02-14").daysLeft, 0);
+  assert.equal(nextMilestone("2023-02-14", "2026-02-15").kind, "days");
+  assert.deepEqual(nextMilestone("2024-02-29", "2025-02-28"), { kind: "anniversary", years: 1, date: "2025-02-28", daysLeft: 0 });
   assert.equal(formatVnd(450000, "vi"), "450.000\u00a0₫");
   assert.equal(formatVnd(450000, "en"), "₫450,000");
 });

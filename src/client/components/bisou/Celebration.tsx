@@ -40,7 +40,7 @@ export function Celebration({ open, onOpenChange, title, body }: CelebrationProp
             <PartyPopper className="size-7" aria-hidden="true" />
           </span>
           <DialogTitle className="font-heading text-2xl leading-tight">{title ?? t("celebration.title")}</DialogTitle>
-          <DialogDescription className="text-base">{body ?? t("celebration.body")}</DialogDescription>
+          <DialogDescription className="text-base text-balance">{body ?? t("celebration.body")}</DialogDescription>
         </DialogHeader>
         <Button onClick={() => onOpenChange(false)}>{t("common.close")}</Button>
       </DialogContent>

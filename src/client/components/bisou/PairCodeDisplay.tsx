@@ -1,5 +1,5 @@
 import { Check, Copy } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
@@ -9,12 +9,24 @@ interface PairCodeDisplayProps {
   /* 6 characters from the no look-alike alphabet (no 0/O, 1/I/L). */
   code: string;
   expiresInMinutes?: number;
+  /* Epoch ms; the hint shows hours while at least 2 are left, then minutes. */
+  expiresAt?: number;
+  /* Extra actions shown next to the copy button (for example Share). */
+  children?: ReactNode;
   className?: string;
 }
 
-export function PairCodeDisplay({ code, expiresInMinutes, className }: PairCodeDisplayProps) {
+const MINUTE = 60_000;
+
+function minutesLeft(expiresInMinutes: number | undefined, expiresAt: number | undefined): number | undefined {
+  if (expiresAt !== undefined) return Math.max(1, Math.ceil((expiresAt - Date.now()) / MINUTE));
+  return expiresInMinutes;
+}
+
+export function PairCodeDisplay({ code, expiresInMinutes, expiresAt, children, className }: PairCodeDisplayProps) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
+  const minutes = minutesLeft(expiresInMinutes, expiresAt);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -45,13 +57,18 @@ export function PairCodeDisplay({ code, expiresInMinutes, className }: PairCodeD
           </span>
         ))}
       </div>
-      {expiresInMinutes !== undefined && (
-        <p className="text-base text-muted-foreground">{t("pair.hint", { minutes: expiresInMinutes })}</p>
+      {minutes !== undefined && (
+        <p className="text-base text-pretty text-muted-foreground">
+          {minutes >= 120 ? t("pair.hintHours", { hours: Math.ceil(minutes / 60) }) : t("pair.hint", { minutes })}
+        </p>
       )}
-      <Button variant="outline" onClick={() => void copy()} className="self-start">
-        {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-        {copied ? t("pair.copied") : t("pair.copy")}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => void copy()}>
+          {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+          {copied ? t("pair.copied") : t("pair.copy")}
+        </Button>
+        {children}
+      </div>
     </div>
   );
 }
