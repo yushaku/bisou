@@ -27,7 +27,8 @@ const SIZES = {
   half: "(min-width: 28rem) 12rem, calc(50vw - 2.5rem)",
 };
 
-export function PhotoGrid({ photos, className }: { photos: Photo[]; className?: string }) {
+/* onOpen: tiles become buttons that open the photo viewer at that index. */
+export function PhotoGrid({ photos, onOpen, className }: { photos: Photo[]; onOpen?: (index: number) => void; className?: string }) {
   const { t } = useI18n();
   if (photos.length === 0) return null;
   const shown = photos.slice(0, 4);
@@ -37,6 +38,7 @@ export function PhotoGrid({ photos, className }: { photos: Photo[]; className?: 
     <ul className={cn("grid gap-3", GRID[shown.length], className)}>
       {shown.map((photo, i) => {
         const lead = shown.length === 3 && i === 0;
+        const Tile = onOpen ? "button" : "div";
         // data-tilt: prints sit a little askew in the journal and sticker styles; soft sets the tilt to 0.
         return (
           <li
@@ -45,7 +47,13 @@ export function PhotoGrid({ photos, className }: { photos: Photo[]; className?: 
             data-tilt={i % 2 === 0 ? "left" : "right"}
             data-tape={i === 0 ? "" : undefined}
           >
-            <div data-slot="photo" className="relative aspect-square overflow-hidden bg-muted">
+            <Tile
+              data-slot="photo"
+              data-photo={i}
+              type={onOpen ? "button" : undefined}
+              onClick={onOpen && (() => onOpen(i))}
+              className="relative block aspect-square w-full overflow-hidden bg-muted outline-none focus-visible:ring-3 focus-visible:ring-ring"
+            >
               <img
                 src={photo.src}
                 srcSet={photo.srcSet}
@@ -63,7 +71,7 @@ export function PhotoGrid({ photos, className }: { photos: Photo[]; className?: 
                   <span className="sr-only">{t("entry.morePhotos", { count: extra })}</span>
                 </span>
               )}
-            </div>
+            </Tile>
           </li>
         );
       })}

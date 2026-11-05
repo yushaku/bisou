@@ -11,6 +11,7 @@ import { EmptyState } from "../components/bisou/EmptyState";
 import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard, type Entry } from "../components/bisou/EntryCard";
 import { PageHeader } from "../components/bisou/PageHeader";
+import { PhotoViewer } from "../components/bisou/PhotoViewer";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
 import { useI18n, type Translate } from "../i18n";
@@ -84,6 +85,10 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
     setComposeLoaded(true);
     setComposing(true);
   };
+
+  // Kept after closing, so focus can go back to the tile of the photo last shown.
+  const [viewer, setViewer] = useState<{ entry: JournalEntry; index: number; open: boolean } | null>(null);
+  const viewed = viewer?.open ? viewer.entry.photoIds : null;
 
   const onDeleted = (id: string) => {
     setFeed((f) => f && removeEntry(f, id));
@@ -241,6 +246,7 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
                     id={`entry-${e.id}`}
                     entry={card}
                     showDate={false}
+                    onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
                     // Only the author changes or deletes an entry (R10, R11); the server checks it again.
                     actions={
                       e.authorId === user.id && (
@@ -298,6 +304,16 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
           </div>
         </>
       )}
+
+      <PhotoViewer
+        photos={viewed && viewed.map((id, i) => ({ src: photoUrl(id, "full"), alt: t("entry.photo", { index: i + 1, count: viewed.length }) }))}
+        index={viewer?.index ?? 0}
+        onIndex={(index) => setViewer((v) => v && { ...v, index })}
+        onClose={() => setViewer((v) => v && { ...v, open: false })}
+        onReturnFocus={(index) =>
+          document.getElementById(`entry-${viewer?.entry.id}`)?.querySelector<HTMLElement>(`[data-photo="${index}"]`)?.focus()
+        }
+      />
 
       <EntryActions entry={acting} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
 

@@ -29,18 +29,21 @@ const CLAMP_AT = 220;
 /*
  * showDate: off in the day feed, where the day heading already says it. id: lets the feed scroll
  * to and focus the card. actions: a control at the header's end, only on the author's own entries.
+ * onOpenPhoto: makes each photo a button that opens the viewer.
  */
 export function EntryCard({
   entry,
   showDate = true,
   id,
   actions,
+  onOpenPhoto,
   className,
 }: {
   entry: Entry;
   showDate?: boolean;
   id?: string;
   actions?: ReactNode;
+  onOpenPhoto?: (index: number) => void;
   className?: string;
 }) {
   const { t, locale } = useI18n();
@@ -72,7 +75,7 @@ export function EntryCard({
 
       {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}
 
-      <PhotoGrid photos={entry.photos} className="px-1" />
+      <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="px-1" />
 
       {entry.body && (
         <div>
