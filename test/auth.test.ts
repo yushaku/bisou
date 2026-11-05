@@ -191,6 +191,33 @@ describe("POST /api/auth/verify", () => {
     expect(set).toContain(`Expires=${new Date(T0 + 90 * DAY).toUTCString()}`);
   });
 
+  it("drops Secure only for local development over http (Safari rejects Secure cookies on http://localhost)", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const { default: worker } = await import("../src/worker/index");
+    const ctx = { waitUntil: () => {}, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
+    const loginAt = async (base: string, environment: string, email: string) => {
+      const post = (path: string, body: unknown) =>
+        worker.fetch(
+          new Request(`${base}${path}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Origin: base },
+            body: JSON.stringify(body),
+          }) as Request<unknown, IncomingRequestCfProperties>,
+          { ...env, RESEND_API_KEY: undefined, ENVIRONMENT: environment },
+          ctx,
+        );
+      await post("/api/auth/request", { email });
+      const match = log.mock.calls.flat().join(" ").match(new RegExp(`${email.replace(".", "\\.")}: (\\d{6})`));
+      const res = await post("/api/auth/verify", { email, code: match![1] });
+      expect(res.status).toBe(200);
+      return res.headers.get("Set-Cookie")!;
+    };
+
+    expect(await loginAt("http://localhost:5173", "development", "local@example.com")).not.toContain("Secure");
+    expect(await loginAt("https://dev.trycloudflare.com", "development", "tunnel@example.com")).toContain("Secure");
+    expect(await loginAt("http://localhost:5173", "production", "prodhttp@example.com")).toContain("Secure");
+  });
+
   it("reuses the existing user on a second login", async () => {
     const first = await login("same@example.com");
     const a = await first.res.json<{ user: { id: string } }>();

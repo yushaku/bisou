@@ -8,11 +8,19 @@ import { rowToUser, type UserRow } from "./users";
 
 export const SESSION_COOKIE = "bisou_session";
 
+/**
+ * Secure everywhere except local development over plain http: Safari (unlike Chromium)
+ * refuses Secure cookies on http://localhost, which made local login bounce back.
+ */
+function secureCookie(c: Context<AppEnv>): boolean {
+  return c.env.ENVIRONMENT !== "development" || new URL(c.req.url).protocol === "https:";
+}
+
 /** Persistent cookie so the session survives closing an installed iOS PWA. */
 export function setSessionCookie(c: Context<AppEnv>, token: string): void {
   setCookie(c, SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: true,
+    secure: secureCookie(c),
     sameSite: "Lax",
     path: "/",
     maxAge: SESSION_TTL / 1000,
@@ -21,7 +29,7 @@ export function setSessionCookie(c: Context<AppEnv>, token: string): void {
 }
 
 export function clearSessionCookie(c: Context<AppEnv>): void {
-  deleteCookie(c, SESSION_COOKIE, { path: "/", secure: true, httpOnly: true, sameSite: "Lax" });
+  deleteCookie(c, SESSION_COOKIE, { path: "/", secure: secureCookie(c), httpOnly: true, sameSite: "Lax" });
 }
 
 export function readSessionToken(c: Context<AppEnv>): string | undefined {
