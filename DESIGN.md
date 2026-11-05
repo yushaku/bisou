@@ -15,3 +15,4 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Thẻ nhật ký đặt lời kể và dòng ghi chú trước lưới ảnh, sau phần người viết và tiêu đề kỷ niệm nếu có.
 - Logo là trái tim nỉ màu đào, giữ màu nhận diện khi đổi theme; không tô lại theo màu hành động.
 - Lời giao diện gần gũi, ngắn và cụ thể: “Góc nhỏ của hai đứa”, “Một điều ước nhỏ”, “Mở hũ”. Không đưa lời giới thiệu design system vào luồng sản phẩm
+- Bánh răng trên thanh đầu mở trang Cài đặt toàn màn hình, có nút quay lại. Hồ sơ nằm trên cùng; các mục gom vào thẻ bo góc với đường ngăn mảnh, giá trị hiện tại ở bên phải. Chạm từng mục để mở sheet riêng, giữ bảng màu và chất liệu chung của Bisou.

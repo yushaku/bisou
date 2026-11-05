@@ -1,12 +1,12 @@
 import { demoSpin } from "./samples";
-import { Plus } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { AppShell, type TabId } from "@/components/bisou/AppShell";
 import { DaysCounter } from "@/components/bisou/DaysCounter";
 import { EntryCard } from "@/components/bisou/EntryCard";
 import { PageHeader } from "@/components/bisou/PageHeader";
-import { SettingsSheet } from "@/components/bisou/SettingsSheet";
+import { AppearanceSettings } from "@/components/bisou/ThemeControls";
 import { SpinCard } from "@/components/bisou/SpinCard";
 import { WishCard } from "@/components/bisou/WishCard";
 import { WishTeaser } from "@/components/bisou/WishTeaser";
@@ -24,6 +24,14 @@ const SCREEN_TAB: Record<SampleScreen, TabId> = { home: "home", journal: "journa
 export function SampleApp({ initial, framed = false }: { initial: SampleScreen; framed?: boolean }) {
   const [screen, setScreen] = useState<SampleScreen>(initial);
   const [settings, setSettings] = useState(false);
+  const { t } = useI18n();
+  if (settings) return (
+    <AppShell title={t("settings.title")} className={cn(framed && "min-h-full")} action={
+      <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => setSettings(false)}><ArrowLeft /></Button>
+    }>
+      <AppearanceSettings />
+    </AppShell>
+  );
   return (
     <AppShell
       className={cn(framed && "min-h-full")}
@@ -39,7 +47,6 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
       {screen === "home" && <HomeScreen onOpenWishes={() => setScreen("wishes")} />}
       {screen === "journal" && <JournalScreen />}
       {screen === "wishes" && <WishesScreen />}
-      <SettingsSheet open={settings} onOpenChange={setSettings} />
     </AppShell>
   );
 }

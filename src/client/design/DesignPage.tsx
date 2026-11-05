@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { isLocale } from "../../shared/types";
-import { ThemeControls } from "@/components/bisou/SettingsSheet";
+import { ThemeControls } from "@/components/bisou/ThemeControls";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
 import { useTheme } from "@/theme/ThemeProvider";

@@ -1,15 +1,8 @@
-import { CircleCheck, LogOut } from "lucide-react";
-import { useContext, useLayoutEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useContext, useLayoutEffect, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { useLocation } from "wouter";
-import { DISPLAY_NAME_MAX, type Locale, type User } from "../../shared/types";
-import { api } from "../api";
+import type { User } from "../../shared/types";
 import { AppShell, type TabId } from "../components/bisou/AppShell";
-import { SettingsSheet } from "../components/bisou/SettingsSheet";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { useI18n } from "../i18n";
 import { TabMemory } from "../lib/tabMemory";
 
 export interface SessionProps {
@@ -34,20 +27,14 @@ function switchTab(path: string, dir: 1 | -1, navigate: (to: string) => void) {
 }
 
 /*
- * Signed-in frame: AppShell plus the Settings sheet with appearance, language and account.
+ * Signed-in frame: AppShell with a history entry for the full screen Settings page.
  * `tab` shows the bottom tab bar with that tab active; onboarding and pairing leave it out.
  */
 export function SignedInShell({
-  user,
-  onUser,
-  onSignedOut,
-  showProfile = true,
   tab,
   children,
-}: SessionProps & { showProfile?: boolean; tab?: TabId; children: ReactNode }) {
-  const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const [, navigate] = useLocation();
+}: SessionProps & { tab?: TabId; children: ReactNode }) {
+  const [location, navigate] = useLocation();
   const memory = useContext(TabMemory);
 
   useLayoutEffect(() => {
@@ -58,19 +45,12 @@ export function SignedInShell({
     return () => window.removeEventListener("scroll", remember);
   }, [tab, memory]);
 
-  async function changeLocale(locale: Locale) {
-    const res = await api.updateMe({ locale });
-    if (res.ok) onUser(res.data.user);
-  }
-
-  async function logout() {
-    await api.logout();
-    onSignedOut();
-  }
-
   return (
     <AppShell
-      onOpenSettings={() => setOpen(true)}
+      onOpenSettings={() => {
+        if (tab) memory?.scroll.set(tab, window.scrollY);
+        navigate("/settings", { state: { settingsFrom: location } });
+      }}
       tabs={
         tab && {
           active: tab,
@@ -85,63 +65,6 @@ export function SignedInShell({
       }
     >
       {children}
-      <SettingsSheet open={open} onOpenChange={setOpen} onLocaleChange={(l) => void changeLocale(l)}>
-        {showProfile && <ProfileForm user={user} onUser={onUser} />}
-        <Button type="button" variant="ghost" className="self-center" onClick={() => void logout()}>
-          <LogOut aria-hidden="true" />
-          {t("home.logout")}
-        </Button>
-      </SettingsSheet>
     </AppShell>
-  );
-}
-
-function ProfileForm({ user, onUser }: Pick<SessionProps, "user" | "onUser">) {
-  const { t } = useI18n();
-  const [name, setName] = useState(user.displayName ?? "");
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-
-  async function save(e: FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setStatus("saving");
-    const res = await api.updateMe({ displayName: name });
-    if (res.ok) {
-      onUser(res.data.user);
-      setName(res.data.user.displayName ?? "");
-      setStatus("saved");
-    } else setStatus("error");
-  }
-
-  return (
-    <form onSubmit={save} className="flex flex-col gap-3">
-      <Label htmlFor="settings-name">{t("home.displayName")}</Label>
-      <Input
-        id="settings-name"
-        value={name}
-        required
-        maxLength={DISPLAY_NAME_MAX}
-        autoComplete="nickname"
-        placeholder={t("home.displayNamePlaceholder")}
-        onChange={(e) => {
-          setName(e.target.value);
-          setStatus("idle");
-        }}
-      />
-      {status === "saved" && (
-        <p role="status" className="flex items-center gap-2 text-base">
-          <CircleCheck className="size-5 text-success" aria-hidden="true" />
-          {t("home.saved")}
-        </p>
-      )}
-      {status === "error" && (
-        <p role="alert" className="text-base text-destructive">
-          {t("error.generic")}
-        </p>
-      )}
-      <Button type="submit" variant="outline" loading={status === "saving"} disabled={!name.trim()}>
-        {status === "saving" ? t("home.saving") : t("home.save")}
-      </Button>
-    </form>
   );
 }

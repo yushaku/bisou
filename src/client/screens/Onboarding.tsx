@@ -34,7 +34,7 @@ export function Onboarding(props: SessionProps) {
   }
 
   return (
-    <SignedInShell {...props} showProfile={false}>
+    <SignedInShell {...props}>
       <img src={couple} alt="" width={640} height={466} className="mx-auto mt-2 h-40 w-56 object-contain" />
       <PageHeader title={t("onboarding.title")} description={t("onboarding.body")} />
       <Card className="px-5 py-5">

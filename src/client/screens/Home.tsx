@@ -2,7 +2,7 @@ import { BookHeart, CalendarHeart, ChevronRight } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
-import type { ApiError, Couple } from "../../shared/types";
+import type { Couple } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
@@ -10,7 +10,8 @@ import { DaysCounter } from "../components/bisou/DaysCounter";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { WishTeaser } from "../components/bisou/WishTeaser";
 import { PageHeader } from "../components/bisou/PageHeader";
-import { useI18n, type Translate } from "../i18n";
+import { useI18n } from "../i18n";
+import { startDateError } from "../lib/startDate";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The calendar (react-day-picker and its locales) loads on first use, outside the main bundle.
@@ -40,11 +41,6 @@ function useNow(): Date {
     };
   }, [now]);
   return now;
-}
-
-function startDateError(t: Translate, status: number, error: ApiError | null): string {
-  if (status === 0) return t("error.network");
-  return error?.error === "invalid_start_date" ? t("error.invalid_start_date") : t("error.generic");
 }
 
 export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {

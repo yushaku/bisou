@@ -1,5 +1,6 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
-import { Route, Switch } from "wouter";
+import { Activity, lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { Route, Switch, useLocation } from "wouter";
+import { useHistoryState } from "wouter/use-browser-location";
 import type { Couple, User } from "../shared/types";
 import { api } from "./api";
 import { BrandMark } from "./components/bisou/BrandMark";
@@ -12,6 +13,7 @@ import { Journal } from "./screens/Journal";
 import { Login } from "./screens/Login";
 import { Onboarding } from "./screens/Onboarding";
 import { Pairing } from "./screens/Pairing";
+import { Settings } from "./screens/Settings";
 
 // Dev only: import.meta.env.DEV is false in production builds, so this import and the
 // whole design folder are dropped from the bundle (checked by grepping dist).
@@ -98,6 +100,9 @@ function SignedIn({
   const [celebrate, setCelebrate] = useState(false);
   const [tabMemory] = useState(createTabMemory);
   const paired = (couple?.members.length ?? 0) >= 2;
+  const [location] = useLocation();
+  const historyState = useHistoryState<{ settingsFrom?: string } | null>();
+  const settingsOpen = location === "/settings";
 
   const refresh = useCallback(async () => {
     const res = await api.couple();
@@ -130,12 +135,13 @@ function SignedIn({
   };
 
   const session = { user, onUser, onSignedOut };
-  if (!user.displayName) return <Onboarding {...session} />;
-  if (couple === undefined) return <LoadingScreen />;
-  if (!couple || !paired) return <Pairing {...session} couple={couple} onCouple={onCouple} />;
-  return (
+  let content;
+  if (!user.displayName) content = <Onboarding {...session} />;
+  else if (couple === undefined) content = <LoadingScreen />;
+  else if (!couple || !paired) content = <Pairing {...session} couple={couple} onCouple={onCouple} />;
+  else content = (
     <TabMemory value={tabMemory}>
-      <Switch>
+      <Switch location={settingsOpen ? historyState?.settingsFrom ?? "/" : location}>
         <Route path="/wishes">
           <Wishes {...session} couple={couple} />
         </Route>
@@ -147,5 +153,12 @@ function SignedIn({
         </Route>
       </Switch>
     </TabMemory>
+  );
+  return (
+    <>
+      {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
+      <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
+      {settingsOpen && <Settings {...session} couple={couple} onCouple={onCouple} />}
+    </>
   );
 }

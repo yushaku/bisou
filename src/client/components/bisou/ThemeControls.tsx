@@ -1,14 +1,15 @@
-import { Monitor, Moon, Sun, type LucideIcon } from "lucide-react";
-import { useId, type ReactNode } from "react";
+import { Image, Languages, Monitor, Moon, Paintbrush, Sun, type LucideIcon } from "lucide-react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import type { Locale } from "../../../shared/types";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/theme/ThemeProvider";
-import { BACKGROUNDS, DARK_THEMES, LIGHT_THEMES, MODES, STYLES, type Mode, type ThemeDef } from "@/theme/themes";
+import { BACKGROUNDS, DARK_THEMES, LIGHT_THEMES, MODES, STYLES, type Mode, type ThemeDef, themeById } from "@/theme/themes";
 import { LanguageToggle } from "./LanguageToggle";
+import { SettingsGroup, SettingsRow } from "./SettingsGroup";
 
 const MODE_ICONS: Record<Mode, LucideIcon> = { light: Sun, dark: Moon, system: Monitor };
 
@@ -35,15 +36,17 @@ function Swatches({ theme }: { theme: ThemeDef }) {
   );
 }
 
-/* Every appearance choice; used by the Settings sheet and the /design toolbar. */
-export function ThemeControls({ onLocaleChange, showStyle = true, className }: { onLocaleChange?: (l: Locale) => void; showStyle?: boolean; className?: string }) {
+export type AppearanceField = "style" | "mode" | "lightTheme" | "darkTheme" | "background" | "language";
+
+/* Shared by individual settings sheets and the /design toolbar. */
+export function ThemeControls({ onLocaleChange, showStyle = true, field, className }: { field?: AppearanceField; onLocaleChange?: (l: Locale) => void; showStyle?: boolean; className?: string }) {
   const { t } = useI18n();
   const { prefs, setPrefs } = useTheme();
   const item = "flex-1 basis-0";
 
   return (
     <div className={cn("flex flex-col gap-5", className)}>
-      {showStyle && STYLES.length > 1 && (
+      {(!field || field === "style") && showStyle && STYLES.length > 1 && (
         <Field label={t("settings.style")}>
           {(id) => (
             <ToggleGroup type="single" variant="outline" spacing={1} className="w-full" aria-labelledby={id} value={prefs.style}
@@ -56,7 +59,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, className }: {
         </Field>
       )}
 
-      <Field label={t("settings.mode")}>
+      {(!field || field === "mode") && <Field label={t("settings.mode")}>
         {(id) => (
           <ToggleGroup type="single" variant="outline" spacing={1} className="w-full" aria-labelledby={id} value={prefs.mode}
             onValueChange={(v) => { const m = MODES.find((x) => x === v); if (m) setPrefs({ mode: m }); }}>
@@ -71,9 +74,9 @@ export function ThemeControls({ onLocaleChange, showStyle = true, className }: {
             })}
           </ToggleGroup>
         )}
-      </Field>
+      </Field>}
 
-      {LIGHT_THEMES.length > 0 && (
+      {(!field || field === "lightTheme") && LIGHT_THEMES.length > 0 && (
         <Field label={t("settings.lightTheme")}>
           {(id) => (
             <ToggleGroup type="single" variant="outline" spacing={1} className="w-full flex-wrap" aria-labelledby={id} value={prefs.lightTheme}
@@ -86,7 +89,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, className }: {
         </Field>
       )}
 
-      <Field label={t("settings.darkTheme")}>
+      {(!field || field === "darkTheme") && <Field label={t("settings.darkTheme")}>
         {(id) => (
           <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-2" aria-labelledby={id} value={prefs.darkTheme}
             onValueChange={(v) => { const th = DARK_THEMES.find((x) => x.id === v); if (th) setPrefs({ darkTheme: th.id }); }}>
@@ -98,9 +101,9 @@ export function ThemeControls({ onLocaleChange, showStyle = true, className }: {
             ))}
           </ToggleGroup>
         )}
-      </Field>
+      </Field>}
 
-      <Field label={t("settings.background")}>
+      {(!field || field === "background") && <Field label={t("settings.background")}>
         {(id) => (
           <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-3" aria-labelledby={id} value={prefs.background}
             onValueChange={(v) => { const b = BACKGROUNDS.find((x) => x.id === v); if (b) setPrefs({ background: b.id }); }}>
@@ -109,34 +112,44 @@ export function ThemeControls({ onLocaleChange, showStyle = true, className }: {
             ))}
           </ToggleGroup>
         )}
-      </Field>
+      </Field>}
 
-      <Field label={t("language")}>{() => <LanguageToggle onChange={onLocaleChange} />}</Field>
+      {(!field || field === "language") && <Field label={t("language")}>{() => <LanguageToggle onChange={onLocaleChange} />}</Field>}
     </div>
   );
 }
 
-interface SettingsSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onLocaleChange?: (l: Locale) => void;
-  /* Account actions (log out) go under the appearance controls. */
-  children?: ReactNode;
-}
-
-export function SettingsSheet({ open, onOpenChange, onLocaleChange, children }: SettingsSheetProps) {
-  const { t } = useI18n();
+export function AppearanceSettings({ onLocaleChange }: { onLocaleChange?: (locale: Locale) => void }) {
+  const { t, locale } = useI18n();
+  const { prefs } = useTheme();
+  const trigger = useRef<HTMLButtonElement>(null);
+  const [field, setField] = useState<AppearanceField>("style");
+  const [open, setOpen] = useState(false);
+  const rows: { field: AppearanceField; icon: LucideIcon; label: string; value: string }[] = [
+    { field: "style", icon: Paintbrush, label: t("settings.style"), value: t(`style.${prefs.style}`) },
+    { field: "mode", icon: Monitor, label: t("settings.mode"), value: t(`mode.${prefs.mode}`) },
+    { field: "lightTheme", icon: Sun, label: t("settings.lightTheme"), value: themeById(prefs.lightTheme).label },
+    { field: "darkTheme", icon: Moon, label: t("settings.darkTheme"), value: themeById(prefs.darkTheme).label },
+    { field: "background", icon: Image, label: t("settings.background"), value: t(`bg.${prefs.background}`) },
+    { field: "language", icon: Languages, label: t("language"), value: t(`language.${locale}`) },
+  ];
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+    <Drawer open={open} onOpenChange={setOpen}>
+      <SettingsGroup title={t("settings.appearance")}>
+        {rows.map((row) => (
+          <DrawerTrigger key={row.field} asChild>
+            <SettingsRow icon={row.icon} label={row.label} value={row.value} onClick={(event) => { trigger.current = event.currentTarget; setField(row.field); }} />
+          </DrawerTrigger>
+        ))}
+      </SettingsGroup>
+      <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus({ preventScroll: true }); }}>
         <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
           <DrawerHeader className="px-0 text-left">
-            <DrawerTitle className="font-heading text-2xl">{t("settings.title")}</DrawerTitle>
-            <DrawerDescription className="sr-only">{t("settings.appearance")}</DrawerDescription>
+            <DrawerTitle className="font-heading text-2xl">{rows.find((row) => row.field === field)?.label}</DrawerTitle>
+            <DrawerDescription>{t("settings.appliesImmediately")}</DrawerDescription>
           </DrawerHeader>
-          <ThemeControls onLocaleChange={onLocaleChange} />
-          {children && <div className="mt-6 flex flex-col gap-3 border-t pt-5">{children}</div>}
-          <Button variant="outline" className="mt-5 w-full" onClick={() => onOpenChange(false)}>{t("common.close")}</Button>
+          <ThemeControls field={field} onLocaleChange={onLocaleChange} />
+          <Button variant="outline" className="mt-5 w-full" onClick={() => setOpen(false)}>{t("common.close")}</Button>
         </div>
       </DrawerContent>
     </Drawer>

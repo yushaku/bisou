@@ -1,0 +1,186 @@
+import { ArrowLeft, CalendarHeart, CircleCheck, Heart, LogOut, Mail, UserRound } from "lucide-react";
+import { lazy, Suspense, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { toast } from "sonner";
+import { useLocation } from "wouter";
+import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
+import { api } from "../api";
+import { CoupleAvatars, PersonAvatar, type Person } from "../components/bisou/CoupleAvatars";
+import { SettingsGroup, SettingsRow } from "../components/bisou/SettingsGroup";
+import { AppearanceSettings } from "../components/bisou/ThemeControls";
+import { Button } from "../components/ui/button";
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "../components/ui/drawer";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { useI18n } from "../i18n";
+import { formatDay } from "../lib/format";
+import { startDateError } from "../lib/startDate";
+import type { SessionProps } from "./SignedInShell";
+
+const StartDateSheet = lazy(() => import("../components/bisou/StartDateSheet").then((m) => ({ default: m.StartDateSheet })));
+
+export function Settings({ user, onUser, onSignedOut, couple, onCouple }: SessionProps & {
+  couple: Couple | null | undefined;
+  onCouple: (couple: Couple | null) => void;
+}) {
+  const { t, locale } = useI18n();
+  const [, navigate] = useLocation();
+  const sheetButton = useRef<HTMLButtonElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const dateButton = useRef<HTMLButtonElement>(null);
+  const [sheet, setSheet] = useState<"profile" | "logout">("profile");
+  const [open, setOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [dateLoaded, setDateLoaded] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState(false);
+  const paired = (couple?.members.length ?? 0) >= 2;
+  const partner = paired ? couple?.members.find((member) => member.id !== user.id) : null;
+  const people = paired ? couple!.members.slice(0, 2).map((member, i) => ({
+    name: (member.id === user.id ? user.displayName : member.displayName) ?? "?",
+    tone: i === 0 ? "primary" : "secondary",
+  })) as [Person, Person] : null;
+
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    heading.current?.focus({ preventScroll: true });
+  }, []);
+
+  async function changeLocale(next: Locale) {
+    const res = await api.updateMe({ locale: next });
+    if (res.ok) onUser(res.data.user);
+    else toast.error(t("error.generic"));
+  }
+
+  async function saveStartDate(day: string): Promise<string | null> {
+    const res = await api.setStartDate(day);
+    if (!res.ok) return startDateError(t, res.status, res.error);
+    onCouple(res.data.couple);
+    toast.success(t("startDate.saved"));
+    return null;
+  }
+
+  async function logout() {
+    setLoggingOut(true);
+    setLogoutError(false);
+    const res = await api.logout();
+    setLoggingOut(false);
+    if (res.ok) {
+      navigate("/", { replace: true });
+      onSignedOut();
+    } else setLogoutError(true);
+  }
+
+  return (
+    <div className="flex min-h-dvh flex-col pb-[env(safe-area-inset-bottom)]">
+      <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex h-14 w-full max-w-md items-center gap-3 px-4">
+          <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => {
+            if (history.state?.settingsFrom) history.back();
+            else navigate("/", { replace: true });
+          }}><ArrowLeft aria-hidden="true" /></Button>
+          <h1 ref={heading} tabIndex={-1} className="font-heading text-2xl outline-none">{t("settings.title")}</h1>
+        </div>
+      </header>
+      <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 pt-3 pb-6">
+        <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
+          {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={{ name: user.displayName ?? user.email, tone: "primary" }} />}
+          <div className="min-w-0">
+            <p className="break-words font-heading text-xl">{user.displayName ?? t("settings.yourProfile")}</p>
+            <p className="break-all text-sm text-muted-foreground">{user.email}</p>
+          </div>
+        </div>
+        <Drawer open={open} onOpenChange={setOpen}>
+          <SettingsGroup title={t("settings.account")}>
+            {user.displayName && <DrawerTrigger asChild>
+              <SettingsRow icon={UserRound} label={t("home.displayName")} value={user.displayName} onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("profile"); }} />
+            </DrawerTrigger>}
+            <SettingsRow icon={Mail} label={t("login.email")} value={user.email} />
+          </SettingsGroup>
+          {paired && couple && <SettingsGroup title={t("settings.couple")}>
+            <SettingsRow icon={Heart} label={t("settings.partner")} value={partner?.displayName ?? "?"} />
+            <SettingsRow ref={dateButton} icon={CalendarHeart} label={t("settings.startDate")}
+              value={couple.startDate ? formatDay(couple.startDate, locale, "numeric") : t("settings.notSet")}
+              onClick={() => { setDateLoaded(true); setPicking(true); }} />
+          </SettingsGroup>}
+          <AppearanceSettings onLocaleChange={(next) => void changeLocale(next)} />
+          <div className="overflow-hidden rounded-xl edge bg-card">
+            <DrawerTrigger asChild>
+              <SettingsRow icon={LogOut} label={t("home.logout")} className="text-destructive" onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("logout"); setLogoutError(false); }} />
+            </DrawerTrigger>
+          </div>
+          <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); sheetButton.current?.focus({ preventScroll: true }); }}>
+            <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
+              <DrawerHeader className="px-0 text-left">
+                <DrawerTitle className="font-heading text-2xl">{t(sheet === "profile" ? "home.displayName" : "settings.logoutConfirm")}</DrawerTitle>
+                <DrawerDescription className={sheet === "profile" ? "sr-only" : undefined}>
+                  {t(sheet === "profile" ? "home.displayNamePlaceholder" : "settings.logoutHint")}
+                </DrawerDescription>
+              </DrawerHeader>
+              {sheet === "profile" ? <ProfileForm key={String(open)} user={user} onUser={onUser} /> : <>
+                {logoutError && <p role="alert" className="mb-3 text-destructive">{t("error.generic")}</p>}
+                <Button variant="destructive" className="w-full" loading={loggingOut} onClick={() => void logout()}>{t("home.logout")}</Button>
+              </>}
+              <Button variant="outline" className="mt-3 w-full" onClick={() => setOpen(false)}>{t(sheet === "profile" ? "common.close" : "settings.cancel")}</Button>
+            </div>
+          </DrawerContent>
+        </Drawer>
+        {dateLoaded && couple && <Suspense fallback={null}>
+          <StartDateSheet open={picking} onOpenChange={(next) => {
+            setPicking(next);
+            if (!next) dateButton.current?.focus({ preventScroll: true });
+          }} value={couple.startDate} onSave={saveStartDate} />
+        </Suspense>}
+      </main>
+    </div>
+  );
+}
+
+function ProfileForm({ user, onUser }: Pick<SessionProps, "user" | "onUser">) {
+  const { t } = useI18n();
+  const [name, setName] = useState(user.displayName ?? "");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setStatus("saving");
+    const res = await api.updateMe({ displayName: name });
+    if (res.ok) {
+      onUser(res.data.user);
+      setName(res.data.user.displayName ?? "");
+      setStatus("saved");
+    } else setStatus("error");
+  }
+
+  return (
+    <form onSubmit={save} className="flex flex-col gap-3">
+      <Label htmlFor="settings-name">{t("home.displayName")}</Label>
+      <Input
+        id="settings-name"
+        value={name}
+        required
+        maxLength={DISPLAY_NAME_MAX}
+        autoComplete="nickname"
+        placeholder={t("home.displayNamePlaceholder")}
+        onChange={(e) => {
+          setName(e.target.value);
+          setStatus("idle");
+        }}
+      />
+      {status === "saved" && (
+        <p role="status" className="flex items-center gap-2 text-base">
+          <CircleCheck className="size-5 text-success" aria-hidden="true" />
+          {t("home.saved")}
+        </p>
+      )}
+      {status === "error" && (
+        <p role="alert" className="text-base text-destructive">
+          {t("error.generic")}
+        </p>
+      )}
+      <Button type="submit" variant="outline" loading={status === "saving"} disabled={!name.trim()}>
+        {status === "saving" ? t("home.saving") : t("home.save")}
+      </Button>
+    </form>
+  );
+}
