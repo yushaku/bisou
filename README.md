@@ -33,6 +33,7 @@ Open http://localhost:5173/design for the development-only component gallery and
 | Script | What it does |
 | --- | --- |
 | `pnpm dev` | Vite and the Worker together (local D1 in `.wrangler/state`) |
+| `pnpm dev:phone [port]` | Same dev server on port 5180 (or the given port) plus a cloudflared quick tunnel; prints an https URL to open on a phone |
 | `pnpm build` | Builds the client (`dist/client`, with service worker) and the Worker (`dist/bisou`) |
 | `pnpm typecheck` | `tsc --noEmit` for client, Worker, Vite config and tests |
 | `pnpm test` | API tests (Vitest in workerd, Resend mocked), then design-system checks (Node) |

@@ -8,6 +8,8 @@ import { themeHead } from "./scripts/theme-bootstrap.ts";
 import palettes from "./src/client/theme/palettes.json" with { type: "json" };
 
 export default defineConfig({
+  // `pnpm dev:phone` serves the dev server through a cloudflared quick tunnel.
+  server: { allowedHosts: [".trycloudflare.com"] },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src/client", import.meta.url)) },
   },
