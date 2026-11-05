@@ -1,12 +1,12 @@
 # Bisou
 
-A private PWA for one couple: shared journal and wish jar. Email OTP login and profile editing work today. The design system previews the upcoming couple, journal and wish screens in Vietnamese and English.
+A private PWA for one couple. Sign in with an emailed 6 digit code, choose a display name, pair with an invite code or link, and see your days together and next milestone. Display names can be changed but cannot be cleared. The app supports Vietnamese and English; the shared journal and wish jar are planned and can be previewed in the development gallery.
 
 One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. Data lives in D1. Free plan only.
 
 ## Layout
 
-- `src/worker`: the Worker. `app.ts` mounts one route module per area (`routes/auth.ts`, `routes/me.ts`; later `couple`, `journal`, `wishes`).
+- `src/worker`: the Worker. `app.ts` mounts one route module per area (`routes/auth.ts`, `routes/me.ts`, `routes/couple.ts`; later `journal`, `wishes`).
 - `src/client`: React app. `i18n/vi.ts` is the source dictionary, `i18n/en.ts` must have the same keys.
 - `src/shared`: types used by both sides.
 - `migrations`: D1 migrations (`wrangler d1 migrations`).
@@ -40,6 +40,12 @@ Open http://localhost:5173/design for the development-only component gallery and
 | `pnpm icons` | Exports the in-app logo, PNG favicons and install icons from the brand artwork |
 | `pnpm db:migrate:local` | Applies migrations to the local D1 |
 | `pnpm run deploy` | Builds, then `wrangler deploy` (needs the setup below) |
+
+## Deploy
+
+Pushing `main` releases production through GitHub Actions after typecheck, tests, build and a safety check of pending migrations. Additive D1 migrations run before the Worker deploys; destructive migrations need the Product Owner's approval.
+
+To retry a failed release, open **Actions**, select **Deploy production**, then **Run workflow** on `main`.
 
 ## Setup steps for a human (not automated)
 

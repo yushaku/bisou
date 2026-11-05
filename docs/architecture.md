@@ -5,7 +5,6 @@ Private PWA for one couple: shared journal with photos, milestone timeline, secr
 Diagrams (open in a browser, specs beside them):
 
 - [system-architecture.html](system-architecture.html) ([spec](system-architecture.json)): components and trust boundary.
-- [otp-login-sequence.html](otp-login-sequence.html) ([spec](otp-login-sequence.json)): email OTP login, session cookie, `/api/me`.
 
 Decisions: [ADR 0001](adr/0001-cloudflare-workers-d1-r2.md) Cloudflare Workers + D1 + R2, [ADR 0002](adr/0002-email-otp-via-resend.md) email OTP via Resend, [ADR 0003](adr/0003-pwa-instead-of-native.md) PWA instead of native.
 
@@ -36,7 +35,7 @@ Source layout: `src/client` (React app, `i18n/`), `src/worker` (`app.ts`, `route
 
 ## 3. Auth flow (built)
 
-See [otp-login-sequence.html](otp-login-sequence.html).
+See [ADR 0002](adr/0002-email-otp-via-resend.md).
 
 | Step | Endpoint | Behavior |
 |---|---|---|
