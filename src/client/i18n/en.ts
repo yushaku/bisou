@@ -215,7 +215,7 @@ export const en: Messages = {
   "entry.delete": "Delete entry",
   "entry.cancel": "Cancel",
   "entry.deleteTitle": "Delete this entry?",
-  "entry.deleteBody": "The entry for {day} and its {count} photos will be permanently removed for both of you.",
+  "entry.deleteBody": "The entry for {day} and its photos ({count}) will be permanently removed for both of you.",
   "entry.deleteBodyText": "The entry for {day} will be permanently removed for both of you.",
   "entry.deleteYes": "Delete permanently",
   "entry.deleted": "Entry deleted.",
