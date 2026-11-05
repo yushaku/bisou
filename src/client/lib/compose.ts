@@ -43,6 +43,20 @@ export function takeRoom(have: number, picked: number): { take: number; refused:
   return { take, refused: take < picked };
 }
 
+interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** The cropper's area in whole pixels, made exactly square and inside the photo (R18). */
+export function fitSquare(area: Rect, photo: { width: number; height: number }): Rect {
+  const side = Math.max(1, Math.min(Math.round(area.width), Math.round(area.height), photo.width, photo.height));
+  const clamp = (v: number, room: number) => Math.min(Math.max(Math.round(v), 0), room - side);
+  return { x: clamp(area.x, photo.width), y: clamp(area.y, photo.height), width: side, height: side };
+}
+
 const IN_FLIGHT = 2;
 
 /** Queued photos to start now, in picked order, keeping at most two uploads running. */

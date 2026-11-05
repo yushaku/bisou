@@ -209,6 +209,13 @@ export const en: Messages = {
   "compose.discardBody": "Your words and added photos won't be kept.",
   "compose.discard": "Discard changes",
   "compose.keep": "Keep writing",
+  "crop.title": "Choose the part to keep",
+  "crop.step": "Photo {index} of {total}",
+  "crop.help": "Drag to move the photo, pinch or use the slider below to zoom. Only the part inside the square is saved.",
+  "crop.area": "Square frame. Use the arrow keys to move the photo.",
+  "crop.zoom": "Zoom",
+  "crop.use": "Use photo",
+  "crop.skip": "Skip this photo",
   "wishes.mine": "My jar",
   "wishes.add": "Add a wish",
 };

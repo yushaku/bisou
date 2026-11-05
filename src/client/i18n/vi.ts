@@ -208,6 +208,13 @@ export const vi = {
   "compose.discardBody": "Nội dung và ảnh vừa thêm sẽ không được giữ lại.",
   "compose.discard": "Bỏ phần này",
   "compose.keep": "Viết tiếp",
+  "crop.title": "Chọn phần ảnh giữ lại",
+  "crop.step": "Ảnh {index} trên {total}",
+  "crop.help": "Kéo để dời ảnh, chụm hai ngón hoặc kéo thanh bên dưới để phóng to. Chỉ phần trong khung vuông được lưu.",
+  "crop.area": "Khung ảnh vuông. Dùng phím mũi tên để dời ảnh.",
+  "crop.zoom": "Thu phóng",
+  "crop.use": "Dùng ảnh này",
+  "crop.skip": "Bỏ ảnh này",
   "wishes.mine": "Hũ của mình",
   "wishes.add": "Thêm điều ước",
 } as const satisfies Record<string, string>;

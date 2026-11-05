@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   defaultDay,
+  fitSquare,
   maxDay,
   saveBlock,
   saveErrorKey,
@@ -62,6 +63,19 @@ describe("compose save rules", () => {
     expect(takeRoom(0, 4)).toEqual({ take: 4, refused: false });
     expect(takeRoom(3, 2)).toEqual({ take: 1, refused: true });
     expect(takeRoom(4, 1)).toEqual({ take: 0, refused: true });
+  });
+});
+
+describe("crop frame", () => {
+  const wide = { width: 4000, height: 3000 };
+
+  it("AC13 (R18): the framed part of a wide photo is kept as is when it is a square inside the photo", () => {
+    expect(fitSquare({ x: 2500, y: 1000, width: 1500, height: 1500 }, wide)).toEqual({ x: 2500, y: 1000, width: 1500, height: 1500 });
+  });
+
+  it("AC13 (R18): an area off by rounding becomes a square inside the photo", () => {
+    expect(fitSquare({ x: 1001, y: -1, width: 3000, height: 3001 }, wide)).toEqual({ x: 1000, y: 0, width: 3000, height: 3000 });
+    expect(fitSquare({ x: 0.4, y: 0.6, width: 299.6, height: 300.2 }, { width: 300, height: 300 })).toEqual({ x: 0, y: 0, width: 300, height: 300 });
   });
 });
 
