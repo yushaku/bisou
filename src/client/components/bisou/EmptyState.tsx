@@ -4,13 +4,14 @@ import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
   title: string;
+  description?: string;
   icon?: LucideIcon;
   action?: { label: string; onClick: () => void; icon?: LucideIcon };
   className?: string;
 }
 
 /* One short line and the next step, in the frame the content will fill. No illustration. */
-export function EmptyState({ title, icon: Icon, action, className }: EmptyStateProps) {
+export function EmptyState({ title, description, icon: Icon, action, className }: EmptyStateProps) {
   const ActionIcon = action?.icon;
   return (
     <div
@@ -24,6 +25,7 @@ export function EmptyState({ title, icon: Icon, action, className }: EmptyStateP
         {Icon && <Icon className="size-6 shrink-0 text-muted-foreground" aria-hidden="true" />}
         {title}
       </p>
+      {description && <p className="-mt-2 text-base text-pretty text-muted-foreground">{description}</p>}
       {action && (
         <Button onClick={action.onClick}>
           {ActionIcon && <ActionIcon aria-hidden="true" />}

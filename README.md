@@ -1,6 +1,6 @@
 # Bisou
 
-A private PWA for one couple. Sign in with an emailed 6 digit code, choose a display name, pair with an invite code or link, and see your days together and next milestone. Display names can be changed but cannot be cleared. The app supports Vietnamese and English; the shared journal and wish jar are planned and can be previewed in the development gallery.
+A private PWA for one couple. Sign in with an emailed 6 digit code, choose a display name, pair with an invite code or link, and see your days together and next milestone, and read your shared journal by day, newest first. Display names can be changed but cannot be cleared. The app supports Vietnamese and English; the wish jar is planned and can be previewed in the development gallery.
 
 One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. Data lives in D1. Free plan only.
 

@@ -1,13 +1,24 @@
-import type { ApiError, CoupleResponse, Locale, MeResponse, RequestCodeResponse, User } from "../shared/types";
+import type {
+  ApiError,
+  CoupleResponse,
+  EntryInput,
+  JournalEntry,
+  JournalPage,
+  Locale,
+  MeResponse,
+  PhotoSize,
+  RequestCodeResponse,
+  User,
+} from "../shared/types";
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: ApiError | null };
 
 async function call<T>(method: string, path: string, body?: unknown): Promise<ApiResult<T>> {
   let res: Response;
   try {
+    // credentials default to same-origin, so the session cookie goes along.
     res = await fetch(path, {
       method,
-      credentials: "same-origin",
       headers: body === undefined ? undefined : { "Content-Type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
@@ -39,4 +50,14 @@ export const api = {
   newPairCode: () => call<CoupleResponse>("POST", "/api/couple/code"),
   joinCouple: (code: string) => call<CoupleResponse>("POST", "/api/couple/join", { code }),
   setStartDate: (startDate: string) => call<CoupleResponse>("PATCH", "/api/couple", { startDate }),
+  journal: (cursor?: string) =>
+    call<JournalPage>("GET", cursor ? `/api/journal?cursor=${encodeURIComponent(cursor)}` : "/api/journal"),
+  createEntry: (input: EntryInput) => call<{ entry: JournalEntry }>("POST", "/api/journal", input),
+  updateEntry: (id: string, input: EntryInput) =>
+    call<{ entry: JournalEntry }>("PUT", `/api/journal/${encodeURIComponent(id)}`, input),
+  deleteEntry: (id: string) => call<{ ok: true }>("DELETE", `/api/journal/${encodeURIComponent(id)}`),
 };
+
+export function photoUrl(id: string, size: PhotoSize): string {
+  return `/api/photos/${encodeURIComponent(id)}/${size}`;
+}

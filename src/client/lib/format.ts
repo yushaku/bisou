@@ -29,3 +29,8 @@ export function formatDay(day: string | Date, locale: Locale, style: "long" | "s
           : { day: "numeric", month: "long", year: "numeric" };
   return new Intl.DateTimeFormat(TAGS[locale], options).format(date);
 }
+
+/* Local clock time of an epoch: "22:00" in both languages. */
+export function formatTime(epochMs: number, locale: Locale): string {
+  return new Intl.DateTimeFormat(TAGS[locale], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(epochMs);
+}
