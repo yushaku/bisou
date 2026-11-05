@@ -1,10 +1,12 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { isValidDay, latestDay } from "../../shared/days";
 import { DISPLAY_NAME_MAX, isLocale, type MeResponse } from "../../shared/types";
 import type { AppEnv } from "../env";
 import { rowToUser, type UserRow } from "../lib/users";
 
 export const me = new Hono<AppEnv>();
+const limitBody = bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "body_too_large" }, 413) });
 
 me.get("/", async (c) => {
   const user = c.get("user");
@@ -15,7 +17,7 @@ me.get("/", async (c) => {
   return c.json(body);
 });
 
-me.patch("/", async (c) => {
+me.patch("/", limitBody, async (c) => {
   let body: Record<string, unknown>;
   try {
     const parsed: unknown = await c.req.json();

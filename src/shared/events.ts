@@ -12,9 +12,9 @@ export type UpcomingEvent = { date: string; daysLeft: number } & (
 
 const ORDER = { anniversary: 0, days: 1, birthday: 2, holiday: 3 };
 
-/** Today included, the same calendar day next year excluded; ties follow R7. */
+/** Today included, the same calendar day next year excluded (March 1 for February 29); ties follow R7. */
 export function upcomingEvents(startDate: string | null, people: { name: string; birthDate: string | null }[], today: string): UpcomingEvent[] {
-  const end = anniversaryDate(today, 1);
+  const end = addDays(anniversaryDate(today, 1), today.slice(5) === "02-29" ? 1 : 0);
   const events: UpcomingEvent[] = [];
   const add = (event: UpcomingEvent) => {
     if (event.date >= today && event.date < end) events.push(event);

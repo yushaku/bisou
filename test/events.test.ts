@@ -78,11 +78,19 @@ describe("upcoming events", () => {
       expect(upcomingEvents(startDate, [], date).find((e) => e.kind === "days")).toMatchObject({ days: 1000, daysLeft: 0 });
     },
   );
-  it("AC3 R12: includes today and excludes the same day next year, including leap windows", () => {
-    for (const today of ["2026-11-18", "2028-02-29"]) {
-      const events = upcomingEvents(null, [{ name: "An", birthDate: today }], today).filter((e) => e.kind === "birthday");
-      expect(events).toEqual([{ kind: "birthday", name: "An", age: 0, date: today, daysLeft: 0 }]);
-    }
+  it("AC3 R12: includes today and excludes the same day next year", () => {
+    const today = "2026-11-18";
+    const events = upcomingEvents(null, [{ name: "An", birthDate: today }], today).filter((e) => e.kind === "birthday");
+    expect(events).toEqual([{ kind: "birthday", name: "An", age: 0, date: today, daysLeft: 0 }]);
+  });
+  it.each(["2024-02-28", "2024-02-29"])("R11: a leap-day window includes next February 28 for %s and excludes next March 1", (date) => {
+    const events = upcomingEvents(date, [
+      { name: "An", birthDate: date }, { name: "Binh", birthDate: "2024-03-01" },
+    ], "2028-02-29");
+    expect(events.filter((e) => e.date >= "2029-01-01" && (e.kind === "anniversary" || e.kind === "birthday"))).toEqual([
+      { kind: "anniversary", years: 5, date: "2029-02-28", daysLeft: 365 },
+      { kind: "birthday", name: "An", age: 5, date: "2029-02-28", daysLeft: 365 },
+    ]);
   });
   it("R2: the start day is not a zero-year anniversary", () => {
     expect(upcomingEvents("2026-11-05", [], "2026-11-05").some((e) => e.kind === "anniversary")).toBe(false);

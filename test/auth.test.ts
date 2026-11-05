@@ -1,8 +1,9 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { app } from "../src/worker/app";
 import { sha256Hex } from "../src/worker/lib/crypto";
 import { DAY, MINUTE } from "../src/worker/lib/time";
-import { call, codeFromMail, login, mockResend, sessionCookie } from "./helpers";
+import { call, codeFromMail, login, mockResend, ORIGIN, sessionCookie } from "./helpers";
 
 const T0 = new Date("2026-11-04T08:00:00Z").getTime();
 
@@ -357,6 +358,29 @@ describe("sliding session expiry", () => {
 });
 
 describe("PATCH /api/me", () => {
+  it.each([true, false])("accepts 16 KB JSON and rejects larger bodies with Content-Length %s", async (contentLength) => {
+    const { cookie } = await login("body-limit@example.com");
+    for (const extra of [0, 1]) {
+      const json = JSON.stringify({ displayName: extra ? "Changed" : "Mai" });
+      const bytes = new TextEncoder().encode(json + " ".repeat(16 * 1024 - json.length + extra));
+      const headers = new Headers({ Cookie: cookie, Origin: ORIGIN, "Content-Type": "application/json" });
+      if (contentLength) headers.set("Content-Length", String(bytes.length));
+      const res = await app.request(`${ORIGIN}/api/me`, {
+        method: "PATCH", headers,
+        body: contentLength ? bytes : new ReadableStream({ start(controller) {
+          controller.enqueue(bytes.subarray(0, 8192));
+          controller.enqueue(bytes.subarray(8192));
+          controller.close();
+        } }),
+      }, env);
+      expect(res.status).toBe(extra ? 413 : 200);
+      if (extra) expect(await res.json()).toEqual({ error: "body_too_large" });
+      expect(res.headers.get("Cache-Control")).toBe("no-store");
+      expect(await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
+        .bind("body-limit@example.com").first("display_name")).toBe("Mai");
+    }
+  });
+
   it("R4 / AC2: sets and renames a display name, trimming outer spaces", async () => {
     const { cookie } = await login("patch@example.com");
     const res = await call("PATCH", "/api/me", { cookie, body: { displayName: "  Mai  ", locale: "vi" } });
