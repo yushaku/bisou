@@ -13,8 +13,4 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Bảng màu, phong cách và nền phải tiếp tục độc lập, dùng chung component. Thêm theme không được kéo theo một bản UI riêng.
 - Ảnh nhật ký giữ chất ảnh thật. Minh hoạ đôi chỉ là trang trí, không thay ảnh đại diện hay giả làm danh tính của người dùng.
 - Logo là trái tim nỉ màu đào, giữ màu nhận diện khi đổi theme; không tô lại theo màu hành động.
-- Lời giao diện gần gũi, ngắn và cụ thể: “Góc nhỏ của hai đứa”, “Một điều ước nhỏ”, “Mở hũ”. Không đưa lời giới thiệu design system vào luồng sản phẩm.
-
-## Duy trì tài liệu
-
-Code là nguồn cho token, component và cách triển khai. Chỉ bổ sung vào đây quyết định thiết kế mà agent không thể tự suy ra từ repo; không thêm danh mục file, API, checklist kỹ thuật hay trạng thái tính năng. Khi người dùng đổi hướng, cập nhật quyết định ở đây thay vì giữ nhiều bộ quy tắc.
+- Lời giao diện gần gũi, ngắn và cụ thể: “Góc nhỏ của hai đứa”, “Một điều ước nhỏ”, “Mở hũ”. Không đưa lời giới thiệu design system vào luồng sản phẩm
