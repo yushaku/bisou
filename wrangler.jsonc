@@ -16,8 +16,7 @@
     {
       "binding": "DB",
       "database_name": "bisou",
-      // Placeholder: run `wrangler d1 create bisou` and paste the real id here.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "0107d312-ce81-4920-9b86-26828009aad1",
       "migrations_dir": "migrations"
     }
   ]
