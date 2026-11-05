@@ -3,22 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PAIR_CODE_ALPHABET } from "../src/shared/pairCode";
 import type { Couple } from "../src/shared/types";
 import { HOUR, MINUTE } from "../src/worker/lib/time";
-import { call, login } from "./helpers";
+import { call, login, paired, resetDb, user, type TestUser } from "./helpers";
 
 const T0 = new Date("2026-11-04T08:00:00Z").getTime();
-
-async function resetDb() {
-  await env.DB.batch([
-    env.DB.prepare("DELETE FROM join_attempts"),
-    env.DB.prepare("DELETE FROM pair_codes"),
-    env.DB.prepare("DELETE FROM couple_members"),
-    env.DB.prepare("DELETE FROM couples"),
-    env.DB.prepare("DELETE FROM sessions"),
-    env.DB.prepare("DELETE FROM otp_codes"),
-    env.DB.prepare("DELETE FROM otp_requests"),
-    env.DB.prepare("DELETE FROM users"),
-  ]);
-}
 
 beforeEach(async () => {
   await resetDb();
@@ -30,18 +17,6 @@ afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
-
-interface TestUser {
-  cookie: string;
-  id: string;
-}
-
-async function user(name: string): Promise<TestUser> {
-  const { cookie, res } = await login(`${name.toLowerCase()}@example.com`);
-  const { user: u } = await res.json<{ user: { id: string } }>();
-  await call("PATCH", "/api/me", { cookie, body: { displayName: name } });
-  return { cookie, id: u.id };
-}
 
 async function getCouple(u: TestUser): Promise<Couple | null> {
   const res = await call("GET", "/api/couple", { cookie: u.cookie });
@@ -57,16 +32,6 @@ async function create(u: TestUser): Promise<Couple> {
 
 function join(u: TestUser, code: string) {
   return call("POST", "/api/couple/join", { cookie: u.cookie, body: { code } });
-}
-
-async function paired(): Promise<{ a: TestUser; b: TestUser; couple: Couple; code: string }> {
-  const a = await user("An");
-  const b = await user("Minh");
-  const created = await create(a);
-  const code = created.pendingCode!.code;
-  const res = await join(b, code);
-  expect(res.status).toBe(200);
-  return { a, b, couple: (await res.json<{ couple: Couple }>()).couple, code };
 }
 
 /** A valid-looking code that is not the given one. */

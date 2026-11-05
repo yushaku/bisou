@@ -4,6 +4,7 @@ import {
   anniversaryDate,
   daysTogether,
   isValidDay,
+  latestDay,
   nextMilestone,
   toDayString,
   utcDayString,
@@ -22,6 +23,16 @@ describe("isValidDay", () => {
 });
 
 describe("day strings", () => {
+  it.each([
+    ["2026-11-07T09:59:59.999Z", "2026-11-07"],
+    ["2026-11-07T10:00:00.000Z", "2026-11-08"],
+    ["2026-12-31T10:00:00.000Z", "2027-01-01"],
+    ["2024-02-28T10:00:00.000Z", "2024-02-29"],
+    ["2025-02-28T10:00:00.000Z", "2025-03-01"],
+  ])("AC7 (R8): latest day at %s is %s in UTC+14", (now, expected) => {
+    expect(latestDay(Date.parse(now))).toBe(expected);
+  });
+
   it("reads the local calendar date of a Date and the UTC date of an epoch", () => {
     expect(toDayString(new Date(2026, 10, 4, 23, 59))).toBe("2026-11-04");
     expect(toDayString(new Date(2026, 0, 1, 0, 0))).toBe("2026-01-01");

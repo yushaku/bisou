@@ -1,0 +1,164 @@
+import { env } from "cloudflare:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import worker from "../src/worker/index";
+import { call, explain, jpeg, paired, photoForm, resetDb, webp } from "./helpers";
+
+afterEach(() => vi.restoreAllMocks());
+
+describe("journal query plans", () => {
+  it.each([
+    {
+      name: "AC8 (R12): first feed page",
+      sql: "SELECT * FROM journal_entries WHERE couple_id = ? ORDER BY entry_date DESC, created_at DESC, id DESC LIMIT 21",
+      binds: ["couple"],
+      indexes: ["journal_entries_feed"],
+    },
+    {
+      name: "AC5, AC15 (R13, R21): next feed page, newest first within a day",
+      sql: `SELECT * FROM journal_entries WHERE couple_id = ? AND entry_date <= ?
+        AND (entry_date < ? OR (entry_date = ? AND (created_at < ? OR (created_at = ? AND id < ?))))
+        ORDER BY entry_date DESC, created_at DESC, id DESC LIMIT 21`,
+      binds: ["couple", "2026-11-06", "2026-11-06", "2026-11-06", 100, 100, "entry"],
+      indexes: ["journal_entries_feed"],
+    },
+    {
+      name: "AC3 (R5): photos of a page in position order",
+      sql: "SELECT id, entry_id FROM photos WHERE entry_id IN (?, ?) ORDER BY entry_id, position",
+      binds: ["entry-1", "entry-2"],
+      indexes: ["photos_entry"],
+    },
+    {
+      name: "AC1, AC12 (R1, R17): attached photo with membership",
+      sql: `SELECT p.couple_id FROM photos p JOIN couple_members m ON m.couple_id = p.couple_id
+        WHERE p.id = ? AND m.user_id = ? AND p.entry_id IS NOT NULL`,
+      binds: ["photo", "user"],
+      indexes: ["sqlite_autoindex_photos_1", "sqlite_autoindex_couple_members_"],
+    },
+    {
+      name: "AC1 (R1): entry by id with membership",
+      sql: `SELECT e.* FROM journal_entries e
+        WHERE e.id = ? AND e.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?)`,
+      binds: ["entry", "user"],
+      indexes: ["sqlite_autoindex_journal_entries_1", "sqlite_autoindex_couple_members_"],
+    },
+    {
+      name: "AC12 (R17): pending photo cap",
+      sql: "SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL",
+      binds: ["user"],
+      indexes: ["COVERING INDEX photos_uploader"],
+    },
+    {
+      name: "AC10, AC12 (R11, R17): expired or detached photo sweep",
+      sql: "SELECT id, couple_id FROM photos WHERE entry_id IS NULL AND created_at <= ? LIMIT 500",
+      binds: [100],
+      indexes: ["photos_unattached"],
+    },
+  ])("$name uses indexed searches without sorting", async ({ sql, binds, indexes }) => {
+    const plan = (await explain(sql, ...binds)).join("\n");
+    expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+    for (const index of indexes) expect(plan).toContain(index);
+  });
+});
+
+describe("journal storage", () => {
+  beforeEach(resetDb);
+
+  it("AC5, AC6, AC15 (R7, R13, R21): pages by descending day, creation time and id without gaps", async () => {
+    const { a, couple } = await paired();
+    const entries = [
+      ["past", "2023-02-12", 300],
+      ["lunch", "2026-11-06", 100],
+      ["evening-a", "2026-11-06", 200],
+      ["evening-b", "2026-11-06", 200],
+    ] as const;
+    await env.DB.batch(entries.map(([id, day, at]) => env.DB.prepare(
+      "INSERT INTO journal_entries (id, couple_id, author_id, entry_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).bind(id, couple.id, a.id, day, at, at)));
+    const first = await env.DB.prepare(`SELECT id FROM journal_entries WHERE couple_id = ?
+      ORDER BY entry_date DESC, created_at DESC, id DESC LIMIT 2`).bind(couple.id).all<{ id: string }>();
+    expect(first.results.map((row) => row.id)).toEqual(["evening-b", "evening-a"]);
+    const next = await env.DB.prepare(`SELECT id FROM journal_entries WHERE couple_id = ? AND entry_date <= ?
+      AND (entry_date < ? OR (entry_date = ? AND (created_at < ? OR (created_at = ? AND id < ?))))
+      ORDER BY entry_date DESC, created_at DESC, id DESC LIMIT 2`)
+      .bind(couple.id, "2026-11-06", "2026-11-06", "2026-11-06", 200, 200, "evening-a").all<{ id: string }>();
+    expect(next.results.map((row) => row.id)).toEqual(["lunch", "past"]);
+  });
+
+  it("AC10, AC11 (R11, R15, R17): defaults to partner and detaches photos when their entry is deleted", async () => {
+    const { a, couple } = await paired();
+    await env.DB.prepare(`INSERT INTO journal_entries (id, couple_id, author_id, entry_date, created_at, updated_at)
+      VALUES ('entry', ?, ?, '2026-11-06', 100, 100)`).bind(couple.id, a.id).run();
+    expect(await env.DB.prepare("SELECT body, source FROM journal_entries WHERE id = 'entry'").first())
+      .toEqual({ body: "", source: "partner" });
+    await env.DB.prepare(`INSERT INTO photos (id, couple_id, uploader_id, entry_id, position, created_at)
+      VALUES ('photo', ?, ?, 'entry', 0, 100)`).bind(couple.id, a.id).run();
+    await env.DB.prepare("DELETE FROM journal_entries WHERE id = 'entry'").run();
+    expect(await env.DB.prepare("SELECT entry_id FROM photos WHERE id = 'photo'").first("entry_id")).toBeNull();
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(1);
+    await env.DB.prepare("DELETE FROM couples WHERE id = ?").bind(couple.id).run();
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(0);
+  });
+
+  it("AC3 (R5): rejects photo positions outside the four slots and nonexistent parents", async () => {
+    const { a, couple } = await paired();
+    const insert = env.DB.prepare("INSERT INTO photos (id, couple_id, uploader_id, position, created_at) VALUES (?, ?, ?, ?, 100)");
+    for (const position of [-1, 4]) {
+      await expect(insert.bind(`photo-${position}`, couple.id, a.id, position).run()).rejects.toThrow("CHECK constraint failed");
+    }
+    await expect(insert.bind("orphan", "missing", a.id, null).run()).rejects.toThrow("FOREIGN KEY constraint failed");
+  });
+
+  it("AC12 (R17): supplies a local PHOTOS binding for both renditions", async () => {
+    const key = "couples/test/photos/test/full";
+    await env.PHOTOS.put(key, "photo fixture", { httpMetadata: { contentType: "image/jpeg" } });
+    const object = await env.PHOTOS.get(key);
+    expect(await object?.text()).toBe("photo fixture");
+    expect(object?.httpMetadata?.contentType).toBe("image/jpeg");
+    await env.PHOTOS.delete(key);
+  });
+});
+
+describe("photo test fixtures", () => {
+  it("AC12, AC13 (R16, R18): JPEG headers encode dimensions and optional APP1 metadata", () => {
+    const clean = jpeg({ width: 300, height: 479 });
+    expect(Array.from(clean.slice(0, 11))).toEqual([0xff, 0xd8, 0xff, 0xc0, 0, 11, 8, 1, 223, 1, 44]);
+    const metadata = jpeg({ width: 300, height: 479, exif: true });
+    expect(Array.from(metadata.slice(2, 12))).toEqual([0xff, 0xe1, 0, 8, 69, 120, 105, 102, 0, 0]);
+    expect(metadata.slice(12)).toEqual(clean.slice(2));
+  });
+
+  it.each([
+    ["VP8", [16, 0, 0, 157, 1, 42, 44, 1, 223, 1]],
+    ["VP8L", [47, 43, 129, 119, 0]],
+    ["VP8X", [0, 0, 0, 0, 43, 1, 0, 222, 1, 0]],
+  ] as const)("AC12, AC13 (R16, R18): %s headers encode dimensions and optional EXIF chunks", (kind, header) => {
+    const clean = webp({ width: 300, height: 479, kind });
+    expect(new TextDecoder().decode(clean.slice(0, 4))).toBe("RIFF");
+    expect(new TextDecoder().decode(clean.slice(8, 16))).toBe(`WEBP${kind.padEnd(4)}`);
+    expect(new DataView(clean.buffer).getUint32(4, true)).toBe(clean.length - 8);
+    expect(new DataView(clean.buffer).getUint32(16, true)).toBe(header.length);
+    expect(Array.from(clean.slice(20, 20 + header.length))).toEqual(header);
+    expect(clean.length % 2).toBe(0);
+    const metadata = webp({ width: 300, height: 479, kind, exif: true });
+    expect(new TextDecoder().decode(metadata.slice(clean.length, clean.length + 4))).toBe("EXIF");
+    expect(new DataView(metadata.buffer).getUint32(4, true)).toBe(metadata.length - 8);
+  });
+
+  it("AC12, AC13 (R16, R18): sends both multipart files with their bytes and content types intact", async () => {
+    const full = jpeg({ width: 1440, height: 1440 });
+    const thumb = webp({ width: 480, height: 480, kind: "VP8L" });
+    vi.spyOn(worker, "fetch").mockImplementationOnce(async (req) => {
+      expect(req.headers.get("Content-Type")).toMatch(/^multipart\/form-data; boundary=/);
+      const form = await req.formData();
+      for (const [size, bytes, type] of [["full", full, "image/jpeg"], ["thumb", thumb, "image/webp"]] as const) {
+        const part = form.get(size);
+        expect(part).toBeInstanceOf(File);
+        const file = part as File;
+        expect(file.type).toBe(type);
+        expect(new Uint8Array(await file.arrayBuffer())).toEqual(bytes);
+      }
+      return new Response(null, { status: 201 });
+    });
+    expect((await call("POST", "/api/photos", { form: photoForm(full, thumb, { thumb: "image/webp" }) })).status).toBe(201);
+  });
+});

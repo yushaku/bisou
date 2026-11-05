@@ -36,7 +36,16 @@ export type ApiErrorCode =
   | "pair_code_expired"
   | "own_pair_code"
   | "couple_full"
-  | "invalid_start_date";
+  | "invalid_start_date"
+  | "entry_empty"
+  | "entry_text_too_long"
+  | "invalid_entry_date"
+  | "too_many_photos"
+  | "photo_invalid"
+  | "photo_too_large"
+  | "unsupported_photo_type"
+  | "too_many_pending_photos"
+  | "not_author";
 
 export interface ApiError {
   error: ApiErrorCode;
@@ -76,4 +85,33 @@ export interface CoupleResponse {
 export interface MeResponse {
   user: User;
   coupleId: string | null;
+}
+
+export type PhotoSize = "full" | "thumb";
+
+export interface JournalEntry {
+  id: string;
+  authorId: string;
+  date: string;
+  text: string;
+  source: "partner" | "wish";
+  /** Ordered by position. */
+  photoIds: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface JournalPage {
+  entries: JournalEntry[];
+  nextCursor: string | null;
+}
+
+export interface EntryInput {
+  date: string;
+  text: string;
+  photoIds: string[];
+}
+
+export interface PhotoUploadResponse {
+  photo: { id: string };
 }

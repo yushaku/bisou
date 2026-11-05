@@ -6,6 +6,9 @@
 const DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DAY_MS = 86_400_000;
 
+/** UTC+14 is the earliest time zone to enter a new calendar day. */
+export const MAX_UTC_OFFSET = 14 * 60 * 60 * 1000;
+
 /** Earliest accepted start date; guards against typos such as year 0202. */
 export const MIN_DAY = "1900-01-01";
 
@@ -49,6 +52,10 @@ export function toDayString(date: Date): string {
 export function utcDayString(epochMs: number): string {
   const d = new Date(epochMs);
   return fromParts(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+}
+
+export function latestDay(nowMs: number): string {
+  return utcDayString(nowMs + MAX_UTC_OFFSET);
 }
 
 /** Days since 1970-01-01 (timezone free). */

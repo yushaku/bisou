@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { isValidDay, utcDayString } from "../../shared/days";
+import { isValidDay, latestDay } from "../../shared/days";
 import { isPairCode, normalizePairCode } from "../../shared/pairCode";
 import type { AppEnv } from "../env";
 import {
@@ -10,7 +10,7 @@ import {
   releaseJoinAttempt,
   reserveJoinAttempt,
 } from "../lib/couples";
-import { MAX_UTC_OFFSET, PAIR_CODE_TTL } from "../lib/time";
+import { PAIR_CODE_TTL } from "../lib/time";
 
 // Every query is keyed by the session user; a couple id never comes from the client.
 export const couple = new Hono<AppEnv>();
@@ -179,7 +179,7 @@ couple.patch("/", async (c) => {
   const body = await readJson(c.req.raw);
   const startDate = body?.startDate;
   // The client limits the picker to the device's today; the server allows the furthest zone's today.
-  if (!isValidDay(startDate) || startDate > utcDayString(Date.now() + MAX_UTC_OFFSET)) {
+  if (!isValidDay(startDate) || startDate > latestDay(Date.now())) {
     return c.json({ error: "invalid_start_date" }, 400);
   }
   const res = await db

@@ -11,8 +11,10 @@ export const OTP_MAX_PER_HOUR = 5;
 export const PAIR_CODE_TTL = 24 * HOUR;
 /** Failed join attempts (wrong or expired code) allowed per user per rolling hour. */
 export const JOIN_MAX_FAILED_PER_HOUR = 10;
-/** The furthest time zone (UTC+14): a start date up to that zone's today is not in the future. */
-export const MAX_UTC_OFFSET = 14 * HOUR;
+export { MAX_UTC_OFFSET } from "../../shared/days";
+
+export const PENDING_PHOTO_TTL = 24 * HOUR;
+export const MAX_PENDING_PHOTOS_PER_USER = 12;
 
 export const SESSION_TTL = 90 * DAY;
 /** Extend the session when less than this much time is left. */

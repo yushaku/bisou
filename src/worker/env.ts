@@ -2,6 +2,7 @@ import type { Locale, User } from "../shared/types";
 
 export interface Env {
   DB: D1Database;
+  PHOTOS: R2Bucket;
   /** "development" locally (from .dev.vars), "production" otherwise. */
   ENVIRONMENT?: string;
   /** Secret: HMAC key for one-time codes. */
