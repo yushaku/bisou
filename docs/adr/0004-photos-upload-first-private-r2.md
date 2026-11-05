@@ -8,15 +8,15 @@ Journal entries carry up to 4 photos, each a square the author frames ([journal 
 ## Decision
 - The client crops each photo to the chosen square and encodes two renditions: `full` (at most 1440 px) and `thumb` (at most 480 px), both re-encoded without metadata.
 - Upload first: `POST /api/photos` takes one photo as a `multipart/form-data` request with parts `full` and `thumb`, stores both in R2 (binding `PHOTOS`, bucket `bisou`) and returns one photo id that is pending (`photos.entry_id` NULL). Saving or editing an entry attaches pending photos by id in one D1 batch.
-- The server reads only headers: magic bytes, no EXIF or XMP blocks, and declared dimensions that are square and within each rendition's limit.
+- The server checks magic bytes and square dimensions within each rendition's limit without decoding pixels. Before the first JPEG scan it keeps APP0 (JFIF), ICC_PROFILE APP2 and APP14 (Adobe), dropping other APPn and COM segments; after that it refuses any APPn or COM marker or an end marker before the final two bytes. WebP EXIF and XMP blocks are refused.
 - Pending photos older than 24 h, and photos detached by an edit or delete, are removed from R2 and D1 by the daily cron; edit and delete also remove them right away, the cron is the fallback.
-- One D1 row per photo, two R2 objects: `couples/<coupleId>/photos/<photoId>/full` and `.../thumb`, derived from the row, with ids made by the server, never from user input. The keys never change, so photo responses are `private, max-age=31536000, immutable`. Photos are served only by `GET /api/photos/:id/:size` (`full` or `thumb`) after a session and couple check.
+- One D1 row per photo, two R2 objects: `couples/<coupleId>/photos/<photoId>/full` and `.../thumb`, derived from the row, with ids made by the server, never from user input. Photo responses use `private, max-age=86400` so cached photos become stale within one day of an entry's deletion (R20). Photos are served only by `GET /api/photos/:id/:size` (`full` or `thumb`) after a session and couple check.
 
 ## Consequences
-- A failed photo is retried alone, both renditions together; there is no half uploaded photo state. The entry save stays a small JSON request.
-- Each photo costs two R2 writes and about 300 to 650 KB of storage.
-- Orphans exist for up to a day; the cron and a per user cap on pending photos bound them.
+- A failed photo is retried alone, both renditions together; there is no half uploaded photo state in the client. Entry create and edit requests are limited to 16 KB of JSON.
+- Each photo costs two R2 writes; rendition size and byte limits are defined in [shared journal limits](../../src/shared/journal.ts).
+- Pending rows expire after 24 h and are swept daily; each user can have at most 12 live pending photos. If the Worker dies between an R2 write and the D1 insert, those objects have no row and are not swept. There is no per-couple storage cap.
 - The couple prefix lets a later account or couple deletion list and remove all photos of a couple.
 - Header checks do not prove the pixels match; a crafted file only reaches the couple that uploaded it and is served with its allow listed type and `nosniff`.
-- A partner's browser may keep a deleted photo in its private HTTP cache until evicted (accepted, R20).
+- A partner's browser may display a deleted photo from its private cache for up to one day before it becomes stale; an already open view can persist until refreshed (R20).
 - Changing the renditions, the upload shape or the key layout later means migrating stored objects.

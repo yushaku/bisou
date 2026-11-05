@@ -6,7 +6,7 @@ Status: accepted (November 2026)
 Bisou is a private app for two people. It needs an HTTPS host for a PWA, a small relational store, and photo storage of a few GB, at zero monthly cost and without a credit card commitment if possible.
 
 ## Decision
-One Cloudflare Worker (Hono) serves the static PWA (Workers static assets) and the JSON API under `/api`. D1 (SQLite) stores all data, R2 stores photos in a private bucket served through the Worker. Hosting stays on `*.workers.dev` until a domain is bought.
+One Cloudflare Worker (Hono) serves the static PWA (Workers static assets) and the JSON API under `/api`. D1 (SQLite) stores structured data; R2 stores photos in a private bucket served through the Worker. Hosting stays on `*.workers.dev` until a domain is bought.
 
 ## Consequences
 - Free limits: 100k Worker requests/day (static assets not counted), 10 ms CPU per request, so only Web Crypto (HMAC, SHA-256), no bcrypt or image processing on the server.
