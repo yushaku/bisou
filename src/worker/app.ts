@@ -6,8 +6,9 @@ import { auth } from "./routes/auth";
 import { couple } from "./routes/couple";
 import { me } from "./routes/me";
 import { photos } from "./routes/photos";
+import { journal } from "./routes/journal";
 
-// One route module per area. Later steps add journal and wishes here.
+// One route module per area.
 export const app = new Hono<AppEnv>().basePath("/api");
 
 app.use("*", async (c, next) => {
@@ -21,6 +22,7 @@ app.route("/auth", auth);
 app.route("/me", me);
 app.route("/couple", couple);
 app.route("/photos", photos);
+app.route("/journal", journal);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));
 app.onError((err, c) => {
