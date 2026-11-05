@@ -1,6 +1,7 @@
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { receivedText } from "../../shared/wishes";
+import { isLocale } from "../../shared/types";
 import { entriesWithPhotos, findEntry, validateEntry } from "../lib/journal";
 import type { AppEnv } from "../env";
 import { isUniqueViolation } from "../lib/couples";
@@ -87,7 +88,7 @@ wishes.delete("/:id", async (c) => {
   const owner = c.get("user").id;
   if (!await findWish(db, id, owner, c.get("wishCoupleId"))) return c.json({ error: "not_found" }, 404);
   const [, detached] = await db.batch([
-    db.prepare(`UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), wish_id = NULL WHERE wish_id = ?1`).bind(id),
+    db.prepare(`UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), gone_at = ?2, wish_id = NULL WHERE wish_id = ?1`).bind(id, Date.now()),
     db.prepare("UPDATE photos SET wish_id = NULL, created_at = 0 WHERE wish_id = ? RETURNING id, couple_id").bind(id),
     db.prepare("DELETE FROM wishes WHERE id = ? AND owner_id = ?").bind(id, owner),
   ]);
@@ -117,7 +118,7 @@ wishes.post("/:id/claim", async (c) => {
   const claimer = c.get("user").id;
   try {
     const result = await db.prepare(`INSERT INTO wish_claims (id, wish_id, claimer_id, created_at)
-      SELECT ?, w.id, ?, ? FROM wishes w WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ? AND w.status = 'open'`)
+      SELECT ?, w.id, ?, ? FROM wishes w WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ? AND w.status = 'open' AND w.price IS NOT NULL`)
       .bind(id, claimer, Date.now(), c.req.param("id"), c.get("partnerId"), c.get("wishCoupleId")).run();
     if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
   } catch (error) {
@@ -130,11 +131,15 @@ wishes.post("/:id/claim", async (c) => {
 });
 
 wishes.get("/claims", async (c) => {
-  const [list] = await c.env.DB.batch<ClaimRow>([
-    c.env.DB.prepare(`${CLAIM_SELECT} WHERE c.claimer_id = ? ORDER BY c.created_at DESC`).bind(c.get("user").id),
-    c.env.DB.prepare("DELETE FROM wish_claims WHERE claimer_id = ? AND wish_id IS NULL").bind(c.get("user").id),
-  ]);
-  return c.json({ claims: list!.results.map(toClaim) });
+  const list = await c.env.DB.prepare(`${CLAIM_SELECT} WHERE c.claimer_id = ? ORDER BY c.created_at DESC`)
+    .bind(c.get("user").id).all<ClaimRow>();
+  return c.json({ claims: list.results.map(toClaim) });
+});
+
+wishes.post("/claims/:id/ack", async (c) => {
+  await c.env.DB.prepare("DELETE FROM wish_claims WHERE id = ? AND claimer_id = ? AND wish_id IS NULL")
+    .bind(c.req.param("id"), c.get("user").id).run();
+  return c.json({ ok: true });
 });
 
 wishes.delete("/claims/:id", async (c) => {
@@ -161,7 +166,8 @@ wishes.post("/:id/received", limitBody, async (c) => {
   if (!body || typeof body !== "object" || typeof body.note !== "string") return c.json({ error: "invalid_body" }, 400);
   const now = Date.now();
   const note = body.note.trim();
-  const parsed = validateEntry({ date: body.date, photoIds: body.photoIds, text: receivedText(c.get("user").locale, current.title, note) }, now);
+  const locale = isLocale(body.locale) ? body.locale : c.get("user").locale;
+  const parsed = validateEntry({ date: body.date, photoIds: body.photoIds, text: receivedText(locale, current.title, note) }, now);
   if ("error" in parsed) return c.json(parsed, 400);
   const { date, text, photoIds } = parsed.input;
   if (photoIds.length) {

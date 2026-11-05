@@ -161,6 +161,7 @@ export interface Claim {
 }
 
 export interface ReceiveWishInput {
+  locale: Locale;
   date: string;
   note: string;
   photoIds: string[];

@@ -46,6 +46,7 @@ export const api = {
   spin: (budget: number) => call<{ wish: SpinWish | null }>("POST", "/api/wishes/spin", { budget }),
   claim: (id: string) => call<{ claim: Claim }>("POST", `/api/wishes/${encodeURIComponent(id)}/claim`),
   claims: () => call<{ claims: Claim[] }>("GET", "/api/wishes/claims"),
+  acknowledgeClaimNotice: (id: string) => call<{ ok: true }>("POST", `/api/wishes/claims/${encodeURIComponent(id)}/ack`),
   releaseClaim: (id: string) => call<{ ok: true }>("DELETE", `/api/wishes/claims/${encodeURIComponent(id)}`),
   wishes: () => call<{ open: Wish[]; received: Wish[] }>("GET", "/api/wishes"),
   createWish: (input: WishInput) => call<{ wish: Wish }>("POST", "/api/wishes", input),

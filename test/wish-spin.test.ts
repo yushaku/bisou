@@ -76,12 +76,21 @@ describe("secret spins and claims", () => {
     expect((await (await spin(a)).json<{ wish: SpinWish }>()).wish.id).toBe(wish.id);
   });
 
-  it("AC9 (R16, R23): deleting keeps the title only until the claimer reads the notice", async () => {
+  it("AC9 (R16, R23): GET preserves notices until an owned notice is acknowledged by POST", async () => {
     const { a, b } = await paired();
     const wish = await create(b);
     await claim(a, wish.id);
     expect((await call("DELETE", `/api/wishes/${wish.id}`, { cookie: b.cookie })).status).toBe(200);
-    expect(await claims(a)).toEqual([expect.objectContaining({ status: "gone", title: "Scarf", price: null, link: null, photoId: null })]);
+    const notices = await claims(a);
+    expect(notices).toEqual([expect.objectContaining({ status: "gone", title: "Scarf", price: null, link: null, photoId: null })]);
+    expect(await claims(a)).toEqual(notices);
+    const path = `/api/wishes/claims/${notices[0]!.id}/ack`;
+    expect((await call("POST", path, { cookie: a.cookie, origin: "https://outside.example" })).status).toBe(403);
+    expect((await call("POST", path, { cookie: a.cookie, origin: null })).status).toBe(403);
+    expect((await call("POST", path, { cookie: b.cookie })).status).toBe(200);
+    expect(await claims(a)).toEqual(notices);
+    expect((await call("POST", path, { cookie: a.cookie })).status).toBe(200);
+    expect((await call("POST", path, { cookie: a.cookie })).status).toBe(200);
     expect(await claims(a)).toEqual([]);
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM wish_claims").first("n")).toBe(0);
   });
@@ -104,7 +113,7 @@ describe("secret spins and claims", () => {
     expect((await env.DB.prepare("PRAGMA table_info(wish_spins)").all<{ name: string }>()).results.map((c) => c.name)).toEqual(["id", "user_id", "created_at"]);
   });
 
-  it("AC1, AC7 (R1, R13): own and outsider claims fail, and landed wishes stay claimable after price changes", async () => {
+  it("AC1, AC7 (R1, R8, R12, R13): own, outsider and newly unpriced landed wishes cannot be claimed", async () => {
     const { a, b } = await paired();
     const outsider = await user("Outside");
     const wish = await create(b);
@@ -113,7 +122,20 @@ describe("secret spins and claims", () => {
     expect((await spin(outsider)).status).toBe(404);
     await spin(a);
     await call("PUT", `/api/wishes/${wish.id}`, { cookie: b.cookie, body: { title: "Scarf", price: null } });
-    expect((await claim(a, wish.id)).status).toBe(201);
+    expect((await claim(a, wish.id)).status).toBe(404);
+    expect(await claims(a)).toEqual([]);
+  });
+
+  it("R16, R22: acknowledging a notice cannot remove an open or received claim", async () => {
+    const { a, b } = await paired();
+    const wish = await create(b);
+    const { claim: mine } = await (await claim(a, wish.id)).json<{ claim: Claim }>();
+    const path = `/api/wishes/claims/${mine.id}/ack`;
+    expect((await call("POST", path, { cookie: a.cookie })).status).toBe(200);
+    expect(await claims(a)).toHaveLength(1);
+    await call("POST", `/api/wishes/${wish.id}/received`, { cookie: b.cookie, body: { date: "2023-02-12", note: "", photoIds: [] } });
+    expect((await call("POST", path, { cookie: a.cookie })).status).toBe(200);
+    expect(await claims(a)).toEqual([expect.objectContaining({ id: mine.id, status: "received" })]);
   });
 
   it("AC3 (R7): refuses invalid budgets without consuming a spin", async () => {

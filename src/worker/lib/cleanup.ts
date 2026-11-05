@@ -15,22 +15,24 @@ export interface CleanupCounts {
   join_attempts: number;
   pair_codes: number;
   wish_spins: number;
+  wish_notices: number;
 }
 
 /**
  * Deletes expired rows in one D1 batch (one transaction). Every WHERE column has an index
- * (0002_couples.sql, 0003_cleanup_indexes.sql), so each delete is a SEARCH, not a SCAN.
+ * (0002_couples.sql, 0003_cleanup_indexes.sql, 0005_wishes.sql), so each delete is a SEARCH, not a SCAN.
  * Only pair codes are removed from the pairing tables: couples and members stay.
  */
 export async function runCleanup(db: D1Database, now: number): Promise<CleanupCounts> {
   const windowStart = now - RATE_LIMIT_WINDOW;
-  const [otpCodes, sessions, otpRequests, joinAttempts, pairCodes, wishSpins] = await db.batch([
+  const [otpCodes, sessions, otpRequests, joinAttempts, pairCodes, wishSpins, wishNotices] = await db.batch([
     db.prepare("DELETE FROM otp_codes WHERE expires_at <= ?").bind(now),
     db.prepare("DELETE FROM sessions WHERE expires_at <= ?").bind(now),
     db.prepare("DELETE FROM otp_requests WHERE created_at <= ?").bind(windowStart),
     db.prepare("DELETE FROM join_attempts WHERE created_at <= ?").bind(windowStart),
     db.prepare("DELETE FROM pair_codes WHERE expires_at <= ?").bind(now),
     db.prepare("DELETE FROM wish_spins WHERE created_at <= ?").bind(now - DAY),
+    db.prepare("DELETE FROM wish_claims WHERE wish_id IS NULL AND gone_at <= ?").bind(now - 30 * DAY),
   ]);
   return {
     otp_codes: otpCodes?.meta.changes ?? 0,
@@ -39,6 +41,7 @@ export async function runCleanup(db: D1Database, now: number): Promise<CleanupCo
     join_attempts: joinAttempts?.meta.changes ?? 0,
     pair_codes: pairCodes?.meta.changes ?? 0,
     wish_spins: wishSpins?.meta.changes ?? 0,
+    wish_notices: wishNotices?.meta.changes ?? 0,
   };
 }
 

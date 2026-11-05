@@ -13,6 +13,15 @@ async function create(owner: TestUser) {
 const receive = (owner: TestUser, id: string, body: unknown = input) => call("POST", `/api/wishes/${id}/received`, { cookie: owner.cookie, body });
 
 describe("wish receipt", () => {
+  it.each(["en", "vi", "fr", null, 42, undefined])("R20: uses the app locale %s when valid, otherwise the stored locale", async (locale) => {
+    const { b } = await paired();
+    const wish = await create(b);
+    const res = await receive(b, wish.id, { ...input, locale });
+    expect(res.status).toBe(201);
+    expect((await res.json<{ entry: JournalEntry }>()).entry.text)
+      .toBe(`${locale === "en" ? "Received" : "Đã nhận"}: Linen scarf. ${input.note}`);
+  });
+
   it("AC11 (R18, R19, R22): only the owner receives, for a valid day, permanently; the claim follows", async () => {
     const { a, b } = await paired();
     const wish = await create(b);

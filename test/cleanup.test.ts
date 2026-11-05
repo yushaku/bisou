@@ -2,7 +2,7 @@ import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../src/worker/index";
 import { runCleanup, sweepPhotos } from "../src/worker/lib/cleanup";
-import { HOUR, MINUTE, PENDING_PHOTO_TTL } from "../src/worker/lib/time";
+import { DAY, HOUR, MINUTE, PENDING_PHOTO_TTL } from "../src/worker/lib/time";
 import { photoKey } from "../src/worker/lib/photos";
 import { call, paired, resetDb, upload } from "./helpers";
 
@@ -104,10 +104,31 @@ async function expectOnlyLiveRowsLeft() {
 }
 
 describe("runCleanup", () => {
+  it("R16, R23: expires unread titles 30 days after deletion, preserving recent notices and live claims", async () => {
+    const { a, b } = await paired();
+    for (const title of ["Deleted", "Live"]) {
+      const res = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title, price: 100 } });
+      const { wish } = await res.json<{ wish: { id: string } }>();
+      await call("POST", `/api/wishes/${wish.id}/claim`, { cookie: a.cookie });
+      await env.DB.prepare("UPDATE wish_claims SET created_at = ? WHERE wish_id = ?").bind(NOW - 60 * DAY, wish.id).run();
+      if (title === "Deleted") {
+        vi.useFakeTimers({ toFake: ["Date"] });
+        vi.setSystemTime(NOW);
+        await call("DELETE", `/api/wishes/${wish.id}`, { cookie: b.cookie });
+        vi.useRealTimers();
+      }
+    }
+    await runCleanup(env.DB, NOW + 30 * DAY - 1);
+    expect(await count("wish_claims")).toBe(2);
+    expect((await runCleanup(env.DB, NOW + 30 * DAY)).wish_notices).toBe(1);
+    expect(await count("wish_claims")).toBe(1);
+    expect(await env.DB.prepare("SELECT gone_title FROM wish_claims").first("gone_title")).toBeNull();
+  });
+
   it("deletes only expired rows and reports the counts per table", async () => {
     await seed();
     const counts = await runCleanup(env.DB, NOW);
-    expect(counts).toEqual({ otp_codes: 2, sessions: 2, otp_requests: 2, join_attempts: 2, pair_codes: 2, wish_spins: 0 });
+    expect(counts).toEqual({ otp_codes: 2, sessions: 2, otp_requests: 2, join_attempts: 2, pair_codes: 2, wish_spins: 0, wish_notices: 0 });
     await expectOnlyLiveRowsLeft();
   });
 
@@ -130,6 +151,7 @@ describe("runCleanup", () => {
       join_attempts: 0,
       pair_codes: 0,
       wish_spins: 0,
+      wish_notices: 0,
     });
     await expectOnlyLiveRowsLeft();
   });
@@ -161,6 +183,7 @@ describe("scheduled handler", () => {
       join_attempts: 2,
       pair_codes: 2,
       wish_spins: 0,
+      wish_notices: 0,
     });
     expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 0);
   });

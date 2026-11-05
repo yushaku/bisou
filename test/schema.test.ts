@@ -51,7 +51,7 @@ describe("journal query plans", () => {
       name: "AC10, AC12 (R11, R17): expired or detached photo sweep",
       sql: "SELECT id, couple_id FROM photos WHERE entry_id IS NULL AND wish_id IS NULL AND created_at <= ? LIMIT 500",
       binds: [100],
-      indexes: ["photos_unattached"],
+      indexes: ["photos_pending"],
     },
   ])("$name uses indexed searches without sorting", async ({ sql, binds, indexes }) => {
     const plan = (await explain(sql, ...binds)).join("\n");
@@ -169,10 +169,12 @@ describe("wish query plans", () => {
     ["AC1 (R1): paired membership", `SELECT m.couple_id, (SELECT x.user_id FROM couple_members x WHERE x.couple_id = m.couple_id AND x.user_id != m.user_id) AS partner_id FROM couple_members m WHERE m.user_id = ?`, ["user"]],
     ["AC1 (R2): owner list", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.owner_id = ? AND w.couple_id = ? AND w.status = ? ORDER BY w.created_at DESC, w.id DESC`, ["user", "couple", "open"]],
     ["AC1 (R2): owner wish", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.id = ? AND w.owner_id = ?`, ["wish", "user"]],
-    ["AC9 (R16): deleted claim notice", `UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), wish_id = NULL WHERE wish_id = ?1`, ["wish"]],
+    ["AC9 (R16): deleted claim notice", `UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), gone_at = ?2, wish_id = NULL WHERE wish_id = ?1`, ["wish", 100]],
     ["AC3 (R7-R9): spin candidates", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.owner_id = ? AND w.couple_id = ? AND w.status = 'open' AND w.price IS NOT NULL AND w.price <= ? AND NOT EXISTS (SELECT 1 FROM wish_claims c WHERE c.wish_id = w.id)`, ["user", "couple", 500000]],
     ["AC8 (R15): claims", `SELECT c.*, w.title, p.id FROM wish_claims c LEFT JOIN wishes w ON w.id = c.wish_id LEFT JOIN photos p ON p.wish_id = w.id WHERE c.claimer_id = ? ORDER BY c.created_at DESC`, ["user"]],
-    ["AC9 (R16): consume notice", `DELETE FROM wish_claims WHERE claimer_id = ? AND wish_id IS NULL`, ["user"]],
+    ["AC9 (R16): acknowledge notice", `DELETE FROM wish_claims WHERE id = ? AND claimer_id = ? AND wish_id IS NULL`, ["claim", "user"]],
+    ["AC9 (R23): expire unread notice", `DELETE FROM wish_claims WHERE wish_id IS NULL AND gone_at <= ?`, [100]],
+    ["AC7 (R8, R12, R13): claim a priced wish", `INSERT INTO wish_claims (id, wish_id, claimer_id, created_at) SELECT ?, w.id, ?, ? FROM wishes w WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ? AND w.status = 'open' AND w.price IS NOT NULL`, ["claim", "user", 100, "wish", "owner", "couple"]],
     ["AC8 (R15): release", `DELETE FROM wish_claims WHERE id = ? AND claimer_id = ? AND EXISTS (SELECT 1 FROM wishes w WHERE w.id = wish_claims.wish_id AND w.status = 'open')`, ["claim", "user"]],
     ["AC5 (R11): spin quota", `SELECT COUNT(*), MIN(created_at) FROM wish_spins WHERE user_id = ?`, ["user"]],
     ["AC10 (R24): remove old spins", `DELETE FROM wish_spins WHERE created_at <= ?`, [100]],

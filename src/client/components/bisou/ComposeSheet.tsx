@@ -129,7 +129,7 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
     setSaving(true);
     setFormError(null);
     const input = { date, text: entryText(text), photoIds: queue.items.map((i) => i.photoId ?? "") };
-    const res = receiving ? await api.receiveWish(receiving.id, { date, note: text.trim(), photoIds: input.photoIds })
+    const res = receiving ? await api.receiveWish(receiving.id, { date, note: text.trim(), photoIds: input.photoIds, locale })
       : entry ? await api.updateEntry(entry.id, input) : await api.createEntry(input);
     setConfirmReceiving(false);
     setSaving(false);

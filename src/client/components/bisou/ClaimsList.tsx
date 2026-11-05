@@ -33,6 +33,11 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
     document.addEventListener("visibilitychange", visible);
     return () => document.removeEventListener("visibilitychange", visible);
   }, [refresh]);
+  useEffect(() => {
+    for (const claim of claims ?? []) {
+      if (claim.status === "gone") void api.acknowledgeClaimNotice(claim.id);
+    }
+  }, [claims]);
 
   async function release() {
     if (!releasing || busy) return;
