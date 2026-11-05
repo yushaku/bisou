@@ -82,8 +82,10 @@ export function parsePrefs(raw: string | null): ThemePrefs {
   };
 }
 
-export function themeById(id: ThemeId): (typeof THEMES)[number] {
-  return THEMES.find((t) => t.id === id) ?? THEMES[0];
+export function themeById(id: ThemeId): ThemeDef {
+  const found = THEMES.find((t) => t.id === id) ?? THEMES[0];
+  if (!found) throw new Error("No themes registered in palettes.json");
+  return found;
 }
 
 export function resolveTheme(prefs: ThemePrefs, systemDark: boolean): ThemeId {
