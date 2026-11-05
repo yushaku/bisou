@@ -1,6 +1,8 @@
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { AppEnv } from "../env";
+import { isUniqueViolation } from "../lib/couples";
+import { CLAIM_SELECT, toClaim, pickWeighted, reserveSpin, type ClaimRow } from "../lib/wishes";
 import { purgePhotos } from "../lib/photos";
 import { PENDING_PHOTO_TTL } from "../lib/time";
 import { findWish, toWish, validateWish, WISH_SELECT, type WishRow } from "../lib/wishes";
@@ -89,4 +91,56 @@ wishes.delete("/:id", async (c) => {
   ]);
   await purgePhotos(c.env, detached!.results as { id: string; couple_id: string }[]);
   return c.json({ ok: true });
+});
+
+
+wishes.post("/spin", limitBody, async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const budget = body?.budget;
+  if (typeof budget !== "number" || !Number.isSafeInteger(budget) || budget <= 0) return c.json({ error: "invalid_budget" }, 400);
+  const retryAfter = await reserveSpin(c.env.DB, c.get("user").id, Date.now());
+  if (retryAfter !== null) return c.json({ error: "rate_limited", retryAfter }, 429);
+  // shortcut: reads the eligible jar in one query, add a cap if jars grow beyond a few hundred wishes.
+  const { results } = await c.env.DB.prepare(`${WISH_SELECT} WHERE w.owner_id = ? AND w.couple_id = ?
+    AND w.status = 'open' AND w.price IS NOT NULL AND w.price <= ?
+    AND NOT EXISTS (SELECT 1 FROM wish_claims c WHERE c.wish_id = w.id)`)
+    .bind(c.get("partnerId"), c.get("wishCoupleId"), budget).all<WishRow>();
+  const row = pickWeighted(results);
+  return c.json({ wish: row ? { id: row.id, title: row.title, price: row.price, link: row.link, photoId: row.photo_id } : null });
+});
+
+wishes.post("/:id/claim", async (c) => {
+  const db = c.env.DB;
+  const id = crypto.randomUUID();
+  const claimer = c.get("user").id;
+  try {
+    const result = await db.prepare(`INSERT INTO wish_claims (id, wish_id, claimer_id, created_at)
+      SELECT ?, w.id, ?, ? FROM wishes w WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ? AND w.status = 'open'`)
+      .bind(id, claimer, Date.now(), c.req.param("id"), c.get("partnerId"), c.get("wishCoupleId")).run();
+    if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
+  } catch (error) {
+    if (isUniqueViolation(error, "wish_claims.wish_id")) return c.json({ error: "already_claimed" }, 409);
+    throw error;
+  }
+  const row = await db.prepare(`${CLAIM_SELECT} WHERE c.id = ? AND c.claimer_id = ?`).bind(id, claimer).first<ClaimRow>();
+  return c.json({ claim: toClaim(row!) }, 201);
+});
+
+wishes.get("/claims", async (c) => {
+  const [list] = await c.env.DB.batch<ClaimRow>([
+    c.env.DB.prepare(`${CLAIM_SELECT} WHERE c.claimer_id = ? ORDER BY c.created_at DESC`).bind(c.get("user").id),
+    c.env.DB.prepare("DELETE FROM wish_claims WHERE claimer_id = ? AND wish_id IS NULL").bind(c.get("user").id),
+  ]);
+  return c.json({ claims: list!.results.map(toClaim) });
+});
+
+wishes.delete("/claims/:id", async (c) => {
+  const db = c.env.DB;
+  const id = c.req.param("id");
+  const claimer = c.get("user").id;
+  const result = await db.prepare(`DELETE FROM wish_claims WHERE id = ? AND claimer_id = ?
+    AND EXISTS (SELECT 1 FROM wishes w WHERE w.id = wish_claims.wish_id AND w.status = 'open')`).bind(id, claimer).run();
+  if (result.meta.changes) return c.json({ ok: true });
+  const row = await db.prepare(`${CLAIM_SELECT} WHERE c.id = ? AND c.claimer_id = ?`).bind(id, claimer).first<ClaimRow>();
+  return row?.status === "received" ? c.json({ error: "wish_received" }, 409) : c.json({ error: "not_found" }, 404);
 });

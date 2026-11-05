@@ -3,6 +3,8 @@
 import type { Person } from "@/components/bisou/CoupleAvatars";
 import type { Entry } from "@/components/bisou/EntryCard";
 import type { Milestone } from "@/components/bisou/MilestoneItem";
+import type { ApiResult } from "@/api";
+import type { SpinWish } from "../../shared/types";
 import type { Wish } from "@/components/bisou/WishCard";
 import coffee from "./photos/coffee.webp";
 import daLat from "./photos/da-lat.webp";
@@ -84,3 +86,9 @@ export const PARTNER_WISHES: Wish[] = [
 ];
 
 export const PAIR_CODE = "HN7K2Q";
+
+
+export async function demoSpin(budget: number): Promise<ApiResult<{ wish: SpinWish | null }>> {
+  const wish = PARTNER_WISHES.find((w) => w.price !== null && w.price <= budget);
+  return { ok: true, data: { wish: wish ? { id: wish.id, title: wish.title, price: wish.price!, link: wish.link, photoId: null } : null } };
+}

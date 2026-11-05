@@ -170,6 +170,12 @@ describe("wish query plans", () => {
     ["AC1 (R2): owner list", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.owner_id = ? AND w.couple_id = ? AND w.status = ? ORDER BY w.created_at DESC, w.id DESC`, ["user", "couple", "open"]],
     ["AC1 (R2): owner wish", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.id = ? AND w.owner_id = ?`, ["wish", "user"]],
     ["AC9 (R16): deleted claim notice", `UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), wish_id = NULL WHERE wish_id = ?1`, ["wish"]],
+    ["AC3 (R7-R9): spin candidates", `SELECT w.*, p.id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id WHERE w.owner_id = ? AND w.couple_id = ? AND w.status = 'open' AND w.price IS NOT NULL AND w.price <= ? AND NOT EXISTS (SELECT 1 FROM wish_claims c WHERE c.wish_id = w.id)`, ["user", "couple", 500000]],
+    ["AC8 (R15): claims", `SELECT c.*, w.title, p.id FROM wish_claims c LEFT JOIN wishes w ON w.id = c.wish_id LEFT JOIN photos p ON p.wish_id = w.id WHERE c.claimer_id = ? ORDER BY c.created_at DESC`, ["user"]],
+    ["AC9 (R16): consume notice", `DELETE FROM wish_claims WHERE claimer_id = ? AND wish_id IS NULL`, ["user"]],
+    ["AC8 (R15): release", `DELETE FROM wish_claims WHERE id = ? AND claimer_id = ? AND EXISTS (SELECT 1 FROM wishes w WHERE w.id = wish_claims.wish_id AND w.status = 'open')`, ["claim", "user"]],
+    ["AC5 (R11): spin quota", `SELECT COUNT(*), MIN(created_at) FROM wish_spins WHERE user_id = ?`, ["user"]],
+    ["AC10 (R24): remove old spins", `DELETE FROM wish_spins WHERE created_at <= ?`, [100]],
     ["AC13 (R6): detach photo", `UPDATE photos SET wish_id = NULL, created_at = 0 WHERE wish_id = ? RETURNING id, couple_id`, ["wish"]],
   ])("%s uses indexed searches", async (_name, sql, binds) => {
     const plan = (await explain(sql as string, ...binds)).join("\n");

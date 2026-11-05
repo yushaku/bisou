@@ -1,6 +1,8 @@
 import type {
   ApiError,
   Wish,
+  SpinWish,
+  Claim,
   WishInput,
   CoupleResponse,
   EntryInput,
@@ -39,6 +41,10 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  spin: (budget: number) => call<{ wish: SpinWish | null }>("POST", "/api/wishes/spin", { budget }),
+  claim: (id: string) => call<{ claim: Claim }>("POST", `/api/wishes/${encodeURIComponent(id)}/claim`),
+  claims: () => call<{ claims: Claim[] }>("GET", "/api/wishes/claims"),
+  releaseClaim: (id: string) => call<{ ok: true }>("DELETE", `/api/wishes/claims/${encodeURIComponent(id)}`),
   wishes: () => call<{ open: Wish[]; received: Wish[] }>("GET", "/api/wishes"),
   createWish: (input: WishInput) => call<{ wish: Wish }>("POST", "/api/wishes", input),
   updateWish: (id: string, input: WishInput) => call<{ wish: Wish }>("PUT", `/api/wishes/${encodeURIComponent(id)}`, input),

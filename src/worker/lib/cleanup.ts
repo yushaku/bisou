@@ -1,6 +1,6 @@
 import type { Env } from "../env";
 import { photoKeys } from "./photos";
-import { HOUR, PENDING_PHOTO_TTL } from "./time";
+import { DAY, HOUR, PENDING_PHOTO_TTL } from "./time";
 
 /**
  * Rate limit windows: otp_requests (routes/auth.ts) and join_attempts (lib/couples.ts) both
@@ -14,6 +14,7 @@ export interface CleanupCounts {
   otp_requests: number;
   join_attempts: number;
   pair_codes: number;
+  wish_spins: number;
 }
 
 /**
@@ -23,12 +24,13 @@ export interface CleanupCounts {
  */
 export async function runCleanup(db: D1Database, now: number): Promise<CleanupCounts> {
   const windowStart = now - RATE_LIMIT_WINDOW;
-  const [otpCodes, sessions, otpRequests, joinAttempts, pairCodes] = await db.batch([
+  const [otpCodes, sessions, otpRequests, joinAttempts, pairCodes, wishSpins] = await db.batch([
     db.prepare("DELETE FROM otp_codes WHERE expires_at <= ?").bind(now),
     db.prepare("DELETE FROM sessions WHERE expires_at <= ?").bind(now),
     db.prepare("DELETE FROM otp_requests WHERE created_at <= ?").bind(windowStart),
     db.prepare("DELETE FROM join_attempts WHERE created_at <= ?").bind(windowStart),
     db.prepare("DELETE FROM pair_codes WHERE expires_at <= ?").bind(now),
+    db.prepare("DELETE FROM wish_spins WHERE created_at <= ?").bind(now - DAY),
   ]);
   return {
     otp_codes: otpCodes?.meta.changes ?? 0,
@@ -36,6 +38,7 @@ export async function runCleanup(db: D1Database, now: number): Promise<CleanupCo
     otp_requests: otpRequests?.meta.changes ?? 0,
     join_attempts: joinAttempts?.meta.changes ?? 0,
     pair_codes: pairCodes?.meta.changes ?? 0,
+    wish_spins: wishSpins?.meta.changes ?? 0,
   };
 }
 

@@ -1,3 +1,4 @@
+import { demoSpin } from "./samples";
 import { Plus } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -114,10 +115,10 @@ function WishesScreen() {
       <PageHeader title={t("nav.wishes")} />
       <SpinCard
         partnerName={QUOC_BAO.name}
-        wishes={PARTNER_WISHES}
+        onSpin={demoSpin}
         initialBudget={500_000}
-        onClaim={() => toast.info(d("previewOnly"))}
-        initialState={result ? { step: "result", wish: result } : undefined}
+        onClaim={async () => { toast.info(d("previewOnly")); return { ok: false, status: 0, error: null }; }}
+        initialState={result ? { step: "result", wish: { ...result, price: result.price! } } : undefined}
       />
       <SectionTitle
         action={

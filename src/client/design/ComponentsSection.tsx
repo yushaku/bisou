@@ -1,3 +1,4 @@
+import { demoSpin } from "./samples";
 import { BookHeart, Gift, PartyPopper } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Celebration } from "@/components/bisou/Celebration";
@@ -16,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { useDesignT } from "./messages";
-import { COUPLE, ENTRIES, MILESTONES, MY_WISHES, PAIR_CODE, PARTNER_WISHES, PHOTOS, QUOC_BAO, START_DATE, TODAY } from "./samples";
+import { COUPLE, ENTRIES, MILESTONES, MY_WISHES, PAIR_CODE, PHOTOS, QUOC_BAO, START_DATE, TODAY } from "./samples";
 
 function Block({ title, children, wide = false }: { title: string; children: ReactNode; wide?: boolean }) {
   return (
@@ -88,8 +89,8 @@ export function ComponentsSection() {
       </Block>
 
       <Block title="SpinCard">
-        <SpinCard partnerName={QUOC_BAO.name} wishes={PARTNER_WISHES} />
-        <SpinCard partnerName={QUOC_BAO.name} wishes={PARTNER_WISHES} initialBudget={100_000} initialState={{ step: "empty" }} />
+        <SpinCard partnerName={QUOC_BAO.name} onSpin={demoSpin} onClaim={async () => ({ ok: false, status: 0, error: null })} />
+        <SpinCard partnerName={QUOC_BAO.name} onSpin={demoSpin} onClaim={async () => ({ ok: false, status: 0, error: null })} initialBudget={100_000} initialState={{ step: "empty" }} />
       </Block>
 
       <Block title="EmptyState, Celebration">

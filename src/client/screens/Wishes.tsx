@@ -1,10 +1,13 @@
-import { Ellipsis, Gift, Plus } from "lucide-react";
+import { ArrowLeft, Ellipsis, Gift, LockKeyhole, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Couple, Wish } from "../../shared/types";
 import { api } from "../api";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { PageHeader } from "../components/bisou/PageHeader";
+import { ClaimsList } from "../components/bisou/ClaimsList";
+import { SpinCard } from "../components/bisou/SpinCard";
+import { WishTeaser } from "../components/bisou/WishTeaser";
 import { WishCard } from "../components/bisou/WishCard";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
@@ -15,8 +18,10 @@ import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
 
-export function Wishes({ couple: _couple, ...session }: SessionProps & { couple: Couple }) {
+export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { t } = useI18n();
+  const [view, setView] = useState<"jar" | "spin" | "claims">("jar");
+  const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [jar, setJar] = useState<{ open: Wish[]; received: Wish[] } | null>(null);
   const [failed, setFailed] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
@@ -51,7 +56,13 @@ export function Wishes({ couple: _couple, ...session }: SessionProps & { couple:
   }
 
   return <SignedInShell {...session} tab="wishes">
-    <PageHeader title={t("wishes.mine")} description={t("wishes.private")} />
+    {view !== "jar" && <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button>}
+    <PageHeader title={t(view === "jar" ? "wishes.mine" : view === "spin" ? "spin.title" : "claims.title")} description={view === "jar" ? t("wishes.private") : undefined} />
+    {view === "spin" && <SpinCard partnerName={partnerName} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
+    {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
+    {view === "jar" && <>
+    <WishTeaser onOpen={() => setView("spin")} title={t("spin.entry", { name: partnerName })} description={t("spin.entryHint")} />
+    <div className="my-4 flex justify-between"><Button variant="ghost" onClick={() => setView("claims")}><LockKeyhole aria-hidden="true" />{t("claims.title")}</Button></div>
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!jar && !failed && <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3"><Skeleton className="h-28" /><Skeleton className="h-28" /></div>}
     {jar && <>
@@ -60,6 +71,7 @@ export function Wishes({ couple: _couple, ...session }: SessionProps & { couple:
       <div className="pointer-events-none sticky bottom-[calc(--spacing(19)+env(safe-area-inset-bottom))] z-20 mt-auto flex justify-end">
         <Button size="lg" className="pointer-events-auto elevate" onClick={() => setEditing(null)}><Plus aria-hidden="true" />{t("wishes.add")}</Button>
       </div>
+    </>}
     </>}
     {editing !== undefined && <Suspense fallback={null}><WishSheet key={editing?.id ?? "new"} wish={editing} onClose={() => setEditing(undefined)} onSignedOut={session.onSignedOut} onSaved={(wish) => {
       setJar((j) => j && { ...j, open: [wish, ...j.open.filter((w) => w.id !== wish.id)].sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id)) });

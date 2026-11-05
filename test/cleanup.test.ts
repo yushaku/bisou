@@ -107,7 +107,7 @@ describe("runCleanup", () => {
   it("deletes only expired rows and reports the counts per table", async () => {
     await seed();
     const counts = await runCleanup(env.DB, NOW);
-    expect(counts).toEqual({ otp_codes: 2, sessions: 2, otp_requests: 2, join_attempts: 2, pair_codes: 2 });
+    expect(counts).toEqual({ otp_codes: 2, sessions: 2, otp_requests: 2, join_attempts: 2, pair_codes: 2, wish_spins: 0 });
     await expectOnlyLiveRowsLeft();
   });
 
@@ -129,6 +129,7 @@ describe("runCleanup", () => {
       otp_requests: 0,
       join_attempts: 0,
       pair_codes: 0,
+      wish_spins: 0,
     });
     await expectOnlyLiveRowsLeft();
   });
@@ -159,6 +160,7 @@ describe("scheduled handler", () => {
       otp_requests: 2,
       join_attempts: 2,
       pair_codes: 2,
+      wish_spins: 0,
     });
     expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 0);
   });
@@ -266,4 +268,13 @@ describe("scheduled photo sweep", () => {
     expect(deleted.mock.calls[1]?.[0]).toHaveLength(2);
     expect(log).toHaveBeenLastCalledWith("[bisou] photo cleanup", 1);
   });
+});
+
+
+it("AC10 (R24): daily cleanup retains only the last 24 hours of spin times", async () => {
+  await seed();
+  await env.DB.batch([NOW - 24 * HOUR - 1, NOW - 24 * HOUR, NOW - 24 * HOUR + 1].map((at) =>
+    env.DB.prepare("INSERT INTO wish_spins (user_id, created_at) VALUES ('u1', ?)").bind(at)));
+  expect((await runCleanup(env.DB, NOW)).wish_spins).toBe(2);
+  expect(await count("wish_spins")).toBe(1);
 });

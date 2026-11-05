@@ -141,3 +141,21 @@ export interface Wish extends WishInput {
   createdAt: number;
   updatedAt: number;
 }
+
+export interface SpinWish {
+  id: string;
+  title: string;
+  price: number;
+  link: string | null;
+  photoId: string | null;
+}
+
+export interface Claim {
+  id: string;
+  status: "open" | "received" | "gone";
+  title: string;
+  price: number | null;
+  link: string | null;
+  photoId: string | null;
+  createdAt: number;
+}
