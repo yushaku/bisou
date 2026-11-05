@@ -12,7 +12,7 @@ export const en: Messages = {
   "entry.fromWish": "Made from a wish",
   "spin.entry": "A surprise for {name}",
   "spin.entryHint": "Let the jar choose a little wish.",
-  "spin.limit": "You have used your spins. Try again from {time}.",
+  "spin.limit": "No spins left for now. Try again from {time}.",
   "spin.claimed": "Claimed. Your partner still has no idea.",
   "spin.unavailable": "This wish is no longer available to claim. Try another spin.",
   "spin.invalidBudget": "Enter a whole VND budget above zero.",
