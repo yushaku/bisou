@@ -19,6 +19,8 @@ interface AppShellProps {
   /* Shown in the top bar; the page's own h1 lives in PageHeader. */
   title?: string;
   onOpenSettings?: () => void;
+  /* Top bar control at the right edge, such as a back link. */
+  action?: ReactNode;
   /* Omit to hide the bottom tab bar (screens without destinations yet). */
   tabs?: { active: TabId; onSelect: (tab: TabId) => void };
   children: ReactNode;
@@ -30,7 +32,7 @@ interface AppShellProps {
  * in thumb reach above the home indicator. Both bars are sticky, so the shell works in
  * the page scroll and inside the /design phone frames alike.
  */
-export function AppShell({ title, onOpenSettings, tabs, children, className }: AppShellProps) {
+export function AppShell({ title, onOpenSettings, action, tabs, children, className }: AppShellProps) {
   const { t } = useI18n();
   return (
     <div className={cn("flex min-h-dvh flex-col", className)}>
@@ -38,6 +40,7 @@ export function AppShell({ title, onOpenSettings, tabs, children, className }: A
         <div className="mx-auto flex h-14 w-full max-w-md items-center gap-2 px-4">
           <BrandMark className="size-6 shrink-0" />
           <span className="min-w-0 flex-1 truncate font-heading text-2xl">{title ?? t("appName")}</span>
+          {action}
           {onOpenSettings && (
             <Button variant="ghost" size="icon" aria-label={t("settings.open")} onClick={onOpenSettings}>
               <Settings />

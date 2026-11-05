@@ -17,6 +17,10 @@ export interface Entry {
   body: string;
   photos: Photo[];
   milestone?: string;
+  /* Time written, beside the author ("22:00"). */
+  time?: string;
+  /* A quiet line under the body, such as when a back-filled entry was written. */
+  note?: string;
 }
 
 /* Long entries clamp to five lines; the toggle only appears when there is more to read. */
@@ -34,7 +38,10 @@ export function EntryCard({ entry, showDate = true, className }: { entry: Entry;
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <PersonAvatar person={entry.author} size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{entry.author.name}</p>
+          <p className="truncate">
+            <span className="font-semibold">{entry.author.name}</span>
+            {entry.time && <span className="ml-2 text-sm text-muted-foreground tabular-nums">{entry.time}</span>}
+          </p>
         </div>
         {showDate && (
           <time dateTime={entry.date} className="text-sm text-muted-foreground">{formatDay(entry.date, locale, "numeric")}</time>
@@ -49,25 +56,32 @@ export function EntryCard({ entry, showDate = true, className }: { entry: Entry;
 
       {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}
 
-      <div>
-        <p id={bodyId} className={cn("text-base leading-relaxed whitespace-pre-line", long && !open && "line-clamp-5")}>
-          {entry.body}
-        </p>
-        {long && (
-          <Button
-            variant="link"
-            size="sm"
-            className="mt-1 h-9"
-            aria-expanded={open}
-            aria-controls={bodyId}
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? t("entry.less") : t("entry.more")}
-          </Button>
-        )}
-      </div>
+      <PhotoGrid photos={entry.photos} className="px-1" />
 
-      <PhotoGrid photos={entry.photos} className="px-1 pb-1" />
+      {entry.body && (
+        <div>
+          <p
+            id={bodyId}
+            className={cn("text-base leading-relaxed whitespace-pre-line wrap-anywhere", long && !open && "line-clamp-5")}
+          >
+            {entry.body}
+          </p>
+          {long && (
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-1 h-9"
+              aria-expanded={open}
+              aria-controls={bodyId}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? t("entry.less") : t("entry.more")}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
     </Card>
   );
 }

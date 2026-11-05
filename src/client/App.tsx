@@ -6,6 +6,7 @@ import { BrandMark } from "./components/bisou/BrandMark";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
 import { Home } from "./screens/Home";
+import { Journal } from "./screens/Journal";
 import { Login } from "./screens/Login";
 import { Onboarding } from "./screens/Onboarding";
 import { Pairing } from "./screens/Pairing";
@@ -130,6 +131,13 @@ function SignedIn({
   if (couple === undefined) return <LoadingScreen />;
   if (!couple || !paired) return <Pairing {...session} couple={couple} onCouple={onCouple} />;
   return (
-    <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
+    <Switch>
+      <Route path="/journal">
+        <Journal user={user} couple={couple} onSignedOut={onSignedOut} />
+      </Route>
+      <Route>
+        <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
+      </Route>
+    </Switch>
   );
 }

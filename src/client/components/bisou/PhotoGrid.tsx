@@ -4,14 +4,27 @@ import { cn } from "@/lib/utils";
 export interface Photo {
   src: string;
   alt: string;
+  /* Larger renditions for high density screens; the grid sets sizes per tile. */
+  srcSet?: string;
 }
 
-/* Layouts for 1 to 4 photos; more than 4 shows the first 4 with a "+n" on the last. */
+/*
+ * Layouts for 1 to 4 photos, every tile square (R18); more than 4 shows the first 4 with a
+ * "+n" on the last. Three photos: one large square beside two stacked squares, so the right
+ * column is (100% - two gaps) / 3 and the left square is exactly two tiles plus a gap tall.
+ */
 const GRID: Record<number, string> = {
   1: "grid-cols-1",
   2: "grid-cols-2",
-  3: "grid-cols-2 grid-rows-2",
+  3: "grid-cols-[1fr_calc((100%_-_var(--spacing)*6)/3)]",
   4: "grid-cols-2",
+};
+
+/* Rendered tile widths inside a card of the max-w-md column; a 3x phone picks full only for big tiles. */
+const SIZES = {
+  one: "(min-width: 28rem) 24rem, calc(100vw - 4rem)",
+  lead: "(min-width: 28rem) 16rem, calc(66vw - 2.5rem)",
+  half: "(min-width: 28rem) 12rem, calc(50vw - 2.5rem)",
 };
 
 export function PhotoGrid({ photos, className }: { photos: Photo[]; className?: string }) {
@@ -32,10 +45,14 @@ export function PhotoGrid({ photos, className }: { photos: Photo[]; className?: 
             data-tilt={i % 2 === 0 ? "left" : "right"}
             data-tape={i === 0 ? "" : undefined}
           >
-            <div data-slot="photo" className={cn("relative overflow-hidden bg-muted", shown.length <= 2 ? "aspect-[4/3]" : lead ? "h-full min-h-40" : "aspect-square")}>
+            <div data-slot="photo" className="relative aspect-square overflow-hidden bg-muted">
               <img
                 src={photo.src}
+                srcSet={photo.srcSet}
+                sizes={photo.srcSet ? (shown.length === 1 ? SIZES.one : lead ? SIZES.lead : SIZES.half) : undefined}
                 alt={photo.alt}
+                width={1}
+                height={1}
                 loading="lazy"
                 decoding="async"
                 className="absolute inset-0 size-full object-cover"

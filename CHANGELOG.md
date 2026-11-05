@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Open the shared journal from Home: entries grouped by day, newest first, with square photos, and older days load as you scroll.
+
 ### Changed
 
 - Display names can be changed but can no longer be cleared.

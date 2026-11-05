@@ -1,6 +1,7 @@
-import { CalendarHeart, PencilLine } from "lucide-react";
+import { BookHeart, CalendarHeart, ChevronRight, PencilLine } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 import type { ApiError, Couple } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
@@ -95,6 +96,18 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
           action={{ label: t("startDate.set"), onClick: pick }}
         />
       )}
+
+      <Link
+        href="/journal"
+        className="press mt-6 flex items-center gap-4 rounded-xl edge elevate bg-card p-4 text-card-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring"
+      >
+        <BookHeart className="size-6 shrink-0" aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-heading text-xl">{t("journal.title")}</span>
+          <span className="block text-sm text-muted-foreground">{t("journal.open")}</span>
+        </span>
+        <ChevronRight className="size-5 shrink-0" aria-hidden="true" />
+      </Link>
 
       {sheetLoaded && (
         <Suspense fallback={null}>
