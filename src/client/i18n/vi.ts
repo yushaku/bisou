@@ -230,7 +230,6 @@ export const vi = {
   "journal.moreError": "Chưa mở được những ngày cũ hơn.",
   "journal.loadMore": "Xem những ngày cũ hơn",
   "journal.end": "Những ngày của mình bắt đầu từ đây.",
-  "compose.write": "Viết một chút",
   "compose.first": "Viết bài đầu tiên",
   "compose.new": "Một chuyện hôm nay",
   "compose.day": "Ngày của bài",

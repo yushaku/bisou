@@ -231,7 +231,6 @@ export const en: Messages = {
   "journal.moreError": "Couldn't open older days.",
   "journal.loadMore": "Show older days",
   "journal.end": "This is where our days begin.",
-  "compose.write": "Write a little",
   "compose.first": "Write our first entry",
   "compose.new": "A little story",
   "compose.day": "Entry date",
