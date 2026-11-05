@@ -159,8 +159,8 @@ describe("scheduled handler", () => {
       otp_requests: 2,
       join_attempts: 2,
       pair_codes: 2,
-      photos: 0,
     });
+    expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 0);
   });
 });
 
@@ -221,16 +221,31 @@ describe("scheduled photo sweep", () => {
         else expect(object).toBeNull();
       }
     }
-    expect(JSON.parse(String(log.mock.calls.at(-1)?.[1]))).toEqual({ otp_codes: 2, sessions: 2, otp_requests: 2, join_attempts: 2, pair_codes: 2, photos: 3 });
+    expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 3);
     await scheduled();
-    expect(JSON.parse(String(log.mock.calls.at(-1)?.[1])).photos).toBe(0);
+    expect(log).toHaveBeenLastCalledWith("[bisou] photo cleanup", 0);
+  });
+
+  it("sweeps photos even when D1 row cleanup fails and logs each outcome", async () => {
+    await seedPhotos();
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(env.DB, "batch").mockRejectedValueOnce(new Error("unavailable"));
+    await scheduled();
+    expect(await keys("SELECT id AS k FROM photos")).toEqual(["attached", "recent"]);
+    expect(error).toHaveBeenCalledWith("[bisou] cleanup failed");
+    expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 3);
+    expect(await count("otp_codes")).toBe(3);
   });
 
   it("AC12 (R17): an R2 failure leaves pending rows for a later retry", async () => {
     await seedPhotos();
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
-    await expect(scheduled()).rejects.toThrow("unavailable");
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    await scheduled();
+    expect(error).toHaveBeenCalledWith("[bisou] photo cleanup failed");
+    await expectOnlyLiveRowsLeft();
     expect(await count("photos")).toBe(5);
     await scheduled();
     expect(await keys("SELECT id AS k FROM photos")).toEqual(["attached", "recent"]);
@@ -245,10 +260,10 @@ describe("scheduled photo sweep", () => {
     await scheduled();
     expect(await count("photos")).toBe(1);
     expect(deleted.mock.calls[0]?.[0]).toHaveLength(1000);
-    expect(JSON.parse(String(log.mock.calls.at(-1)?.[1])).photos).toBe(500);
+    expect(log).toHaveBeenLastCalledWith("[bisou] photo cleanup", 500);
     await scheduled();
     expect(await count("photos")).toBe(0);
     expect(deleted.mock.calls[1]?.[0]).toHaveLength(2);
-    expect(JSON.parse(String(log.mock.calls.at(-1)?.[1])).photos).toBe(1);
+    expect(log).toHaveBeenLastCalledWith("[bisou] photo cleanup", 1);
   });
 });

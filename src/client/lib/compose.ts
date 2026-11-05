@@ -7,13 +7,10 @@ import type { MessageKey } from "../i18n/vi";
 
 export type PhotoState = "queued" | "uploading" | "done" | "failed";
 
-/** The newest day an entry may have: today in the earliest time zone (R8). */
-export const maxDay = latestDay;
-
 /** The device's today, or the latest allowed day if the device runs ahead of every time zone. */
 export function defaultDay(nowMs: number): string {
   const local = toDayString(new Date(nowMs));
-  const max = maxDay(nowMs);
+  const max = latestDay(nowMs);
   return local < max ? local : max;
 }
 
@@ -31,7 +28,7 @@ export function saveBlock(
 ): SaveBlock | null {
   const length = textLength(form.text);
   if (length > ENTRY_TEXT_MAX) return "tooLong";
-  if (!isValidDay(form.date) || form.date > maxDay(nowMs)) return "date";
+  if (!isValidDay(form.date) || form.date > latestDay(nowMs)) return "date";
   if (form.photos.some((p) => p.state !== "done")) return "photos";
   if (length === 0 && form.photos.length === 0) return "empty";
   return null;

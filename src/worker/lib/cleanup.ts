@@ -1,5 +1,5 @@
 import type { Env } from "../env";
-import { photoKey } from "./photos";
+import { photoKeys } from "./photos";
 import { HOUR, PENDING_PHOTO_TTL } from "./time";
 
 /**
@@ -46,7 +46,7 @@ export async function sweepPhotos(env: Env, now: number): Promise<number> {
     AND entry_id IS NULL RETURNING id, couple_id`)
     .bind(now - PENDING_PHOTO_TTL).all<{ id: string; couple_id: string }>();
   if (!rows.length) return 0;
-  await env.PHOTOS.delete(rows.flatMap((row) => [photoKey(row.couple_id, row.id, "full"), photoKey(row.couple_id, row.id, "thumb")]));
+  await env.PHOTOS.delete(rows.flatMap(photoKeys));
   const deletes = [];
   // D1 allows at most 100 bound parameters per statement.
   for (let offset = 0; offset < rows.length; offset += 100) {

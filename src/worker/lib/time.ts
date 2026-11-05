@@ -11,7 +11,6 @@ export const OTP_MAX_PER_HOUR = 5;
 export const PAIR_CODE_TTL = 24 * HOUR;
 /** Failed join attempts (wrong or expired code) allowed per user per rolling hour. */
 export const JOIN_MAX_FAILED_PER_HOUR = 10;
-export { MAX_UTC_OFFSET } from "../../shared/days";
 
 export const PENDING_PHOTO_TTL = 24 * HOUR;
 export const MAX_PENDING_PHOTOS_PER_USER = 12;

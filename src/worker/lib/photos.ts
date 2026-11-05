@@ -5,6 +5,10 @@ export function photoKey(coupleId: string, id: string, size: PhotoSize): string 
   return `couples/${coupleId}/photos/${id}/${size}`;
 }
 
+export function photoKeys(row: { id: string; couple_id: string }): string[] {
+  return [photoKey(row.couple_id, row.id, "full"), photoKey(row.couple_id, row.id, "thumb")];
+}
+
 // Header checks only; the client re-encodes the cropped pixels before uploading.
 export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number; bytes: Uint8Array } | null {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -99,7 +103,7 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
 export async function purgePhotos(env: Env, rows: { id: string; couple_id: string }[]): Promise<void> {
   if (!rows.length) return;
   try {
-    await env.PHOTOS.delete(rows.flatMap((row) => [photoKey(row.couple_id, row.id, "full"), photoKey(row.couple_id, row.id, "thumb")]));
+    await env.PHOTOS.delete(rows.flatMap(photoKeys));
     await env.DB.prepare(`DELETE FROM photos WHERE id IN (${rows.map(() => "?").join(",")}) AND entry_id IS NULL`)
       .bind(...rows.map((row) => row.id)).run();
   } catch {

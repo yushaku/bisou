@@ -1,6 +1,6 @@
 import { CalendarDays, ImagePlus, RotateCw, X } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { toDayString } from "../../../shared/days";
+import { latestDay, toDayString } from "../../../shared/days";
 import { ENTRY_PHOTOS_MAX, ENTRY_TEXT_MAX, entryText } from "../../../shared/journal";
 import type { JournalEntry } from "../../../shared/types";
 import { api } from "@/api";
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n, type MessageKey } from "@/i18n";
-import { defaultDay, fitSquare, maxDay, saveBlock, saveErrorKey, takeRoom, textLength, type SaveBlock } from "@/lib/compose";
+import { defaultDay, fitSquare, saveBlock, saveErrorKey, takeRoom, textLength, type SaveBlock } from "@/lib/compose";
 import { formatDay, parseDay } from "@/lib/format";
 import { decodePhoto, renderSquare, type Area } from "@/lib/photo";
 import { cn } from "@/lib/utils";
@@ -98,7 +98,7 @@ function ComposeForm({ author, partnerName, entry, onSaved, onSignedOut, onLock,
   const { t, locale } = useI18n();
   const ids = useId();
   const [now] = useState(Date.now);
-  const max = maxDay(now);
+  const max = latestDay(now);
   const [date, setDate] = useState(() => entry?.date ?? defaultDay(now));
   const [text, setText] = useState(entry?.text ?? "");
   const [dirty, setDirty] = useState(false);

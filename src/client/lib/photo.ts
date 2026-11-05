@@ -17,27 +17,9 @@ export interface Renditions {
   thumb: Blob;
 }
 
-/** The device cannot open this file (a HEIC on Chrome desktop, a renamed text file): R19. */
-export class PhotoDecodeError extends Error {
-  constructor(readonly fileName: string) {
-    super(`cannot decode ${fileName}`);
-    this.name = "PhotoDecodeError";
-  }
-}
-
 /* Bakes the EXIF rotation into the pixels before the metadata is dropped by re-encoding. */
-export async function decodePhoto(file: File): Promise<ImageBitmap> {
-  try {
-    return await createImageBitmap(file, { imageOrientation: "from-image" });
-  } catch {
-    throw new PhotoDecodeError(file.name);
-  }
-}
-
-/** The largest centered square: the crop's starting frame. */
-export function centerSquare(bitmap: { width: number; height: number }): Area {
-  const side = Math.min(bitmap.width, bitmap.height);
-  return { x: (bitmap.width - side) / 2, y: (bitmap.height - side) / 2, width: side, height: side };
+export function decodePhoto(file: File): Promise<ImageBitmap> {
+  return createImageBitmap(file, { imageOrientation: "from-image" });
 }
 
 function canvas(side: number): [HTMLCanvasElement, CanvasRenderingContext2D] {

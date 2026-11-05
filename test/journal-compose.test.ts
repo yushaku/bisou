@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   defaultDay,
   fitSquare,
-  maxDay,
   saveBlock,
   saveErrorKey,
   startable,
@@ -10,7 +9,7 @@ import {
   textLength,
   uploadErrorKey,
 } from "../src/client/lib/compose";
-import { toDayString } from "../src/shared/days";
+import { latestDay, toDayString } from "../src/shared/days";
 
 // Compose rules as pure functions: the sheet only renders what these decide.
 
@@ -20,11 +19,11 @@ const NOW = Date.UTC(2026, 10, 7, 9);
 
 describe("compose day", () => {
   it("AC7 (R7, R8): the default day is the device's today, never past the earliest time zone", () => {
-    expect(maxDay(NOW)).toBe("2026-11-07");
-    expect(maxDay(Date.UTC(2026, 10, 7, 11))).toBe("2026-11-08");
+    expect(latestDay(NOW)).toBe("2026-11-07");
+    expect(latestDay(Date.UTC(2026, 10, 7, 11))).toBe("2026-11-08");
     const later = Date.UTC(2026, 10, 7, 11);
     expect(defaultDay(later)).toBe(toDayString(new Date(later)));
-    expect(defaultDay(later) <= maxDay(later)).toBe(true);
+    expect(defaultDay(later) <= latestDay(later)).toBe(true);
   });
 
   it("AC7 (R7, R8): 8 November and 31 December 1899 block saving, 7 November and 1 January 1900 do not", () => {

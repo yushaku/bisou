@@ -12,9 +12,14 @@ export default {
   // Daily Cron Trigger (triggers.crons in wrangler.jsonc): removes expired rows.
   scheduled(controller, env, ctx) {
     ctx.waitUntil(
-      runCleanup(env.DB, controller.scheduledTime).then(async (counts) => {
-        const photos = await sweepPhotos(env, controller.scheduledTime);
-        console.log("[bisou] cleanup", JSON.stringify({ ...counts, photos }));
+      Promise.allSettled([
+        runCleanup(env.DB, controller.scheduledTime),
+        sweepPhotos(env, controller.scheduledTime),
+      ]).then(([rows, photos]) => {
+        if (rows.status === "fulfilled") console.log("[bisou] cleanup", JSON.stringify(rows.value));
+        else console.error("[bisou] cleanup failed");
+        if (photos.status === "fulfilled") console.log("[bisou] photo cleanup", photos.value);
+        else console.error("[bisou] photo cleanup failed");
       }),
     );
   },
