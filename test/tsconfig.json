@@ -12,5 +12,5 @@
     "skipLibCheck": true,
     "types": ["@cloudflare/workers-types", "@cloudflare/vitest-plugin/types"]
   },
-  "include": ["./**/*.ts", "../src/worker", "../src/shared", "../src/client/api.ts", "../src/client/lib/journalFeed.ts", "../src/client/lib/compose.ts", "../src/client/i18n/vi.ts"]
+  "include": ["./**/*.ts", "../src/worker", "../src/shared", "../src/client/api.ts", "../src/client/lib/journalFeed.ts", "../src/client/lib/tabMemory.ts", "../src/client/lib/compose.ts", "../src/client/i18n/vi.ts"]
 }

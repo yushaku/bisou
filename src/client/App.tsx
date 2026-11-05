@@ -5,6 +5,7 @@ import { api } from "./api";
 import { BrandMark } from "./components/bisou/BrandMark";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
+import { createTabMemory, TabMemory } from "./lib/tabMemory";
 import { Home } from "./screens/Home";
 import { Journal } from "./screens/Journal";
 import { Login } from "./screens/Login";
@@ -94,6 +95,7 @@ function SignedIn({
   // undefined while loading; /api/me already tells when there is no couple, saving a request.
   const [couple, setCouple] = useState<Couple | null | undefined>(knownCoupleId === null ? null : undefined);
   const [celebrate, setCelebrate] = useState(false);
+  const [tabMemory] = useState(createTabMemory);
   const paired = (couple?.members.length ?? 0) >= 2;
 
   const refresh = useCallback(async () => {
@@ -131,13 +133,15 @@ function SignedIn({
   if (couple === undefined) return <LoadingScreen />;
   if (!couple || !paired) return <Pairing {...session} couple={couple} onCouple={onCouple} />;
   return (
-    <Switch>
-      <Route path="/journal">
-        <Journal {...session} couple={couple} />
-      </Route>
-      <Route>
-        <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
-      </Route>
-    </Switch>
+    <TabMemory value={tabMemory}>
+      <Switch>
+        <Route path="/journal">
+          <Journal {...session} couple={couple} />
+        </Route>
+        <Route>
+          <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
+        </Route>
+      </Switch>
+    </TabMemory>
   );
 }
