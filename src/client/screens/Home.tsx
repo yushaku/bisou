@@ -1,6 +1,13 @@
 import { CalendarHeart } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useContext, useState } from "react";
 import { toast } from "sonner";
+import { Link } from "wouter";
+import { toDayString } from "../../shared/days";
+import { upcomingEvents } from "../../shared/events";
+import { UpcomingCard } from "../components/bisou/EventRow";
+import { Button } from "../components/ui/button";
+import { TabMemory } from "../lib/tabMemory";
+import { useNow } from "../lib/useNow";
 import type { Couple } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
@@ -23,24 +30,6 @@ interface HomeProps extends SessionProps {
   onCelebrated: () => void;
 }
 
-/* "Today" in the device's calendar; moves on at local midnight and when the app comes back. */
-function useNow(): Date {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const id = setTimeout(() => setNow(new Date()), tomorrow.getTime() - now.getTime() + 1000);
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") setNow(new Date());
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      clearTimeout(id);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [now]);
-  return now;
-}
-
 export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
   const [picking, setPicking] = useState(false);
@@ -51,13 +40,15 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
     setPicking(true);
   };
   const now = useNow();
+  const memory = useContext(TabMemory);
 
   // Creator first on both phones, so each partner keeps the same tint everywhere.
   const tones: Person["tone"][] = ["primary", "secondary"];
   const people = couple.members.slice(0, 2).map((m, i) => ({
     name: (m.id === session.user.id ? session.user.displayName : m.displayName) ?? "?",
     tone: tones[i] ?? "primary",
-  })) as [Person, Person];
+    birthDate: m.id === session.user.id ? session.user.birthDate : m.birthDate,
+  })) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
 
   async function saveStartDate(day: string): Promise<string | null> {
     const res = await api.setStartDate(day);
@@ -84,6 +75,17 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
           action={{ label: t("startDate.set"), onClick: pick }}
         />
       )}
+
+      <UpcomingCard events={upcomingEvents(couple.startDate, people, toDayString(now))} action={
+        <Button asChild variant="ghost" size="sm">
+          <Link id="events-see-all" href="/events" state={{ from: "/" }} onClick={() => {
+            if (memory) {
+              memory.scroll.set("home", window.scrollY);
+              memory.returnFocus = "events-see-all";
+            }
+          }}>{t("home.seeAll")}</Link>
+        </Button>
+      } />
 
       {sheetLoaded && (
         <Suspense fallback={null}>

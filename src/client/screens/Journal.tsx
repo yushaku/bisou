@@ -77,6 +77,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   const partner = couple.members.find((m) => m.id !== user.id);
   const partnerName = (partner && people.get(partner.id)?.name) ?? "?";
 
+  const [fromMenu, setFromMenu] = useState(false);
   const [composing, setComposing] = useState(false);
   // Stays mounted after the first open so the sheet can animate closed.
   const [composeLoaded, setComposeLoaded] = useState(false);
@@ -85,13 +86,14 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [editing, setEditing] = useState<JournalEntry | null>(null);
   // Own entry whose edit and delete actions are open.
   const [acting, setActing] = useState<JournalEntry | null>(null);
-  const write = (entry: JournalEntry | null = null) => {
+  const write = (entry: JournalEntry | null = null, fromMenu = false) => {
+    setFromMenu(fromMenu);
     setEditing(entry);
     setComposeLoaded(true);
     setComposing(true);
   };
 
-  useCreateRequest("journal", () => write());
+  useCreateRequest("journal", () => write(null, true));
 
   // Kept after closing, so focus can go back to the tile of the photo last shown.
   const [viewer, setViewer] = useState<{ entry: JournalEntry; index: number; open: boolean } | null>(null);
@@ -309,6 +311,7 @@ export function Journal({ couple, ...session }: JournalProps) {
       {composeLoaded && (
         <Suspense fallback={null}>
           <ComposeSheet
+            fromMenu={fromMenu}
             open={composing}
             onOpenChange={setComposing}
             author={me}

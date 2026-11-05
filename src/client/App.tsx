@@ -7,6 +7,7 @@ import { BrandMark } from "./components/bisou/BrandMark";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
+import { Events } from "./screens/Events";
 import { Home } from "./screens/Home";
 import { Wishes } from "./screens/Wishes";
 import { Journal } from "./screens/Journal";
@@ -101,7 +102,7 @@ function SignedIn({
   const [tabMemory] = useState(createTabMemory);
   const paired = (couple?.members.length ?? 0) >= 2;
   const [location] = useLocation();
-  const historyState = useHistoryState<{ settingsFrom?: string } | null>();
+  const historyState = useHistoryState<{ from?: string } | null>();
   const settingsOpen = location === "/settings";
 
   const refresh = useCallback(async () => {
@@ -140,7 +141,10 @@ function SignedIn({
   else if (couple === undefined) content = <LoadingScreen />;
   else if (!couple || !paired) content = <Pairing {...session} couple={couple} onCouple={onCouple} />;
   else content = (
-    <Switch location={settingsOpen ? historyState?.settingsFrom ?? "/" : location}>
+    <Switch location={settingsOpen ? historyState?.from ?? "/" : location}>
+      <Route path="/events">
+        <Events user={user} couple={couple} />
+      </Route>
       <Route path="/wishes">
         <Wishes {...session} couple={couple} />
       </Route>

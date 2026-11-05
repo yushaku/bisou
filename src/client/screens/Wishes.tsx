@@ -32,6 +32,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [celebrate, setCelebrate] = useState(false);
   const [jar, setJar] = useState<{ open: Wish[]; received: Wish[] } | null>(null);
   const [failed, setFailed] = useState(false);
+  const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
   const [acting, setActing] = useState<Wish | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -51,7 +52,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     return () => { document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
   }, [refresh]);
 
-  useCreateRequest("wishes", () => { setView("jar"); setEditing(null); });
+  useCreateRequest("wishes", () => { setFromMenu(true); setView("jar"); setEditing(null); });
 
   async function remove() {
     if (!acting || busy) return;
@@ -89,11 +90,11 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!jar && !failed && <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3"><Skeleton className="h-28" /><Skeleton className="h-28" /></div>}
     {jar && <>
-      {jar.open.length === 0 ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => setEditing(null), icon: Plus }} /> :
+      {jar.open.length === 0 ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} /> :
         <div className="flex flex-col gap-3 pb-6">{jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)} />)}</div>}
     </>}
     </>}
-    {editing !== undefined && <Suspense fallback={null}><WishSheet key={editing?.id ?? "new"} wish={editing} onClose={() => setEditing(undefined)} onSignedOut={session.onSignedOut} onSaved={(wish) => {
+    {editing !== undefined && <Suspense fallback={null}><WishSheet fromMenu={fromMenu} key={editing?.id ?? "new"} wish={editing} onClose={() => setEditing(undefined)} onSignedOut={session.onSignedOut} onSaved={(wish) => {
       setJar((j) => j && { ...j, open: [wish, ...j.open.filter((w) => w.id !== wish.id)].sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id)) });
       toast.success(t("wish.saved"));
     }} /></Suspense>}
@@ -109,7 +110,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         <p role="alert" className="text-destructive empty:hidden">{error}</p>
         <DialogFooter>
           {!deleting && acting?.status === "open" && <Button onClick={() => { setReceiving(acting); setActing(null); }}>{t("received.action")}</Button>}
-          {!deleting && acting?.status === "open" && <Button variant="outline" onClick={() => { setEditing(acting); setActing(null); }}>{t("wish.edit")}</Button>}
+          {!deleting && acting?.status === "open" && <Button variant="outline" onClick={() => { setFromMenu(false); setEditing(acting); setActing(null); }}>{t("wish.edit")}</Button>}
           <Button variant="destructive" loading={busy} onClick={() => deleting ? void remove() : setDeleting(true)}>{t("wish.delete")}</Button>
           <Button variant="outline" disabled={busy} onClick={() => setActing(null)}>{t("common.close")}</Button>
         </DialogFooter>

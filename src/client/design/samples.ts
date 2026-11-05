@@ -22,9 +22,9 @@ export const PHOTOS = {
   pho: { src: pho, alt: "Tô phở bên cửa sổ" },
 };
 
-export const MINH_ANH: Person = { name: "Minh Anh", tone: "primary" };
-export const QUOC_BAO: Person = { name: "Quốc Bảo", tone: "secondary" };
-export const COUPLE: [Person, Person] = [MINH_ANH, QUOC_BAO];
+export const MINH_ANH: Person & { birthDate: string } = { name: "Minh Anh", tone: "primary", birthDate: "1997-11-18" };
+export const QUOC_BAO: Person & { birthDate: string } = { name: "Quốc Bảo", tone: "secondary", birthDate: "1996-01-03" };
+export const COUPLE: [typeof MINH_ANH, typeof QUOC_BAO] = [MINH_ANH, QUOC_BAO];
 
 export const START_DATE = "2023-02-14";
 // Fixed "today" so the counter and the screenshots do not drift.

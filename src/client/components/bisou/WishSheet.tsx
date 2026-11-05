@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { formatNumber } from "@/lib/format";
+import { focusCreateButton } from "@/lib/useTabNavigation";
 import { parseVnd, wishErrorKey, wishSaveBlock } from "@/lib/wishes";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
 
-export function WishSheet({ wish, onClose, onSaved, onSignedOut }: {
+export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
+  fromMenu?: boolean;
   wish: Wish | null;
   onClose: () => void;
   onSaved: (wish: Wish) => void;
@@ -49,7 +51,9 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut }: {
 
   return <>
     <Drawer open onOpenChange={(open) => { if (!open) close(); }} dismissible={!dirty && !saving}>
-      <DrawerContent aria-describedby={undefined} onEscapeKeyDown={(e) => { e.preventDefault(); close(); }} onPointerDownOutside={(e) => { e.preventDefault(); close(); }}>
+      <DrawerContent onCloseAutoFocus={(event) => {
+        if (fromMenu) { event.preventDefault(); focusCreateButton(); }
+      }} aria-describedby={undefined} onEscapeKeyDown={(e) => { e.preventDefault(); close(); }} onPointerDownOutside={(e) => { e.preventDefault(); close(); }}>
         <form onSubmit={(e) => void save(e)} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
           <DrawerHeader className="flex-row items-center gap-2 px-5 pt-2 pb-3 text-left">
             <DrawerTitle className="flex-1 font-heading text-2xl">{t(wish ? "wish.edit" : "wishes.add")}</DrawerTitle>

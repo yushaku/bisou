@@ -17,16 +17,18 @@ export function parseDay(day: string): Date {
   return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
 }
 
-export function formatDay(day: string | Date, locale: Locale, style: "long" | "short" | "weekday" | "numeric" = "long"): string {
+export function formatDay(day: string | Date, locale: Locale, style: "long" | "short" | "weekday" | "numeric" | "month" = "long"): string {
   const date = typeof day === "string" ? parseDay(day) : day;
   const options: Intl.DateTimeFormatOptions =
-    style === "numeric"
-      ? { day: "2-digit", month: "2-digit", year: "numeric" }
-      : style === "short"
-        ? { day: "numeric", month: "short" }
-        : style === "weekday"
-          ? { weekday: "long", day: "numeric", month: "long" }
-          : { day: "numeric", month: "long", year: "numeric" };
+    style === "month"
+      ? { month: "long", year: "numeric" }
+      : style === "numeric"
+        ? { day: "2-digit", month: "2-digit", year: "numeric" }
+        : style === "short"
+          ? { day: "numeric", month: "short" }
+          : style === "weekday"
+            ? { weekday: "long", day: "numeric", month: "long" }
+            : { day: "numeric", month: "long", year: "numeric" };
   return new Intl.DateTimeFormat(TAGS[locale], options).format(date);
 }
 

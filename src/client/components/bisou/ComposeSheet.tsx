@@ -13,12 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useI18n, type MessageKey } from "@/i18n";
 import { defaultDay, saveBlock, saveErrorKey, textLength, type SaveBlock } from "@/lib/compose";
 import { formatDay, parseDay } from "@/lib/format";
+import { focusCreateButton } from "@/lib/useTabNavigation";
 import { cn } from "@/lib/utils";
 import { PersonAvatar, type Person } from "./CoupleAvatars";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
 
 interface ComposeSheetProps {
+  fromMenu?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   author: Person;
@@ -47,7 +49,7 @@ const HINTS: Record<SaveBlock, MessageKey> = {
  * Bottom sheet to write an entry. Nothing is kept after it closes (no drafts, R9), so a
  * changed form asks before it is discarded, by the close button, Escape, a tap outside or a swipe.
  */
-export function ComposeSheet({ open, onOpenChange, ...form }: ComposeSheetProps) {
+export function ComposeSheet({ open, onOpenChange, fromMenu, ...form }: ComposeSheetProps) {
   const { t } = useI18n();
   const [lock, setLock] = useState<Lock>(null);
   const [confirming, setConfirming] = useState(false);
@@ -64,7 +66,9 @@ export function ComposeSheet({ open, onOpenChange, ...form }: ComposeSheetProps)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} dismissible={!lock}>
-      <DrawerContent aria-describedby={undefined} onEscapeKeyDown={guard} onPointerDownOutside={guard}>
+      <DrawerContent onCloseAutoFocus={(event) => {
+        if (fromMenu) { event.preventDefault(); focusCreateButton(); }
+      }} aria-describedby={undefined} onEscapeKeyDown={guard} onPointerDownOutside={guard}>
         {/* Keyed by entry, so switching between new and edit never carries a form over. */}
         <ComposeForm key={form.receiving?.id ?? form.entry?.id ?? "new"} {...form} onLock={setLock} onClose={requestClose} onDone={() => onOpenChange(false)} />
       </DrawerContent>
@@ -88,7 +92,7 @@ export function ComposeSheet({ open, onOpenChange, ...form }: ComposeSheetProps)
   );
 }
 
-interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChange"> {
+interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChange" | "fromMenu"> {
   onLock: (lock: Lock) => void;
   onClose: () => void;
   onDone: () => void;

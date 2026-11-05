@@ -3,7 +3,7 @@ import { flushSync } from "react-dom";
 import { useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import type { TabId } from "../components/bisou/AppShell";
-import { readCreateRequest, TAB_PATH, type CreateDestination } from "./navigation";
+import { readCreateRequest, tabMove, TAB_PATH, type CreateDestination } from "./navigation";
 import { TabMemory } from "./tabMemory";
 
 const LIVE_TABS = ["home", "journal", "wishes"] as const;
@@ -17,20 +17,29 @@ function switchTab(go: () => void, direction: 1 | -1) {
 
 export function useTabNavigation(tab?: TabId) {
   const [location, navigate] = useLocation();
-  const state = useHistoryState<{ settingsFrom?: string } | null>();
+  const state = useHistoryState<{ from?: string } | null>();
   const memory = useContext(TabMemory);
-  const origin = location === "/settings" ? state?.settingsFrom : location;
+  const origin = state?.from ?? location;
   const current = LIVE_TABS.find((id) => TAB_PATH[id] === origin) ?? "home";
 
   function go(next: Exclude<TabId, "garden">, create?: CreateDestination) {
     if (tab) memory?.scroll.set(tab, window.scrollY);
+    if (memory) memory.returnFocus = null;
     const path = TAB_PATH[next];
-    if (location === path && !create) {
+    const move = tabMove(location, state?.from, path, create);
+    if (move === "scroll") {
       window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
       return;
     }
+    if (move === "back") {
+      if (create) window.addEventListener("popstate", () => {
+        navigate(path, { replace: true, state: { create } });
+      }, { once: true });
+      history.back();
+      return;
+    }
     const update = () => navigate(path, {
-      replace: location === path || location === "/settings",
+      replace: move === "replace",
       state: create ? { create } : null,
     });
     if (location === path) update();
@@ -51,4 +60,8 @@ export function useCreateRequest(destination: CreateDestination, onOpen: () => v
     navigate(location, { replace: true });
     onOpen();
   }, [request, destination, location, navigate, onOpen]);
+}
+
+export function focusCreateButton() {
+  document.querySelector<HTMLButtonElement>("[data-create-button]")?.focus({ preventScroll: true });
 }

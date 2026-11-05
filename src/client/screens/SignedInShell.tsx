@@ -24,8 +24,13 @@ export function SignedInShell({
   const navigation = useTabNavigation(tab);
 
   useLayoutEffect(() => {
-    if (!tab || !memory) return;
-    window.scrollTo({ top: memory.scroll.get(tab) ?? 0, behavior: "instant" });
+    if (!memory) return;
+    if (tab) window.scrollTo({ top: memory.scroll.get(tab) ?? 0, behavior: "instant" });
+    if (memory.returnFocus) {
+      document.getElementById(memory.returnFocus)?.focus({ preventScroll: true });
+      memory.returnFocus = null;
+    }
+    if (!tab) return;
     const remember = () => memory.scroll.set(tab, window.scrollY);
     window.addEventListener("scroll", remember, { passive: true });
     return () => window.removeEventListener("scroll", remember);
@@ -35,7 +40,8 @@ export function SignedInShell({
     <AppShell
       onOpenSettings={() => {
         if (tab) memory?.scroll.set(tab, window.scrollY);
-        navigate("/settings", { state: { settingsFrom: location } });
+        if (memory) memory.returnFocus = "settings-button";
+        navigate("/settings", { state: { from: location } });
       }}
       tabs={tab ? { active: tab, ...navigation } : undefined}
     >

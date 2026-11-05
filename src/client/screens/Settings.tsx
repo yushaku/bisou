@@ -1,11 +1,12 @@
-import { ArrowLeft, Cake, CalendarHeart, CircleCheck, Heart, LogOut, Mail, UserRound } from "lucide-react";
-import { lazy, Suspense, useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { Cake, CalendarHeart, CircleCheck, Heart, LogOut, Mail, UserRound } from "lucide-react";
+import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
 import { api } from "../api";
 import { BottomBar } from "../components/bisou/AppShell";
 import { CoupleAvatars, PersonAvatar, type Person } from "../components/bisou/CoupleAvatars";
+import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { SettingsGroup, SettingsRow } from "../components/bisou/SettingsGroup";
 import { AppearanceSettings } from "../components/bisou/ThemeControls";
 import { Button } from "../components/ui/button";
@@ -28,7 +29,6 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   const [, navigate] = useLocation();
   const navigation = useTabNavigation();
   const sheetButton = useRef<HTMLButtonElement>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
   const birthdayButton = useRef<HTMLButtonElement>(null);
   const [birthdayOpen, setBirthdayOpen] = useState(false);
   const [birthdayLoaded, setBirthdayLoaded] = useState(false);
@@ -45,11 +45,6 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
     name: (member.id === user.id ? user.displayName : member.displayName) ?? "?",
     tone: i === 0 ? "primary" : "secondary",
   })) as [Person, Person] : null;
-
-  useLayoutEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-    heading.current?.focus({ preventScroll: true });
-  }, []);
 
   async function changeLocale(next: Locale) {
     const res = await api.updateMe({ locale: next });
@@ -86,15 +81,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
-        <div className="mx-auto flex h-14 w-full max-w-md items-center gap-3 px-4">
-          <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => {
-            if (history.state?.settingsFrom) history.back();
-            else navigate("/", { replace: true });
-          }}><ArrowLeft aria-hidden="true" /></Button>
-          <h1 ref={heading} tabIndex={-1} className="font-heading text-2xl outline-none">{t("settings.title")}</h1>
-        </div>
-      </header>
+      <SubPageHeader title={t("settings.title")} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
           {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={{ name: user.displayName ?? user.email, tone: "primary" }} />}

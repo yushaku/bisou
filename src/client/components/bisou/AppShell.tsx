@@ -46,7 +46,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, children, classN
           <span className="min-w-0 flex-1 truncate font-heading text-2xl">{title ?? t("appName")}</span>
           {action}
           {onOpenSettings && (
-            <Button variant="ghost" size="icon" aria-label={t("settings.open")} onClick={onOpenSettings}>
+            <Button id="settings-button" variant="ghost" size="icon" aria-label={t("settings.open")} onClick={onOpenSettings}>
               <Settings />
             </Button>
           )}
@@ -90,7 +90,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
               <Fragment key={id}>
                 {index === 2 && <li className="flex items-center justify-center">
                   <DrawerTrigger asChild>
-                    <Button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-card elevate" aria-label={t("nav.create")}>
+                    <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-card elevate" aria-label={t("nav.create")}>
                       <Plus className="size-6" aria-hidden="true" />
                     </Button>
                   </DrawerTrigger>
