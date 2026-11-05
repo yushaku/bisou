@@ -2,7 +2,7 @@ import { ImagePlus, RotateCw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
-import { fitSquare } from "@/lib/compose";
+import { fitSquare, takeRoom } from "@/lib/compose";
 import { decodePhoto, renderSquare, type Area } from "@/lib/photo";
 import { PhotoCropDialog, type CropRequest } from "./PhotoCropDialog";
 import type { useUploadQueue } from "./useUploadQueue";
@@ -42,7 +42,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
 
   async function addFiles(files: File[]) {
     if (preparing) return;
-    const { take, refused } = { take: Math.max(0, Math.min(files.length, max - queue.items.length)), refused: files.length > max - queue.items.length };
+    const { take, refused } = takeRoom(queue.items.length, files.length, max);
     const messages: string[] = refused ? [t(max === 1 ? "wish.photoLimit" : "compose.limit")] : [];
     setPhotoError(refused ? messages.join(" ") : null);
     if (take === 0) return;

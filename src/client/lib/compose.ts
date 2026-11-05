@@ -35,8 +35,8 @@ export function saveBlock(
 }
 
 /** How many of the picked files fit beside the photos already there (R5). */
-export function takeRoom(have: number, picked: number): { take: number; refused: boolean } {
-  const take = Math.max(0, Math.min(picked, ENTRY_PHOTOS_MAX - have));
+export function takeRoom(have: number, picked: number, max = ENTRY_PHOTOS_MAX): { take: number; refused: boolean } {
+  const take = Math.max(0, Math.min(picked, max - have));
   return { take, refused: take < picked };
 }
 

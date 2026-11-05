@@ -112,7 +112,6 @@ function WishesScreen() {
   const result = PARTNER_WISHES[0];
   return (
     <>
-      <PageHeader title={t("nav.wishes")} />
       <SpinCard
         partnerName={QUOC_BAO.name}
         onSpin={demoSpin}

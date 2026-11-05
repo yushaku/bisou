@@ -63,6 +63,11 @@ describe("compose save rules", () => {
     expect(takeRoom(3, 2)).toEqual({ take: 1, refused: true });
     expect(takeRoom(4, 1)).toEqual({ take: 0, refused: true });
   });
+
+  it("R6: the wish picker fits one photo using the same room rule", () => {
+    expect(takeRoom(0, 2, 1)).toEqual({ take: 1, refused: true });
+    expect(takeRoom(1, 1, 1)).toEqual({ take: 0, refused: true });
+  });
 });
 
 describe("crop frame", () => {

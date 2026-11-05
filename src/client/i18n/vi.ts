@@ -135,7 +135,7 @@ export const vi = {
   "spin.budget": "Ngân sách",
   "spin.spin": "Quay",
   "spin.spinning": "Đang quay...",
-  "spin.result": "Thử món này nhé",
+  "spin.result": "Một điều ước của {name}",
   "spin.claim": "Mình sẽ tặng",
   "spin.again": "Quay lại",
   "spin.empty": "Chưa có điều ước nào trong ngân sách này. Thử tăng một chút?",

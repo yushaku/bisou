@@ -5,10 +5,9 @@ import { isLocale } from "../../shared/types";
 import { entriesWithPhotos, findEntry, validateEntry } from "../lib/journal";
 import type { AppEnv } from "../env";
 import { isUniqueViolation } from "../lib/couples";
-import { CLAIM_SELECT, toClaim, pickWeighted, reserveSpin, type ClaimRow } from "../lib/wishes";
+import { CLAIM_SELECT, toClaim, pickWeighted, reserveSpin, findWish, toWish, validateWish, WISH_SELECT, type ClaimRow, type WishRow } from "../lib/wishes";
 import { purgePhotos } from "../lib/photos";
 import { PENDING_PHOTO_TTL } from "../lib/time";
-import { findWish, toWish, validateWish, WISH_SELECT, type WishRow } from "../lib/wishes";
 
 type WishEnv = AppEnv & { Variables: { wishCoupleId: string; partnerId: string } };
 export const wishes = new Hono<WishEnv>();
@@ -88,8 +87,10 @@ wishes.delete("/:id", async (c) => {
   const owner = c.get("user").id;
   if (!await findWish(db, id, owner, c.get("wishCoupleId"))) return c.json({ error: "not_found" }, 404);
   const [, detached] = await db.batch([
-    db.prepare(`UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), gone_at = ?2, wish_id = NULL WHERE wish_id = ?1`).bind(id, Date.now()),
+    db.prepare(`UPDATE wish_claims SET gone_title = (SELECT title FROM wishes WHERE id = ?1), gone_at = ?2, wish_id = NULL
+      WHERE wish_id = ?1 AND (SELECT status FROM wishes WHERE id = ?1) = 'open'`).bind(id, Date.now()),
     db.prepare("UPDATE photos SET wish_id = NULL, created_at = 0 WHERE wish_id = ? RETURNING id, couple_id").bind(id),
+    db.prepare("DELETE FROM wish_claims WHERE wish_id = ?").bind(id),
     db.prepare("DELETE FROM wishes WHERE id = ? AND owner_id = ?").bind(id, owner),
   ]);
   await purgePhotos(c.env, detached!.results as { id: string; couple_id: string }[]);

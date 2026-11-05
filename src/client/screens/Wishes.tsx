@@ -62,16 +62,19 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     else setError(t(wishErrorKey(res.error?.error)));
   }
 
+  const optionsButton = (wish: Wish) => <Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>;
+
   return <SignedInShell {...session} tab="wishes">
     {view !== "jar" && <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button>}
-    <PageHeader title={t(view === "jar" ? "wishes.mine" : view === "spin" ? "spin.title" : view === "claims" ? "claims.title" : "received.list")} description={view === "jar" ? t("wishes.private") : undefined} />
+    {view !== "spin" && <PageHeader title={t(view === "jar" ? "wishes.mine" : view === "claims" ? "claims.title" : "received.list")} description={view === "jar" ? t("wishes.private") : undefined} />}
     {view === "spin" && <SpinCard partnerName={partnerName} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
     {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
     {view === "received" && <>
       {failed && <p role="alert">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></p>}
+      {!jar && !failed && <Skeleton className="h-28" aria-label={t("loading")} />}
       {jar?.received.length === 0 && <EmptyState icon={Gift} title={t("received.empty")} />}
       <div className="flex flex-col gap-3">{jar?.received.map((wish) => <div key={wish.id}>
-        <WishCard wish={wish} actions={<Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>} />
+        <WishCard wish={wish} actions={optionsButton(wish)} />
         {wish.receivedOn && <p className="mt-2 text-sm text-muted-foreground">{t("received.on", { date: formatDay(wish.receivedOn, locale) })}</p>}
         {wish.note && <p className="mt-1 whitespace-pre-line">{wish.note}</p>}
       </div>)}</div>
@@ -84,7 +87,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     {!jar && !failed && <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3"><Skeleton className="h-28" /><Skeleton className="h-28" /></div>}
     {jar && <>
       {jar.open.length === 0 ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => setEditing(null), icon: Plus }} /> :
-        <div className="flex flex-col gap-3 pb-6">{jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={<Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>} />)}</div>}
+        <div className="flex flex-col gap-3 pb-6">{jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)} />)}</div>}
       <div className="pointer-events-none sticky bottom-[calc(--spacing(19)+env(safe-area-inset-bottom))] z-20 mt-auto flex justify-end">
         <Button size="lg" className="pointer-events-auto elevate" onClick={() => setEditing(null)}><Plus aria-hidden="true" />{t("wishes.add")}</Button>
       </div>
@@ -106,7 +109,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         <p role="alert" className="text-destructive empty:hidden">{error}</p>
         <DialogFooter>
           {!deleting && acting?.status === "open" && <Button onClick={() => { setReceiving(acting); setActing(null); }}>{t("received.action")}</Button>}
-          {!deleting && acting?.status === "open" && <Button onClick={() => { setEditing(acting); setActing(null); }}>{t("wish.edit")}</Button>}
+          {!deleting && acting?.status === "open" && <Button variant="outline" onClick={() => { setEditing(acting); setActing(null); }}>{t("wish.edit")}</Button>}
           <Button variant="destructive" loading={busy} onClick={() => deleting ? void remove() : setDeleting(true)}>{t("wish.delete")}</Button>
           <Button variant="outline" disabled={busy} onClick={() => setActing(null)}>{t("common.close")}</Button>
         </DialogFooter>

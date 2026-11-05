@@ -45,6 +45,7 @@ describe("wish receipt", () => {
     expect((await call("DELETE", `/api/wishes/claims/${claims[0]!.id}`, { cookie: a.cookie })).status).toBe(409);
     expect(await (await call("POST", "/api/wishes/spin", { cookie: a.cookie, body: { budget: 500000 } })).json()).toEqual({ wish: null });
     expect((await call("DELETE", `/api/wishes/${wish.id}`, { cookie: b.cookie })).status).toBe(200);
+    expect((await (await call("GET", "/api/wishes/claims", { cookie: a.cookie })).json<{ claims: Claim[] }>()).claims).toEqual([]);
   });
 
   it.each(["vi", "en"] as const)("AC12 (R20, R21): creates one ordinary journal entry with 4 photos in %s", async (locale) => {

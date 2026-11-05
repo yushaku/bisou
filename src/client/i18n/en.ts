@@ -136,7 +136,7 @@ export const en: Messages = {
   "spin.budget": "Budget",
   "spin.spin": "Spin",
   "spin.spinning": "Spinning...",
-  "spin.result": "How about this",
+  "spin.result": "A wish from {name}",
   "spin.claim": "I'll get it",
   "spin.again": "Spin again",
   "spin.empty": "No wish fits this budget yet. Try a little more?",

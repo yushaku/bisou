@@ -11,6 +11,7 @@ import { useI18n } from "@/i18n";
 import { formatNumber, formatVnd } from "@/lib/format";
 import { parseVnd } from "@/lib/wishes";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "./PageHeader";
 
 export type SpinState = { step: "idle" | "spinning" | "empty" } | { step: "result"; wish: SpinWish };
 
@@ -68,34 +69,38 @@ export function SpinCard({ partnerName, initialBudget, initialState, onSpin = ap
   }
 
   const spinning = state.step === "spinning";
-  return <Card className={cn("gap-4 px-5 py-5", className)}>
-    <div><h2 className="font-heading text-2xl">{t("spin.title")}</h2><p className="mt-1 text-muted-foreground">{t("spin.hint", { name: partnerName })}</p></div>
-    <form onSubmit={(e) => void spin(e)} className="flex flex-col gap-2">
-      <Label htmlFor={budgetId}>{t("spin.budget")}</Label>
-      <div className="flex flex-wrap gap-2">
-        <Input id={budgetId} inputMode="numeric" autoComplete="off" disabled={spinning || claiming} value={budget} placeholder={formatNumber(500000, locale)} className="min-w-40 flex-1 text-lg tabular-nums"
-          onChange={(e) => { setBudget(e.target.value); setError(null); }} onBlur={() => { const n = parseVnd(budget); if (n && Number.isSafeInteger(n) && n > 0) setBudget(formatNumber(n, locale)); }} />
-        <Button type="submit" loading={spinning} disabled={claiming || retryAt !== null}><Dices aria-hidden="true" />{t(spinning ? "spin.spinning" : "spin.spin")}</Button>
-      </div>
-    </form>
+  return <div className={cn("flex flex-col gap-4", className)}>
+    <PageHeader className="pb-0" title={t(state.step === "result" ? "spin.result" : "spin.title", { name: partnerName })}
+      description={state.step === "result" ? `${t("spin.budget")}: ${formatVnd(parseVnd(budget) ?? 0, locale)}` : t("spin.hint", { name: partnerName })} />
     {retryAt !== null && <p role="status" className="rounded-lg bg-muted p-3">{t("spin.limit", { time: new Date(retryAt).toLocaleString(locale) })}</p>}
     <p role="alert" className="text-destructive empty:hidden">{error}</p>
-    <div aria-live="polite">
+    <Card className="gap-4 p-4" aria-live="polite">
+      {state.step !== "result" && <form onSubmit={(e) => void spin(e)} className="flex flex-col gap-2">
+        <Label htmlFor={budgetId}>{t("spin.budget")}</Label>
+        <div className="flex flex-wrap gap-2">
+          <Input id={budgetId} inputMode="numeric" autoComplete="off" disabled={spinning || claiming} value={budget} placeholder={formatNumber(500000, locale)} className="min-w-40 flex-1 text-lg tabular-nums"
+            onChange={(e) => { setBudget(e.target.value); setError(null); }} onBlur={() => { const n = parseVnd(budget); if (n && Number.isSafeInteger(n) && n > 0) setBudget(formatNumber(n, locale)); }} />
+          <Button type="submit" loading={spinning} disabled={claiming || retryAt !== null}><Dices aria-hidden="true" />{t(spinning ? "spin.spinning" : "spin.spin")}</Button>
+        </div>
+      </form>}
       {(state.step === "idle" || spinning) && <img src={pouch} alt="" className={cn("mx-auto size-32 object-contain", spinning && "animate-pulse motion-reduce:animate-none")} />}
       {state.step === "result" && <div className="flex flex-col gap-3 animate-in fade-in duration-(--duration) motion-reduce:animate-none">
-        <p className="text-sm font-semibold text-muted-foreground">{t("spin.result")}</p>
-        <div className="edge flex items-center gap-3 rounded-lg bg-muted p-3">
-          <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-card">
-            {state.wish.photoId ? <img src={photoUrl(state.wish.photoId, "thumb")} alt={state.wish.title} className="size-full object-cover" /> : <Gift className="absolute inset-0 m-auto size-6 text-muted-foreground" aria-hidden="true" />}
+        <div className="photo-frame w-full [--photo-pad-bottom:var(--photo-pad)] [--photo-tilt:0deg]">
+          <div data-slot="photo" className="relative aspect-square w-full overflow-hidden bg-muted">
+            {state.wish.photoId ? <img src={photoUrl(state.wish.photoId, "full")} alt={state.wish.title} className="size-full object-cover" /> : <Gift className="absolute inset-0 m-auto size-12 text-muted-foreground" aria-hidden="true" />}
           </div>
-          <div className="min-w-0 flex-1"><h3 className="font-semibold">{state.wish.title}</h3><p className="font-heading text-lg tabular-nums">{formatVnd(state.wish.price, locale)}</p></div>
+        </div>
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1"><h2 className="font-heading text-2xl">{state.wish.title}</h2><p className="font-heading text-2xl tabular-nums">{formatVnd(state.wish.price, locale)}</p></div>
           {state.wish.link && <Button asChild variant="ghost" size="icon"><a href={state.wish.link} target="_blank" rel="noreferrer noopener" aria-label={t("wish.openLink")}><ExternalLink aria-hidden="true" /></a></Button>}
         </div>
+      </div>}
+      {state.step === "empty" && <p className="rounded-lg bg-muted p-3">{t("spin.empty")}</p>}
+    </Card>
+    {state.step === "result" && <div className="flex flex-col gap-3" aria-live="polite">
         {claimed ? <><p>{t("spin.claimed")}</p>{onViewClaims && <Button onClick={onViewClaims}>{t("claims.title")}</Button>}</> : <Button loading={claiming} onClick={() => void claim()}><Gift aria-hidden="true" />{t("spin.claim")}</Button>}
         <Button variant="outline" disabled={claiming || retryAt !== null} onClick={() => void spin()}><RotateCcw aria-hidden="true" />{t("spin.again")}</Button>
         <p className="text-sm text-muted-foreground">{t("spin.secret", { name: partnerName })}</p>
-      </div>}
-      {state.step === "empty" && <p className="rounded-lg bg-muted p-3">{t("spin.empty")}</p>}
-    </div>
-  </Card>;
+    </div>}
+  </div>;
 }
