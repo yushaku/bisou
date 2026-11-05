@@ -12,7 +12,7 @@
 ### Fixed
 
 - Remove private JPEG metadata and refuse metadata between scans or appended images; journal JSON requests are limited to 16 KB.
-- Photo responses become stale after one day so a partner's browser refreshes access to deleted photos.
+- A partner's browser may show a deleted photo from its cache for up to one day, then stops once it refreshes.
 
 ### Changed
 
