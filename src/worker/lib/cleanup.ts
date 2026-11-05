@@ -1,4 +1,6 @@
-import { HOUR } from "./time";
+import type { Env } from "../env";
+import { photoKey } from "./photos";
+import { HOUR, PENDING_PHOTO_TTL } from "./time";
 
 /**
  * Rate limit windows: otp_requests (routes/auth.ts) and join_attempts (lib/couples.ts) both
@@ -35,4 +37,22 @@ export async function runCleanup(db: D1Database, now: number): Promise<CleanupCo
     join_attempts: joinAttempts?.meta.changes ?? 0,
     pair_codes: pairCodes?.meta.changes ?? 0,
   };
+}
+
+export async function sweepPhotos(env: Env, now: number): Promise<number> {
+  // Expire the selected rows atomically so an already validated save cannot attach them during R2 deletion.
+  const { results: rows } = await env.DB.prepare(`UPDATE photos SET created_at = 0
+    WHERE id IN (SELECT id FROM photos WHERE entry_id IS NULL AND created_at <= ? LIMIT 500)
+    AND entry_id IS NULL RETURNING id, couple_id`)
+    .bind(now - PENDING_PHOTO_TTL).all<{ id: string; couple_id: string }>();
+  if (!rows.length) return 0;
+  await env.PHOTOS.delete(rows.flatMap((row) => [photoKey(row.couple_id, row.id, "full"), photoKey(row.couple_id, row.id, "thumb")]));
+  const deletes = [];
+  // D1 allows at most 100 bound parameters per statement.
+  for (let offset = 0; offset < rows.length; offset += 100) {
+    const ids = rows.slice(offset, offset + 100).map((row) => row.id);
+    deletes.push(env.DB.prepare(`DELETE FROM photos WHERE id IN (${ids.map(() => "?").join(",")}) AND entry_id IS NULL`).bind(...ids));
+  }
+  const results = await env.DB.batch(deletes);
+  return results.reduce((count, result) => count + result.meta.changes, 0);
 }
