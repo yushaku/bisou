@@ -157,7 +157,6 @@ export const en: Messages = {
   "journal.pickDate": "Pick a date",
   "journal.title": "Our journal",
   "journal.subtitle": "{a} and {b}, our days together",
-  "journal.back": "Our corner",
   "journal.open": "Open our journal",
   "journal.loading": "Opening your journal...",
   "journal.loadError": "Couldn't open the journal",

@@ -133,7 +133,7 @@ function SignedIn({
   return (
     <Switch>
       <Route path="/journal">
-        <Journal user={user} couple={couple} onSignedOut={onSignedOut} />
+        <Journal {...session} couple={couple} />
       </Route>
       <Route>
         <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />

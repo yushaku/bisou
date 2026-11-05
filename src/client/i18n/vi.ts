@@ -156,7 +156,6 @@ export const vi = {
   "journal.pickDate": "Chọn ngày",
   "journal.title": "Nhật ký chung",
   "journal.subtitle": "{a} và {b}, những ngày bên nhau",
-  "journal.back": "Góc nhỏ",
   "journal.open": "Mở nhật ký",
   "journal.loading": "Đang mở nhật ký...",
   "journal.loadError": "Chưa mở được nhật ký",

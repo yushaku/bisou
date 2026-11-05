@@ -1,8 +1,10 @@
 import { CircleCheck, LogOut } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
+import { flushSync } from "react-dom";
+import { useLocation } from "wouter";
 import { DISPLAY_NAME_MAX, type Locale, type User } from "../../shared/types";
 import { api } from "../api";
-import { AppShell } from "../components/bisou/AppShell";
+import { AppShell, type TabId } from "../components/bisou/AppShell";
 import { SettingsSheet } from "../components/bisou/SettingsSheet";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -15,16 +17,37 @@ export interface SessionProps {
   onSignedOut: () => void;
 }
 
-/* Signed-in frame: AppShell plus the Settings sheet with appearance, language and account. */
+/* Tabs with a screen behind them; wishes and "us" join when they are built. */
+const LIVE_TABS: readonly TabId[] = ["home", "journal"];
+const TAB_PATH: Partial<Record<TabId, string>> = { home: "/", journal: "/journal" };
+
+/* Animated where the browser supports view transitions and motion is welcome; instant otherwise. */
+function switchTab(path: string, dir: 1 | -1, navigate: (to: string) => void) {
+  const go = () => {
+    // Synchronous render so the transition captures the new tab, opened at its top.
+    flushSync(() => navigate(path));
+    window.scrollTo(0, 0);
+  };
+  if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return go();
+  document.documentElement.style.setProperty("--tab-dir", String(dir));
+  document.startViewTransition(go);
+}
+
+/*
+ * Signed-in frame: AppShell plus the Settings sheet with appearance, language and account.
+ * `tab` shows the bottom tab bar with that tab active; onboarding and pairing leave it out.
+ */
 export function SignedInShell({
   user,
   onUser,
   onSignedOut,
   showProfile = true,
+  tab,
   children,
-}: SessionProps & { showProfile?: boolean; children: ReactNode }) {
+}: SessionProps & { showProfile?: boolean; tab?: TabId; children: ReactNode }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   async function changeLocale(locale: Locale) {
     const res = await api.updateMe({ locale });
@@ -37,7 +60,20 @@ export function SignedInShell({
   }
 
   return (
-    <AppShell onOpenSettings={() => setOpen(true)}>
+    <AppShell
+      onOpenSettings={() => setOpen(true)}
+      tabs={
+        tab && {
+          active: tab,
+          items: LIVE_TABS,
+          onSelect: (next) => {
+            const path = TAB_PATH[next];
+            if (next === tab) window.scrollTo({ top: 0, behavior: "smooth" });
+            else if (path) switchTab(path, LIVE_TABS.indexOf(next) > LIVE_TABS.indexOf(tab) ? 1 : -1, navigate);
+          },
+        }
+      }
+    >
       {children}
       <SettingsSheet open={open} onOpenChange={setOpen} onLocaleChange={(l) => void changeLocale(l)}>
         {showProfile && <ProfileForm user={user} onUser={onUser} />}

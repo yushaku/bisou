@@ -112,3 +112,37 @@
     text-wrap: balance;
   }
 }
+
+/*
+ * Tab switches run inside document.startViewTransition (SignedInShell): the accent pill
+ * slides to the new tab, the page slides in from the side of the tab (--tab-dir: 1 or -1),
+ * header and tab bar stay put. Reduced motion skips the transition in code.
+ */
+::view-transition-group(tab-pill) {
+  animation-duration: calc(var(--duration) * 2);
+  animation-timing-function: var(--ease);
+}
+::view-transition-old(tab-page) {
+  animation: tab-page-out var(--duration) var(--ease) both;
+}
+::view-transition-new(tab-page) {
+  animation: tab-page-in calc(var(--duration) * 2) var(--ease) both;
+}
+::view-transition-old(tab-header),
+::view-transition-new(tab-header),
+::view-transition-old(tab-bar),
+::view-transition-new(tab-bar) {
+  animation: none;
+}
+@keyframes tab-page-out {
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--tab-dir, 1) * -1.5rem));
+  }
+}
+@keyframes tab-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--tab-dir, 1) * 1.5rem));
+  }
+}

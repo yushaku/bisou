@@ -1,4 +1,4 @@
-import { BookHeart, CalendarHeart, ChevronRight, PencilLine } from "lucide-react";
+import { BookHeart, CalendarHeart, ChevronRight } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -9,7 +9,6 @@ import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
 import { DaysCounter } from "../components/bisou/DaysCounter";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { PageHeader } from "../components/bisou/PageHeader";
-import { Button } from "../components/ui/button";
 import { useI18n, type Translate } from "../i18n";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
@@ -74,7 +73,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
   }
 
   return (
-    <SignedInShell {...session}>
+    <SignedInShell {...session} tab="home">
       <PageHeader title={t("home.ourCorner")} className="pb-2" />
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={people} size="sm" />
@@ -82,13 +81,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
       </div>
 
       {couple.startDate ? (
-        <>
-          <DaysCounter startDate={couple.startDate} people={people} today={now} />
-          <Button variant="ghost" className="mt-3 self-center" onClick={pick}>
-            <PencilLine aria-hidden="true" />
-            {t("startDate.edit")}
-          </Button>
-        </>
+        <DaysCounter startDate={couple.startDate} people={people} today={now} onEditStartDate={pick} />
       ) : (
         <EmptyState
           icon={CalendarHeart}

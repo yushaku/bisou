@@ -1,11 +1,9 @@
-import { BookHeart, ChevronLeft, Ellipsis, PencilLine, Plus } from "lucide-react";
+import { BookHeart, Ellipsis, PencilLine, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Link } from "wouter";
 import { toDayString } from "../../shared/days";
-import type { Couple, JournalEntry, JournalPage, Locale, User } from "../../shared/types";
+import type { Couple, JournalEntry, JournalPage, Locale } from "../../shared/types";
 import { api, photoUrl } from "../api";
-import { AppShell } from "../components/bisou/AppShell";
 import type { Person } from "../components/bisou/CoupleAvatars";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { EntryActions } from "../components/bisou/EntryActions";
@@ -17,14 +15,13 @@ import { Skeleton } from "../components/ui/skeleton";
 import { useI18n, type Translate } from "../i18n";
 import { formatDay, formatTime } from "../lib/format";
 import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../lib/journalFeed";
+import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
 const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
 
-interface JournalProps {
-  user: User;
+interface JournalProps extends SessionProps {
   couple: Couple;
-  onSignedOut: () => void;
 }
 
 /* Starts the next page this far before the reader reaches the bottom, so scrolling rarely waits. */
@@ -49,7 +46,8 @@ function toCard(e: JournalEntry, people: Map<string, Person>, t: Translate, loca
   };
 }
 
-export function Journal({ user, couple, onSignedOut }: JournalProps) {
+export function Journal({ couple, ...session }: JournalProps) {
+  const { user, onSignedOut } = session;
   const { t, locale } = useI18n();
   // null until the first page arrives; never shown as an empty journal while loading or failed.
   const [feed, setFeed] = useState<JournalPage | null>(null);
@@ -181,17 +179,8 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
     return () => io.disconnect();
   }, [autoLoad, loadMore, more, feed]);
 
-  const back = (
-    <Button variant="ghost" className="px-3" asChild>
-      <Link href="/">
-        <ChevronLeft aria-hidden="true" />
-        {t("journal.back")}
-      </Link>
-    </Button>
-  );
-
   return (
-    <AppShell action={back}>
+    <SignedInShell {...session} tab="journal">
       <PageHeader title={t("journal.title")} description={t("journal.subtitle", { a: names[0] ?? "?", b: names[1] ?? "?" })} />
 
       {feed && (!online || stale) && (
@@ -295,9 +284,9 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
             <p className="pb-4 text-sm text-muted-foreground">{t("journal.end")}</p>
           )}
 
-          {/* In thumb reach above the home indicator, as the tab bar is on other screens. */}
-          <div className="sticky bottom-0 z-20 -mx-4 -mb-4 mt-auto border-t bg-background px-4 pt-3 pb-[max(--spacing(4),env(safe-area-inset-bottom))]">
-            <Button size="lg" className="w-full" onClick={() => write()}>
+          {/* Floats in thumb reach just above the tab bar (h-16 plus the home indicator). */}
+          <div className="pointer-events-none sticky bottom-[calc(--spacing(19)+env(safe-area-inset-bottom))] z-20 mt-auto flex justify-end">
+            <Button size="lg" className="pointer-events-auto elevate" onClick={() => write()}>
               <PencilLine aria-hidden="true" />
               {t("compose.write")}
             </Button>
@@ -330,6 +319,6 @@ export function Journal({ user, couple, onSignedOut }: JournalProps) {
           />
         </Suspense>
       )}
-    </AppShell>
+    </SignedInShell>
   );
 }
