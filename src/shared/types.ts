@@ -30,6 +30,7 @@ export type ApiErrorCode =
   | "already_in_couple"
   | "already_paired"
   | "not_in_couple"
+  | "code_still_valid"
   | "pair_code_invalid"
   | "pair_code_expired"
   | "own_pair_code"

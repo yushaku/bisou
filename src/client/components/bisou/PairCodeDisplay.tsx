@@ -2,14 +2,14 @@ import { Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/i18n";
+import { useI18n, type Translate } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 interface PairCodeDisplayProps {
   /* 6 characters from the no look-alike alphabet (no 0/O, 1/I/L). */
   code: string;
   expiresInMinutes?: number;
-  /* Epoch ms; the hint shows hours while at least 2 are left, then minutes. */
+  /* Epoch ms; the expiry line counts down in whole hours, then minutes under 1 hour. */
   expiresAt?: number;
   /* Extra actions shown next to the copy button (for example Share). */
   children?: ReactNode;
@@ -17,19 +17,36 @@ interface PairCodeDisplayProps {
 }
 
 const MINUTE = 60_000;
+const TICK_MS = 15_000;
 
-function minutesLeft(expiresInMinutes: number | undefined, expiresAt: number | undefined): number | undefined {
-  if (expiresAt !== undefined) return Math.max(1, Math.ceil((expiresAt - Date.now()) / MINUTE));
+function minutesLeft(expiresInMinutes: number | undefined, expiresAt: number | undefined, now: number): number | undefined {
+  if (expiresAt !== undefined) return Math.max(1, Math.ceil((expiresAt - now) / MINUTE));
   return expiresInMinutes;
+}
+
+function expiryText(t: Translate, minutes: number): string {
+  // Whole hours rounded down, so the line never promises more time than is left.
+  const hours = Math.floor(minutes / 60);
+  if (hours >= 2) return t("pair.expiresHours", { hours });
+  if (hours === 1) return t("pair.expiresHour");
+  return minutes === 1 ? t("pair.expiresMinute") : t("pair.expiresMinutes", { minutes });
 }
 
 export function PairCodeDisplay({ code, expiresInMinutes, expiresAt, children, className }: PairCodeDisplayProps) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
-  const minutes = minutesLeft(expiresInMinutes, expiresAt);
+  const [now, setNow] = useState(() => Date.now());
+  const minutes = minutesLeft(expiresInMinutes, expiresAt, now);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
+
+  // Keeps the remaining time current while the code is on screen.
+  useEffect(() => {
+    if (expiresAt === undefined) return;
+    const id = setInterval(() => setNow(Date.now()), TICK_MS);
+    return () => clearInterval(id);
+  }, [expiresAt]);
 
   async function copy() {
     try {
@@ -57,12 +74,14 @@ export function PairCodeDisplay({ code, expiresInMinutes, expiresAt, children, c
           </span>
         ))}
       </div>
-      {minutes !== undefined && (
-        <p className="text-base text-pretty text-muted-foreground">
-          {minutes >= 120 ? t("pair.hintHours", { hours: Math.ceil(minutes / 60) }) : t("pair.hint", { minutes })}
-        </p>
-      )}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-0.5">
+        <p className="text-base text-balance">{t("pair.send")}</p>
+        {minutes !== undefined && (
+          <p className="text-sm text-pretty text-muted-foreground">{expiryText(t, minutes)}</p>
+        )}
+      </div>
+      {/* Buttons share the row; when the labels do not fit, each takes a full row instead of leaving a gap. */}
+      <div className="flex flex-wrap gap-2 *:flex-1">
         <Button variant="outline" onClick={() => void copy()}>
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
           {copied ? t("pair.copied") : t("pair.copy")}

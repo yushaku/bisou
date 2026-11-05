@@ -1,4 +1,4 @@
-import { ArrowLeft, Heart, KeyRound, Share2, Sparkles } from "lucide-react";
+import { ArrowLeft, Heart, KeyRound, Share2, Sparkles, TimerOff } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { normalizePairCode, PAIR_CODE_LENGTH } from "../../shared/pairCode";
@@ -45,7 +45,7 @@ export function Pairing({ couple: current, onCouple, ...session }: PairingProps)
   const [view, setView] = useState<View>(() => (pendingJoinCode() ? "enter" : current ? "waiting" : "choose"));
   const [busy, setBusy] = useState(false);
   const { t } = useI18n();
-  // The couple can disappear under the waiting view (cancelled in another tab).
+  // Defensive: with no couple there is nothing to wait for.
   const shown: View = view === "waiting" && !current ? "choose" : view;
 
   async function create() {
@@ -69,12 +69,7 @@ export function Pairing({ couple: current, onCouple, ...session }: PairingProps)
         <ChooseView busy={busy} onCreate={() => void create()} onEnter={() => setView("enter")} />
       )}
       {shown === "waiting" && current && (
-        <WaitingView
-          couple={current}
-          onCouple={onCouple}
-          onCancelled={() => setView("choose")}
-          onEnter={() => setView("enter")}
-        />
+        <WaitingView couple={current} onCouple={onCouple} onEnter={() => setView("enter")} />
       )}
       {shown === "enter" && <EnterView onCouple={onCouple} onBack={() => setView(current ? "waiting" : "choose")} />}
     </SignedInShell>
@@ -154,16 +149,14 @@ function usePartnerPolling(onCouple: (couple: Couple | null) => void) {
 function WaitingView({
   couple: current,
   onCouple,
-  onCancelled,
   onEnter,
 }: {
   couple: Couple;
   onCouple: (couple: Couple | null) => void;
-  onCancelled: () => void;
   onEnter: () => void;
 }) {
   const { t } = useI18n();
-  const [busy, setBusy] = useState<"new" | "cancel" | null>(null);
+  const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   usePartnerPolling(onCouple);
 
@@ -177,29 +170,20 @@ function WaitingView({
     return () => clearTimeout(id);
   }, [pending]);
 
+  // Only offered once the code has expired; the server refuses while it is still valid.
   async function newCode() {
-    setBusy("new");
+    setBusy(true);
     const res = await api.newPairCode();
-    setBusy(null);
+    setBusy(false);
     if (res.ok) {
       setNow(Date.now());
       onCouple(res.data.couple);
-    } else if (res.error?.error === "already_paired") {
+    } else if (res.error?.error === "already_paired" || res.error?.error === "code_still_valid") {
       const again = await api.couple();
-      if (again.ok) onCouple(again.data.couple);
-    } else toast.error(res.status === 0 ? t("error.network") : t("error.generic"));
-  }
-
-  async function cancel() {
-    setBusy("cancel");
-    const res = await api.cancelCouple();
-    setBusy(null);
-    if (res.ok || res.error?.error === "not_in_couple") {
-      onCouple(null);
-      onCancelled();
-    } else if (res.error?.error === "already_paired") {
-      const again = await api.couple();
-      if (again.ok) onCouple(again.data.couple);
+      if (again.ok) {
+        setNow(Date.now());
+        onCouple(again.data.couple);
+      }
     } else toast.error(res.status === 0 ? t("error.network") : t("error.generic"));
   }
 
@@ -235,32 +219,29 @@ function WaitingView({
             </Button>
           </PairCodeDisplay>
         ) : (
-          <p role="status" className="text-base">
-            {t("pairing.expired")}
-          </p>
+          <div className="flex flex-col gap-4">
+            <p role="status" className="flex items-center gap-3 text-lg font-semibold text-balance">
+              <TimerOff className="size-6 shrink-0 text-muted-foreground" aria-hidden="true" />
+              {t("pairing.expired")}
+            </p>
+            <Button size="lg" loading={busy} onClick={() => void newCode()}>
+              {t("pairing.newCode")}
+            </Button>
+          </div>
         )}
       </Card>
 
       {!expired && (
-        <p role="status" className="mt-5 flex items-center gap-3 text-base text-muted-foreground">
+        <p role="status" className="mt-5 flex items-center gap-3 text-base text-pretty text-muted-foreground">
           <Heart className="size-5 shrink-0 animate-pulse text-primary motion-reduce:animate-none" aria-hidden="true" />
           {t("pairing.waiting")}
         </p>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        <Button variant={expired ? "default" : "outline"} loading={busy === "new"} disabled={busy !== null} onClick={() => void newCode()}>
-          {t("pairing.newCode")}
-        </Button>
-        <Button variant="ghost" loading={busy === "cancel"} disabled={busy !== null} onClick={() => void cancel()}>
-          {t("pairing.cancel")}
-        </Button>
-      </div>
-
-      <div className="mt-auto flex flex-wrap items-center gap-x-2 pt-10 text-base text-muted-foreground">
-        {t("pairing.haveCode")}
-        <Button variant="link" className="h-11" onClick={onEnter}>
-          {t("pairing.enter")}
+      <div className="mt-auto flex flex-col pt-10">
+        <Button variant="outline" size="lg" disabled={busy} onClick={onEnter}>
+          <KeyRound aria-hidden="true" />
+          {t("pairing.enterInstead")}
         </Button>
       </div>
     </>

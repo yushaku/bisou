@@ -57,7 +57,7 @@ couple.post("/", async (c) => {
   return c.json({ couple: await loadCouple(db, user.id, now) }, 201);
 });
 
-// New code for a couple that is still waiting; the old code stops working.
+// New code for a couple that is still waiting, only once its code has expired.
 couple.post("/code", async (c) => {
   const user = c.get("user");
   const db = c.env.DB;
@@ -68,11 +68,11 @@ couple.post("/code", async (c) => {
 
   for (let attempt = 0; ; attempt++) {
     try {
-      // Two deletes rather than one OR, so each one searches its own index.
-      const [, , inserted] = await db.batch([
-        db.prepare("DELETE FROM pair_codes WHERE couple_id = ?").bind(mine.coupleId),
+      const [, inserted] = await db.batch([
+        // Clears this couple's code too once it has expired.
         db.prepare("DELETE FROM pair_codes WHERE expires_at <= ?").bind(now),
-        // Only while still alone, in case the partner joined in the meantime.
+        // Only while still alone, in case the partner joined in the meantime. A code that is
+        // still valid survives the delete, so UNIQUE (couple_id) refuses the insert.
         db
           .prepare(
             `INSERT INTO pair_codes (code, couple_id, expires_at, created_at)
@@ -83,24 +83,11 @@ couple.post("/code", async (c) => {
       if (!inserted?.meta.changes) return c.json({ error: "already_paired" }, 409);
       break;
     } catch (err) {
+      if (isUniqueViolation(err, "pair_codes.couple_id")) return c.json({ error: "code_still_valid" }, 409);
       if (!isUniqueViolation(err, "pair_codes.code") || attempt + 1 >= CODE_RETRIES) throw err;
     }
   }
   return c.json({ couple: await loadCouple(db, user.id, now) });
-});
-
-// Cancel while still alone: the couple and its code are deleted. No unpairing once paired.
-couple.delete("/", async (c) => {
-  const user = c.get("user");
-  const db = c.env.DB;
-  const mine = await findMembership(db, user.id);
-  if (!mine) return c.json({ error: "not_in_couple" }, 404);
-  const res = await db
-    .prepare("DELETE FROM couples WHERE id = ? AND (SELECT COUNT(*) FROM couple_members WHERE couple_id = ?) = 1")
-    .bind(mine.coupleId, mine.coupleId)
-    .run();
-  if (!res.meta.changes) return c.json({ error: "already_paired" }, 409);
-  return c.json({ couple: null });
 });
 
 couple.post("/join", async (c) => {

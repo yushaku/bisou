@@ -108,31 +108,38 @@ describe("POST /api/couple (create)", () => {
 });
 
 describe("POST /api/couple/code (regenerate)", () => {
-  it("replaces the code; the old one stops working", async () => {
+  it("is refused while the current code is still valid; that code keeps working", async () => {
     const a = await user("An");
     const b = await user("Minh");
     const first = (await create(a)).pendingCode!;
-    vi.setSystemTime(T0 + 5 * MINUTE);
+    for (const at of [T0 + 5 * MINUTE, T0 + 24 * HOUR - 1]) {
+      vi.setSystemTime(at);
+      const res = await call("POST", "/api/couple/code", { cookie: a.cookie });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: "code_still_valid" });
+    }
+    expect((await getCouple(a))!.pendingCode).toEqual(first);
+    expect(await count("pair_codes")).toBe(1);
+    expect((await join(b, first.code)).status).toBe(200);
+  });
+
+  it("gives a new code once the old one expired; the old one stays dead", async () => {
+    const a = await user("An");
+    const b = await user("Minh");
+    const first = (await create(a)).pendingCode!;
+    vi.setSystemTime(T0 + 24 * HOUR);
+    expect((await getCouple(a))!.pendingCode).toBeUndefined();
     const res = await call("POST", "/api/couple/code", { cookie: a.cookie });
     expect(res.status).toBe(200);
     const second = (await res.json<{ couple: Couple }>()).couple.pendingCode!;
     expect(second.code).not.toBe(first.code);
-    expect(second.expiresAt).toBe(T0 + 5 * MINUTE + 24 * HOUR);
+    expect(second.expiresAt).toBe(T0 + 48 * HOUR);
     expect(await count("pair_codes")).toBe(1);
 
     const old = await join(b, first.code);
     expect(old.status).toBe(400);
     expect(await old.json()).toEqual({ error: "pair_code_invalid" });
     expect((await join(b, second.code)).status).toBe(200);
-  });
-
-  it("gives a new code after the old one expired", async () => {
-    const a = await user("An");
-    await create(a);
-    vi.setSystemTime(T0 + 25 * HOUR);
-    expect((await getCouple(a))!.pendingCode).toBeUndefined();
-    const res = await call("POST", "/api/couple/code", { cookie: a.cookie });
-    expect((await res.json<{ couple: Couple }>()).couple.pendingCode!.expiresAt).toBe(T0 + 49 * HOUR);
   });
 
   it("is refused without a couple and once paired", async () => {
@@ -149,32 +156,13 @@ describe("POST /api/couple/code (regenerate)", () => {
   });
 });
 
-describe("DELETE /api/couple (cancel)", () => {
-  it("deletes the couple and its code while the creator is alone", async () => {
+describe("DELETE /api/couple", () => {
+  it("does not exist: a waiting couple is only left by joining the partner's code", async () => {
     const a = await user("An");
-    const b = await user("Minh");
-    const { code } = (await create(a)).pendingCode!;
+    const created = await create(a);
     const res = await call("DELETE", "/api/couple", { cookie: a.cookie });
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ couple: null });
-    expect(await getCouple(a)).toBeNull();
-    expect(await count("couples")).toBe(0);
-    expect(await count("pair_codes")).toBe(0);
-    expect((await join(b, code)).status).toBe(400);
-    // Free to create again.
-    await create(a);
-  });
-
-  it("cannot unpair once paired, and needs a couple", async () => {
-    const { a, b } = await paired();
-    for (const u of [a, b]) {
-      const res = await call("DELETE", "/api/couple", { cookie: u.cookie });
-      expect(res.status).toBe(409);
-      expect(await res.json()).toEqual({ error: "already_paired" });
-    }
-    expect((await getCouple(a))!.members).toHaveLength(2);
-    const lone = await user("Lan");
-    expect((await call("DELETE", "/api/couple", { cookie: lone.cookie })).status).toBe(404);
+    expect(res.status).toBe(404);
+    expect(await getCouple(a)).toEqual(created);
   });
 });
 
@@ -298,6 +286,19 @@ describe("POST /api/couple/join", () => {
     expect(await count("pair_codes")).toBe(0);
     const lan = await user("Lan");
     expect((await join(lan, aCode)).status).toBe(400);
+  });
+
+  it("also drops the caller's own empty couple when its code has already expired", async () => {
+    const a = await user("An");
+    const b = await user("Minh");
+    const aCouple = await create(a);
+    vi.setSystemTime(T0 + 25 * HOUR);
+    const bCouple = await create(b);
+    const res = await join(a, bCouple.pendingCode!.code);
+    expect(res.status).toBe(200);
+    expect((await res.json<{ couple: Couple }>()).couple.id).toBe(bCouple.id);
+    expect(await count("couples")).toBe(1);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM couples WHERE id = ?").bind(aCouple.id).first("n")).toBe(0);
   });
 
   it("allows 10 failed attempts per hour, then answers 429 with retryAfter, even for the right code", async () => {

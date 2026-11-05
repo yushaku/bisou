@@ -37,7 +37,6 @@ export const api = {
   couple: () => call<CoupleResponse>("GET", "/api/couple"),
   createCouple: () => call<CoupleResponse>("POST", "/api/couple"),
   newPairCode: () => call<CoupleResponse>("POST", "/api/couple/code"),
-  cancelCouple: () => call<CoupleResponse>("DELETE", "/api/couple"),
   joinCouple: (code: string) => call<CoupleResponse>("POST", "/api/couple/join", { code }),
   setStartDate: (startDate: string) => call<CoupleResponse>("PATCH", "/api/couple", { startDate }),
 };
