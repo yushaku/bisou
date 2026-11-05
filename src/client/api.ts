@@ -53,7 +53,7 @@ export const api = {
   updateWish: (id: string, input: WishInput) => call<{ wish: Wish }>("PUT", `/api/wishes/${encodeURIComponent(id)}`, input),
   deleteWish: (id: string) => call<{ ok: true }>("DELETE", `/api/wishes/${encodeURIComponent(id)}`),
   me: () => call<MeResponse>("GET", "/api/me"),
-  updateMe: (patch: { displayName?: string; locale?: Locale }) =>
+  updateMe: (patch: { displayName?: string; locale?: Locale; birthDate?: string | null }) =>
     call<{ user: User }>("PATCH", "/api/me", patch),
   requestCode: (email: string, lang: Locale) =>
     call<RequestCodeResponse>("POST", "/api/auth/request", { email, lang }),

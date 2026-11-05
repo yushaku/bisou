@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { isValidDay, latestDay } from "../../shared/days";
 import { DISPLAY_NAME_MAX, isLocale, type MeResponse } from "../../shared/types";
 import type { AppEnv } from "../env";
 import { rowToUser, type UserRow } from "../lib/users";
@@ -26,6 +27,7 @@ me.patch("/", async (c) => {
   const user = c.get("user");
   let displayName = user.displayName;
   let locale = user.locale;
+  let birthDate = user.birthDate;
 
   if ("displayName" in body) {
     const v = body.displayName;
@@ -39,10 +41,18 @@ me.patch("/", async (c) => {
     locale = body.locale;
   }
 
+  if ("birthDate" in body) {
+    const value = body.birthDate;
+    if (value !== null && (!isValidDay(value) || value > latestDay(Date.now()))) {
+      return c.json({ error: "invalid_birth_date" }, 400);
+    }
+    birthDate = value;
+  }
+
   const row = await c.env.DB.prepare(
-    "UPDATE users SET display_name = ?, locale = ? WHERE id = ? RETURNING id, email, display_name, locale, created_at",
+    "UPDATE users SET display_name = ?, locale = ?, birth_date = ? WHERE id = ? RETURNING id, email, display_name, locale, birth_date, created_at",
   )
-    .bind(displayName, locale, user.id)
+    .bind(displayName, locale, birthDate, user.id)
     .first<UserRow>();
   if (!row) return c.json({ error: "unauthorized" }, 401);
   return c.json({ user: rowToUser(row) });

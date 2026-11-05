@@ -11,6 +11,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string | null;
+  birthDate: string | null;
   locale: Locale;
   createdAt: number;
 }
@@ -37,6 +38,7 @@ export type ApiErrorCode =
   | "own_pair_code"
   | "couple_full"
   | "invalid_start_date"
+  | "invalid_birth_date"
   | "entry_empty"
   | "entry_text_too_long"
   | "invalid_entry_date"
@@ -72,6 +74,7 @@ export const DISPLAY_NAME_MAX = 40;
 export interface CoupleMember {
   id: string;
   displayName: string | null;
+  birthDate: string | null;
 }
 
 export interface Couple {

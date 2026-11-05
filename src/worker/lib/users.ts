@@ -5,6 +5,7 @@ export interface UserRow {
   id: string;
   email: string;
   display_name: string | null;
+  birth_date: string | null;
   locale: string;
   created_at: number;
 }
@@ -14,6 +15,7 @@ export function rowToUser(row: UserRow): User {
     id: row.id,
     email: row.email,
     displayName: row.display_name,
+    birthDate: row.birth_date,
     locale: isLocale(row.locale) ? row.locale : "vi",
     createdAt: row.created_at,
   };
@@ -26,7 +28,7 @@ export async function findOrCreateUser(env: Env, email: string, locale: Locale, 
   )
     .bind(crypto.randomUUID(), email, locale, now)
     .run();
-  const row = await env.DB.prepare("SELECT id, email, display_name, locale, created_at FROM users WHERE email = ?")
+  const row = await env.DB.prepare("SELECT id, email, display_name, locale, birth_date, created_at FROM users WHERE email = ?")
     .bind(email)
     .first<UserRow>();
   if (!row) throw new Error("user row missing after insert");

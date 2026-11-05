@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarHeart, CircleCheck, Heart, LogOut, Mail, UserRound } from "lucide-react";
+import { ArrowLeft, Cake, CalendarHeart, CircleCheck, Heart, LogOut, Mail, UserRound } from "lucide-react";
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -18,7 +18,7 @@ import { startDateError } from "../lib/startDate";
 import { useTabNavigation } from "../lib/useTabNavigation";
 import type { SessionProps } from "./SignedInShell";
 
-const StartDateSheet = lazy(() => import("../components/bisou/StartDateSheet").then((m) => ({ default: m.StartDateSheet })));
+const DateSheet = lazy(() => import("../components/bisou/DateSheet").then((m) => ({ default: m.DateSheet })));
 
 export function Settings({ user, onUser, onSignedOut, couple, onCouple }: SessionProps & {
   couple: Couple | null | undefined;
@@ -29,6 +29,9 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   const navigation = useTabNavigation();
   const sheetButton = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const birthdayButton = useRef<HTMLButtonElement>(null);
+  const [birthdayOpen, setBirthdayOpen] = useState(false);
+  const [birthdayLoaded, setBirthdayLoaded] = useState(false);
   const dateButton = useRef<HTMLButtonElement>(null);
   const [sheet, setSheet] = useState<"profile" | "logout">("profile");
   const [open, setOpen] = useState(false);
@@ -59,6 +62,14 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
     if (!res.ok) return startDateError(t, res.status, res.error);
     onCouple(res.data.couple);
     toast.success(t("startDate.saved"));
+    return null;
+  }
+
+  async function saveBirthday(birthDate: string | null): Promise<string | null> {
+    const res = await api.updateMe({ birthDate });
+    if (!res.ok) return t(res.error?.error === "invalid_birth_date" ? "birthday.invalid" : "error.generic");
+    onUser(res.data.user);
+    toast.success(t(birthDate ? "birthday.saved" : "birthday.removed"));
     return null;
   }
 
@@ -97,6 +108,9 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
             {user.displayName && <DrawerTrigger asChild>
               <SettingsRow icon={UserRound} label={t("home.displayName")} value={user.displayName} onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("profile"); }} />
             </DrawerTrigger>}
+            <SettingsRow ref={birthdayButton} icon={Cake} label={t("settings.birthday")}
+              value={user.birthDate ? formatDay(user.birthDate, locale, "numeric") : t("settings.notSet")}
+              onClick={() => { setBirthdayLoaded(true); setBirthdayOpen(true); }} />
             <SettingsRow icon={Mail} label={t("login.email")} value={user.email} />
           </SettingsGroup>
           {paired && couple && <SettingsGroup title={t("settings.couple")}>
@@ -127,8 +141,16 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
             </div>
           </DrawerContent>
         </Drawer>
+        {birthdayLoaded && <Suspense fallback={null}>
+          <DateSheet title={t("birthday.title")} hint={t("birthday.hint")} saveLabel={t("birthday.save")}
+            firstMonth={new Date(1900, 0, 1)} emptyMonth={new Date(2000, 0, 1)}
+            open={birthdayOpen} onOpenChange={(next) => {
+              setBirthdayOpen(next);
+              if (!next) birthdayButton.current?.focus({ preventScroll: true });
+            }} value={user.birthDate} onSave={saveBirthday} onRemove={() => saveBirthday(null)} />
+        </Suspense>}
         {dateLoaded && couple && <Suspense fallback={null}>
-          <StartDateSheet open={picking} onOpenChange={(next) => {
+          <DateSheet title={t("startDate.title")} hint={t("startDate.hint")} saveLabel={t("startDate.save")} firstMonth={new Date(1950, 0, 1)} open={picking} onOpenChange={(next) => {
             setPicking(next);
             if (!next) dateButton.current?.focus({ preventScroll: true });
           }} value={couple.startDate} onSave={saveStartDate} />

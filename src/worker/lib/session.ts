@@ -56,7 +56,7 @@ export interface LoadedSession {
 export async function loadSession(env: Env, token: string, now = Date.now()): Promise<LoadedSession | null> {
   const tokenHash = await sha256Hex(token);
   const row = await env.DB.prepare(
-    `SELECT s.expires_at AS session_expires_at, u.id, u.email, u.display_name, u.locale, u.created_at
+    `SELECT s.expires_at AS session_expires_at, u.id, u.email, u.display_name, u.locale, u.birth_date, u.created_at
      FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?`,
   )
     .bind(tokenHash)

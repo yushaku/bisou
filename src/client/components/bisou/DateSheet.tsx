@@ -6,7 +6,13 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { useI18n } from "@/i18n";
 import { formatDay, parseDay } from "@/lib/format";
 
-interface StartDateSheetProps {
+interface DateSheetProps {
+  title: string;
+  hint: string;
+  saveLabel: string;
+  firstMonth: Date;
+  emptyMonth?: Date;
+  onRemove?: () => Promise<string | null>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /* Current value, "YYYY-MM-DD", or null when not set yet. */
@@ -15,10 +21,8 @@ interface StartDateSheetProps {
   onSave: (day: string) => Promise<string | null>;
 }
 
-const FIRST_MONTH = new Date(1950, 0, 1);
-
 /* Bottom sheet with a month calendar; days after the device's today cannot be picked. */
-export function StartDateSheet({ open, onOpenChange, value, onSave }: StartDateSheetProps) {
+export function DateSheet({ open, onOpenChange, value, onSave, title, hint, saveLabel, firstMonth, emptyMonth, onRemove }: DateSheetProps) {
   const { t, locale } = useI18n();
   const [selected, setSelected] = useState<Date | undefined>(value ? parseDay(value) : undefined);
   const [busy, setBusy] = useState(false);
@@ -32,11 +36,11 @@ export function StartDateSheet({ open, onOpenChange, value, onSave }: StartDateS
     }
   }, [open, value]);
 
-  async function save() {
-    if (!selected) return;
+  async function save(remove = false) {
+    if (!remove && !selected) return;
     setBusy(true);
     setError(null);
-    const message = await onSave(toDayString(selected));
+    const message = remove ? await onRemove!() : await onSave(toDayString(selected!));
     setBusy(false);
     if (message) setError(message);
     else onOpenChange(false);
@@ -47,8 +51,8 @@ export function StartDateSheet({ open, onOpenChange, value, onSave }: StartDateS
       <DrawerContent>
         <div className="mx-auto flex w-full max-w-md flex-col overflow-y-auto px-4 pb-6">
           <DrawerHeader className="px-0 text-left">
-            <DrawerTitle className="font-heading text-2xl">{t("startDate.title")}</DrawerTitle>
-            <DrawerDescription className="text-base">{t("startDate.hint")}</DrawerDescription>
+            <DrawerTitle className="font-heading text-2xl">{title}</DrawerTitle>
+            <DrawerDescription className="text-base">{hint}</DrawerDescription>
           </DrawerHeader>
           <Calendar
             mode="single"
@@ -58,8 +62,8 @@ export function StartDateSheet({ open, onOpenChange, value, onSave }: StartDateS
               setSelected(d);
               setError(null);
             }}
-            defaultMonth={selected ?? today}
-            startMonth={FIRST_MONTH}
+            defaultMonth={selected ?? emptyMonth ?? today}
+            startMonth={firstMonth}
             endMonth={today}
             disabled={{ after: today }}
             className="edge mx-auto rounded-lg"
@@ -72,10 +76,13 @@ export function StartDateSheet({ open, onOpenChange, value, onSave }: StartDateS
               {error}
             </p>
           )}
-          <Button size="lg" className="mt-3" loading={busy} disabled={!selected} onClick={() => void save()}>
-            {t("startDate.save")}
+          <Button size="lg" className="mt-3" loading={busy} disabled={!selected || busy} onClick={() => void save()}>
+            {saveLabel}
           </Button>
-          <Button variant="outline" className="mt-3" onClick={() => onOpenChange(false)}>
+          {value && onRemove && <Button variant="outline" className="mt-3 text-destructive" disabled={busy} onClick={() => void save(true)}>
+            {t("birthday.remove")}
+          </Button>}
+          <Button variant="outline" className="mt-3" disabled={busy} onClick={() => onOpenChange(false)}>
             {t("common.close")}
           </Button>
         </div>

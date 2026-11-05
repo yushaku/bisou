@@ -13,7 +13,7 @@ import { startDateError } from "../lib/startDate";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The calendar (react-day-picker and its locales) loads on first use, outside the main bundle.
-const StartDateSheet = lazy(() => import("../components/bisou/StartDateSheet").then((m) => ({ default: m.StartDateSheet })));
+const DateSheet = lazy(() => import("../components/bisou/DateSheet").then((m) => ({ default: m.DateSheet })));
 
 interface HomeProps extends SessionProps {
   couple: Couple;
@@ -87,7 +87,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
 
       {sheetLoaded && (
         <Suspense fallback={null}>
-          <StartDateSheet open={picking} onOpenChange={setPicking} value={couple.startDate} onSave={saveStartDate} />
+          <DateSheet title={t("startDate.title")} hint={t("startDate.hint")} saveLabel={t("startDate.save")} firstMonth={new Date(1950, 0, 1)} open={picking} onOpenChange={setPicking} value={couple.startDate} onSave={saveStartDate} />
         </Suspense>
       )}
       <Celebration
