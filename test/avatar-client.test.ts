@@ -1,11 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, avatarUrl } from "../src/client/api";
-import { avatarFileError, renderAvatar } from "../src/client/lib/photo";
+import { avatarFileError, avatarRetryWait, renderAvatar } from "../src/client/lib/photo";
 import type { User } from "../src/shared/types";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("profile photo client", () => {
+  it.each([
+    [undefined, "1 minute", "1 phút"],
+    [1, "1 minute", "1 phút"],
+    [61, "2 minutes", "2 phút"],
+    [3600, "60 minutes", "60 phút"],
+    [3601, "2 hours", "2 giờ"],
+    [10800, "3 hours", "3 giờ"],
+  ])("formats the retry wait for %s seconds", (seconds, en, vi) => {
+    expect(avatarRetryWait(seconds, "en")).toBe(en);
+    expect(avatarRetryWait(seconds, "vi")).toBe(vi);
+  });
   it.each(["image/jpeg", "image/png", "image/heic", "image/heif"])("AC3 R4: accepts %s", (type) => {
     expect(avatarFileError(new File(["photo"], "photo", { type }))).toBeNull();
   });
@@ -55,6 +66,7 @@ describe("profile photo client", () => {
       ["An", "/api/avatars/a/new", "primary"], ["Binh", "/api/avatars/b/partner", "secondary"],
     ]);
     expect(toPeople(members, { ...user, avatarId: null })[0]?.photoUrl).toBeUndefined();
-    expect(toPeople([user], { ...user, displayName: null })[0]?.name).toBe("an@example.com");
+    expect(toPeople([user], { ...user, displayName: null })[0]).toMatchObject({ name: "?", initial: "A" });
+    expect(toPeople([{ ...members[1]!, displayName: null }], user)[0]).toMatchObject({ name: "?", initial: "?" });
   });
 });

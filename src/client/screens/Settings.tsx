@@ -18,7 +18,7 @@ import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { startDateError } from "../lib/startDate";
 import { useTabNavigation } from "../lib/useTabNavigation";
-import { avatarFileError, decodePhoto, renderAvatar, type Area } from "../lib/photo";
+import { avatarFileError, avatarRetryWait, decodePhoto, renderAvatar, type Area } from "../lib/photo";
 import { fitSquare } from "../lib/compose";
 import type { SessionProps } from "./SignedInShell";
 
@@ -95,7 +95,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
       const res = await api.setAvatar(blob);
       if (res.ok) { onUser(res.data.user); toast.success(t("avatar.saved")); }
       else toast.error(res.status === 429
-        ? t("avatar.rateLimited", { minutes: Math.max(1, Math.ceil((res.error?.retryAfter ?? 60) / 60)) })
+        ? t("avatar.rateLimited", { wait: avatarRetryWait(res.error?.retryAfter, locale) })
         : t("avatar.saveFailed"));
     } catch {
       bitmap.close();

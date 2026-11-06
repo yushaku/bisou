@@ -104,7 +104,7 @@ export const en: Messages = {
   "avatar.tooLarge": "Photo is too large. Choose one up to 20 MB.",
   "avatar.saveFailed": "Could not save your photo. Please try again.",
   "avatar.decodeFailed": "This browser could not read your photo. Try a JPEG or PNG photo.",
-  "avatar.rateLimited": "You've changed your photo too often. Try again in {minutes} minutes.",
+  "avatar.rateLimited": "You've changed your photo too often. Try again in about {wait}.",
   "events.edit": "Edit event",
   "events.delete": "Delete event",
   "events.deleteTitle": "Delete “{title}”?",

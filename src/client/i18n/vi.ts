@@ -103,7 +103,7 @@ export const vi = {
   "avatar.tooLarge": "Ảnh quá lớn, tối đa 20 MB.",
   "avatar.saveFailed": "Chưa lưu được ảnh. Thử lại nhé.",
   "avatar.decodeFailed": "Trình duyệt này chưa đọc được ảnh. Thử chọn ảnh JPEG hoặc PNG nhé.",
-  "avatar.rateLimited": "Bạn đổi ảnh nhiều lần quá. Thử lại sau {minutes} phút nhé.",
+  "avatar.rateLimited": "Bạn đổi ảnh nhiều lần quá. Thử lại sau khoảng {wait} nhé.",
   "events.edit": "Sửa sự kiện",
   "events.delete": "Xoá sự kiện",
   "events.deleteTitle": "Xoá “{title}”?",

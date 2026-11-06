@@ -2,7 +2,7 @@
 // Only the chosen square leaves the phone, re-encoded; the server strips JPEG metadata (R16, R18).
 import { PHOTO_SIZES } from "../../shared/journal";
 import { AVATAR_MAX_BYTES, AVATAR_PICK_MAX_BYTES, AVATAR_PICK_TYPES, AVATAR_SIDE } from "../../shared/avatar";
-import type { ApiError, PhotoUploadResponse } from "../../shared/types";
+import type { ApiError, Locale, PhotoUploadResponse } from "../../shared/types";
 import type { ApiResult } from "../api";
 
 /** A square in the bitmap's pixels: the part of the photo the author keeps. */
@@ -26,6 +26,14 @@ export function decodePhoto(file: File): Promise<ImageBitmap> {
 export function avatarFileError(file: File): "avatar.wrongType" | "avatar.tooLarge" | null {
   if (!AVATAR_PICK_TYPES.includes(file.type) && !(file.type === "" && /\.(jpe?g|png|heic|heif)$/i.test(file.name))) return "avatar.wrongType";
   return file.size > AVATAR_PICK_MAX_BYTES ? "avatar.tooLarge" : null;
+}
+
+export function avatarRetryWait(seconds = 60, locale: Locale): string {
+  const hours = seconds > 3600;
+  const count = Math.max(1, Math.ceil(seconds / (hours ? 3600 : 60)));
+  return new Intl.NumberFormat(locale, {
+    style: "unit", unit: hours ? "hour" : "minute", unitDisplay: "long",
+  }).format(count);
 }
 
 export async function renderAvatar(bitmap: ImageBitmap, area: Area): Promise<Blob> {

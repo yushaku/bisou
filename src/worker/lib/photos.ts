@@ -81,8 +81,8 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
       const icc = marker === 0xe2 && length >= 16
         && String.fromCharCode(...bytes.subarray(offset + 2, offset + 14)) === "ICC_PROFILE\0";
       const identifier = length >= 7 ? String.fromCharCode(...bytes.subarray(offset + 2, offset + 7)) : "";
-      const jfif = marker === 0xe0 && (identifier === "JFIF\0" || identifier === "JFXX\0");
-      const adobe = marker === 0xee && identifier === "Adobe";
+      const jfif = marker === 0xe0 && length === 16 && identifier === "JFIF\0";
+      const adobe = marker === 0xee && length === 14 && identifier === "Adobe";
       if (marker === 0xfe || (marker >= 0xe0 && marker <= 0xef && !jfif && !adobe && !icc)) {
         kept.push(bytes.subarray(start, markerStart));
         start = offset + length;

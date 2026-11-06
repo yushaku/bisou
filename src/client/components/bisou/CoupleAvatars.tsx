@@ -6,6 +6,7 @@ import type { CoupleMember, User } from "../../../shared/types";
 
 export interface Person {
   name: string;
+  initial?: string;
   photoUrl?: string;
   /* Each partner keeps one tint everywhere: primary for one, secondary for the other. */
   tone: "primary" | "secondary";
@@ -15,7 +16,8 @@ export function toPeople(members: CoupleMember[], user: User): (Person & { birth
   return members.map((member, index) => {
     const person = member.id === user.id ? user : member;
     return {
-      name: person.displayName ?? (member.id === user.id ? user.email : "?"),
+      name: person.displayName ?? "?",
+      initial: initials(person.displayName ?? (member.id === user.id ? user.email : "?")),
       birthDate: person.birthDate,
       photoUrl: person.avatarId ? avatarUrl(member.id, person.avatarId) : undefined,
       tone: index === 0 ? "primary" : "secondary",
@@ -44,7 +46,7 @@ export function PersonAvatar({ person, size = "md", className }: { person: Perso
   return (
     <Avatar className={cn(SIZE[size], "edge-ink after:hidden", className)}>
       {person.photoUrl && <AvatarImage src={person.photoUrl} alt="" />}
-      <AvatarFallback className={cn("font-heading", TONE[person.tone])}>{initials(person.name)}</AvatarFallback>
+      <AvatarFallback className={cn("font-heading", TONE[person.tone])}>{person.initial ?? initials(person.name)}</AvatarFallback>
     </Avatar>
   );
 }

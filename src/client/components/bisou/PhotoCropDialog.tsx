@@ -69,9 +69,9 @@ function CropFrame({ request }: { request: CropRequest }) {
           cropperProps={{
             "aria-label": t(request.round ? "crop.roundArea" : "crop.area"),
             onKeyDownCapture: (event) => {
-              if (event.key !== "+" && event.key !== "-") return;
+              if (!["+", "=", "-", "_"].includes(event.key)) return;
               event.preventDefault();
-              setZoom((value) => Math.min(MAX_ZOOM, Math.max(1, value + (event.key === "+" ? 0.1 : -0.1))));
+              setZoom((value) => Math.min(MAX_ZOOM, Math.max(1, value + (event.key === "+" || event.key === "=" ? 0.1 : -0.1))));
             },
           }}
         />

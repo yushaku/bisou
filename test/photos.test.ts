@@ -334,13 +334,22 @@ describe("photo header bounds", () => {
     expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
   });
 
-  it("R16: keeps the recognized JFXX APP0 extension", () => {
+  it("R16: strips the JFXX APP0 extension", () => {
     const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(0xe0, "JFXX\0\x13thumbnail"), ...baseline.subarray(2)]);
-    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes });
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
+  });
+
+  it.each([
+    [0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0private location"],
+    [0xee, "Adobe\0\x64\0\0\0\0\0private location"],
+  ])("R16: strips extra payload after recognized APP marker %i", (marker, data) => {
+    const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(marker, data), ...baseline.subarray(2)]);
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
   });
 
   it("R16: accepts a canvas-like baseline JPEG byte-identically apart from removed metadata (AC12)", () => {
     const clean = new Uint8Array([...baseline.subarray(0, 2), ...segment(0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0"), ...baseline.subarray(2)]);
+    expect(new DataView(clean.buffer).getUint16(4)).toBe(16);
     expect(checkPhotoBytes(clean, "image/jpeg")).toEqual({ side: 8, bytes: clean });
     const bytes = new Uint8Array([...clean.subarray(0, 2), ...segment(0xed, "Photoshop 3.0\0location"),
       ...segment(0xfe, "private comment"), ...clean.subarray(2)]);
