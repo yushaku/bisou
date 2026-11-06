@@ -7,6 +7,7 @@ import { api } from "../src/client/api";
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useState: (value: unknown) => [value, vi.fn()], useId: () => "test", useRef: () => ({ current: null }),
+  useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "vi", t: (key: string) => key }) }));
 vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
@@ -24,7 +25,7 @@ it("Delete at position zero leaves the caret at zero after regrouping", () => {
 
 it("WishSheet submits zero price as null", async () => {
   const create = vi.spyOn(api, "createWish").mockResolvedValue({ ok: false, status: 0, error: null });
-  const tree = WishSheet({ wish: { title: "A book", price: 0 } as never, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const tree = WishSheet({ wish: { id: "wish", title: "A book", price: 0, link: null, priority: 2, photoId: null, status: "open", receivedOn: null, note: null, createdAt: 0, updatedAt: 0 }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   const update = vi.spyOn(api, "updateWish").mockResolvedValue({ ok: false, status: 0, error: null });
   function findForm(node: ReactNode): ReactElement<{ onSubmit: (event: unknown) => void }> | undefined {
     if (Array.isArray(node)) return node.map(findForm).find(Boolean);
@@ -34,7 +35,7 @@ it("WishSheet submits zero price as null", async () => {
   }
   findForm(tree)!.props.onSubmit({ preventDefault: vi.fn() });
   await Promise.resolve();
-  expect(update).toHaveBeenCalledWith(undefined, expect.objectContaining({ price: null }));
+  expect(update).toHaveBeenCalledWith("wish", expect.objectContaining({ price: null }));
   expect(create).not.toHaveBeenCalled();
 });
 
@@ -50,4 +51,14 @@ it("deleting a digit inside a thousands group does not drop the rest as cents", 
   vi.stubGlobal("requestAnimationFrame", vi.fn());
   element.props.onChange({ currentTarget: { value: "1.25", selectionStart: 4 } });
   expect(onValueChange).toHaveBeenCalledWith("125");
+});
+
+it("WishSheet refuses submission when offline", async () => {
+  vi.stubGlobal("navigator", { onLine: false });
+  const save = vi.spyOn(api, "updateWish");
+  const tree = WishSheet({ wish: { id: "wish", title: "A book", price: 0, link: null, priority: 2, photoId: null, status: "open", receivedOn: null, note: null, createdAt: 0, updatedAt: 0 }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const form = tree.props.children[0].props.children.props.children;
+  form.props.onSubmit({ preventDefault: vi.fn() });
+  await Promise.resolve();
+  expect(save).not.toHaveBeenCalled();
 });

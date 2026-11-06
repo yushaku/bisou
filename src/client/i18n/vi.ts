@@ -1,5 +1,10 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "errorScreen.title": "Có chút trục trặc rồi",
+  "errorScreen.body": "Bạn thử tải lại để về góc nhỏ của hai đứa nhé.",
+  "errorScreen.reload": "Tải lại",
+  "offline.bar": "Đang ngoại tuyến. Bạn vẫn có thể xem nội dung đã tải.",
+  "offline.save": "Cần kết nối mạng để lưu",
   "received.action": "Mình đã nhận",
   "received.confirm": "Lưu vào nhật ký của hai đứa. Điều ước sẽ chuyển sang Đã nhận, không chuyển lại được.",
   "received.day": "Ngày nhận",

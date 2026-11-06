@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/useOnline";
 import { CalendarDays, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { latestDay, toDayString } from "../../../shared/days";
@@ -101,6 +102,7 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
 function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   const ids = useId();
   const [now] = useState(Date.now);
   const max = latestDay(now);
@@ -121,7 +123,7 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
   const journalText = receiving ? receivedText(locale, receiving.title, text) : text;
   const length = textLength(journalText);
   const block = preparing ? "photos" : saveBlock({ date, text: journalText, photos: queue.items }, now);
-  const hint = block ? t(HINTS[block], { max: formatDay(max, locale, "numeric") }) : t("compose.shared", { partner: partnerName });
+  const hint = !online ? t("offline.save") : block ? t(HINTS[block], { max: formatDay(max, locale, "numeric") }) : t("compose.shared", { partner: partnerName });
 
   const change = () => {
     setDirty(true);
@@ -129,7 +131,7 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
   };
 
   async function save() {
-    if (block || saving) return;
+    if (!online || block || saving) return;
     setSaving(true);
     setFormError(null);
     const input = { date, text: entryText(text), photoIds: queue.items.map((i) => i.photoId ?? "") };
@@ -150,7 +152,7 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
 
   return (
     <>
-      <form onSubmit={(e) => { e.preventDefault(); if (receiving) setConfirmReceiving(true); else void save(); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
+      <form onSubmit={(e) => { e.preventDefault(); if (!online) return; if (receiving) setConfirmReceiving(true); else void save(); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
         <DrawerHeader className="flex-row items-center gap-2 px-5 pt-2 pb-3 text-left">
           <DrawerTitle className="min-w-0 flex-1 font-heading text-2xl">{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
           <Button type="button" variant="ghost" size="icon" aria-label={t("common.close")} disabled={saving} onClick={onClose}>
@@ -244,7 +246,7 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
           <p id={`${ids}-hint`} aria-live="polite" className="text-center text-sm text-muted-foreground">
             {hint}
           </p>
-          <Button type="submit" size="lg" loading={saving} disabled={!!block} aria-describedby={`${ids}-hint`}>
+          <Button type="submit" size="lg" loading={saving} disabled={!online || !!block} aria-describedby={`${ids}-hint`}>
             {saving ? t("compose.saving") : t(receiving ? "received.action" : "compose.save")}
           </Button>
         </div>
@@ -252,7 +254,7 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
       <Dialog open={confirmReceiving} onOpenChange={(open) => { if (!saving) setConfirmReceiving(open); }}>
         <DialogContent showCloseButton={!saving}>
           <DialogHeader><DialogTitle>{t("received.action")}</DialogTitle><DialogDescription>{t("received.confirm")}</DialogDescription></DialogHeader>
-          <DialogFooter><Button variant="outline" disabled={saving} onClick={() => setConfirmReceiving(false)}>{t("common.close")}</Button><Button loading={saving} onClick={() => void save()}>{t("received.save")}</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" disabled={saving} onClick={() => setConfirmReceiving(false)}>{t("common.close")}</Button><Button disabled={!online} loading={saving} onClick={() => void save()}>{t("received.save")}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </>

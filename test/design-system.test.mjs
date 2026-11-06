@@ -29,11 +29,15 @@ test("mode, palette, style and background resolve independently, including befor
           ? prefs.lightTheme : prefs.darkTheme;
         assert.equal(resolveTheme(prefs, systemDark), expected);
         const root = { dataset: {}, classList: { toggle: (name, on) => { root[name] = on; } } };
+        const statusBar = {};
+        const color = { removeAttribute() {} };
         runInNewContext(script, {
           localStorage: { getItem: () => raw },
           window: { matchMedia: () => ({ matches: systemDark }) },
-          document: { documentElement: root },
+          document: { documentElement: root, querySelector: () => statusBar, querySelectorAll: () => [color] },
         });
+        assert.equal(statusBar.content, palettes[expected].kind === "dark" ? "black-translucent" : "default");
+        assert.equal(color.content, palettes[expected].tokens.background);
         assert.equal(root.dataset.theme, expected);
         assert.equal(root.dataset.style, "sticker");
         assert.equal(root.dataset.bg, "hearts");
@@ -47,7 +51,7 @@ test("pre-paint theme works when browser storage is blocked", () => {
   const root = { dataset: {}, classList: { toggle() {} } };
   runInNewContext(themeHead(palettes)[1].children, {
     localStorage: { getItem() { throw new Error("blocked"); } },
-    window: {}, document: { documentElement: root },
+    window: {}, document: { documentElement: root, querySelector: () => null, querySelectorAll: () => [] },
   });
   assert.equal(root.dataset.theme, DEFAULT_PREFS.lightTheme);
   assert.equal(root.dataset.style, DEFAULT_PREFS.style);
@@ -60,7 +64,7 @@ test("the fabric preset resolves before paint and existing choices are retained"
     runInNewContext(themeHead(palettes)[1].children, {
       localStorage: { getItem: () => null },
       window: { matchMedia: () => ({ matches: systemDark }) },
-      document: { documentElement: root },
+      document: { documentElement: root, querySelector: () => null, querySelectorAll: () => [] },
     });
     assert.equal(root.dataset.theme, resolveTheme(DEFAULT_PREFS, systemDark));
     assert.equal(root.dataset.style, "soft");

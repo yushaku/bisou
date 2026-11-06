@@ -1,6 +1,11 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "errorScreen.title": "Something went wrong",
+  "errorScreen.body": "Reload to get back to your shared space.",
+  "errorScreen.reload": "Reload",
+  "offline.bar": "You are offline. You can still view content already loaded.",
+  "offline.save": "You need a connection to save",
   "received.action": "Mark received",
   "received.confirm": "Save this to our journal. The wish will move to Received and cannot be moved back.",
   "received.day": "Received day",

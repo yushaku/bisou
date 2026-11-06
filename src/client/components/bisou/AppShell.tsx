@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/useOnline";
 import { BookHeart, Gift, House, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ interface AppShellProps {
  */
 export function AppShell({ title, onOpenSettings, action, tabs, children, className }: AppShellProps) {
   const { t } = useI18n();
+  const online = useOnline();
   return (
     <div className={cn("flex min-h-dvh flex-col", className)}>
       <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)] [view-transition-name:tab-header]">
@@ -54,6 +56,8 @@ export function AppShell({ title, onOpenSettings, action, tabs, children, classN
           )}
         </div>
       </header>
+
+      {!online && <p role="status" className="bg-warning px-4 py-3 text-center text-sm text-warning-foreground">{t("offline.bar")}</p>}
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">{children}</main>
 

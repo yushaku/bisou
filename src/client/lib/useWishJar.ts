@@ -12,7 +12,7 @@ export function useWishJar(onSignedOut: () => void) {
     const res = await loadWishes(memory, force);
     if (res.ok) { setJar(res.data); setFailed(false); }
     else if (res.status === 401) onSignedOut();
-    else setFailed(true);
+    else setFailed(memory.wishes === null);
   }, [memory, onSignedOut]);
 
   useEffect(() => {

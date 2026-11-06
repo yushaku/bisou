@@ -1,11 +1,13 @@
-import { createElement as h, useEffect } from "react";
+import { createElement as h, useEffect, useState } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../src/client/api";
 import { createTabMemory, TabMemory } from "../src/client/lib/tabMemory";
 import { useWishJar } from "../src/client/lib/useWishJar";
 
-vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useEffect: vi.fn() }));
+vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useEffect: vi.fn(), useState: vi.fn() }));
+
+vi.mocked(useState).mockImplementation((initial?: unknown): [unknown, (value: unknown) => void] => [typeof initial === "function" ? initial() : initial, vi.fn()]);
 
 afterEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); vi.unstubAllGlobals(); });
 
@@ -37,4 +39,19 @@ it("refreshes on tab entry, shares the pending request and keeps the cached jar 
   expect(signedOut).not.toHaveBeenCalled();
   cleanupHome?.();
   cleanupWishes?.();
+});
+
+it("keeps the cached jar without an error state when refresh fails", async () => {
+  const memory = createTabMemory();
+  const cached = { open: [], received: [], partnerJarEmpty: true };
+  memory.wishes = cached;
+  vi.spyOn(api, "wishes").mockResolvedValue({ ok: false, status: 0, error: null });
+  const failed = vi.fn();
+  vi.mocked(useState).mockImplementation((initial?: unknown): [unknown, (value: unknown) => void] => [typeof initial === "function" ? initial() : initial, initial === false ? failed : vi.fn()]);
+  let refresh!: () => Promise<void>;
+  function Tab() { refresh = useWishJar(vi.fn()).refresh; return null; }
+  renderToString(h(TabMemory.Provider, { value: memory }, h(Tab)));
+  await refresh();
+  expect(memory.wishes).toBe(cached);
+  expect(failed).toHaveBeenCalledWith(false);
 });

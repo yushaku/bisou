@@ -1,3 +1,4 @@
+import { useOnline } from "../lib/useOnline";
 import { Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   onCouple: (couple: Couple | null) => void;
 }) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   const [, navigate] = useLocation();
   const navigation = useTabNavigation();
   const sheetButton = useRef<HTMLButtonElement>(null);
@@ -67,6 +69,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   }
 
   async function pickAvatar(file: File) {
+    if (!online) return;
     const error = avatarFileError(file);
     if (error) { toast.error(t(error)); return; }
     setAvatarBusy(true);
@@ -92,6 +95,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
       });
       if (!area) { bitmap.close(); return; }
       const blob = await renderAvatar(bitmap, area);
+      if (!navigator.onLine) { toast.error(t("offline.save")); return; }
       const res = await api.setAvatar(blob);
       if (res.ok) { onUser(res.data.user); toast.success(t("avatar.saved")); }
       else toast.error(res.status === 429
@@ -109,6 +113,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   }
 
   async function removeAvatar() {
+    if (!online) return;
     setAvatarBusy(true);
     const res = await api.removeAvatar();
     setAvatarBusy(false);
@@ -120,6 +125,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   }
 
   async function changeLocale(next: Locale) {
+    if (!online) return;
     const res = await api.updateMe({ locale: next });
     if (res.ok) onUser(res.data.user);
     else toast.error(t("error.generic"));
@@ -142,6 +148,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   }
 
   async function logout() {
+    if (!online) return;
     setLoggingOut(true);
     setLogoutError(false);
     const res = await api.logout();
@@ -155,6 +162,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   return (
     <div className="flex min-h-dvh flex-col">
       <SubPageHeader title={t("settings.title")} />
+      {!online && <p role="status" className="bg-warning px-4 py-3 text-center text-sm text-warning-foreground">{t("offline.save")}</p>}
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
           <button type="button" aria-label={t("avatar.change")} aria-busy={avatarBusy} disabled={avatarBusy}
@@ -202,15 +210,16 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
                   {t(sheet === "avatar" ? "avatar.change" : sheet === "profile" ? "home.displayNamePlaceholder" : "settings.logoutHint")}
                 </DrawerDescription>
               </DrawerHeader>
+              {!online && sheet !== "profile" && <p role="status" className="mb-3 text-sm text-muted-foreground">{t("offline.save")}</p>}
               {sheet === "avatar" ? <div className="flex flex-col gap-3">
-                <Button loading={avatarBusy} onClick={() => avatarInput.current?.click()}>{t("avatar.choose")}</Button>
+                <Button disabled={!online} loading={avatarBusy} onClick={() => avatarInput.current?.click()}>{t("avatar.choose")}</Button>
                 {user.avatarId && (removingAvatar ? <>
                   <p id="avatar-remove-confirm">{t("avatar.removeConfirm")}</p>
-                  <Button autoFocus variant="destructive" aria-describedby="avatar-remove-confirm" loading={avatarBusy} onClick={() => void removeAvatar()}>{t("avatar.remove")}</Button>
+                  <Button autoFocus variant="destructive" aria-describedby="avatar-remove-confirm" disabled={!online} loading={avatarBusy} onClick={() => void removeAvatar()}>{t("avatar.remove")}</Button>
                 </> : <Button variant="destructive" disabled={avatarBusy} onClick={() => setRemovingAvatar(true)}>{t("avatar.remove")}</Button>)}
               </div> : sheet === "profile" ? <ProfileForm key={String(open)} user={user} onUser={onUser} /> : <>
                 {logoutError && <p role="alert" className="mb-3 text-destructive">{t("error.generic")}</p>}
-                <Button variant="destructive" className="w-full" loading={loggingOut} onClick={() => void logout()}>{t("home.logout")}</Button>
+                <Button variant="destructive" disabled={!online} className="w-full" loading={loggingOut} onClick={() => void logout()}>{t("home.logout")}</Button>
               </>}
               <Button variant="outline" className="mt-3 w-full" disabled={avatarBusy} onClick={() => setOpen(false)}>{t(sheet === "logout" ? "settings.cancel" : "common.close")}</Button>
             </div>
@@ -244,12 +253,13 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
 
 function ProfileForm({ user, onUser }: Pick<SessionProps, "user" | "onUser">) {
   const { t } = useI18n();
+  const online = useOnline();
   const [name, setName] = useState(user.displayName ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!online || !name.trim() || status === "saving") return;
     setStatus("saving");
     const res = await api.updateMe({ displayName: name });
     if (res.ok) {
@@ -285,7 +295,8 @@ function ProfileForm({ user, onUser }: Pick<SessionProps, "user" | "onUser">) {
           {t("error.generic")}
         </p>
       )}
-      <Button type="submit" variant="outline" loading={status === "saving"} disabled={!name.trim()}>
+      {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+      <Button type="submit" variant="outline" loading={status === "saving"} disabled={!online || !name.trim()}>
         {status === "saving" ? t("home.saving") : t("home.save")}
       </Button>
     </form>

@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/useOnline";
 import { isLocale, LOCALES, type Locale } from "../../../shared/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -36,8 +37,9 @@ export function LanguageToggle({ onChange, className }: { onChange?: (locale: Lo
 
 export function LanguageSelect({ onChange, labelledBy, className }: { onChange?: (locale: Locale) => void; labelledBy?: string; className?: string }) {
   const { locale, setLocale } = useI18n();
+  const online = useOnline();
   return (
-    <Select value={locale} onValueChange={(value) => {
+    <Select disabled={!!onChange && !online} value={locale} onValueChange={(value) => {
       if (!isLocale(value) || value === locale) return;
       setLocale(value);
       onChange?.(value);

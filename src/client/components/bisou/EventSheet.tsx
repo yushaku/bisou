@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/useOnline";
 import { useId, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ export function EventSheet({ event, onClose, onCouple, onSignedOut }: {
   onSignedOut: () => void;
 }) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   const ids = useId();
   const [title, setTitle] = useState(event?.title ?? "");
   const [date, setDate] = useState(event?.date ?? "");
@@ -47,7 +49,7 @@ export function EventSheet({ event, onClose, onCouple, onSignedOut }: {
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if ("error" in parsed || saving) return;
+    if (!online || "error" in parsed || saving) return;
     setSaving(true);
     const res = event ? await api.updateEvent(event.id, parsed.input) : await api.createEvent(parsed.input);
     setSaving(false);
@@ -61,7 +63,7 @@ export function EventSheet({ event, onClose, onCouple, onSignedOut }: {
   }
 
   async function remove() {
-    if (!event || saving) return;
+    if (!online || !event || saving) return;
     setSaving(true);
     const res = await api.deleteEvent(event.id);
     if (res.ok || (!res.ok && res.error?.error === "not_found")) {
@@ -87,7 +89,7 @@ export function EventSheet({ event, onClose, onCouple, onSignedOut }: {
             <DrawerTitle className="flex-1 font-heading text-2xl">{t(event ? "events.edit" : "events.add")}</DrawerTitle>
             <Button type="button" variant="ghost" size="icon" disabled={saving} aria-label={t("common.close")} onClick={close}><X aria-hidden="true" /></Button>
           </DrawerHeader>
-          <fieldset disabled={saving || error === "events.gone"} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
+          <fieldset disabled={!online || saving || error === "events.gone"} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
             <Label htmlFor={`${ids}-title`}>{t("events.name")}</Label>
             <Input id={`${ids}-title`} autoFocus={!event} value={title} onChange={(e) => { setTitle(e.target.value); change(); }} aria-invalid={dirty && block === "events.titleInvalid"} />
             <fieldset className="flex flex-col gap-2">
@@ -117,8 +119,9 @@ export function EventSheet({ event, onClose, onCouple, onSignedOut }: {
           </fieldset>
           <div className="flex flex-col gap-2 border-t bg-popover px-5 pt-3 pb-[max(--spacing(5),env(safe-area-inset-bottom))]">
             <p role="alert" className="text-sm text-destructive empty:hidden">{error ? t(error) : dirty && block ? t(block) : null}</p>
-            <Button type="submit" size="lg" loading={saving} disabled={!!block || error === "events.gone"}>{t("events.save")}</Button>
-            {event && <Button type="button" variant="outline" className="text-destructive" disabled={saving || error === "events.gone"} onClick={() => setDeleting(true)}>{t("events.delete")}</Button>}
+            {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+            <Button type="submit" size="lg" loading={saving} disabled={!online || !!block || error === "events.gone"}>{t("events.save")}</Button>
+            {event && <Button type="button" variant="outline" className="text-destructive" disabled={!online || saving || error === "events.gone"} onClick={() => setDeleting(true)}>{t("events.delete")}</Button>}
           </div>
         </form>
       </DrawerContent>
@@ -126,7 +129,7 @@ export function EventSheet({ event, onClose, onCouple, onSignedOut }: {
     <Dialog open={deleting} onOpenChange={(open) => { if (!saving) setDeleting(open); }}>
       <DialogContent showCloseButton={false}>
         <DialogHeader><DialogTitle>{t("events.deleteTitle", { title: event?.title ?? "" })}</DialogTitle><DialogDescription>{t("events.deleteBody")}</DialogDescription></DialogHeader>
-        <DialogFooter><Button variant="destructive" loading={saving} onClick={() => void remove()}>{t("events.deleteConfirm")}</Button><Button autoFocus disabled={saving} onClick={() => setDeleting(false)}>{t("events.keep")}</Button></DialogFooter>
+        <DialogFooter><Button variant="destructive" disabled={!online} loading={saving} onClick={() => void remove()}>{t("events.deleteConfirm")}</Button><Button autoFocus disabled={saving} onClick={() => setDeleting(false)}>{t("events.keep")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
     <Dialog open={discard} onOpenChange={setDiscard}>

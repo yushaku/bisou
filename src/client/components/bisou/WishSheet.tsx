@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/useOnline";
 import { X } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import type { Wish, WishPriority } from "../../../shared/types";
@@ -23,6 +24,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
   onSignedOut: () => void;
 }) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   const ids = useId();
   const [title, setTitle] = useState(wish?.title ?? "");
   const [price, setPrice] = useState(formatNumber(wish?.price ?? 0, locale));
@@ -41,7 +43,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (block || saving) return;
+    if (!online || block || saving) return;
     setSaving(true);
     const res = wish ? await api.updateWish(wish.id, input) : await api.createWish(input);
     setSaving(false);
@@ -78,7 +80,8 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
           </fieldset>
           <div className="flex flex-col gap-2 border-t bg-popover px-5 pt-3 pb-5">
             <p role="alert" className="text-sm text-destructive empty:hidden">{error ?? (dirty && block ? t(block) : null)}</p>
-            <Button type="submit" size="lg" loading={saving} disabled={!!block}>{t("wish.save")}</Button>
+            {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+            <Button type="submit" size="lg" loading={saving} disabled={!online || !!block}>{t("wish.save")}</Button>
           </div>
         </form>
       </DrawerContent>

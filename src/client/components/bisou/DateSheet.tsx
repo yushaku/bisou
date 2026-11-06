@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/useOnline";
 import { useEffect, useState } from "react";
 import { toDayString } from "../../../shared/days";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface DateSheetProps {
 /* Bottom sheet with a month calendar; days after the device's today cannot be picked. */
 export function DateSheet({ open, onOpenChange, value, onSave, title, hint, saveLabel, firstMonth, emptyMonth, onRemove }: DateSheetProps) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   const [selected, setSelected] = useState<Date | undefined>(value ? parseDay(value) : undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export function DateSheet({ open, onOpenChange, value, onSave, title, hint, save
   }, [open, value]);
 
   async function save(remove = false) {
-    if (!remove && !selected) return;
+    if (!online || busy || (!remove && !selected)) return;
     setBusy(true);
     setError(null);
     const message = remove ? await onRemove!() : await onSave(toDayString(selected!));
@@ -76,10 +78,11 @@ export function DateSheet({ open, onOpenChange, value, onSave, title, hint, save
               {error}
             </p>
           )}
-          <Button size="lg" className="mt-3" loading={busy} disabled={!selected || busy} onClick={() => void save()}>
+          {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+          <Button size="lg" className="mt-3" loading={busy} disabled={!online || !selected || busy} onClick={() => void save()}>
             {saveLabel}
           </Button>
-          {value && onRemove && <Button variant="outline" className="mt-3 text-destructive" disabled={busy} onClick={() => void save(true)}>
+          {value && onRemove && <Button variant="outline" className="mt-3 text-destructive" disabled={!online || busy} onClick={() => void save(true)}>
             {t("birthday.remove")}
           </Button>}
           <Button variant="outline" className="mt-3" disabled={busy} onClick={() => onOpenChange(false)}>

@@ -1,3 +1,4 @@
+import { useOnline } from "../lib/useOnline";
 import { BookHeart, Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -60,7 +61,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [firstLoad, setFirstLoad] = useState<"loading" | "error">("loading");
   const [more, setMore] = useState<"idle" | "loading" | "error">("idle");
   const [stale, setStale] = useState(false);
-  const [online, setOnline] = useState(() => navigator.onLine);
+  const online = useOnline();
   const moreBusy = useRef(false);
   const sentinel = useRef<HTMLDivElement>(null);
 
@@ -156,17 +157,13 @@ export function Journal({ couple, ...session }: JournalProps) {
       if (document.visibilityState === "visible") void refresh();
     };
     const onOnline = () => {
-      setOnline(true);
       void refresh();
     };
-    const onOffline = () => setOnline(false);
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
     };
   }, [refresh]);
 
@@ -185,9 +182,9 @@ export function Journal({ couple, ...session }: JournalProps) {
   return (
     <SignedInShell {...session} tab="journal">
 
-      {feed && (!online || stale) && (
+      {feed && online && stale && (
         <div role="status" className="mb-4 rounded-control bg-warning px-4 py-3 text-base text-warning-foreground">
-          {t(online ? "journal.stale" : "journal.offline")}{" "}
+          {t("journal.stale")}{" "}
           <Button variant="link" size="sm" className="h-auto text-warning-foreground" onClick={() => void refresh()}>
             {t("journal.retry")}
           </Button>

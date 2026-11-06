@@ -1,3 +1,4 @@
+import { useOnline } from "@/lib/useOnline";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export function PhotoCropDialog({ request }: { request: CropRequest | null }) {
 }
 
 function CropFrame({ request }: { request: CropRequest }) {
+  const online = useOnline();
   const { t } = useI18n();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -77,11 +79,12 @@ function CropFrame({ request }: { request: CropRequest }) {
         />
       </div>
       <p className="text-sm text-muted-foreground">{t(request.round ? "crop.roundHelp" : "crop.help")}</p>
+      {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
       <DialogFooter>
         <Button variant="outline" onClick={() => request.done(null)}>
           {t(request.round ? "entry.cancel" : "crop.skip")}
         </Button>
-        <Button disabled={!area} onClick={() => area && request.done(area)}>
+        <Button disabled={!online || !area} onClick={() => online && area && request.done(area)}>
           {t("crop.use")}
         </Button>
       </DialogFooter>
