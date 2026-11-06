@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A couple wants to see their coming dates, so neither forgets a birthday or an anniversary. It builds on [pairing](pairing.md) and its start date.
+A couple wants to see their coming dates, so neither forgets a birthday or an anniversary. It builds on [pairing](pairing.md) and its start date. Couples add their own plans as [custom events](custom-events.md).
 
 ## Actors
 
@@ -82,7 +82,7 @@ Glance at Home, open the full list, set one's own birthday; a wrong birthday is 
 ## Out of scope
 
 - Lunar events: Tet, Valentine on 7 July lunar.
-- Reminders, past events, events the couple adds, hiding a holiday, recording gender.
+- Reminders, past events, hiding a holiday, recording gender.
 - Export and full deletion come with account deletion.
 
 ## Open questions
