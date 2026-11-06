@@ -51,18 +51,19 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: amounts grouped while typing (500.000) and starting at 0; sheets no longer slide off screen when the keyboard opens.
 
 ## Phase 3: Polish and trust
-- [ ] **PWA polish**
+- [x] **PWA polish**
   - Goal: feels like an app on both phones.
-  - Outcome: splash screen, offline app shell checked, tested installed on a real iPhone and an Android phone.
-- [ ] **Error boundary**
+  - Outcome: splash screens, install card, Android shortcuts, offline bar, status bar following the theme ([docs/product/pwa.md](docs/product/pwa.md)).
+  - [ ] Tested installed on a real iPhone and an Android phone (PO).
+- [x] **Error boundary**
   - Goal: a failure never shows a white page.
-  - Outcome: a root boundary with a reload action.
+  - Outcome: a root error screen with a Reload button.
 - [ ] **Leave the couple, delete the account, export data**
   - Goal: each person stays in control of their data.
-  - Outcome: unpair, delete the account (including `users/<id>/avatar/` in R2), download one's data.
-- [ ] **Carry-over fixes**
+  - Outcome: unpair, delete the account (including `users/<id>/avatar/` in R2), download one's data. The full avatar purge on account deletion belongs here.
+- [x] **Carry-over fixes**
   - Goal: clear the small debts reviews left.
-  - Outcome: the open items in `.team/carry-over.md` (money paste with decimals, caret on Delete, photo purge guard, ICC cap, shared control-character regex).
+  - Outcome: money paste with decimals, caret on Delete, photo purge guard, ICC cap, shared control-character regex, stale upload cleanup.
 
 ## Phase 4: Memories
 - [ ] **Milestone timeline**

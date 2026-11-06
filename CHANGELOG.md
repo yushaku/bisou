@@ -5,10 +5,24 @@
 ### Added
 
 - Home shows your jar and your partner's jar: yours fills up as you add wishes, your partner's only shows empty or filled, and tapping it opens the spin.
+- Opening the installed app on iPhone shows the felt heart on linen, light or dark, instead of a white flash.
+- In a browser tab, Home shows a small card on how to install Bisou: 3 steps on iPhone Safari, an install button on Android; closing it hides it for good on that device.
+- On Android, a long press on the app icon offers Write in the journal and Spin.
+- Without a connection, one offline bar shows on every tab and loaded data stays visible.
+- An unexpected error shows a friendly screen with a Reload button instead of a white page.
 
 ### Changed
 
 - Money fields group digits as you type (500.000) and start at 0; a wish price of 0 means no price yet.
+- While offline, save and delete buttons say they need a connection; nothing is saved later on its own.
+- The iPhone status bar and the browser bar follow the chosen theme.
+- A person without a display name shows the start of their email, or Member, instead of "?".
+
+### Fixed
+
+- Pasting an amount with decimals (500.000,50) keeps only the whole number, and the caret stays put when you delete at the start of a money field.
+- A wait of exactly one hour before the next profile photo change reads "1 hour" instead of "60 minutes".
+- Photos with an oversized color profile are refused, and profile photo uploads left unfinished for a day are cleaned up.
 
 ## [2026-11-06]
 
