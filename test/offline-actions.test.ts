@@ -126,7 +126,7 @@ it("keeps an empty shell status region mounted inside the sticky header online",
   const status = elements(header).filter((node) => node.props.role === "status");
   expect(status).toHaveLength(1);
   expect(status[0]!.props.children).toBe("");
-  expect(status[0]!.props.className).toContain("absolute top-full");
+  expect(status[0]!.props.className).not.toContain("absolute");
 });
 
 it("describes disabled entry deletion with plain offline text", () => {

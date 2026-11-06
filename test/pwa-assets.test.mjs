@@ -43,7 +43,8 @@ test("browser bar colour starts from the light and dark theme backgrounds and th
   const html = await readFile("index.html", "utf8");
   const tags = themeHead(palettes);
   const scriptIndex = tags.findIndex((tag) => tag.tag === "script");
-  const colors = tags.filter((tag) => tag.tag === "meta");
+  assert.deepEqual(tags[0], { tag: "meta", attrs: { charset: "UTF-8" }, injectTo: "head-prepend" });
+  const colors = tags.filter((tag) => tag.tag === "meta" && tag.attrs.name === "theme-color");
   assert.deepEqual(colors.map((tag) => tag.attrs.content), [palettes.peach.tokens.background, palettes.cocoa.tokens.background]);
   assert.ok(colors.every((tag) => tags.indexOf(tag) < scriptIndex));
   assert.ok(tags.every((tag) => tag.injectTo === "head-prepend"));

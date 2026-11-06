@@ -4,6 +4,7 @@ type Palettes = Record<string, { kind: string; tokens: Record<string, string> }>
 export function themeHead(palettes: Palettes) {
   const ids = (kind: string) => Object.keys(palettes).filter((id) => palettes[id]?.kind === kind);
   return [
+    { tag: "meta", attrs: { charset: "UTF-8" }, injectTo: "head-prepend" as const },
     { tag: "meta", attrs: { name: "theme-color", content: palettes.peach!.tokens.background!, media: "(prefers-color-scheme: light)" }, injectTo: "head-prepend" as const },
     { tag: "meta", attrs: { name: "theme-color", content: palettes.cocoa!.tokens.background!, media: "(prefers-color-scheme: dark)" }, injectTo: "head-prepend" as const },
     {
