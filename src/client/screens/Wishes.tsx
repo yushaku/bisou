@@ -19,6 +19,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../components/ui/select";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
+import { displayName } from "../lib/displayName";
+import { useOnline } from "../lib/useOnline";
 import { wishErrorKey } from "../lib/wishes";
 import { useCreateRequest } from "../lib/useTabNavigation";
 import { readCreateRequest } from "../lib/navigation";
@@ -39,13 +41,14 @@ const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then(
 
 export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   const memory = useContext(TabMemory);
   const historyState = useHistoryState<{ shortcut?: boolean } | null>();
   const request = readCreateRequest(historyState);
   const [view, setView] = useState<Section | "spin">(() => request === "spin" ? "spin" : memory?.wishesSection ?? "jar");
   const [spinFromHome, setSpinFromHome] = useState(request === "spin" && !historyState?.shortcut);
   const [filter, setFilter] = useState<Filter>(() => memory?.wishesFilter ?? "all");
-  const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
+  const partnerName = displayName(couple.members.find((m) => m.id !== session.user.id), t);
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const { jar, setJar, failed, refresh } = useWishJar(session.onSignedOut);
@@ -68,7 +71,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   useCreateRequest("wishes", () => { setFromMenu(true); setView("jar"); setEditing(null); });
 
   async function remove() {
-    if (!acting || busy) return;
+    if (!online || !acting || busy) return;
     setBusy(true);
     const res = await api.deleteWish(acting.id);
     setBusy(false);
@@ -132,7 +135,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
       setJar((j) => j && { ...j, open: [wish, ...j.open.filter((w) => w.id !== wish.id)].sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id)) });
       toast.success(t("wish.saved"));
     }} /></Suspense>}
-    {receiving && <Suspense fallback={null}><ComposeSheet open receiving={receiving} author={toPeople(couple.members, session.user)[couple.members.findIndex((member) => member.id === session.user.id)]!} partnerName={partnerName}
+    {receiving && <Suspense fallback={null}><ComposeSheet open receiving={receiving} author={toPeople(couple.members, session.user, t)[couple.members.findIndex((member) => member.id === session.user.id)]!} partnerName={partnerName}
       onOpenChange={(open) => { if (!open) setReceiving(null); }} onSignedOut={session.onSignedOut} onSaved={(entry) => {
         setJar((j) => j && { ...j, open: j.open.filter((w) => w.id !== receiving.id), received: [{ ...receiving, status: "received", receivedOn: entry.date, note: null, updatedAt: entry.updatedAt }, ...j.received] });
         setView("jar"); setFilter("received"); setCelebrate(true); void refresh();
@@ -146,13 +149,14 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
             {deleting && <p id="wish-delete-confirm" className="text-sm text-muted-foreground">{t("wish.deleteConfirm", { title: shownWish?.title ?? "" })}</p>}
           </DrawerHeader>
           <p role="alert" className="text-destructive empty:hidden">{error}</p>
+          {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
           {deleting ? <>
-            <Button key="confirm-delete" autoFocus aria-describedby="wish-delete-confirm" variant="destructive" size="lg" loading={busy} onClick={() => void remove()}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
+            <Button key="confirm-delete" autoFocus aria-describedby="wish-delete-confirm" variant="destructive" size="lg" disabled={!online} loading={busy} onClick={() => void remove()}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
             <Button variant="outline" size="lg" disabled={busy} onClick={() => { setDeleting(false); setError(null); }}>{t("common.back")}</Button>
           </> : <>
             {shownWish?.status === "open" && <Button size="lg" className="justify-start" onClick={() => { setReceiving(acting); setActing(null); }}><Check aria-hidden="true" />{t("received.action")}</Button>}
             {shownWish?.status === "open" && <Button variant="outline" size="lg" className="justify-start" onClick={() => { setFromMenu(false); setEditing(acting); setActing(null); }}><PencilLine aria-hidden="true" />{t("wish.edit")}</Button>}
-            <Button variant="outline" size="lg" className="justify-start text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
+            <Button variant="outline" size="lg" disabled={!online} className="justify-start text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
             <Button variant="ghost" size="lg" onClick={() => setActing(null)}>{t("common.close")}</Button>
           </>}
         </div>

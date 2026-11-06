@@ -10,10 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { formatVnd } from "@/lib/format";
 import { TabMemory } from "@/lib/tabMemory";
+import { useOnline } from "@/lib/useOnline";
 import { EmptyState } from "./EmptyState";
 
 export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   const memory = useContext(TabMemory);
   const [claims, setClaims] = useState<Claim[] | null>(() => memory?.claims ?? null);
   useLayoutEffect(() => {
@@ -46,7 +48,7 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
   }, [claims]);
 
   async function release() {
-    if (!releasing || busy) return;
+    if (!online || !releasing || busy) return;
     setBusy(true);
     const res = await api.releaseClaim(releasing.id);
     setBusy(false);
@@ -56,6 +58,7 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
   }
 
   return <>
+    {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
     {failed && <p role="alert" className="text-destructive">{t("claims.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></p>}
     {!claims && !failed && <Skeleton className="h-28" aria-label={t("loading")} />}
     {claims?.length === 0 && <EmptyState icon={Gift} title={t("claims.empty")} />}
@@ -72,13 +75,14 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
             <span className="sr-only">{t("claims.received")}</span>
           </span>}
         </div>
-        {claim.status !== "received" && <Button variant="outline" onClick={() => { setReleasing(claim); setError(null); }}>{t("claims.release")}</Button>}
+        {claim.status !== "received" && <Button variant="outline" disabled={!online} onClick={() => { setReleasing(claim); setError(null); }}>{t("claims.release")}</Button>}
       </>}
     </Card>)}</div>
     <Dialog open={!!releasing} onOpenChange={(open) => { if (!open && !busy) setReleasing(null); }}>
       <DialogContent showCloseButton={!busy}><DialogHeader><DialogTitle>{t("claims.release")}</DialogTitle><DialogDescription>{t("claims.releaseConfirm", { title: releasing?.title ?? "" })}</DialogDescription></DialogHeader>
         <p role="alert" className="text-destructive empty:hidden">{error}</p>
-        <DialogFooter><Button variant="outline" disabled={busy} onClick={() => setReleasing(null)}>{t("common.close")}</Button><Button loading={busy} onClick={() => void release()}>{t("claims.release")}</Button></DialogFooter>
+        {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+        <DialogFooter><Button variant="outline" disabled={busy} onClick={() => setReleasing(null)}>{t("common.close")}</Button><Button disabled={!online} loading={busy} onClick={() => void release()}>{t("claims.release")}</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   </>;

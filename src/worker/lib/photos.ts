@@ -25,8 +25,12 @@ export async function purgeAvatars(env: Env, userId: string, completedId?: strin
     do {
       const page = await env.PHOTOS.list({ prefix: avatarKey(userId, ""), cursor });
       // Read after listing and keep pending uploads that could commit during cleanup.
-      const { results } = await env.DB.prepare(`SELECT avatar_id AS id FROM users WHERE id = ?
-        UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`).bind(userId, userId).all<{ id: string | null }>();
+      const [, kept] = await env.DB.batch<{ id: string | null }>([
+        env.DB.prepare("DELETE FROM avatar_uploads WHERE user_id = ? AND pending = 1 AND created_at <= ?").bind(userId, Date.now() - DAY),
+        env.DB.prepare(`SELECT avatar_id AS id FROM users WHERE id = ?
+          UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`).bind(userId, userId),
+      ]);
+      const results = kept!.results;
       const keep = new Set(results.map((row) => avatarKey(userId, row.id ?? "")));
       const keys = page.objects.map((object) => object.key).filter((key) => !keep.has(key));
       if (keys.length) await env.PHOTOS.delete(keys);

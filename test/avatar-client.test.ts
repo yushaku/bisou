@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, avatarUrl } from "../src/client/api";
 import { avatarFileError, avatarRetryWait, renderAvatar } from "../src/client/lib/photo";
 import type { User } from "../src/shared/types";
+import type { Translate } from "../src/client/i18n";
+import { vi as messages } from "../src/client/i18n/vi";
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
@@ -60,13 +62,14 @@ describe("profile photo client", () => {
   });
   it("AC8 R9 R10: both people carry photos and self changes override stale couple data", async () => {
     const { toPeople } = await import("../src/client/components/bisou/CoupleAvatars");
+    const t: Translate = (key) => messages[key];
     const user: User = { id: "a", displayName: "An", email: "an@example.com", birthDate: null, avatarId: "new", locale: "vi", createdAt: 0 };
     const members = [{ ...user, avatarId: "old" }, { id: "b", displayName: "Binh", birthDate: null, avatarId: "partner" }];
-    expect(toPeople(members, user).map((p) => [p.name, p.photoUrl, p.tone])).toEqual([
+    expect(toPeople(members, user, t).map((p) => [p.name, p.photoUrl, p.tone])).toEqual([
       ["An", "/api/avatars/a/new", "primary"], ["Binh", "/api/avatars/b/partner", "secondary"],
     ]);
-    expect(toPeople(members, { ...user, avatarId: null })[0]?.photoUrl).toBeUndefined();
-    expect(toPeople([user], { ...user, displayName: null })[0]).toMatchObject({ name: "an", initial: "A" });
-    expect(toPeople([{ ...members[1]!, displayName: null }], user)[0]).toMatchObject({ name: "Người ấy", initial: "Ấ" });
+    expect(toPeople(members, { ...user, avatarId: null }, t)[0]?.photoUrl).toBeUndefined();
+    expect(toPeople([user], { ...user, displayName: null }, t)[0]).toMatchObject({ name: "an", initial: "A" });
+    expect(toPeople([{ ...members[1]!, displayName: null }], user, t)[0]).toMatchObject({ name: messages["common.person"], initial: "V" });
   });
 });

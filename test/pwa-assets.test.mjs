@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir, stat } from "node:fs/promises";
 import { test } from "node:test";
 import sharp from "sharp";
 import palettes from "../src/client/theme/palettes.json" with { type: "json" };
+
+test("portrait splash PNGs total less than 3 MB", async () => {
+  const sizes = await Promise.all((await readdir("public/splash")).filter((file) => file.endsWith(".png")).map(async (file) => (await stat(`public/splash/${file}`)).size));
+  assert.ok(sizes.reduce((sum, size) => sum + size, 0) < 3_000_000);
+});
 
 test("every portrait splash link has matching pixels and the approved background", async () => {
   const html = await readFile("index.html", "utf8");

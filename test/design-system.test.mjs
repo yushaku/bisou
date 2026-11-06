@@ -29,14 +29,14 @@ test("mode, palette, style and background resolve independently, including befor
           ? prefs.lightTheme : prefs.darkTheme;
         assert.equal(resolveTheme(prefs, systemDark), expected);
         const root = { dataset: {}, classList: { toggle: (name, on) => { root[name] = on; } } };
-        const statusBar = {};
+        const statusBar = { content: "black" };
         const color = { removeAttribute() {} };
         runInNewContext(script, {
           localStorage: { getItem: () => raw },
           window: { matchMedia: () => ({ matches: systemDark }) },
           document: { documentElement: root, querySelector: () => statusBar, querySelectorAll: () => [color] },
         });
-        assert.equal(statusBar.content, palettes[expected].kind === "dark" ? "black-translucent" : "default");
+        assert.equal(statusBar.content, "black");
         assert.equal(color.content, palettes[expected].tokens.background);
         assert.equal(root.dataset.theme, expected);
         assert.equal(root.dataset.style, "sticker");

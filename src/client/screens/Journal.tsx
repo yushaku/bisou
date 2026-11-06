@@ -6,6 +6,7 @@ import { toDayString } from "../../shared/days";
 import type { Couple, JournalEntry, JournalPage, Locale } from "../../shared/types";
 import { api, photoUrl } from "../api";
 import { toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import { displayName } from "../lib/displayName";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard, type Entry } from "../components/bisou/EntryCard";
@@ -36,7 +37,7 @@ function toCard(e: JournalEntry, people: Map<string, Person>, t: Translate, loca
     id: e.id,
     source: e.source,
     date: e.date,
-    author: people.get(e.authorId) ?? { name: "?", tone: "secondary" },
+    author: people.get(e.authorId) ?? { name: displayName(undefined, t), tone: "secondary" },
     body: e.text,
     photos: e.photoIds.map((id, i) => ({
       src: photoUrl(id, "thumb"),
@@ -66,10 +67,10 @@ export function Journal({ couple, ...session }: JournalProps) {
   const sentinel = useRef<HTMLDivElement>(null);
 
   // Creator first, as on Home, so each partner keeps one tint everywhere.
-  const people = new Map(toPeople(couple.members, user).map((person, index) => [couple.members[index]!.id, person]));
-  const me = people.get(user.id) ?? { name: user.displayName ?? "?", tone: "primary" };
+  const people = new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person]));
+  const me = people.get(user.id) ?? { name: displayName(user, t), tone: "primary" };
   const partner = couple.members.find((m) => m.id !== user.id);
-  const partnerName = (partner && people.get(partner.id)?.name) ?? "?";
+  const partnerName = displayName(partner, t);
 
   const [fromMenu, setFromMenu] = useState(false);
   const [composing, setComposing] = useState(false);

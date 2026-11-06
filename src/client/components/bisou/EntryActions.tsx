@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useI18n } from "@/i18n";
 import { formatDay } from "@/lib/format";
+import { useOnline } from "@/lib/useOnline";
 
 interface EntryActionsProps {
   /* The author's own entry whose actions are open, or null. */
@@ -23,6 +24,7 @@ interface EntryActionsProps {
  */
 export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }: EntryActionsProps) {
   const { t, locale } = useI18n();
+  const online = useOnline();
   // The sheet still shows its entry while it animates closed.
   const last = useRef(entry);
   if (entry) last.current = entry;
@@ -32,6 +34,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
   const [error, setError] = useState<string | null>(null);
 
   async function remove(e: JournalEntry) {
+    if (!online || deleting) return;
     setDeleting(true);
     setError(null);
     const res = await api.deleteEntry(e.id);
@@ -57,6 +60,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
             <DrawerHeader className="px-0 text-left">
               <DrawerTitle className="font-heading text-xl">{shown ? formatDay(shown.date, locale) : ""}</DrawerTitle>
             </DrawerHeader>
+            {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
             <Button
               variant="outline"
               size="lg"
@@ -74,6 +78,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
               variant="outline"
               size="lg"
               className="justify-start text-destructive"
+              disabled={!online}
               onClick={() => {
                 setError(null);
                 setTarget(shown);
@@ -98,11 +103,12 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
               {count > 0 ? t("entry.deleteBody", { day, count }) : t("entry.deleteBodyText", { day })}
             </DialogDescription>
           </DialogHeader>
+          {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
           <p role="alert" className="text-base text-destructive empty:hidden">
             {error}
           </p>
           <DialogFooter>
-            <Button variant="destructive" loading={deleting} onClick={() => target && void remove(target)}>
+            <Button variant="destructive" disabled={!online} loading={deleting} onClick={() => target && void remove(target)}>
               {t("entry.deleteYes")}
             </Button>
             <Button autoFocus disabled={deleting} onClick={() => setTarget(null)}>

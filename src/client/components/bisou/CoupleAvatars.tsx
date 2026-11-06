@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useI18n } from "../../i18n";
+import { useI18n, type Translate } from "../../i18n";
+import { displayName } from "../../lib/displayName";
 import { cn } from "../../lib/utils";
 import { avatarUrl } from "../../api";
 import type { CoupleMember, User } from "../../../shared/types";
@@ -12,10 +13,10 @@ export interface Person {
   tone: "primary" | "secondary";
 }
 
-export function toPeople(members: CoupleMember[], user: User): (Person & { birthDate: string | null })[] {
+export function toPeople(members: CoupleMember[], user: User, t: Translate): (Person & { birthDate: string | null })[] {
   return members.map((member, index) => {
     const person = member.id === user.id ? user : member;
-    const name = person.displayName || (member.id === user.id ? user.email.split("@")[0] : null) || (user.locale === "vi" ? "Người ấy" : "Partner");
+    const name = displayName(person, t);
     return {
       name,
       initial: initials(name),

@@ -54,7 +54,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
   const navigation = useTabNavigation("home");
 
   // Creator first on both phones, so each partner keeps the same tint everywhere.
-  const people = toPeople(couple.members.slice(0, 2), session.user) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
+  const people = toPeople(couple.members.slice(0, 2), session.user, t) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
   const myIndex = couple.members[0]?.id === session.user.id ? 0 : 1;
 
   async function saveStartDate(day: string): Promise<string | null> {

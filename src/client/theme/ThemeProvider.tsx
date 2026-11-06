@@ -31,9 +31,7 @@ function applyToDocument(prefs: ThemePrefs, theme: ThemeId) {
   root.dataset.style = prefs.style;
   root.dataset.bg = prefs.background;
   root.classList.toggle("dark", themeById(theme).kind === "dark");
-  const statusBar = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-status-bar-style"]');
-  if (statusBar) statusBar.content = themeById(theme).kind === "dark" ? "black-translucent" : "default";
-  // The status bar follows the page background of the active theme.
+  // Browser chrome follows the page background of the active theme.
   const background = getComputedStyle(root).getPropertyValue("--background").trim();
   if (background) {
     for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {

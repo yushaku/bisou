@@ -2,6 +2,7 @@ import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Couple, User } from "../src/shared/types";
 import { DAY, HOUR } from "../src/worker/lib/time";
+import { purgeAvatars } from "../src/worker/lib/photos";
 import { call, explain, jpeg, paired, resetDb, user, webp, type TestUser } from "./helpers";
 
 beforeEach(resetDb);
@@ -24,6 +25,39 @@ async function save(who: TestUser, data = form()) {
 }
 
 describe("profile photos", () => {
+  it("purges stale pending reservations and objects while retaining fresh and committed uploads", async () => {
+    const a = await user("An");
+    const current = await save(a);
+    const now = Date.now();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(now);
+    for (const [id, created] of [["stale", now - DAY - 1], ["boundary", now - DAY], ["fresh", now - DAY + 1]] as const) {
+      await env.DB.prepare("INSERT INTO avatar_uploads (id, user_id, created_at) VALUES (?, ?, ?)").bind(id, a.id, created).run();
+      await env.PHOTOS.put(key(a, id), id);
+    }
+    await purgeAvatars(env, a.id);
+    expect((await env.DB.prepare("SELECT id FROM avatar_uploads WHERE user_id = ?").bind(a.id).all<{ id: string }>()).results.map((r) => r.id).sort()).toEqual([current, "fresh"].sort());
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key).sort()).toEqual([key(a, current), key(a, "fresh")].sort());
+  });
+
+  it("a late commit fails after removal purges its stale pending reservation", async () => {
+    const a = await user("An");
+    const start = Date.now();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(start);
+    const write = env.PHOTOS.put.bind(env.PHOTOS);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(env.PHOTOS, "put").mockImplementationOnce(async (...args) => {
+      const result = await write(...args);
+      vi.setSystemTime(start + DAY);
+      expect((await call("DELETE", "/api/me/avatar", { cookie: a.cookie })).status).toBe(200);
+      return result;
+    });
+    expect((await put(a)).status).toBe(500);
+    expect(await (await call("GET", "/api/me", { cookie: a.cookie })).json()).toMatchObject({ user: { avatarId: null } });
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects).toEqual([]);
+  });
+
   it("limits each user to 20 uploads per rolling day without changing the current photo", async () => {
     const a = await user("An");
     const b = await user("Binh");

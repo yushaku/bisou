@@ -20,10 +20,9 @@ describe("formatMoneyInput", () => {
     expect(formatMoneyInput("9".repeat(20), "vi").replace(/\D/g, "")).toHaveLength(15);
   });
 
-  it("reads back to the same amount, and 0 means no price", () => {
+  it("reads both locale formats back to the same amount", () => {
     expect(parseVnd(formatMoneyInput("450000", "vi"))).toBe(450000);
     expect(parseVnd(formatMoneyInput("450000", "en"))).toBe(450000);
-
   });
 });
 

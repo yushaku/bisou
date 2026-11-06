@@ -45,12 +45,12 @@ for (const { width, height, dpr } of phones) {
   const heart = await sharp("assets/brand-heart.webp").resize(Math.round(pixelsWide * 0.28)).toBuffer();
   for (const [mode, palette] of [["light", "peach"], ["dark", "cocoa"]]) {
     const href = `/splash/${width}x${height}@${dpr}x-${mode}.png`;
-    // Same weave, scale and blending as theme/backgrounds.css.
-    const linen = await sharp("src/client/assets/linen.webp").resize(256 * dpr, 256 * dpr)
-      .removeAlpha().linear(mode === "light" ? 0.2 : 0.045, mode === "light" ? 255 * 0.8 : 0).png().toBuffer();
+    // A smaller, quieter weave compresses well across the full launch screen.
+    const linen = await sharp("src/client/assets/linen.webp").resize(64 * dpr, 64 * dpr)
+      .removeAlpha().linear(mode === "light" ? 0.08 : 0.025, mode === "light" ? 255 * 0.92 : 0).png().toBuffer();
     await sharp({ create: { width: pixelsWide, height: pixelsHigh, channels: 3, background: palettes[palette].tokens.background } })
       .composite([{ input: linen, tile: true, blend: mode === "light" ? "multiply" : "screen" }, { input: heart, gravity: "centre" }])
-      .png({ compressionLevel: 9, palette: true }).toFile(`public${href}`);
+      .png({ compressionLevel: 9, palette: true, colours: 64, dither: 0 }).toFile(`public${href}`);
     total += (await stat(`public${href}`)).size;
     links.push(`    <link rel="apple-touch-startup-image" href="${href}" media="(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait) and (prefers-color-scheme: ${mode})" />`);
   }

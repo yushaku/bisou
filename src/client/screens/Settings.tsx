@@ -7,6 +7,7 @@ import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
 import { api } from "../api";
 import { BottomBar } from "../components/bisou/AppShell";
 import { CoupleAvatars, PersonAvatar, toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import { displayName } from "../lib/displayName";
 import type { CropRequest } from "../components/bisou/PhotoCropDialog";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { SettingsGroup, SettingsRow } from "../components/bisou/SettingsGroup";
@@ -57,9 +58,9 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   }, []);
   const paired = (couple?.members.length ?? 0) >= 2;
   const partner = paired ? couple?.members.find((member) => member.id !== user.id) : null;
-  const members = toPeople(couple?.members ?? [], user);
+  const members = toPeople(couple?.members ?? [], user, t);
   const people: [Person, Person] | null = paired ? [members[0]!, members[1]!] : null;
-  const ownPerson = toPeople([user], user)[0]!;
+  const ownPerson = toPeople([user], user, t)[0]!;
 
   function openAvatar(button: HTMLButtonElement) {
     sheetButton.current = button;
@@ -171,7 +172,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
             {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={ownPerson} />}
           </button>
           <div className="min-w-0">
-            <p className="break-words font-heading text-xl">{user.displayName ?? t("settings.yourProfile")}</p>
+            <p className="break-words font-heading text-xl">{displayName(user, t)}</p>
             <p className="break-all text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
@@ -188,7 +189,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
             <SettingsRow icon={Mail} label={t("login.email")} value={user.email} />
           </SettingsGroup>
           {paired && couple && <SettingsGroup title={t("settings.couple")}>
-            <SettingsRow icon={Heart} label={t("settings.partner")} value={partner?.displayName ?? "?"} />
+            <SettingsRow icon={Heart} label={t("settings.partner")} value={displayName(partner, t)} />
             <SettingsRow ref={dateButton} icon={CalendarHeart} label={t("settings.startDate")}
               value={couple.startDate ? formatDay(couple.startDate, locale, "numeric") : t("settings.notSet")}
               onClick={() => { setDateLoaded(true); setPicking(true); }} />

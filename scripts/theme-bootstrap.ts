@@ -29,8 +29,6 @@ export function themeHead(palettes: Palettes) {
         r.dataset.style = ["journal", "soft", "sticker"].includes(p.style) ? p.style : "soft";
         r.dataset.bg = ["linen", "plain", "paper", "dots", "hearts"].includes(p.background) ? p.background : "linen";
         r.classList.toggle("dark", isDark);
-        const status = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
-        if (status) status.content = isDark ? "black-translucent" : "default";
         const backgrounds = ${JSON.stringify(Object.fromEntries(Object.entries(palettes).map(([id, p]) => [id, p.tokens.background])))};
         for (const meta of document.querySelectorAll('meta[name="theme-color"]')) {
           meta.content = backgrounds[r.dataset.theme];

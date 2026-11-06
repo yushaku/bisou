@@ -3,6 +3,7 @@ import { toDayString } from "../../shared/days";
 import { upcomingEvents, type UpcomingEvent } from "../../shared/events";
 import type { Couple, CoupleEvent, User } from "../../shared/types";
 import { BottomBar } from "../components/bisou/AppShell";
+import { toPeople } from "../components/bisou/CoupleAvatars";
 import { EventRow } from "../components/bisou/EventRow";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { Card } from "../components/ui/card";
@@ -19,10 +20,7 @@ export function Events({ couple, user, onCouple, onSignedOut }: { couple: Couple
   const { t, locale } = useI18n();
   const now = useNow();
   const navigation = useTabNavigation();
-  const people = couple.members.map((member) => ({
-    name: (member.id === user.id ? user.displayName : member.displayName) ?? "?",
-    birthDate: member.id === user.id ? user.birthDate : member.birthDate,
-  }));
+  const people = toPeople(couple.members, user, t);
   const later: UpcomingEvent[] = [];
   const months = new Map<string, UpcomingEvent[]>();
   for (const event of upcomingEvents(couple.startDate, people, toDayString(now), couple.events)) {

@@ -10,7 +10,8 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- iOS reads this only at launch; opaque black stays readable above either theme without overlaying the safe-area layout. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Bisou" />
     <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
