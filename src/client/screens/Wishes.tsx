@@ -98,7 +98,23 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
           {(Object.keys(SECTIONS) as Section[]).map((id) => <TabsTrigger key={id} value={id}>{t(SECTIONS[id])}</TabsTrigger>)}
         </TabsList>
       </Tabs>
-      {view === "jar" && <p className="mb-4 text-sm text-muted-foreground">{t("wishes.private")}</p>}
+      {view === "jar" && <div className="mb-4 flex items-center gap-3">
+        <p className="min-w-0 flex-1 text-sm text-muted-foreground">{t("wishes.private")}</p>
+        {jar && jar.open.length + jar.received.length > 0 && <>
+          <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
+            <SelectTrigger size="sm" aria-label={t("wishes.filter")} className="shrink-0">
+              <ListFilter aria-hidden="true" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent position="popper" align="end">
+              {(Object.keys(FILTERS) as Filter[]).map((id) => <SelectItem key={id} value={id}>
+                {t(FILTERS[id])}
+                <span className="tabular-nums text-muted-foreground">{id === "all" ? jar.open.length + jar.received.length : jar[id].length}</span>
+              </SelectItem>)}
+            </SelectContent>
+          </Select>
+        </>}
+      </div>}
     </>}
     {view === "spin" && <SpinCard partnerName={partnerName} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
     {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
@@ -108,18 +124,6 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     {jar && (jar.open.length + jar.received.length === 0
       ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />
       : <>
-        <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-          <SelectTrigger size="sm" aria-label={t("wishes.filter")} className="mb-4 self-end">
-            <ListFilter aria-hidden="true" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent position="popper" align="end">
-            {(Object.keys(FILTERS) as Filter[]).map((id) => <SelectItem key={id} value={id}>
-              {t(FILTERS[id])}
-              <span className="tabular-nums text-muted-foreground">{id === "all" ? jar.open.length + jar.received.length : jar[id].length}</span>
-            </SelectItem>)}
-          </SelectContent>
-        </Select>
         {filter === "received" && jar.received.length === 0 && <EmptyState icon={Gift} title={t("received.empty")} />}
         {filter === "open" && jar.open.length === 0 && <EmptyState icon={Gift} title={t("empty.wishes")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />}
         <div className="flex flex-col gap-3 pb-6">
