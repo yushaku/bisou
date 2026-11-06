@@ -6,6 +6,7 @@ import type {
   WishInput,
   ReceiveWishInput,
   CoupleResponse,
+  CoupleEventInput,
   EntryInput,
   JournalEntry,
   JournalPage,
@@ -42,6 +43,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  createEvent: (input: CoupleEventInput) => call<CoupleResponse>("POST", "/api/events", input),
   receiveWish: (id: string, input: ReceiveWishInput) => call<{ wish: Wish; entry: JournalEntry }>("POST", `/api/wishes/${encodeURIComponent(id)}/received`, input),
   spin: (budget: number) => call<{ wish: SpinWish | null }>("POST", "/api/wishes/spin", { budget }),
   claim: (id: string) => call<{ claim: Claim }>("POST", `/api/wishes/${encodeURIComponent(id)}/claim`),

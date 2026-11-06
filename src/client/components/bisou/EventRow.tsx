@@ -1,4 +1,4 @@
-import { Cake, Gift, Heart, Sparkles } from "lucide-react";
+import { Cake, Gift, Heart, Sparkles, Plane, Music, UtensilsCrossed, Users, Star } from "lucide-react";
 import type { ReactNode } from "react";
 import type { UpcomingEvent } from "../../../shared/events";
 import { Badge } from "@/components/ui/badge";
@@ -6,14 +6,17 @@ import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
 import { formatDay, formatNumber } from "@/lib/format";
 
+export const EVENT_ICON_COMPONENTS = { heart: Heart, plane: Plane, music: Music, dinner: UtensilsCrossed, gift: Gift, cake: Cake, family: Users, star: Star };
+
 const ICONS = { anniversary: Heart, days: Sparkles, birthday: Cake, holiday: Gift };
 
 export function EventRow({ event }: { event: UpcomingEvent }) {
   const { t, locale } = useI18n();
-  const Icon = ICONS[event.kind];
+  const Icon = event.kind === "custom" ? EVENT_ICON_COMPONENTS[event.icon] : ICONS[event.kind];
   const title = event.kind === "anniversary" ? t("events.anniversary", { years: formatNumber(event.years, locale) })
     : event.kind === "days" ? t("events.days", { n: formatNumber(event.days, locale) })
     : event.kind === "birthday" ? t("events.birthday", { name: event.name })
+    : event.kind === "custom" ? `${event.title}${event.years >= 1 ? ` ${t(event.years === 1 ? "events.countOne" : "events.count", { n: formatNumber(event.years, locale) })}` : ""}`
     : t(`events.holiday.${event.holiday}`);
   return (
     <li className="flex items-center gap-3 px-4 py-3">

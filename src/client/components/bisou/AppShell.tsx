@@ -69,8 +69,8 @@ interface BottomBarProps {
 export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  // On Journal and Wishes the + adds to that tab right away; elsewhere it opens the menu.
-  const direct: CreateDestination | null = active === "journal" || active === "wishes" ? active : null;
+  // The + adds directly to the active tab.
+  const direct: CreateDestination | null = active === "home" ? "event" : active === "journal" || active === "wishes" ? active : null;
   // Open the editor after the menu closes, unless the user has left this screen.
   const pending = useRef<CreateDestination | null>(null);
   useEffect(() => () => { pending.current = null; }, []);
@@ -92,7 +92,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
               <Fragment key={id}>
                 {index === 2 && <li className="flex items-center justify-center">
                   <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-card elevate"
-                    aria-label={direct ? t(direct === "journal" ? "journal.new" : "wishes.add") : t("nav.create")}
+                    aria-label={direct ? t(direct === "event" ? "events.add" : direct === "journal" ? "journal.new" : "wishes.add") : t("nav.create")}
                     onClick={() => direct ? onCreate(direct) : setOpen(true)}>
                     <Plus className="size-6" aria-hidden="true" />
                   </Button>

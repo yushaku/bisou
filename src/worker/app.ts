@@ -7,6 +7,7 @@ import { couple } from "./routes/couple";
 import { me } from "./routes/me";
 import { photos } from "./routes/photos";
 import { wishes } from "./routes/wishes";
+import { coupleEvents } from "./routes/events";
 import { journal } from "./routes/journal";
 
 // One route module per area.
@@ -25,6 +26,7 @@ app.route("/couple", couple);
 app.route("/photos", photos);
 app.route("/journal", journal);
 app.route("/wishes", wishes);
+app.route("/events", coupleEvents);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));
 app.onError((err, c) => {

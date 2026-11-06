@@ -1,5 +1,6 @@
 import { PAIR_CODE_ALPHABET, PAIR_CODE_LENGTH } from "../../shared/pairCode";
-import type { Couple } from "../../shared/types";
+import { earliestDay } from "../../shared/days";
+import type { Couple, CoupleEvent } from "../../shared/types";
 import { HOUR, JOIN_MAX_FAILED_PER_HOUR } from "./time";
 
 /** Uniform random code from the no look-alike alphabet (rejection sampling avoids modulo bias). */
@@ -37,7 +38,7 @@ export async function findMembership(db: D1Database, userId: string): Promise<Me
 /** GET /api/couple payload for the session user, in one round trip. */
 export async function loadCouple(db: D1Database, userId: string, now: number): Promise<Couple | null> {
   const mine = "(SELECT couple_id FROM couple_members WHERE user_id = ?)";
-  const [coupleRes, membersRes, codeRes] = await db.batch([
+  const [coupleRes, membersRes, codeRes, eventsRes] = await db.batch([
     db.prepare(`SELECT id, start_date FROM couples WHERE id = ${mine}`).bind(userId),
     db
       .prepare(
@@ -46,6 +47,8 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
       )
       .bind(userId),
     db.prepare(`SELECT code, expires_at FROM pair_codes WHERE couple_id = ${mine} AND expires_at > ?`).bind(userId, now),
+    db.prepare(`SELECT id, title, event_date AS date, repeats AS repeat, icon, created_at AS createdAt
+      FROM couple_events WHERE couple_id = ${mine} AND (repeats = 'yearly' OR event_date >= ?)`).bind(userId, earliestDay(now)),
   ]);
   const row = (coupleRes?.results as { id: string; start_date: string | null }[] | undefined)?.[0];
   if (!row) return null;
@@ -54,7 +57,7 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
     displayName: m.display_name,
     birthDate: m.birth_date,
   }));
-  const couple: Couple = { id: row.id, startDate: row.start_date, members };
+  const couple: Couple = { id: row.id, startDate: row.start_date, members, events: (eventsRes?.results ?? []) as unknown as CoupleEvent[] };
   const code = (codeRes?.results as { code: string; expires_at: number }[] | undefined)?.[0];
   if (members.length === 1 && code) couple.pendingCode = { code: code.code, expiresAt: code.expires_at };
   return couple;

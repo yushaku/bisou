@@ -54,6 +54,11 @@ export function utcDayString(epochMs: number): string {
   return fromParts(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
 }
 
+/** UTC-12 is the last time zone to leave a calendar day. */
+export function earliestDay(nowMs: number): string {
+  return utcDayString(nowMs - 12 * 60 * 60 * 1000);
+}
+
 export function latestDay(nowMs: number): string {
   return utcDayString(nowMs + MAX_UTC_OFFSET);
 }

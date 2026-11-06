@@ -13,6 +13,7 @@ import { CoupleAvatars } from "@/components/bisou/CoupleAvatars";
 import { UpcomingCard } from "@/components/bisou/EventRow";
 import { upcomingEvents } from "../../shared/events";
 import { toDayString } from "../../shared/days";
+import type { CreateDestination } from "@/lib/navigation";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 import { formatDay } from "@/lib/format";
@@ -34,7 +35,7 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
     onSelect: (tab: TabId) => {
       if (tab === "home" || tab === "journal" || tab === "wishes") { setScreen(tab); setSettings(false); }
     },
-    onCreate: (tab: "journal" | "wishes") => { setScreen(tab); setSettings(false); toast.info(d("previewOnly")); },
+    onCreate: (tab: CreateDestination) => { setScreen(tab === "event" ? "home" : tab); setSettings(false); toast.info(d("previewOnly")); },
   };
   if (settings) return (
     <AppShell tabs={tabs} title={t("settings.title")} className={cn(framed && "min-h-full")} action={

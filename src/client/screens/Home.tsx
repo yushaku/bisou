@@ -1,5 +1,5 @@
 import { CalendarHeart } from "lucide-react";
-import { lazy, Suspense, useContext, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 import { toDayString } from "../../shared/days";
@@ -7,6 +7,7 @@ import { upcomingEvents } from "../../shared/events";
 import { UpcomingCard } from "../components/bisou/EventRow";
 import { Button } from "../components/ui/button";
 import { TabMemory } from "../lib/tabMemory";
+import { useCreateRequest } from "../lib/useTabNavigation";
 import { useNow } from "../lib/useNow";
 import type { Couple } from "../../shared/types";
 import { api } from "../api";
@@ -20,6 +21,7 @@ import { startDateError } from "../lib/startDate";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The calendar (react-day-picker and its locales) loads on first use, outside the main bundle.
+const EventSheet = lazy(() => import("../components/bisou/EventSheet").then((m) => ({ default: m.EventSheet })));
 const DateSheet = lazy(() => import("../components/bisou/DateSheet").then((m) => ({ default: m.DateSheet })));
 
 interface HomeProps extends SessionProps {
@@ -32,6 +34,9 @@ interface HomeProps extends SessionProps {
 
 export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
+  const [addingEvent, setAddingEvent] = useState(false);
+  const openAdd = useCallback(() => setAddingEvent(true), []);
+  useCreateRequest("event", openAdd);
   const [picking, setPicking] = useState(false);
   // Stays mounted after the first open so the sheet can animate closed.
   const [sheetLoaded, setSheetLoaded] = useState(false);
@@ -76,7 +81,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
         />
       )}
 
-      <UpcomingCard events={upcomingEvents(couple.startDate, people, toDayString(now))} action={
+      <UpcomingCard events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter((event) => !(event.kind === "custom" && event.later))} action={
         <Button asChild variant="ghost" size="sm">
           <Link id="events-see-all" href="/events" state={{ from: "/" }} onClick={() => {
             if (memory) {
@@ -87,6 +92,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
         </Button>
       } />
 
+      {addingEvent && <Suspense fallback={null}><EventSheet onClose={() => setAddingEvent(false)} onCouple={onCouple} onSignedOut={session.onSignedOut} /></Suspense>}
       {sheetLoaded && (
         <Suspense fallback={null}>
           <DateSheet title={t("startDate.title")} hint={t("startDate.hint")} saveLabel={t("startDate.save")} firstMonth={new Date(1950, 0, 1)} open={picking} onOpenChange={setPicking} value={couple.startDate} onSave={saveStartDate} />

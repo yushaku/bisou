@@ -20,6 +20,7 @@ export async function resetDb() {
     env.DB.prepare("DELETE FROM join_attempts"),
     env.DB.prepare("DELETE FROM pair_codes"),
     env.DB.prepare("DELETE FROM couple_members"),
+    env.DB.prepare("DELETE FROM couple_events"),
     env.DB.prepare("DELETE FROM couples"),
     env.DB.prepare("DELETE FROM sessions"),
     env.DB.prepare("DELETE FROM otp_codes"),

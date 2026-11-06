@@ -1,10 +1,10 @@
 export const TAB_PATH = { home: "/", journal: "/journal", wishes: "/wishes" } as const;
-export type CreateDestination = "journal" | "wishes";
+export type CreateDestination = "journal" | "wishes" | "event";
 
 export function readCreateRequest(state: unknown): CreateDestination | null {
   if (!state || typeof state !== "object") return null;
   const request = (state as { create?: unknown }).create;
-  return request === "journal" || request === "wishes" ? request : null;
+  return request === "journal" || request === "wishes" || request === "event" ? request : null;
 }
 
 export function tabMove(location: string, from: string | undefined, path: string, create?: CreateDestination): "scroll" | "back" | "replace" | "push" {

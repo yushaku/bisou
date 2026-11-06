@@ -96,3 +96,41 @@ describe("upcoming events", () => {
     expect(upcomingEvents("2026-11-05", [], "2026-11-05").some((e) => e.kind === "anniversary")).toBe(false);
   });
 });
+
+
+describe("custom events", () => {
+  const trip = { id: "trip", title: "Bay đi Đà Lạt", date: "2026-12-20", repeat: "once" as const, icon: "plane" as const, createdAt: 1 };
+  const japan = { ...trip, id: "japan", title: "Đi Nhật", date: "2028-04-10", createdAt: 2 };
+  const family = { ...trip, id: "family", title: "Ngày gặp bố mẹ", date: "2024-06-01", repeat: "yearly" as const, icon: "family" as const };
+  it("AC2 R8 R18: merges the running example and Home's first three", () => {
+    const events = upcomingEvents(start, people, "2026-11-06", [trip, japan, family]);
+    expect(events.map(e => e.date)).toEqual(["2026-11-18", "2026-11-19", "2026-12-20", "2027-01-03", "2027-02-12", "2027-02-14", "2027-03-08", "2027-06-01", "2027-10-20", "2028-04-10"]);
+    expect(events.slice(0, 3).map(e => e.daysLeft)).toEqual([12, 13, 44]);
+    expect(events.find(e => e.kind === "custom" && e.id === "family")).toMatchObject({ years: 3, later: false });
+  });
+  it("AC12 R18: moves the trip out of Later on 2027-04-11, excluding the exact year boundary", () => {
+    for (const [today, later] of [["2027-04-10", true], ["2027-04-11", false]] as const) {
+      expect(upcomingEvents(null, [], today, [japan]).find(e => e.kind === "custom")).toMatchObject({ later });
+    }
+  });
+  it("AC5 R3: repeats February 29 on February 28", () => {
+    expect(upcomingEvents(null, [], "2029-01-01", [{ ...family, date: "2028-02-29" }]).find(e => e.kind === "custom")).toMatchObject({ date: "2029-02-28", years: 1 });
+  });
+  it("AC6 R11: keeps a one-off today and hides it tomorrow", () => {
+    expect(upcomingEvents(null, [], trip.date, [trip]).find(e => e.kind === "custom")).toMatchObject({ daysLeft: 0 });
+    expect(upcomingEvents(null, [], "2026-12-21", [trip]).some(e => e.kind === "custom")).toBe(false);
+  });
+  it("AC7 R10: computed events precede customs ordered by creation time then id", () => {
+    const events = upcomingEvents(start, [], "2027-02-12", [
+      { ...trip, date: "2027-02-12", id: "b", createdAt: 2 },
+      { ...trip, date: "2027-02-12", id: "c", createdAt: 1 },
+      { ...trip, date: "2027-02-12", id: "a", createdAt: 2 },
+    ]).slice(0, 4);
+    expect(events.map(e => e.kind === "custom" ? e.id : e.kind)).toEqual(["anniversary", "c", "a", "b"]);
+  });
+  it("AC13 R9: counts years since the first date, including a future first date", () => {
+    for (const [today, years] of [["2026-06-01", 0], ["2027-06-01", 0], ["2028-06-01", 1]] as const) {
+      expect(upcomingEvents(null, [], today, [{ ...family, date: "2027-06-01" }]).find(e => e.kind === "custom")).toMatchObject({ years });
+    }
+  });
+});

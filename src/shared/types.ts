@@ -1,3 +1,5 @@
+import type { EventIcon } from "./events";
+
 // Types shared by the client and the Worker API.
 
 export const LOCALES = ["vi", "en"] as const;
@@ -18,6 +20,9 @@ export interface User {
 
 /** Error codes returned by the API as { error: ApiErrorCode }. */
 export type ApiErrorCode =
+  | "event_title_invalid"
+  | "event_date_invalid"
+  | "too_many_events"
   | "invalid_email"
   | "invalid_body"
   | "rate_limited"
@@ -77,7 +82,20 @@ export interface CoupleMember {
   birthDate: string | null;
 }
 
+export interface CoupleEventInput {
+  title: string;
+  date: string;
+  repeat: "once" | "yearly";
+  icon: EventIcon;
+}
+
+export interface CoupleEvent extends CoupleEventInput {
+  id: string;
+  createdAt: number;
+}
+
 export interface Couple {
+  events: CoupleEvent[];
   id: string;
   /** First day together, "YYYY-MM-DD", or null until a partner sets it. */
   startDate: string | null;

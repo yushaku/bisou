@@ -143,7 +143,7 @@ function SignedIn({
   else content = (
     <Switch location={settingsOpen ? historyState?.from ?? "/" : location}>
       <Route path="/events">
-        <Events user={user} couple={couple} />
+        <Events user={user} couple={couple} onCouple={onCouple} onSignedOut={onSignedOut} />
       </Route>
       <Route path="/wishes">
         <Wishes {...session} couple={couple} />

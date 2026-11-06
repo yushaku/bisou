@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readCreateRequest, tabMove } from "../src/client/lib/navigation";
 
 describe("creation requests carried by browser history", () => {
-  it.each(["journal", "wishes"] as const)("opens the requested %s editor", (create) => {
+  it.each(["journal", "wishes", "event"] as const)("AC9 R12: opens the requested %s editor", (create) => {
     expect(readCreateRequest({ create })).toBe(create);
   });
 
