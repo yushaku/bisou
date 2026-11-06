@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Ellipsis, Gift, PencilLine, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Ellipsis, Gift, ListFilter, PencilLine, Plus, Trash2 } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import { Button } from "../components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../components/ui/drawer";
 import { Skeleton } from "../components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { wishErrorKey } from "../lib/wishes";
@@ -108,13 +108,18 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     {jar && (jar.open.length + jar.received.length === 0
       ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />
       : <>
-        <ToggleGroup type="single" variant="outline" size="sm" spacing={1} aria-label={t("wishes.filter")} className="mb-4" value={filter}
-          onValueChange={(value) => { if (value) setFilter(value as Filter); }}>
-          {(Object.keys(FILTERS) as Filter[]).map((id) => <ToggleGroupItem key={id} value={id} className="px-3">
-            {t(FILTERS[id])}
-            <span className="tabular-nums text-muted-foreground">{id === "all" ? jar.open.length + jar.received.length : jar[id].length}</span>
-          </ToggleGroupItem>)}
-        </ToggleGroup>
+        <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
+          <SelectTrigger size="sm" aria-label={t("wishes.filter")} className="mb-4 self-end">
+            <ListFilter aria-hidden="true" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent position="popper" align="end">
+            {(Object.keys(FILTERS) as Filter[]).map((id) => <SelectItem key={id} value={id}>
+              {t(FILTERS[id])}
+              <span className="tabular-nums text-muted-foreground">{id === "all" ? jar.open.length + jar.received.length : jar[id].length}</span>
+            </SelectItem>)}
+          </SelectContent>
+        </Select>
         {filter === "received" && jar.received.length === 0 && <EmptyState icon={Gift} title={t("received.empty")} />}
         {filter === "open" && jar.open.length === 0 && <EmptyState icon={Gift} title={t("empty.wishes")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />}
         <div className="flex flex-col gap-3 pb-6">
