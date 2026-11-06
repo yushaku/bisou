@@ -14,7 +14,7 @@ describe("wish jar", () => {
     expect(res.status).toBe(201);
     const { wish } = await res.json<{ wish: { id: string; title: string; priority: number; price: null } }>();
     expect(wish).toMatchObject({ title: "Scarf", priority: 2, price: null });
-    expect(await (await call("GET", "/api/wishes", { cookie: a.cookie })).json()).toEqual({ open: [], received: [] });
+    expect(await (await call("GET", "/api/wishes", { cookie: a.cookie })).json()).toEqual({ open: [], received: [], partnerJarEmpty: false });
     for (const method of ["PUT", "DELETE"]) {
       expect((await call(method, `/api/wishes/${wish.id}`, { cookie: a.cookie, body: { title: "No" } })).status).toBe(404);
     }
@@ -23,6 +23,45 @@ describe("wish jar", () => {
       expect((await call(method!, `/api/wishes${path}`, { cookie: outsider.cookie, body: method === "GET" ? undefined : {} })).status).toBe(404);
     }
     expect((await call("GET", "/api/wishes")).status).toBe(401);
+  });
+
+  it("AC14 (R10): a partner with no wishes has an empty jar", async () => {
+    const { a } = await paired();
+    const res = await call("GET", "/api/wishes", { cookie: a.cookie });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ open: [], received: [], partnerJarEmpty: true });
+  });
+
+  it("AC14 (R10): claimed open wishes keep the partner jar nonempty", async () => {
+    const { a, b } = await paired();
+    const created = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title: "Scarf", price: 450000 } });
+    const { wish } = await created.json<{ wish: { id: string } }>();
+    expect((await call("POST", `/api/wishes/${wish.id}/claim`, { cookie: a.cookie })).status).toBe(201);
+    expect(await (await call("GET", "/api/wishes", { cookie: a.cookie })).json()).toEqual({ open: [], received: [], partnerJarEmpty: false });
+    expect(await (await call("POST", "/api/wishes/spin", { cookie: a.cookie, body: { budget: 500000 } })).json()).toEqual({ wish: null });
+  });
+
+  it("AC14 (R10): received wishes are no longer in the partner jar", async () => {
+    const { a, b } = await paired();
+    const created = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title: "Scarf" } });
+    const { wish } = await created.json<{ wish: { id: string } }>();
+    expect((await call("POST", `/api/wishes/${wish.id}/received`, { cookie: b.cookie, body: { date: "2023-02-12", note: "", photoIds: [] } })).status).toBe(201);
+    expect(await (await call("GET", "/api/wishes", { cookie: a.cookie })).json()).toEqual({ open: [], received: [], partnerJarEmpty: true });
+  });
+
+  it("AC14 (R10, R1): reveals only a boolean, never a partner wish count or details", async () => {
+    const { a, b } = await paired();
+    for (const title of ["Scarf", "Candle"]) {
+      expect((await call("POST", "/api/wishes", { cookie: b.cookie, body: { title, price: 450000 } })).status).toBe(201);
+    }
+    expect(await (await call("GET", "/api/wishes", { cookie: a.cookie })).json()).toEqual({ open: [], received: [], partnerJarEmpty: false });
+  });
+
+  it("AC14 (R10, R1): an unpaired user still gets not_in_couple without jar information", async () => {
+    const outsider = await user("Outsider");
+    const res = await call("GET", "/api/wishes", { cookie: outsider.cookie });
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "not_in_couple" });
   });
 
   it("AC2 (R3-R5): validates title, positive integer VND, web links and priority", async () => {

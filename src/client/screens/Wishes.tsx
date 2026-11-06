@@ -41,7 +41,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
-  const [jar, setJar] = useState<{ open: Wish[]; received: Wish[] } | null>(() => memory?.wishes ?? null);
+  const [jar, setJar] = useState<{ open: Wish[]; received: Wish[]; partnerJarEmpty: boolean } | null>(() => memory?.wishes ?? null);
   useLayoutEffect(() => {
     if (!memory) return;
     memory.wishes = jar;
@@ -81,7 +81,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     const res = await api.deleteWish(acting.id);
     setBusy(false);
     if (res.ok) {
-      setJar((j) => j && { open: j.open.filter((w) => w.id !== acting.id), received: j.received.filter((w) => w.id !== acting.id) });
+      setJar((j) => j && { ...j, open: j.open.filter((w) => w.id !== acting.id), received: j.received.filter((w) => w.id !== acting.id) });
       setActing(null); toast.success(t("wish.deleted"));
     } else if (res.status === 401) session.onSignedOut();
     else setError(t(wishErrorKey(res.error?.error)));
@@ -91,7 +91,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
 
   return <SignedInShell {...session} tab="wishes">
     {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button> : <>
-      <div className="mb-4"><WishTeaser onOpen={() => setView("spin")} title={t("spin.entry", { name: partnerName })} description={t("spin.entryHint")} /></div>
+      <div className="mb-4"><WishTeaser onOpen={() => setView("spin")} disabled={!jar || jar.partnerJarEmpty} title={t("spin.entry", { name: partnerName })} description={t(jar?.partnerJarEmpty ? "spin.jarEmpty" : "spin.entryHint", { name: partnerName })} /></div>
       <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
         <TabsList className="w-full">
           {(Object.keys(SECTIONS) as Section[]).map((id) => <TabsTrigger key={id} value={id}>{t(SECTIONS[id])}</TabsTrigger>)}
@@ -116,7 +116,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         </>}
       </div>}
     </>}
-    {view === "spin" && <SpinCard partnerName={partnerName} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
+    {view === "spin" && jar && <SpinCard partnerName={partnerName} partnerJarEmpty={jar.partnerJarEmpty} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
     {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
     {view === "jar" && <>
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
@@ -142,7 +142,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     }} /></Suspense>}
     {receiving && <Suspense fallback={null}><ComposeSheet open receiving={receiving} author={{ name: session.user.displayName ?? "?", tone: couple.members[0]?.id === session.user.id ? "primary" : "secondary" }} partnerName={partnerName}
       onOpenChange={(open) => { if (!open) setReceiving(null); }} onSignedOut={session.onSignedOut} onSaved={(entry) => {
-        setJar((j) => j && { open: j.open.filter((w) => w.id !== receiving.id), received: [{ ...receiving, status: "received", receivedOn: entry.date, note: null, updatedAt: entry.updatedAt }, ...j.received] });
+        setJar((j) => j && { ...j, open: j.open.filter((w) => w.id !== receiving.id), received: [{ ...receiving, status: "received", receivedOn: entry.date, note: null, updatedAt: entry.updatedAt }, ...j.received] });
         setView("jar"); setFilter("received"); setCelebrate(true); void refresh();
       }} /></Suspense>}
     <Celebration open={celebrate} onOpenChange={setCelebrate} />

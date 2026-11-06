@@ -28,7 +28,10 @@ wishes.get("/", async (c) => {
   const lists = await c.env.DB.batch<WishRow>(["open", "received"].map((status) => c.env.DB.prepare(
     `${WISH_SELECT} WHERE w.owner_id = ? AND w.couple_id = ? AND w.status = ? ORDER BY w.created_at DESC, w.id DESC`,
   ).bind(c.get("user").id, c.get("wishCoupleId"), status)));
-  return c.json({ open: lists[0]!.results.map(toWish), received: lists[1]!.results.map(toWish) });
+  const hasOpenWish = await c.env.DB.prepare(`SELECT EXISTS (
+    SELECT 1 FROM wishes WHERE owner_id = ? AND couple_id = ? AND status = 'open' LIMIT 1
+  ) AS has_open_wish`).bind(c.get("partnerId"), c.get("wishCoupleId")).first<number>("has_open_wish");
+  return c.json({ open: lists[0]!.results.map(toWish), received: lists[1]!.results.map(toWish), partnerJarEmpty: !hasOpenWish });
 });
 
 // The same photo predicate guards every write inside the batch, including a racing expiry or attachment.

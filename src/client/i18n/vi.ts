@@ -206,6 +206,7 @@ export const vi = {
   "spin.claim": "Mình sẽ tặng",
   "spin.again": "Quay lại",
   "spin.empty": "Chưa có điều ước nào trong ngân sách này. Thử tăng một chút?",
+  "spin.jarEmpty": "{name} chưa bỏ điều ước nào vào hũ",
   "spin.secret": "{name} sẽ không biết bạn đã chọn.",
   "empty.journal": "Chưa có trang nhật ký nào.",
   "empty.journalAction": "Viết trang đầu tiên",

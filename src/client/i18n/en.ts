@@ -207,6 +207,7 @@ export const en: Messages = {
   "spin.claim": "I'll get it",
   "spin.again": "Spin again",
   "spin.empty": "No wish fits this budget yet. Try a little more?",
+  "spin.jarEmpty": "{name} hasn't put any wishes in the jar yet",
   "spin.secret": "{name} will not know you picked it.",
   "empty.journal": "No journal entries yet.",
   "empty.journalAction": "Write the first one",

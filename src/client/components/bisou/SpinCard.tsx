@@ -17,6 +17,7 @@ export type SpinState = { step: "idle" | "spinning" | "empty" } | { step: "resul
 
 interface SpinCardProps {
   partnerName: string;
+  partnerJarEmpty?: boolean;
   initialBudget?: number;
   initialState?: SpinState;
   onSpin?: typeof api.spin;
@@ -26,7 +27,7 @@ interface SpinCardProps {
   className?: string;
 }
 
-export function SpinCard({ partnerName, initialBudget, initialState, onSpin = api.spin, onClaim = api.claim, onSignedOut, onViewClaims, className }: SpinCardProps) {
+export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, initialState, onSpin = api.spin, onClaim = api.claim, onSignedOut, onViewClaims, className }: SpinCardProps) {
   const { t, locale } = useI18n();
   const budgetId = useId();
   const [budget, setBudget] = useState(initialBudget ? formatNumber(initialBudget, locale) : "");
@@ -43,7 +44,7 @@ export function SpinCard({ partnerName, initialBudget, initialState, onSpin = ap
 
   async function spin(e?: FormEvent) {
     e?.preventDefault();
-    if (state.step === "spinning" || claiming || retryAt !== null) return;
+    if (partnerJarEmpty || state.step === "spinning" || claiming || retryAt !== null) return;
     const amount = parseVnd(budget);
     if (amount === null || !Number.isSafeInteger(amount) || amount <= 0) { setError(t("spin.invalidBudget")); return; }
     setState({ step: "spinning" }); setError(null); setClaimed(false);
@@ -71,16 +72,16 @@ export function SpinCard({ partnerName, initialBudget, initialState, onSpin = ap
   const spinning = state.step === "spinning";
   return <div className={cn("flex flex-col gap-4", className)}>
     <PageHeader className="pb-0" title={t(state.step === "result" ? "spin.result" : "spin.title", { name: partnerName })}
-      description={state.step === "result" ? `${t("spin.budget")}: ${formatVnd(parseVnd(budget) ?? 0, locale)}` : t("spin.hint", { name: partnerName })} />
+      description={partnerJarEmpty ? t("spin.jarEmpty", { name: partnerName }) : state.step === "result" ? `${t("spin.budget")}: ${formatVnd(parseVnd(budget) ?? 0, locale)}` : t("spin.hint", { name: partnerName })} />
     {retryAt !== null && <p role="status" className="rounded-lg bg-muted p-3">{t("spin.limit", { time: new Date(retryAt).toLocaleString(locale) })}</p>}
     <p role="alert" className="text-destructive empty:hidden">{error}</p>
     <Card className="gap-4 p-4" aria-live="polite">
       {state.step !== "result" && <form onSubmit={(e) => void spin(e)} className="flex flex-col gap-2">
         <Label htmlFor={budgetId}>{t("spin.budget")}</Label>
         <div className="flex flex-wrap gap-2">
-          <Input id={budgetId} inputMode="numeric" autoComplete="off" disabled={spinning || claiming} value={budget} placeholder={formatNumber(500000, locale)} className="min-w-40 flex-1 text-lg tabular-nums"
+          <Input id={budgetId} inputMode="numeric" autoComplete="off" disabled={partnerJarEmpty || spinning || claiming} value={budget} placeholder={formatNumber(500000, locale)} className="min-w-40 flex-1 text-lg tabular-nums"
             onChange={(e) => { setBudget(e.target.value); setError(null); }} onBlur={() => { const n = parseVnd(budget); if (n && Number.isSafeInteger(n) && n > 0) setBudget(formatNumber(n, locale)); }} />
-          <Button type="submit" loading={spinning} disabled={claiming || retryAt !== null}><Dices aria-hidden="true" />{t(spinning ? "spin.spinning" : "spin.spin")}</Button>
+          <Button type="submit" loading={spinning} disabled={partnerJarEmpty || claiming || retryAt !== null}><Dices aria-hidden="true" />{t(spinning ? "spin.spinning" : "spin.spin")}</Button>
         </div>
       </form>}
       {(state.step === "idle" || spinning) && <img src={pouch} alt="" className={cn("mx-auto size-32 object-contain", spinning && "animate-pulse motion-reduce:animate-none")} />}
@@ -95,11 +96,11 @@ export function SpinCard({ partnerName, initialBudget, initialState, onSpin = ap
           {state.wish.link && <Button asChild variant="ghost" size="icon"><a href={state.wish.link} target="_blank" rel="noreferrer noopener" aria-label={t("wish.openLink")}><ExternalLink aria-hidden="true" /></a></Button>}
         </div>
       </div>}
-      {state.step === "empty" && <p className="rounded-lg bg-muted p-3">{t("spin.empty")}</p>}
+      {state.step === "empty" && !partnerJarEmpty && <p className="rounded-lg bg-muted p-3">{t("spin.empty")}</p>}
     </Card>
     {state.step === "result" && <div className="flex flex-col gap-3" aria-live="polite">
         {claimed ? <><p>{t("spin.claimed")}</p>{onViewClaims && <Button onClick={onViewClaims}>{t("claims.title")}</Button>}</> : <Button loading={claiming} onClick={() => void claim()}><Gift aria-hidden="true" />{t("spin.claim")}</Button>}
-        <Button variant="outline" disabled={claiming || retryAt !== null} onClick={() => void spin()}><RotateCcw aria-hidden="true" />{t("spin.again")}</Button>
+        <Button variant="outline" disabled={partnerJarEmpty || claiming || retryAt !== null} onClick={() => void spin()}><RotateCcw aria-hidden="true" />{t("spin.again")}</Button>
         <p className="text-sm text-muted-foreground">{t("spin.secret", { name: partnerName })}</p>
     </div>}
   </div>;

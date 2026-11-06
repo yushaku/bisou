@@ -6,7 +6,7 @@ export interface TabMemoryValue {
   journal: JournalPage | null;
   returnFocus: string | null;
   /* Last loaded wish lists: shown at once when the Wishes tab comes back, then refreshed. */
-  wishes: { open: Wish[]; received: Wish[] } | null;
+  wishes: { open: Wish[]; received: Wish[]; partnerJarEmpty: boolean } | null;
   claims: Claim[] | null;
   wishesSection: "jar" | "claims";
   wishesFilter: "all" | "open" | "received";
