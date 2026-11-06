@@ -14,7 +14,7 @@ import { Button } from "../components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../components/ui/drawer";
 import { Skeleton } from "../components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../components/ui/select";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { wishErrorKey } from "../lib/wishes";
@@ -102,9 +102,10 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         <p className="min-w-0 flex-1 text-sm text-muted-foreground">{t("wishes.private")}</p>
         {jar && jar.open.length + jar.received.length > 0 && <>
           <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-            <SelectTrigger size="sm" aria-label={t("wishes.filter")} className="shrink-0">
-              <ListFilter aria-hidden="true" />
-              <SelectValue />
+            {/* Icon only; a dot marks a filter other than All. The chevron is hidden. */}
+            <SelectTrigger size="sm" aria-label={`${t("wishes.filter")}: ${t(FILTERS[filter])}`} className="relative size-9 shrink-0 justify-center p-0 [&>svg:last-child]:hidden">
+              <ListFilter className="size-4" aria-hidden="true" />
+              {filter !== "all" && <span aria-hidden="true" className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />}
             </SelectTrigger>
             <SelectContent position="popper" align="end">
               {(Object.keys(FILTERS) as Filter[]).map((id) => <SelectItem key={id} value={id}>
