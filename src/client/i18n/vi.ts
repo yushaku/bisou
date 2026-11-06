@@ -162,8 +162,6 @@ export const vi = {
   "settings.logoutHint": "Bạn có thể đăng nhập lại bằng email bất cứ lúc nào.",
   "settings.cancel": "Ở lại",
   "common.back": "Quay lại",
-  "language.vi": "Tiếng Việt",
-  "language.en": "English",
   "mode.light": "Sáng",
   "mode.dark": "Tối",
   "mode.system": "Theo máy",

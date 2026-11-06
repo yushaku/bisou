@@ -163,8 +163,6 @@ export const en: Messages = {
   "settings.logoutHint": "You can sign in again with your email anytime.",
   "settings.cancel": "Stay here",
   "common.back": "Back",
-  "language.vi": "Tiếng Việt",
-  "language.en": "English",
   "mode.light": "Light",
   "mode.dark": "Dark",
   "mode.system": "System",
