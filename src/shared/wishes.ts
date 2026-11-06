@@ -7,14 +7,16 @@ export const SPIN_MAX_PER_DAY = 20;
 export function validateWish(body: unknown): { input: WishInput & { priority: WishPriority } } | { error: ApiErrorCode } {
   if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "invalid_body" };
   const value = body as Record<string, unknown>;
-  if (typeof value.title !== "string" || !value.title.trim() || Array.from(value.title.trim()).length > WISH_TITLE_MAX) {
+  if (typeof value.title !== "string" || /[\p{Cc}\u202a-\u202e\u2066-\u2069]/u.test(value.title)
+    || !value.title.replace(/\p{Cf}/gu, "").trim() || Array.from(value.title.trim()).length > WISH_TITLE_MAX) {
     return { error: "wish_title_invalid" };
   }
   const price = value.price ?? null;
   if (price !== null && (typeof price !== "number" || !Number.isSafeInteger(price) || price <= 0)) return { error: "wish_price_invalid" };
   let link: string | null = null;
   if (value.link != null && value.link !== "") {
-    if (typeof value.link !== "string" || value.link.trim().length > WISH_LINK_MAX) return { error: "wish_link_invalid" };
+    if (typeof value.link !== "string" || /[\p{Cc}\u202a-\u202e\u2066-\u2069]/u.test(value.link)
+      || value.link.trim().length > WISH_LINK_MAX) return { error: "wish_link_invalid" };
     try {
       const url = new URL(value.link.trim());
       if (!["http:", "https:"].includes(url.protocol) || url.href.length > WISH_LINK_MAX) return { error: "wish_link_invalid" };

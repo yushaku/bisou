@@ -97,7 +97,6 @@ describe("upcoming events", () => {
   });
 });
 
-
 describe("custom events", () => {
   const trip = { id: "trip", title: "Bay đi Đà Lạt", date: "2026-12-20", repeat: "once" as const, icon: "plane" as const, createdAt: 1 };
   const japan = { ...trip, id: "japan", title: "Đi Nhật", date: "2028-04-10", createdAt: 2 };

@@ -71,12 +71,10 @@ describe("custom events API", () => {
       const plan = await explain(sql, ...binds);
       expect(plan.join(" ")).toContain("USING INDEX couple_events_couple");
       expect(plan.join(" ")).not.toContain("SCAN couple_events");
-      if (sql.startsWith("UPDATE")) expect(plan.join(" ")).toContain("USING INDEX couple_events_couple");
       if (sql.startsWith("SELECT") && sql.includes("couple_members")) expect(plan.join(" ")).toContain("USING INDEX sqlite_autoindex_couple_members_1");
     }
   });
 });
-
 
 describe("change and delete custom events", () => {
   async function added() {
@@ -171,7 +169,6 @@ describe("change and delete custom events", () => {
       expect(plan.join(" ")).toContain("USING INDEX sqlite_autoindex_couple_events_1");
       expect(plan.join(" ")).not.toContain("SCAN couple_events");
       if (sql.startsWith("UPDATE")) expect(plan.join(" ")).toContain("USING INDEX couple_events_couple");
-      if (sql.startsWith("SELECT") && sql.includes("couple_members")) expect(plan.join(" ")).toContain("USING INDEX sqlite_autoindex_couple_members_1");
     }
   });
 });

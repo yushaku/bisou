@@ -33,7 +33,6 @@ coupleEvents.post("/", limitBody, async (c) => {
   return c.json({ couple: await loadCouple(c.env.DB, c.get("user").id, now) }, 201);
 });
 
-
 async function findEvent(db: D1Database, id: string, couple: string) {
   return db.prepare(`SELECT id, title, event_date AS date, repeats AS repeat, icon, created_at AS createdAt
     FROM couple_events WHERE id = ? AND couple_id = ?`).bind(id, couple).first<CoupleEvent>();

@@ -53,7 +53,11 @@ export function EventSheet({ event, onClose, onCouple, onSignedOut }: {
     setSaving(false);
     if (res.ok) { onCouple(res.data.couple); toast.success(t("events.saved")); onClose(); }
     else if (res.status === 401) onSignedOut();
-    else setError(res.error?.error === "not_found" ? "events.gone" : res.status === 0 ? "error.network" : errorKey(res.error?.error));
+    else if (res.error?.error === "not_found") {
+      setError("events.gone");
+      const refreshed = await api.couple();
+      if (refreshed.ok) onCouple(refreshed.data.couple);
+    } else setError(res.status === 0 ? "error.network" : errorKey(res.error?.error));
   }
 
   async function remove() {
