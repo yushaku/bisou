@@ -1,21 +1,39 @@
 import type { PhotoSize } from "../../shared/types";
 import type { Env } from "../env";
+import { DAY } from "./time";
 
 export function avatarKey(userId: string, id: string): string {
   return `users/${userId}/avatar/${id}`;
 }
 
-export async function purgeAvatars(env: Env, userId: string, keepId: string | null): Promise<void> {
+export async function reserveAvatarUpload(db: D1Database, userId: string, id: string, now: number): Promise<number | null> {
+  const [, , counted] = await db.batch([
+    db.prepare("DELETE FROM avatar_uploads WHERE user_id = ? AND created_at <= ?").bind(userId, now - DAY),
+    db.prepare("INSERT INTO avatar_uploads (id, user_id, created_at) VALUES (?, ?, ?)").bind(id, userId, now),
+    db.prepare("SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM avatar_uploads WHERE user_id = ?").bind(userId),
+  ]);
+  const stats = (counted!.results as { n: number; oldest: number }[])[0]!;
+  if (stats.n <= 20) return null;
+  await db.prepare("DELETE FROM avatar_uploads WHERE id = ?").bind(id).run();
+  return Math.max(1, Math.ceil((stats.oldest + DAY - now) / 1000));
+}
+
+export async function purgeAvatars(env: Env, userId: string, completedId?: string): Promise<void> {
   try {
+    if (completedId) await env.DB.prepare("UPDATE avatar_uploads SET pending = 0 WHERE id = ?").bind(completedId).run();
     let cursor: string | undefined;
     do {
       const page = await env.PHOTOS.list({ prefix: avatarKey(userId, ""), cursor });
-      const keys = page.objects.map((object) => object.key).filter((key) => key !== avatarKey(userId, keepId ?? ""));
+      // Read after listing and keep pending uploads that could commit during cleanup.
+      const { results } = await env.DB.prepare(`SELECT avatar_id AS id FROM users WHERE id = ?
+        UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`).bind(userId, userId).all<{ id: string | null }>();
+      const keep = new Set(results.map((row) => avatarKey(userId, row.id ?? "")));
+      const keys = page.objects.map((object) => object.key).filter((key) => !keep.has(key));
       if (keys.length) await env.PHOTOS.delete(keys);
       cursor = page.truncated ? page.cursor : undefined;
     } while (cursor);
   } catch {
-    console.error("[bisou] avatar purge failed", 1);
+    console.error("[bisou] avatar purge failed");
   }
 }
 
@@ -62,7 +80,10 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
       }
       const icc = marker === 0xe2 && length >= 16
         && String.fromCharCode(...bytes.subarray(offset + 2, offset + 14)) === "ICC_PROFILE\0";
-      if (marker === 0xfe || (marker >= 0xe0 && marker <= 0xef && marker !== 0xe0 && marker !== 0xee && !icc)) {
+      const identifier = length >= 7 ? String.fromCharCode(...bytes.subarray(offset + 2, offset + 7)) : "";
+      const jfif = marker === 0xe0 && (identifier === "JFIF\0" || identifier === "JFXX\0");
+      const adobe = marker === 0xee && identifier === "Adobe";
+      if (marker === 0xfe || (marker >= 0xe0 && marker <= 0xef && !jfif && !adobe && !icc)) {
         kept.push(bytes.subarray(start, markerStart));
         start = offset + length;
         removed += start - markerStart;

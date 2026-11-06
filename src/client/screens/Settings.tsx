@@ -72,7 +72,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
     setAvatarBusy(true);
     let bitmap: ImageBitmap;
     try { bitmap = await decodePhoto(file); } catch {
-      toast.error(t("avatar.wrongType"));
+      toast.error(t("avatar.decodeFailed"));
       setAvatarBusy(false);
       return;
     }
@@ -94,7 +94,9 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
       const blob = await renderAvatar(bitmap, area);
       const res = await api.setAvatar(blob);
       if (res.ok) { onUser(res.data.user); toast.success(t("avatar.saved")); }
-      else toast.error(t("avatar.saveFailed"));
+      else toast.error(res.status === 429
+        ? t("avatar.rateLimited", { minutes: Math.max(1, Math.ceil((res.error?.retryAfter ?? 60) / 60)) })
+        : t("avatar.saveFailed"));
     } catch {
       bitmap.close();
       toast.error(t("avatar.saveFailed"));

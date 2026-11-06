@@ -55,5 +55,6 @@ describe("profile photo client", () => {
       ["An", "/api/avatars/a/new", "primary"], ["Binh", "/api/avatars/b/partner", "secondary"],
     ]);
     expect(toPeople(members, { ...user, avatarId: null })[0]?.photoUrl).toBeUndefined();
+    expect(toPeople([user], { ...user, displayName: null })[0]?.name).toBe("an@example.com");
   });
 });

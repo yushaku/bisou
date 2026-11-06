@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,8 +18,8 @@ export interface CropRequest {
 const MAX_ZOOM = 4;
 
 /*
- * The author moves and zooms a picked photo inside a square frame (R18): drag or arrow keys
- * to move, pinch, wheel or the slider to zoom. Several photos come one after another.
+ * Drag or arrow keys move the photo inside its frame; pinch, wheel or +/- zoom it.
+ * Several photos come one after another.
  */
 export function PhotoCropDialog({ request }: { request: CropRequest | null }) {
   const { t } = useI18n();
@@ -46,7 +46,6 @@ export function PhotoCropDialog({ request }: { request: CropRequest | null }) {
 
 function CropFrame({ request }: { request: CropRequest }) {
   const { t } = useI18n();
-  const zoomId = useId();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<Area | null>(null);
@@ -67,23 +66,17 @@ function CropFrame({ request }: { request: CropRequest }) {
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={(_, pixels) => setArea(pixels)}
-          cropperProps={{ "aria-label": t("crop.area") }}
+          cropperProps={{
+            "aria-label": t(request.round ? "crop.roundArea" : "crop.area"),
+            onKeyDownCapture: (event) => {
+              if (event.key !== "+" && event.key !== "-") return;
+              event.preventDefault();
+              setZoom((value) => Math.min(MAX_ZOOM, Math.max(1, value + (event.key === "+" ? 0.1 : -0.1))));
+            },
+          }}
         />
       </div>
-      <p className="text-sm text-muted-foreground">{t("crop.help")}</p>
-      <label htmlFor={zoomId} className="flex flex-col gap-2 font-semibold">
-        {t("crop.zoom")}
-        <input
-          id={zoomId}
-          type="range"
-          min={1}
-          max={MAX_ZOOM}
-          step={0.01}
-          value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))}
-          className="h-11 w-full accent-primary"
-        />
-      </label>
+      <p className="text-sm text-muted-foreground">{t(request.round ? "crop.roundHelp" : "crop.help")}</p>
       <DialogFooter>
         <Button variant="outline" onClick={() => request.done(null)}>
           {t(request.round ? "entry.cancel" : "crop.skip")}

@@ -329,6 +329,16 @@ describe("photo header bounds", () => {
     expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: clean });
   });
 
+  it.each([0xe0, 0xee])("R16: strips text hidden in an unrecognized APP marker %i", (marker) => {
+    const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(marker, "GPS location and camera serial"), ...baseline.subarray(2)]);
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
+  });
+
+  it("R16: keeps the recognized JFXX APP0 extension", () => {
+    const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(0xe0, "JFXX\0\x13thumbnail"), ...baseline.subarray(2)]);
+    expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes });
+  });
+
   it("R16: accepts a canvas-like baseline JPEG byte-identically apart from removed metadata (AC12)", () => {
     const clean = new Uint8Array([...baseline.subarray(0, 2), ...segment(0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0"), ...baseline.subarray(2)]);
     expect(checkPhotoBytes(clean, "image/jpeg")).toEqual({ side: 8, bytes: clean });

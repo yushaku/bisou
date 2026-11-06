@@ -5,7 +5,7 @@ import { isValidDay, latestDay } from "../../shared/days";
 import { DISPLAY_NAME_MAX, isLocale, type MeResponse } from "../../shared/types";
 import type { AppEnv } from "../env";
 import { rowToUser, type UserRow } from "../lib/users";
-import { avatarKey, checkPhotoBytes, purgeAvatars } from "../lib/photos";
+import { avatarKey, checkPhotoBytes, purgeAvatars, reserveAvatarUpload } from "../lib/photos";
 
 export const me = new Hono<AppEnv>();
 const limitBody = bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "body_too_large" }, 413) });
@@ -81,21 +81,21 @@ me.put("/avatar", bodyLimit({
   if (!checked || checked.side !== AVATAR_SIDE) return c.json({ error: "photo_invalid" }, 400);
   const userId = c.get("user").id;
   const id = crypto.randomUUID();
+  const retryAfter = await reserveAvatarUpload(c.env.DB, userId, id, Date.now());
+  if (retryAfter !== null) return c.json({ error: "rate_limited", retryAfter }, 429);
   const key = avatarKey(userId, id);
   await c.env.PHOTOS.put(key, checked.bytes, { httpMetadata: { contentType: file.type } });
   let row: UserRow;
   try {
-    const [, updated] = await c.env.DB.batch([
-      c.env.DB.prepare("SELECT avatar_id FROM users WHERE id = ?").bind(userId),
-      c.env.DB.prepare("UPDATE users SET avatar_id = ? WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at").bind(id, userId),
-    ]);
-    row = updated!.results[0] as unknown as UserRow;
-    if (!row) throw new Error("avatar owner missing");
+    const updated = await c.env.DB.prepare(`UPDATE users SET avatar_id = ? WHERE id = ?
+      AND EXISTS (SELECT 1 FROM avatar_uploads WHERE id = ? AND pending = 1)
+      RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at`).bind(id, userId, id).first<UserRow>();
+    if (!updated) throw new Error("avatar owner or reservation missing");
+    row = updated;
   } catch (error) {
-    try { await c.env.PHOTOS.delete(key); } catch { console.error("[bisou] avatar rollback failed", 1); }
+    try { await c.env.PHOTOS.delete(key); } catch { console.error("[bisou] avatar rollback failed"); }
     throw error;
   }
-  // shortcut: simultaneous changes can race with cleanup; serialize per user if multi-device writes become common.
   await purgeAvatars(c.env, userId, id);
   return c.json({ user: rowToUser(row) });
 });
@@ -105,6 +105,6 @@ me.delete("/avatar", limitBody, async (c) => {
   const row = await c.env.DB.prepare("UPDATE users SET avatar_id = NULL WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at")
     .bind(userId).first<UserRow>();
   if (!row) return c.json({ error: "unauthorized" }, 401);
-  await purgeAvatars(c.env, userId, null);
+  await purgeAvatars(c.env, userId);
   return c.json({ user: rowToUser(row) });
 });

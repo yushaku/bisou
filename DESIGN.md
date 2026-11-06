@@ -17,3 +17,4 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Lời giao diện gần gũi, ngắn và cụ thể: “Góc nhỏ của hai đứa”, “Một điều ước nhỏ”, “Mở hũ”. Không đưa lời giới thiệu design system vào luồng sản phẩm
 - Bánh răng trên thanh đầu mở trang Cài đặt toàn màn hình, có nút quay lại. Hồ sơ nằm trên cùng; các mục gom vào thẻ bo góc với đường ngăn mảnh, giá trị hiện tại ở bên phải. Chạm từng mục để mở sheet riêng, giữ bảng màu và chất liệu chung của Bisou.
 - Thanh dưới có năm vị trí: Nhà, Nhật ký, nút cộng tròn nhô lên, Điều ước, Vườn. Nút cộng mở lựa chọn viết nhật ký hoặc thêm điều ước; không dùng thêm nút nổi trên hai trang này. Vườn chưa điều hướng; chạm vào chỉ hiện lời nhắn vườn sắp có. Thanh này cũng có trong Cài đặt khi hai người đã ghép đôi.
+- Khung cắt ảnh dùng kéo hoặc phím mũi tên để dời ảnh; chụm hai ngón, cuộn hoặc phím + / - để thu phóng, không hiện thanh trượt.

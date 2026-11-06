@@ -15,7 +15,7 @@ export function toPeople(members: CoupleMember[], user: User): (Person & { birth
   return members.map((member, index) => {
     const person = member.id === user.id ? user : member;
     return {
-      name: person.displayName ?? "?",
+      name: person.displayName ?? (member.id === user.id ? user.email : "?"),
       birthDate: person.birthDate,
       photoUrl: person.avatarId ? avatarUrl(member.id, person.avatarId) : undefined,
       tone: index === 0 ? "primary" : "secondary",

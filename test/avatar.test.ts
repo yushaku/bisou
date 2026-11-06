@@ -1,10 +1,11 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Couple, User } from "../src/shared/types";
+import { DAY, HOUR } from "../src/worker/lib/time";
 import { call, explain, jpeg, paired, resetDb, user, webp, type TestUser } from "./helpers";
 
 beforeEach(resetDb);
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 function form(bytes = jpeg({ width: 512, height: 512 }), type = "image/jpeg") {
   const data = new FormData();
@@ -23,6 +24,87 @@ async function save(who: TestUser, data = form()) {
 }
 
 describe("profile photos", () => {
+  it("limits each user to 20 uploads per rolling day without changing the current photo", async () => {
+    const a = await user("An");
+    const b = await user("Binh");
+    const start = Date.now();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(start);
+    let current = "";
+    for (let i = 0; i < 20; i++) current = await save(a);
+    vi.setSystemTime(start + 13 * HOUR);
+    const limited = await put(a);
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({ error: "rate_limited", retryAfter: 11 * 60 * 60 });
+    expect((await get(a, a, current)).status).toBe(200);
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key)).toEqual([key(a, current)]);
+    await save(b);
+    expect((await call("DELETE", "/api/me/avatar", { cookie: a.cookie })).status).toBe(200);
+    expect((await put(a)).status).toBe(429);
+    vi.setSystemTime(start + DAY);
+    await save(a);
+  });
+
+  it.each(["PUT", "DELETE"])("a delayed %s purge keeps a newer committed upload", async (method) => {
+    const a = await user("An");
+    await save(a);
+    const list = env.PHOTOS.list.bind(env.PHOTOS);
+    let newer = "";
+    vi.spyOn(env.PHOTOS, "list").mockImplementationOnce(async (options) => {
+      newer = await save(a);
+      return list(options);
+    });
+    const res = method === "PUT" ? await put(a) : await call("DELETE", "/api/me/avatar", { cookie: a.cookie });
+    expect(res.status).toBe(200);
+    expect((await get(a, a, newer)).status).toBe(200);
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key)).toEqual([key(a, newer)]);
+  });
+
+  it("simultaneous uploads cannot exceed the quota or delete the final avatar", async () => {
+    const a = await user("An");
+    const responses = await Promise.all(Array.from({ length: 23 }, () => put(a)));
+    expect(responses.filter((res) => res.status === 200)).toHaveLength(20);
+    expect(responses.filter((res) => res.status === 429)).toHaveLength(3);
+    const { user: current } = await (await call("GET", "/api/me", { cookie: a.cookie })).json<{ user: User }>();
+    expect((await get(a, a, current.avatarId!)).status).toBe(200);
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key)).toEqual([key(a, current.avatarId!)]);
+  });
+
+  it("an expired pending upload cannot commit after a newer upload clears its reservation", async () => {
+    const a = await user("An");
+    await save(a);
+    const start = Date.now();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(start);
+    const write = env.PHOTOS.put.bind(env.PHOTOS);
+    let newer = "";
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(env.PHOTOS, "put").mockImplementationOnce(async (...args) => {
+      const result = await write(...args);
+      vi.setSystemTime(start + DAY);
+      newer = await save(a);
+      return result;
+    });
+    expect((await put(a)).status).toBe(500);
+    expect((await get(a, a, newer)).status).toBe(200);
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key)).toEqual([key(a, newer)]);
+  });
+
+  it.each(["PUT", "DELETE"])("%s cleanup keeps an upload that has not committed yet", async (method) => {
+    const a = await user("An");
+    await save(a);
+    const write = env.PHOTOS.put.bind(env.PHOTOS);
+    vi.spyOn(env.PHOTOS, "put").mockImplementationOnce(async (...args) => {
+      const result = await write(...args);
+      const res = method === "PUT" ? await put(a) : await call("DELETE", "/api/me/avatar", { cookie: a.cookie });
+      expect(res.status).toBe(200);
+      return result;
+    });
+    const current = await save(a);
+    expect((await get(a, a, current)).status).toBe(200);
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key)).toEqual([key(a, current)]);
+  });
+
   it("AC1 R1: changing a target id still changes only the session owner", async () => {
     const { a, b } = await paired();
     const id = await save(a);
@@ -117,7 +199,11 @@ describe("profile photos", () => {
   it("AC11 R14: D1 failure preserves the old photo and removes the new object", async () => {
     const a = await user("An");
     const old = await save(a);
-    vi.spyOn(env.DB, "batch").mockRejectedValueOnce(new Error("database unavailable"));
+    const prepare = env.DB.prepare.bind(env.DB);
+    vi.spyOn(env.DB, "prepare").mockImplementation((sql) => {
+      if (sql.startsWith("UPDATE users SET avatar_id = ?")) throw new Error("database unavailable");
+      return prepare(sql);
+    });
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     expect((await put(a)).status).toBe(500);
     expect((await get(a, a, old)).status).toBe(200);
@@ -130,11 +216,15 @@ describe("profile photos", () => {
       explain(`SELECT 1 FROM users u WHERE u.id = ?1 AND u.avatar_id = ?2
         AND (u.id = ?3 OR EXISTS (SELECT 1 FROM couple_members a JOIN couple_members b ON b.couple_id = a.couple_id
         WHERE a.user_id = u.id AND b.user_id = ?3))`, "a", "photo", "b"),
-      explain("SELECT avatar_id FROM users WHERE id = ?", "a"),
-      explain("UPDATE users SET avatar_id = ? WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at", "photo", "a"),
+      explain(`SELECT avatar_id AS id FROM users WHERE id = ?
+        UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`, "a", "a"),
+      explain(`UPDATE users SET avatar_id = ? WHERE id = ?
+        AND EXISTS (SELECT 1 FROM avatar_uploads WHERE id = ? AND pending = 1)
+        RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at`, "photo", "a", "photo"),
+      explain("SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM avatar_uploads WHERE user_id = ?", "a"),
       explain("UPDATE users SET avatar_id = NULL WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at", "a"),
     ]);
-    for (const plan of plans) expect(plan.join("\n")).not.toMatch(/SCAN (?:users|couple_members|u|a|b)\b/);
+    for (const plan of plans) expect(plan.join("\n")).not.toMatch(/SCAN (?:users|avatar_uploads|couple_members|u|a|b)\b/);
     console.log("Avatar EXPLAIN", plans);
   });
 });
