@@ -11,6 +11,7 @@ import { useI18n } from "@/i18n";
 import { formatNumber } from "@/lib/format";
 import { focusCreateButton } from "@/lib/useTabNavigation";
 import { parseVnd, wishErrorKey, wishSaveBlock } from "@/lib/wishes";
+import { MoneyInput } from "./MoneyInput";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
 
@@ -24,7 +25,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
   const { t, locale } = useI18n();
   const ids = useId();
   const [title, setTitle] = useState(wish?.title ?? "");
-  const [price, setPrice] = useState(wish?.price == null ? "" : formatNumber(wish.price, locale));
+  const [price, setPrice] = useState(formatNumber(wish?.price ?? 0, locale));
   const [link, setLink] = useState(wish?.link ?? "");
   const [priority, setPriority] = useState<WishPriority>(wish?.priority ?? 2);
   const [dirty, setDirty] = useState(false);
@@ -33,7 +34,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
   const [discard, setDiscard] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queue = useUploadQueue(wish?.photoId ? [wish.photoId] : []);
-  const input = { title, price: parseVnd(price), link: link.trim() || null, priority, photoId: queue.items[0]?.photoId ?? null };
+  const input = { title, price: parseVnd(price) || null, link: link.trim() || null, priority, photoId: queue.items[0]?.photoId ?? null };
   const block = preparing ? "compose.waitPhotos" : wishSaveBlock(input, queue.items);
   const change = () => { setDirty(true); setError(null); };
   const close = () => { if (!saving) { if (dirty) setDiscard(true); else onClose(); } };
@@ -63,7 +64,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
             <Label htmlFor={`${ids}-title`}>{t("wish.title")}</Label>
             <Input id={`${ids}-title`} autoFocus value={title} onChange={(e) => { setTitle(e.target.value); change(); }} aria-invalid={block === "wish.titleInvalid"} />
             <Label htmlFor={`${ids}-price`}>{t("wish.price")}</Label>
-            <Input id={`${ids}-price`} inputMode="numeric" value={price} onChange={(e) => { setPrice(e.target.value); change(); }} onBlur={() => { const n = parseVnd(price); if (n !== null && Number.isSafeInteger(n) && n > 0) setPrice(formatNumber(n, locale)); }} aria-invalid={block === "wish.priceInvalid"} />
+            <MoneyInput id={`${ids}-price`} value={price} onValueChange={(value) => { setPrice(value); change(); }} aria-invalid={block === "wish.priceInvalid"} />
             <Label htmlFor={`${ids}-link`}>{t("wish.link")}</Label>
             <Input id={`${ids}-link`} inputMode="url" value={link} onChange={(e) => { setLink(e.target.value); change(); }} aria-invalid={block === "wish.linkInvalid"} />
             <fieldset className="flex flex-col gap-2">

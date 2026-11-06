@@ -11,6 +11,12 @@ export function formatNumber(value: number, locale: Locale): string {
   return new Intl.NumberFormat(TAGS[locale]).format(value);
 }
 
+/* A money field as typed: digits only, grouped ("500000" -> "500.000" vi, "500,000" en), empty reads "0", at most 15 digits. */
+export function formatMoneyInput(raw: string, locale: Locale): string {
+  const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 15);
+  return digits ? formatNumber(Number(digits), locale) : "0";
+}
+
 /* Dates are calendar days ("YYYY-MM-DD"), read in local time so a day never shifts by time zone. */
 export function parseDay(day: string): Date {
   const [y, m, d] = day.split("-").map(Number);

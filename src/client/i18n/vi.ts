@@ -28,7 +28,7 @@ export const vi = {
   "wishes.back": "Về hũ của mình",
   "received.list": "Đã nhận",
   "wish.title": "Điều ước của mình",
-  "wish.price": "Giá dự kiến (VND, không bắt buộc)",
+  "wish.price": "Giá dự kiến (VND, để 0 nếu chưa biết)",
   "wish.link": "Đường dẫn (không bắt buộc)",
   "wish.priority": "Mức mong muốn",
   "wish.save": "Cất vào hũ",

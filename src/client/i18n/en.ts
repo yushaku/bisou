@@ -29,7 +29,7 @@ export const en: Messages = {
   "wishes.back": "Back to my jar",
   "received.list": "Received",
   "wish.title": "My wish",
-  "wish.price": "Price (VND, optional)",
+  "wish.price": "Price (VND, leave 0 if unsure)",
   "wish.link": "Web link (optional)",
   "wish.priority": "How much I want it",
   "wish.save": "Save wish",

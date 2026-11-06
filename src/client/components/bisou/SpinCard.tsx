@@ -5,11 +5,11 @@ import { api, photoUrl } from "@/api";
 import pouch from "@/assets/wish-pouch.webp";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/i18n";
 import { formatNumber, formatVnd } from "@/lib/format";
 import { parseVnd } from "@/lib/wishes";
+import { MoneyInput } from "./MoneyInput";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "./PageHeader";
 
@@ -30,7 +30,7 @@ interface SpinCardProps {
 export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, initialState, onSpin = api.spin, onClaim = api.claim, onSignedOut, onViewClaims, className }: SpinCardProps) {
   const { t, locale } = useI18n();
   const budgetId = useId();
-  const [budget, setBudget] = useState(initialBudget ? formatNumber(initialBudget, locale) : "");
+  const [budget, setBudget] = useState(formatNumber(initialBudget ?? 0, locale));
   const [state, setState] = useState<SpinState>(initialState ?? { step: "idle" });
   const [error, setError] = useState<string | null>(null);
   const [retryAt, setRetryAt] = useState<number | null>(null);
@@ -79,8 +79,8 @@ export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, 
       {state.step !== "result" && <form onSubmit={(e) => void spin(e)} className="flex flex-col gap-2">
         <Label htmlFor={budgetId}>{t("spin.budget")}</Label>
         <div className="flex flex-wrap gap-2">
-          <Input id={budgetId} inputMode="numeric" autoComplete="off" disabled={partnerJarEmpty || spinning || claiming} value={budget} placeholder={formatNumber(500000, locale)} className="min-w-40 flex-1 text-lg tabular-nums"
-            onChange={(e) => { setBudget(e.target.value); setError(null); }} onBlur={() => { const n = parseVnd(budget); if (n && Number.isSafeInteger(n) && n > 0) setBudget(formatNumber(n, locale)); }} />
+          <MoneyInput id={budgetId} disabled={partnerJarEmpty || spinning || claiming} value={budget} className="min-w-40 flex-1 text-lg tabular-nums"
+            onValueChange={(value) => { setBudget(value); setError(null); }} />
           <Button type="submit" loading={spinning} disabled={partnerJarEmpty || claiming || retryAt !== null}><Dices aria-hidden="true" />{t(spinning ? "spin.spinning" : "spin.spin")}</Button>
         </div>
       </form>}
