@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { AppShell, type TabId } from "@/components/bisou/AppShell";
 import { DaysCounter } from "@/components/bisou/DaysCounter";
 import { EntryCard } from "@/components/bisou/EntryCard";
-import { PageHeader } from "@/components/bisou/PageHeader";
 import { AppearanceSettings } from "@/components/bisou/ThemeControls";
 import { SpinCard } from "@/components/bisou/SpinCard";
 import { WishCard } from "@/components/bisou/WishCard";
@@ -47,6 +46,7 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
   return (
     <AppShell
       className={cn(framed && "min-h-full")}
+      title={t(screen === "home" ? "home.ourCorner" : screen === "journal" ? "journal.title" : "nav.wishes")}
       onOpenSettings={() => setSettings(true)}
       tabs={tabs}
     >
@@ -71,7 +71,6 @@ function HomeScreen() {
   const d = useDesignT();
   return (
     <>
-      <PageHeader title={t("home.ourCorner")} className="pb-2" />
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={COUPLE} size="sm" />
         <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: COUPLE[0].name, b: COUPLE[1].name })}</p>
@@ -85,20 +84,11 @@ function HomeScreen() {
 }
 
 function JournalScreen() {
-  const { t, locale } = useI18n();
-  const d = useDesignT();
+  const { locale } = useI18n();
   const id = useId();
   const days = [...new Set(ENTRIES.map((e) => e.date))];
   return (
     <>
-      <PageHeader
-        title={t("nav.journal")}
-        action={
-          <Button size="icon" aria-label={t("journal.new")} onClick={() => toast.info(d("previewOnly"))}>
-            <Plus />
-          </Button>
-        }
-      />
       <div className="flex flex-col gap-8">
         {days.map((day) => (
           <section key={day} aria-labelledby={`${id}-${day}`} className="flex flex-col gap-3">

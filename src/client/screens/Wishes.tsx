@@ -91,7 +91,6 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
 
   return <SignedInShell {...session} tab="wishes">
     {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button> : <>
-      <h1 className="sr-only">{t(SECTIONS[view])}</h1>
       <div className="mb-4"><WishTeaser onOpen={() => setView("spin")} title={t("spin.entry", { name: partnerName })} description={t("spin.entryHint")} /></div>
       <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
         <TabsList className="w-full">

@@ -8,7 +8,6 @@ import type { Person } from "../components/bisou/CoupleAvatars";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard, type Entry } from "../components/bisou/EntryCard";
-import { PageHeader } from "../components/bisou/PageHeader";
 import { PhotoViewer } from "../components/bisou/PhotoViewer";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
@@ -72,7 +71,6 @@ export function Journal({ couple, ...session }: JournalProps) {
       { name: (m.id === user.id ? user.displayName : m.displayName) ?? "?", tone: i === 0 ? "primary" : "secondary" },
     ]),
   );
-  const names = couple.members.map((m) => people.get(m.id)?.name ?? "?");
   const me = people.get(user.id) ?? { name: user.displayName ?? "?", tone: "primary" };
   const partner = couple.members.find((m) => m.id !== user.id);
   const partnerName = (partner && people.get(partner.id)?.name) ?? "?";
@@ -191,7 +189,6 @@ export function Journal({ couple, ...session }: JournalProps) {
 
   return (
     <SignedInShell {...session} tab="journal">
-      <PageHeader title={t("journal.title")} description={t("journal.subtitle", { a: names[0] ?? "?", b: names[1] ?? "?" })} />
 
       {feed && (!online || stale) && (
         <div role="status" className="mb-4 rounded-control bg-warning px-4 py-3 text-base text-warning-foreground">

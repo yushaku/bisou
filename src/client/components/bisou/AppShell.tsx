@@ -20,7 +20,7 @@ const TAB_META: Record<TabId, { icon: LucideIcon; label: MessageKey }> = {
 };
 
 interface AppShellProps {
-  /* Shown in the top bar; the page's own h1 lives in PageHeader. */
+  /* The screen's name, shown in the top bar as its h1; without it the bar shows the app name. */
   title?: string;
   onOpenSettings?: () => void;
   /* Top bar control at the right edge, such as a back link. */
@@ -43,7 +43,9 @@ export function AppShell({ title, onOpenSettings, action, tabs, children, classN
       <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)] [view-transition-name:tab-header]">
         <div className="mx-auto flex h-14 w-full max-w-md items-center gap-2 px-4">
           <BrandMark className="size-6 shrink-0" />
-          <span className="min-w-0 flex-1 truncate font-heading text-2xl">{title ?? t("appName")}</span>
+          {title
+            ? <h1 className="min-w-0 flex-1 truncate font-heading text-2xl">{title}</h1>
+            : <span className="min-w-0 flex-1 truncate font-heading text-2xl">{t("appName")}</span>}
           {action}
           {onOpenSettings && (
             <Button id="settings-button" variant="ghost" size="icon" aria-label={t("settings.open")} onClick={onOpenSettings}>

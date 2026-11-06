@@ -2,6 +2,7 @@ import { useContext, useLayoutEffect, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import type { User } from "../../shared/types";
 import { AppShell, type TabId } from "../components/bisou/AppShell";
+import { useI18n, type MessageKey } from "../i18n";
 import { TabMemory } from "../lib/tabMemory";
 import { useTabNavigation } from "../lib/useTabNavigation";
 
@@ -15,11 +16,16 @@ export interface SessionProps {
  * Signed-in frame: AppShell with a history entry for the full screen Settings page.
  * `tab` shows the bottom tab bar with that tab active; onboarding and pairing leave it out.
  */
+// Each tab's name replaces the app name in the top bar.
+const TAB_TITLES: Partial<Record<TabId, MessageKey>> = { home: "home.ourCorner", journal: "journal.title", wishes: "nav.wishes" };
+
 export function SignedInShell({
   tab,
   children,
 }: SessionProps & { tab?: TabId; children: ReactNode }) {
+  const { t } = useI18n();
   const [location, navigate] = useLocation();
+  const titleKey = tab && TAB_TITLES[tab];
   const memory = useContext(TabMemory);
   const navigation = useTabNavigation(tab);
 
@@ -38,6 +44,7 @@ export function SignedInShell({
 
   return (
     <AppShell
+      title={titleKey ? t(titleKey) : undefined}
       onOpenSettings={() => {
         if (tab) memory?.scroll.set(tab, window.scrollY);
         if (memory) memory.returnFocus = "settings-button";

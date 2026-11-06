@@ -15,7 +15,6 @@ import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
 import { DaysCounter } from "../components/bisou/DaysCounter";
 import { EmptyState } from "../components/bisou/EmptyState";
-import { PageHeader } from "../components/bisou/PageHeader";
 import { useI18n } from "../i18n";
 import { startDateError } from "../lib/startDate";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
@@ -65,7 +64,6 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
 
   return (
     <SignedInShell {...session} tab="home">
-      <PageHeader title={t("home.ourCorner")} className="pb-2" />
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={people} size="sm" />
         <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: people[0].name, b: people[1].name })}</p>
