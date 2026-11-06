@@ -71,7 +71,7 @@ export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, 
 
   const spinning = state.step === "spinning";
   return <div className={cn("flex flex-col gap-4", className)}>
-    <PageHeader className="pb-0" title={t(state.step === "result" ? "spin.result" : "spin.title", { name: partnerName })}
+    <PageHeader as="h2" className="pb-0" title={t(state.step === "result" ? "spin.result" : "spin.title", { name: partnerName })}
       description={partnerJarEmpty ? t("spin.jarEmpty", { name: partnerName }) : state.step === "result" ? `${t("spin.budget")}: ${formatVnd(parseVnd(budget) ?? 0, locale)}` : t("spin.hint", { name: partnerName })} />
     {retryAt !== null && <p role="status" className="rounded-lg bg-muted p-3">{t("spin.limit", { time: new Date(retryAt).toLocaleString(locale) })}</p>}
     <p role="alert" className="text-destructive empty:hidden">{error}</p>

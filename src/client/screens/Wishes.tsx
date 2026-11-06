@@ -91,7 +91,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
 
   return <SignedInShell {...session} tab="wishes">
     {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button> : <>
-      <div className="mb-4"><WishTeaser onOpen={() => setView("spin")} disabled={!jar || jar.partnerJarEmpty} title={t("spin.entry", { name: partnerName })} description={t(jar?.partnerJarEmpty ? "spin.jarEmpty" : "spin.entryHint", { name: partnerName })} /></div>
+      <div className="mb-4"><WishTeaser onOpen={() => setView("spin")} disabled={jar?.partnerJarEmpty === true} title={t("spin.entry", { name: partnerName })} description={t(jar?.partnerJarEmpty ? "spin.jarEmpty" : "spin.entryHint", { name: partnerName })} /></div>
       <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
         <TabsList className="w-full">
           {(Object.keys(SECTIONS) as Section[]).map((id) => <TabsTrigger key={id} value={id}>{t(SECTIONS[id])}</TabsTrigger>)}
@@ -116,7 +116,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         </>}
       </div>}
     </>}
-    {view === "spin" && jar && <SpinCard partnerName={partnerName} partnerJarEmpty={jar.partnerJarEmpty} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
+    {view === "spin" && <SpinCard partnerName={partnerName} partnerJarEmpty={jar?.partnerJarEmpty === true} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
     {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
     {view === "jar" && <>
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
