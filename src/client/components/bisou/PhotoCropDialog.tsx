@@ -86,7 +86,7 @@ function CropFrame({ request }: { request: CropRequest }) {
       </label>
       <DialogFooter>
         <Button variant="outline" onClick={() => request.done(null)}>
-          {t(request.round ? "settings.cancel" : "crop.skip")}
+          {t(request.round ? "entry.cancel" : "crop.skip")}
         </Button>
         <Button disabled={!area} onClick={() => area && request.done(area)}>
           {t("crop.use")}

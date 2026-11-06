@@ -27,7 +27,7 @@ describe("subpage and tab history", () => {
     ["/settings/appearance", undefined, "/", undefined, "replace"],
     ["/settings/appearance", "/settings", "/journal", undefined, "replace"],
     ["/events", undefined, "/", undefined, "replace"],
-  ] as const)("CO6: %s from %s to %s (create %s) uses %s", (location, from, path, create, move) => {
+  ] as const)("%s from %s to %s (create %s) uses %s", (location, from, path, create, move) => {
     expect(tabMove(location, from, path, create)).toBe(move);
   });
 });
