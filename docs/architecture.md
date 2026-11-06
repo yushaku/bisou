@@ -1,6 +1,6 @@
 # Bisou architecture
 
-Private PWA for one couple: shared journal with photos, milestone timeline, secret wish jar. Scope: [ideas/bisou.md](ideas/bisou.md), plan: [../todo.md](../todo.md).
+Private PWA for one couple: shared journal with photos, milestone timeline, secret wish jar. Scope and plan: [../todo.md](../todo.md).
 
 Diagrams (open in a browser, specs beside them):
 

@@ -21,4 +21,4 @@ Keep exact token values in their source files. When the user changes a design de
 - Visual rules: [DESIGN.md](DESIGN.md).
 - How to run: [README.md](README.md).
 - Changes: [CHANGELOG.md](CHANGELOG.md).
-- [docs/architecture.md](docs/architecture.md) and [docs/ideas/bisou.md](docs/ideas/bisou.md) are read-only legacy references; code wins.
+- [docs/architecture.md](docs/architecture.md) is a read-only legacy reference; code wins.
