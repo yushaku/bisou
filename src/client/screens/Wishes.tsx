@@ -119,11 +119,10 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         {filter === "open" && jar.open.length === 0 && <EmptyState icon={Gift} title={t("empty.wishes")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />}
         <div className="flex flex-col gap-3 pb-6">
           {filter !== "received" && jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)} />)}
-          {filter !== "open" && jar.received.map((wish) => <div key={wish.id}>
-            <WishCard wish={wish} actions={optionsButton(wish)} />
-            {wish.receivedOn && <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><span className="flex size-5 items-center justify-center rounded-full bg-success text-success-foreground"><Check className="size-3.5" strokeWidth={3} aria-hidden="true" /></span>{t("received.on", { date: formatDay(wish.receivedOn, locale) })}</p>}
-            {wish.note && <p className="mt-1 whitespace-pre-line">{wish.note}</p>}
-          </div>)}
+          {filter !== "open" && jar.received.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)}>
+            {wish.receivedOn && <p className="mt-1 flex items-start gap-1.5 text-sm text-muted-foreground"><span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"><Check className="size-3" strokeWidth={3} aria-hidden="true" /></span>{t("received.on", { date: formatDay(wish.receivedOn, locale) })}</p>}
+            {wish.note && <p className="mt-1 whitespace-pre-line text-sm">{wish.note}</p>}
+          </WishCard>)}
           {filter === "received" && jar.received.length > 0 && <Button asChild variant="outline"><Link href="/journal">{t("received.journal")}</Link></Button>}
         </div>
       </>)}

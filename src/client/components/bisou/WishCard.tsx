@@ -27,7 +27,7 @@ export function WishPriority({ priority }: { priority: Wish["priority"] }) {
   );
 }
 
-export function WishCard({ wish, className, actions }: { wish: Wish; className?: string; actions?: ReactNode }) {
+export function WishCard({ wish, className, actions, children }: { wish: Wish; className?: string; actions?: ReactNode; children?: ReactNode }) {
   const { t, locale } = useI18n();
   const photo = wish.photo ?? (wish.photoId ? { src: photoUrl(wish.photoId, "thumb"), alt: wish.title } : null);
   return (
@@ -48,6 +48,7 @@ export function WishCard({ wish, className, actions }: { wish: Wish; className?:
         <h3 className="line-clamp-2 font-semibold leading-snug">{wish.title}</h3>
         {wish.price !== null && <p className="mt-0.5 font-heading text-lg tabular-nums">{formatVnd(wish.price, locale)}</p>}
         <WishPriority priority={wish.priority} />
+        {children}
       </div>
       {(wish.link || actions) && (
         // One narrow column on the right keeps the title wide: link on top, menu below.
