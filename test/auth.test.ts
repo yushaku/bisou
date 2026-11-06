@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/worker/app";
-import { sha256Hex } from "../src/worker/lib/crypto";
+import { hashOtp, sha256Hex } from "../src/worker/lib/crypto";
 import { DAY, MINUTE } from "../src/worker/lib/time";
 import { call, codeFromMail, login, mockResend, ORIGIN, sessionCookie } from "./helpers";
 
@@ -148,6 +148,80 @@ describe("POST /api/auth/request", () => {
 });
 
 describe("POST /api/auth/verify", () => {
+  describe("development login code", () => {
+    const email = "dev-login@example.com";
+    const bindings = { ENVIRONMENT: "development", DEV_LOGIN_CODE: "111111" };
+    const verify = (code = "111111", overrides: { ENVIRONMENT?: string; DEV_LOGIN_CODE?: string } = {}) =>
+      app.request(`${ORIGIN}/api/auth/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: ORIGIN },
+        body: JSON.stringify({ email, code }),
+      }, { ...env, ...bindings, ...overrides });
+
+    beforeEach(async () => {
+      await requestCode(email);
+      // Keep the real OTP distinct from the shortcut and wrong-code fixtures.
+      await env.DB.prepare("UPDATE otp_codes SET code_hash = ? WHERE email = ?")
+        .bind(await hashOtp(env.OTP_PEPPER!, email, "654321"), email).run();
+    });
+
+    it("signs in after a request, sets a working cookie, logs usage and consumes the OTP", async () => {
+      const log = vi.spyOn(console, "log").mockImplementation(() => {});
+      const res = await verify();
+      expect(res.status).toBe(200);
+      const { user } = await res.json<{ user: { id: string; email: string } }>();
+      expect(user.email).toBe(email);
+      expect(await env.DB.prepare("SELECT user_id FROM sessions").first("user_id")).toBe(user.id);
+      expect((await call("GET", "/api/me", { cookie: sessionCookie(res) })).status).toBe(200);
+      expect(log).toHaveBeenCalledExactlyOnceWith(`[bisou] dev login code used for ${email}`);
+      expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM otp_codes").first("n")).toBe(0);
+      expect(await (await verify()).json()).toEqual({ error: "code_expired" });
+    });
+
+    it.each([
+      { ENVIRONMENT: "development", DEV_LOGIN_CODE: undefined },
+      { ENVIRONMENT: "production", DEV_LOGIN_CODE: "111111" },
+      { ENVIRONMENT: undefined, DEV_LOGIN_CODE: "111111" },
+      { ENVIRONMENT: "development", DEV_LOGIN_CODE: "11111" },
+      { ENVIRONMENT: "development", DEV_LOGIN_CODE: "1111111" },
+      { ENVIRONMENT: "development", DEV_LOGIN_CODE: "abcdef" },
+      { ENVIRONMENT: "development", DEV_LOGIN_CODE: "111111\n" },
+    ])("refuses the shortcut with %j and counts the attempt", async (overrides) => {
+      const res = await verify("111111", overrides);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "invalid_code", attemptsLeft: 4 });
+      expect(res.headers.get("Set-Cookie")).toBeNull();
+      expect(await env.DB.prepare("SELECT attempts FROM otp_codes").first("attempts")).toBe(1);
+    });
+
+    it("still accepts the normal OTP when the shortcut is enabled", async () => {
+      expect((await verify("654321")).status).toBe(200);
+    });
+
+    it("requires the raw code to match the configured shortcut", async () => {
+      expect((await verify(" 111111 ")).status).toBe(400);
+    });
+
+    it("counts wrong codes and blocks the shortcut after five attempts", async () => {
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        const res = await verify("000000");
+        expect(res.status).toBe(attempt < 5 ? 400 : 429);
+        expect(await env.DB.prepare("SELECT attempts FROM otp_codes").first("attempts")).toBe(attempt);
+      }
+      expect((await verify()).status).toBe(429);
+      expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM sessions").first("n")).toBe(0);
+    });
+
+    it.each(["missing", "expired"])("rejects a %s OTP row", async (state) => {
+      if (state === "missing") await env.DB.prepare("DELETE FROM otp_codes").run();
+      else vi.setSystemTime(T0 + 10 * MINUTE);
+      const res = await verify();
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "code_expired" });
+      expect(res.headers.get("Set-Cookie")).toBeNull();
+    });
+  });
+
   it("logs in with the right code: creates the user, a session and a persistent cookie", async () => {
     const { code } = await requestCode("Love@Example.com", "en");
     const res = await call("POST", "/api/auth/verify", {

@@ -32,6 +32,8 @@ pnpm dev
 
 Open http://localhost:5173. Without `RESEND_API_KEY` in `.dev.vars` no mail is sent: the code is printed in the `pnpm dev` log. D1 and R2 are emulated locally in `.wrangler/state`; local photo uploads need no remote bucket or R2 credentials.
 
+With `ENVIRONMENT=development` and `DEV_LOGIN_CODE=111111` in `.dev.vars`, request a code first, then sign in with `111111` or the normal OTP; production ignores `DEV_LOGIN_CODE`.
+
 Open http://localhost:5173/design for the development-only component gallery and three sample screens. Read [DESIGN.md](DESIGN.md) before changing UI; it records the approved visual direction and design constraints.
 
 ## Scripts

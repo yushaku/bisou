@@ -103,7 +103,12 @@ auth.post("/verify", async (c) => {
     .first<{ code_hash: string; attempts: number }>();
   if (!row) return c.json({ error: "too_many_attempts" }, 429);
 
-  const ok = await verifyOtp(pepper(c.env), email, code, row.code_hash);
+  const devLogin = c.env.ENVIRONMENT === "development"
+    && typeof c.env.DEV_LOGIN_CODE === "string"
+    && c.env.DEV_LOGIN_CODE.length === 6
+    && /^\d{6}$/.test(c.env.DEV_LOGIN_CODE)
+    && body?.code === c.env.DEV_LOGIN_CODE;
+  const ok = devLogin || await verifyOtp(pepper(c.env), email, code, row.code_hash);
   if (!ok) {
     const attemptsLeft = OTP_MAX_ATTEMPTS - row.attempts;
     if (attemptsLeft <= 0) return c.json({ error: "too_many_attempts" }, 429);
@@ -119,6 +124,7 @@ auth.post("/verify", async (c) => {
   const user = await findOrCreateUser(c.env, email, lang, now);
   const token = await createSession(c.env, user.id, now);
   setSessionCookie(c, token);
+  if (devLogin) console.log(`[bisou] dev login code used for ${email}`);
   return c.json({ user });
 });
 

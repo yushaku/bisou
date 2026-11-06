@@ -5,6 +5,8 @@ export interface Env {
   PHOTOS: R2Bucket;
   /** "development" locally (from .dev.vars), "production" otherwise. */
   ENVIRONMENT?: string;
+  /** Optional fixed login code for local development only. */
+  DEV_LOGIN_CODE?: string;
   /** Secret: HMAC key for one-time codes. */
   OTP_PEPPER?: string;
   /** Secret: Resend API key. Missing locally, then codes are logged. */
