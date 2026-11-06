@@ -1,4 +1,4 @@
-import { Image, Languages, Monitor, Moon, Paintbrush, Sun, type LucideIcon } from "lucide-react";
+import { Languages, Monitor, Moon, Paintbrush, Sun, type LucideIcon } from "lucide-react";
 import { useId, useRef, useState, type ReactNode } from "react";
 import type { Locale } from "../../../shared/types";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/theme/ThemeProvider";
 import { BACKGROUNDS, DARK_THEMES, LIGHT_THEMES, MODES, STYLES, type Mode, type ThemeDef, themeById } from "@/theme/themes";
-import { LanguageToggle } from "./LanguageToggle";
+import { LanguageSelect, LanguageToggle } from "./LanguageToggle";
 import { SettingsGroup, SettingsRow } from "./SettingsGroup";
 
 const MODE_ICONS: Record<Mode, LucideIcon> = { light: Sun, dark: Moon, system: Monitor };
@@ -39,9 +39,15 @@ function Swatches({ theme }: { theme: ThemeDef }) {
 export type AppearanceField = "style" | "mode" | "lightTheme" | "darkTheme" | "background" | "language";
 
 /* Shared by individual settings sheets and the /design toolbar. */
-export function ThemeControls({ onLocaleChange, showStyle = true, field, className }: { field?: AppearanceField; onLocaleChange?: (l: Locale) => void; showStyle?: boolean; className?: string }) {
+export function ThemeControls({ onLocaleChange, showStyle = true, field, paletteByMode = false, className }: {
+  field?: AppearanceField; onLocaleChange?: (l: Locale) => void; showStyle?: boolean; className?: string;
+  /* Settings: one palette field for the mode in use, and no language (it has its own row). */
+  paletteByMode?: boolean;
+}) {
   const { t } = useI18n();
-  const { prefs, setPrefs } = useTheme();
+  const { prefs, setPrefs, kind } = useTheme();
+  const showLight = (!field || field === "lightTheme") && (!paletteByMode || kind === "light");
+  const showDark = (!field || field === "darkTheme") && (!paletteByMode || kind === "dark");
   const item = "flex-1 basis-0";
 
   return (
@@ -76,7 +82,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, classNa
         )}
       </Field>}
 
-      {(!field || field === "lightTheme") && LIGHT_THEMES.length > 0 && (
+      {showLight && LIGHT_THEMES.length > 0 && (
         <Field label={t("settings.lightTheme")}>
           {(id) => (
             <ToggleGroup type="single" variant="outline" spacing={1} className="w-full flex-wrap" aria-labelledby={id} value={prefs.lightTheme}
@@ -89,7 +95,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, classNa
         </Field>
       )}
 
-      {(!field || field === "darkTheme") && <Field label={t("settings.darkTheme")}>
+      {showDark && <Field label={t("settings.darkTheme")}>
         {(id) => (
           <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-2" aria-labelledby={id} value={prefs.darkTheme}
             onValueChange={(v) => { const th = DARK_THEMES.find((x) => x.id === v); if (th) setPrefs({ darkTheme: th.id }); }}>
@@ -114,44 +120,40 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, classNa
         )}
       </Field>}
 
-      {(!field || field === "language") && <Field label={t("language")}>{() => <LanguageToggle onChange={onLocaleChange} />}</Field>}
+      {(!field || field === "language") && !paletteByMode && <Field label={t("language")}>{() => <LanguageToggle onChange={onLocaleChange} />}</Field>}
     </div>
   );
 }
 
 export function AppearanceSettings({ onLocaleChange }: { onLocaleChange?: (locale: Locale) => void }) {
-  const { t, locale } = useI18n();
-  const { prefs } = useTheme();
+  const { t } = useI18n();
+  const { prefs, kind } = useTheme();
   const trigger = useRef<HTMLButtonElement>(null);
-  const [field, setField] = useState<AppearanceField>("style");
   const [open, setOpen] = useState(false);
-  const rows: { field: AppearanceField; icon: LucideIcon; label: string; value: string }[] = [
-    { field: "style", icon: Paintbrush, label: t("settings.style"), value: t(`style.${prefs.style}`) },
-    { field: "mode", icon: Monitor, label: t("settings.mode"), value: t(`mode.${prefs.mode}`) },
-    { field: "lightTheme", icon: Sun, label: t("settings.lightTheme"), value: themeById(prefs.lightTheme).label },
-    { field: "darkTheme", icon: Moon, label: t("settings.darkTheme"), value: themeById(prefs.darkTheme).label },
-    { field: "background", icon: Image, label: t("settings.background"), value: t(`bg.${prefs.background}`) },
-    { field: "language", icon: Languages, label: t("language"), value: t(`language.${locale}`) },
-  ];
+  const languageId = useId();
+  const palette = themeById(kind === "dark" ? prefs.darkTheme : prefs.lightTheme).label;
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
-      <SettingsGroup title={t("settings.appearance")}>
-        {rows.map((row) => (
-          <DrawerTrigger key={row.field} asChild>
-            <SettingsRow icon={row.icon} label={row.label} value={row.value} onClick={(event) => { trigger.current = event.currentTarget; setField(row.field); }} />
-          </DrawerTrigger>
-        ))}
-      </SettingsGroup>
-      <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus({ preventScroll: true }); }}>
-        <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
-          <DrawerHeader className="px-0 text-left">
-            <DrawerTitle className="font-heading text-2xl">{rows.find((row) => row.field === field)?.label}</DrawerTitle>
-            <DrawerDescription>{t("settings.appliesImmediately")}</DrawerDescription>
-          </DrawerHeader>
-          <ThemeControls field={field} onLocaleChange={onLocaleChange} />
-          <Button variant="outline" className="mt-5 w-full" onClick={() => setOpen(false)}>{t("common.close")}</Button>
-        </div>
-      </DrawerContent>
-    </Drawer>
+    <SettingsGroup title={t("settings.appearance")}>
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerTrigger asChild>
+          <SettingsRow ref={trigger} icon={Paintbrush} label={t("settings.appearance")} value={`${t(`style.${prefs.style}`)} · ${palette}`} />
+        </DrawerTrigger>
+        <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus({ preventScroll: true }); }}>
+          <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
+            <DrawerHeader className="px-0 text-left">
+              <DrawerTitle className="font-heading text-2xl">{t("settings.appearance")}</DrawerTitle>
+              <DrawerDescription>{t("settings.appliesImmediately")}</DrawerDescription>
+            </DrawerHeader>
+            <ThemeControls paletteByMode />
+            <Button variant="outline" className="mt-5 w-full" onClick={() => setOpen(false)}>{t("common.close")}</Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+      <div className="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-base">
+        <Languages className="size-5 shrink-0" aria-hidden="true" />
+        <span id={languageId}>{t("language")}</span>
+        <LanguageSelect className="ml-auto" labelledBy={languageId} onChange={onLocaleChange} />
+      </div>
+    </SettingsGroup>
   );
 }

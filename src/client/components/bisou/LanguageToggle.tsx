@@ -1,4 +1,5 @@
 import { isLocale, LOCALES, type Locale } from "../../../shared/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n } from "@/i18n";
 
@@ -30,5 +31,21 @@ export function LanguageToggle({ onChange, className }: { onChange?: (locale: Lo
         </ToggleGroupItem>
       ))}
     </ToggleGroup>
+  );
+}
+
+export function LanguageSelect({ onChange, labelledBy, className }: { onChange?: (locale: Locale) => void; labelledBy?: string; className?: string }) {
+  const { locale, setLocale } = useI18n();
+  return (
+    <Select value={locale} onValueChange={(value) => {
+      if (!isLocale(value) || value === locale) return;
+      setLocale(value);
+      onChange?.(value);
+    }}>
+      <SelectTrigger size="sm" aria-labelledby={labelledBy} className={className}><SelectValue /></SelectTrigger>
+      <SelectContent position="popper" align="end">
+        {LOCALES.map((l) => <SelectItem key={l} value={l} lang={l}>{LABELS[l].name}</SelectItem>)}
+      </SelectContent>
+    </Select>
   );
 }
