@@ -1,5 +1,5 @@
-import { ArrowLeft, Check, Ellipsis, Gift, Plus } from "lucide-react";
-import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
+import { ArrowLeft, Check, Ellipsis, Gift, PencilLine, Plus, Trash2 } from "lucide-react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import type { Couple, Wish } from "../../shared/types";
@@ -11,7 +11,7 @@ import { SpinCard } from "../components/bisou/SpinCard";
 import { WishTeaser } from "../components/bisou/WishTeaser";
 import { WishCard } from "../components/bisou/WishCard";
 import { Button } from "../components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../components/ui/drawer";
 import { Skeleton } from "../components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
@@ -52,6 +52,10 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
   const [acting, setActing] = useState<Wish | null>(null);
+  // The options sheet still shows its wish while it animates closed.
+  const lastActing = useRef(acting);
+  if (acting) lastActing.current = acting;
+  const shownWish = acting ?? lastActing.current;
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,17 +138,25 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         setView("jar"); setFilter("received"); setCelebrate(true); void refresh();
       }} /></Suspense>}
     <Celebration open={celebrate} onOpenChange={setCelebrate} />
-    <Dialog open={!!acting} onOpenChange={(open) => { if (!open && !busy) setActing(null); }}>
-      <DialogContent showCloseButton={!busy}>
-        <DialogHeader><DialogTitle>{acting?.title}</DialogTitle><DialogDescription>{deleting ? t("wish.deleteConfirm", { title: acting?.title ?? "" }) : t("wish.options", { title: acting?.title ?? "" })}</DialogDescription></DialogHeader>
-        <p role="alert" className="text-destructive empty:hidden">{error}</p>
-        <DialogFooter>
-          {!deleting && acting?.status === "open" && <Button onClick={() => { setReceiving(acting); setActing(null); }}>{t("received.action")}</Button>}
-          {!deleting && acting?.status === "open" && <Button variant="outline" onClick={() => { setFromMenu(false); setEditing(acting); setActing(null); }}>{t("wish.edit")}</Button>}
-          <Button variant="destructive" loading={busy} onClick={() => deleting ? void remove() : setDeleting(true)}>{t("wish.delete")}</Button>
-          <Button variant="outline" disabled={busy} onClick={() => setActing(null)}>{t("common.close")}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <Drawer open={!!acting} onOpenChange={(open) => { if (!open && !busy) setActing(null); }}>
+      <DrawerContent aria-describedby={undefined}>
+        <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-5">
+          <DrawerHeader className="px-0 text-left">
+            <DrawerTitle className="font-heading text-xl">{shownWish?.title}</DrawerTitle>
+            {deleting && <p className="text-sm text-muted-foreground">{t("wish.deleteConfirm", { title: shownWish?.title ?? "" })}</p>}
+          </DrawerHeader>
+          <p role="alert" className="text-destructive empty:hidden">{error}</p>
+          {deleting ? <>
+            <Button variant="destructive" size="lg" loading={busy} onClick={() => void remove()}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
+            <Button variant="outline" size="lg" disabled={busy} onClick={() => { setDeleting(false); setError(null); }}>{t("common.back")}</Button>
+          </> : <>
+            {shownWish?.status === "open" && <Button size="lg" className="justify-start" onClick={() => { setReceiving(acting); setActing(null); }}><Check aria-hidden="true" />{t("received.action")}</Button>}
+            {shownWish?.status === "open" && <Button variant="outline" size="lg" className="justify-start" onClick={() => { setFromMenu(false); setEditing(acting); setActing(null); }}><PencilLine aria-hidden="true" />{t("wish.edit")}</Button>}
+            <Button variant="outline" size="lg" className="justify-start text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
+            <Button variant="ghost" size="lg" onClick={() => setActing(null)}>{t("common.close")}</Button>
+          </>}
+        </div>
+      </DrawerContent>
+    </Drawer>
   </SignedInShell>;
 }
