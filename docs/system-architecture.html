@@ -4847,76 +4847,6 @@
       svg [data-node-id], svg [data-edge-from], svg [data-detail], svg [data-detail-anchor], svg [data-legend-hit], svg { transition: none !important; }
     }
   </style>
-<style id="catppuccin-theme">
-html[data-preset="classic"][data-theme="dark"] {
-  --bg: #303446;
-  --grid: #414559;
-  --text: #c6d0f5;
-  --text-muted: #a5adce;
-  --text-dim: #737994;
-  --text-faint: #838ba7;
-  --panel: #292c3c;
-  --panel-border: #414559;
-  --lane-fill: rgba(41, 44, 60, 0.45);
-  --lane-stroke: #51576d;
-  --arrow: #838ba7;
-  --arrow-emphasis: #a6d189;
-  --mask: #292c3c;
-  --frontend-fill: rgba(140, 170, 238, 0.16);
-  --frontend-stroke: #8caaee;
-  --backend-fill: rgba(166, 209, 137, 0.16);
-  --backend-stroke: #a6d189;
-  --database-fill: rgba(202, 158, 230, 0.16);
-  --database-stroke: #ca9ee6;
-  --cloud-fill: rgba(229, 200, 144, 0.16);
-  --cloud-stroke: #e5c890;
-  --security-fill: rgba(231, 130, 132, 0.16);
-  --security-stroke: #e78284;
-  --messagebus-fill: rgba(239, 159, 118, 0.16);
-  --messagebus-stroke: #ef9f76;
-  --external-fill: rgba(148, 156, 187, 0.16);
-  --external-stroke: #949cbb;
-  --toolbar-bg: rgba(41, 44, 60, 0.9);
-  --toolbar-border: #51576d;
-  --toolbar-text: #c6d0f5;
-  --toolbar-hover: #414559;
-  --toolbar-menu-bg: #292c3c;
-}
-html[data-preset="classic"][data-theme="light"] {
-  --bg: #e6e9ef;
-  --grid: #dce0e8;
-  --text: #4c4f69;
-  --text-muted: #6c6f85;
-  --text-dim: #9ca0b0;
-  --text-faint: #8c8fa1;
-  --panel: #eff1f5;
-  --panel-border: #ccd0da;
-  --lane-fill: rgba(239, 241, 245, 0.45);
-  --lane-stroke: #bcc0cc;
-  --arrow: #8c8fa1;
-  --arrow-emphasis: #40a02b;
-  --mask: #eff1f5;
-  --frontend-fill: rgba(30, 102, 245, 0.12);
-  --frontend-stroke: #1e66f5;
-  --backend-fill: rgba(64, 160, 43, 0.12);
-  --backend-stroke: #40a02b;
-  --database-fill: rgba(136, 57, 239, 0.12);
-  --database-stroke: #8839ef;
-  --cloud-fill: rgba(223, 142, 29, 0.12);
-  --cloud-stroke: #df8e1d;
-  --security-fill: rgba(210, 15, 57, 0.12);
-  --security-stroke: #d20f39;
-  --messagebus-fill: rgba(254, 100, 11, 0.12);
-  --messagebus-stroke: #fe640b;
-  --external-fill: rgba(124, 127, 147, 0.12);
-  --external-stroke: #7c7f93;
-  --toolbar-bg: rgba(239, 241, 245, 0.9);
-  --toolbar-border: #bcc0cc;
-  --toolbar-text: #4c4f69;
-  --toolbar-hover: #dce0e8;
-  --toolbar-menu-bg: #eff1f5;
-}
-</style>
 </head>
 <body>
   <!-- Toolbar: theme, live visual style, trace motion, presentation stage, and export.
@@ -5478,7 +5408,8 @@ html[data-preset="classic"][data-theme="light"] {
           <h3>Data</h3>
         </div>
         <ul>
-          <li>&bull; D1 holds users, sessions, couples, journal, wishes</li>
+          <li>&bull; D1 holds users, sessions, couples, couple events, journal, wishes</li>
+          <li>&bull; Couple events load with the couple; /api/events writes return it</li>
           <li>&bull; R2 photos only via the Worker after a couple check</li>
         </ul>
       </div>

@@ -5,6 +5,9 @@
 ### Added
 
 - Add shared one-off or yearly events from Home, edit or delete them together, and see distant plans under Later.
+- See the next 3 events on Home and the next 12 months under See all: anniversaries, every 1,000th day, both birthdays and four holidays.
+- Add, change or remove your own birthday in Settings; your partner sees it only as an event.
+- The + in the tab bar adds an event on Home, an entry on Journal and a wish on Wishes.
 - Keep a private wish jar with optional photos, spin your partner's jar within a budget, and secretly claim a wish.
 - Mark a wish received to keep a shared journal memory with a note and up to four photos.
 - Open the shared journal from Home: entries grouped by day, newest first, with older days loading as you scroll.
@@ -17,11 +20,12 @@
 - Save received-wish memories in the language shown in the app, and refuse new claims when a wish's price has been removed.
 - Keep a deleted-wish notice until the claimer has seen it, expire unread notices after 30 days, and remove received claims silently when their wish is deleted.
 - Show a loading state for received wishes and a full-width square photo in spin results.
-- Remove private JPEG metadata and refuse metadata between scans or appended images; journal JSON requests are limited to 16 KB.
+- Remove private JPEG metadata and refuse metadata between scans or appended images; journal, profile and event JSON requests are limited to 16 KB.
 - A partner's browser may show a deleted photo from its cache for up to one day, then stops once it refreshes.
 
 ### Changed
 
+- The active tab's highlight fills more of its tab.
 - Restore each tab's scroll position and loaded journal pages while switching tabs.
 - Swipe horizontally through photos in the viewer.
 - Show journal text before its photos.

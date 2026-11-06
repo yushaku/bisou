@@ -6,13 +6,15 @@ The journal opens from Home, groups entries by day with the newest first, and lo
 
 Each partner keeps a private wish jar with optional prices, links and one photo per wish. Spin the other jar within a VND budget, up to 20 times per rolling 24 hours, and claim a priced wish in secret. Marking your own wish received creates a shared journal entry in your current app language, with an optional note and up to four photos. The Claims screen shows received gifts; deleting a received wish removes its claim silently. Deleting an open claimed wish leaves a one-time notice for the claimer; it is removed once they see it, or by the daily cleanup after 30 days.
 
+Home shows the next 3 upcoming events; See all lists the next 12 months: yearly anniversaries, every 1,000th day, both partners' birthdays, four holidays and the couple's own events, with own events further out under Later. Each person sets only their own birthday in Settings. Either partner can add, change or delete a custom event (one-off or yearly, up to 100 upcoming per couple); the + in the tab bar adds an event on Home, an entry on Journal and a wish on Wishes.
+
 Switching tabs restores their scroll positions and keeps loaded journal pages for the current session. Journal text appears before its photos, and the photo viewer supports horizontal swipes as well as its buttons and arrow keys.
 
 One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. D1 stores entries and photo records; the private R2 bucket `bisou`, bound as `PHOTOS` in `wrangler.jsonc`, stores the cropped photos. Free plan only.
 
 ## Layout
 
-- `src/worker`: the Worker. `app.ts` mounts one route module per area: `auth`, `me`, `couple`, `journal`, `photos` and `wishes`.
+- `src/worker`: the Worker. `app.ts` mounts one route module per area: `auth`, `me`, `couple`, `events`, `journal`, `photos` and `wishes`.
 - `src/client`: React app. `i18n/vi.ts` is the source dictionary, `i18n/en.ts` must have the same keys.
 - `src/shared`: types used by both sides.
 - `migrations`: D1 migrations (`wrangler d1 migrations`).

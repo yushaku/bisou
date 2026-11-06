@@ -201,7 +201,8 @@
       "dot": "emerald",
       "title": "Data",
       "items": [
-        "D1 holds users, sessions, couples, journal, wishes",
+        "D1 holds users, sessions, couples, couple events, journal, wishes",
+        "Couple events load with the couple; /api/events writes return it",
         "R2 photos only via the Worker after a couple check"
       ]
     },
