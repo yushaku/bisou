@@ -7,6 +7,7 @@ import { BrandMark } from "./components/bisou/BrandMark";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
+import { Appearance } from "./screens/Appearance";
 import { Events } from "./screens/Events";
 import { Home } from "./screens/Home";
 import { Wishes } from "./screens/Wishes";
@@ -103,7 +104,7 @@ function SignedIn({
   const paired = (couple?.members.length ?? 0) >= 2;
   const [location] = useLocation();
   const historyState = useHistoryState<{ from?: string } | null>();
-  const settingsOpen = location === "/settings";
+  const settingsOpen = location === "/settings" || location === "/settings/appearance";
 
   const refresh = useCallback(async () => {
     const res = await api.couple();
@@ -160,7 +161,8 @@ function SignedIn({
     <TabMemory value={tabMemory}>
       {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
       <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
-      {settingsOpen && <Settings {...session} couple={couple} onCouple={onCouple} />}
+      {location === "/settings" && <Settings {...session} couple={couple} onCouple={onCouple} />}
+      {location === "/settings/appearance" && <Appearance />}
     </TabMemory>
   );
 }

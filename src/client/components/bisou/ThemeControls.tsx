@@ -1,8 +1,6 @@
 import { Languages, Monitor, Moon, Paintbrush, Sun, type LucideIcon } from "lucide-react";
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import type { Locale } from "../../../shared/types";
-import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
@@ -125,30 +123,15 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, palette
   );
 }
 
-export function AppearanceSettings({ onLocaleChange }: { onLocaleChange?: (locale: Locale) => void }) {
+/* The Appearance group in Settings: one row to the appearance page, and the language on its own row. */
+export function AppearanceSettings({ onLocaleChange, onOpen }: { onLocaleChange?: (locale: Locale) => void; onOpen: () => void }) {
   const { t } = useI18n();
   const { prefs, kind } = useTheme();
-  const trigger = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
   const languageId = useId();
   const palette = themeById(kind === "dark" ? prefs.darkTheme : prefs.lightTheme).label;
   return (
     <SettingsGroup title={t("settings.appearance")}>
-      <Drawer open={open} onOpenChange={setOpen}>
-        <DrawerTrigger asChild>
-          <SettingsRow ref={trigger} icon={Paintbrush} label={t("settings.appearance")} value={`${t(`style.${prefs.style}`)} · ${palette}`} />
-        </DrawerTrigger>
-        <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); trigger.current?.focus({ preventScroll: true }); }}>
-          <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
-            <DrawerHeader className="px-0 text-left">
-              <DrawerTitle className="font-heading text-2xl">{t("settings.appearance")}</DrawerTitle>
-              <DrawerDescription>{t("settings.appliesImmediately")}</DrawerDescription>
-            </DrawerHeader>
-            <ThemeControls paletteByMode />
-            <Button variant="outline" className="mt-5 w-full" onClick={() => setOpen(false)}>{t("common.close")}</Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      <SettingsRow id="appearance-row" icon={Paintbrush} label={t("settings.appearance")} value={`${t(`style.${prefs.style}`)} · ${palette}`} onClick={onOpen} />
       <div className="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-base">
         <Languages className="size-5 shrink-0" aria-hidden="true" />
         <span id={languageId}>{t("language")}</span>

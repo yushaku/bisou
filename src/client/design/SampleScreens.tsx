@@ -40,7 +40,7 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
     <AppShell tabs={tabs} title={t("settings.title")} className={cn(framed && "min-h-full")} action={
       <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => setSettings(false)}><ArrowLeft /></Button>
     }>
-      <AppearanceSettings />
+      <AppearanceSettings onOpen={() => toast.info(d("previewOnly"))} />
     </AppShell>
   );
   return (

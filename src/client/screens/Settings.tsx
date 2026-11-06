@@ -106,7 +106,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
               value={couple.startDate ? formatDay(couple.startDate, locale, "numeric") : t("settings.notSet")}
               onClick={() => { setDateLoaded(true); setPicking(true); }} />
           </SettingsGroup>}
-          <AppearanceSettings onLocaleChange={(next) => void changeLocale(next)} />
+          <AppearanceSettings onLocaleChange={(next) => void changeLocale(next)} onOpen={() => navigate("/settings/appearance", { state: { from: history.state?.from } })} />
           <div className="overflow-hidden rounded-xl edge bg-card">
             <DrawerTrigger asChild>
               <SettingsRow icon={LogOut} label={t("home.logout")} className="text-destructive" onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("logout"); setLogoutError(false); }} />
