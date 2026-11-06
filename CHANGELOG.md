@@ -4,14 +4,27 @@
 
 ### Added
 
+- When your partner's jar holds no open wish, the jar card says so and spinning is off; it never shows how many wishes there are.
+
+### Changed
+
+- The top bar shows each tab's name (Our little corner, Our journal, Wishes) instead of Bisou, and the screens drop their own heading.
+
+## [2026-11-06]
+
+### Added
+
 - Add shared one-off or yearly events from Home, edit or delete them together, and see distant plans under Later.
 - The + in the tab bar adds an event on Home, an entry on Journal and a wish on Wishes.
+- See the next 3 events on Home and the next 12 months under See all: anniversaries, every 1,000th day, both birthdays and four holidays.
+- Add, change or remove your own birthday in Settings; your partner sees it only as an event.
 
 ### Fixed
 
 - Event JSON requests are limited to 16 KB.
 - Event and wish titles refuse control characters, text direction overrides and titles made only of invisible characters.
 - Switching sections in Wishes shows the loaded lists at once instead of a loading state.
+- Profile JSON requests are limited to 16 KB.
 
 ### Changed
 
@@ -19,17 +32,6 @@
 - Wishes has two sections, My jar and My claims, under your partner's jar; My jar lists open and received wishes together with an icon filter (All, Wishing, Received), and the received day sits inside the card.
 - Wish options open as a bottom sheet; received claims show a check badge.
 - Settings groups style, light or dark, the palette for the current mode and the background in one Appearance sheet; language is a dropdown.
-
-## [2026-11-06]
-
-### Added
-
-- See the next 3 events on Home and the next 12 months under See all: anniversaries, every 1,000th day, both birthdays and four holidays.
-- Add, change or remove your own birthday in Settings; your partner sees it only as an event.
-
-### Fixed
-
-- Profile JSON requests are limited to 16 KB.
 
 ## [2026-11-05]
 
