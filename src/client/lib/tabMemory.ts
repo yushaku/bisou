@@ -8,11 +8,12 @@ export interface TabMemoryValue {
   /* Last loaded wish lists: shown at once when the Wishes tab comes back, then refreshed. */
   wishes: { open: Wish[]; received: Wish[] } | null;
   claims: Claim[] | null;
-  wishesSection: "jar" | "claims" | "received";
+  wishesSection: "jar" | "claims";
+  wishesFilter: "all" | "open" | "received";
 }
 
 export function createTabMemory(): TabMemoryValue {
-  return { scroll: new Map(), journal: null, returnFocus: null, wishes: null, claims: null, wishesSection: "jar" };
+  return { scroll: new Map(), journal: null, returnFocus: null, wishes: null, claims: null, wishesSection: "jar", wishesFilter: "all" };
 }
 
 // The signed-in provider owns this memory; signing out discards the feed and positions.

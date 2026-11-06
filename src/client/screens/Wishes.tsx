@@ -1,4 +1,4 @@
-import { ArrowLeft, Ellipsis, Gift, Plus } from "lucide-react";
+import { ArrowLeft, Check, Ellipsis, Gift, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { Button } from "../components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Skeleton } from "../components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { wishErrorKey } from "../lib/wishes";
@@ -23,9 +24,12 @@ import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
 
-// The three sections of the Wishes tab; the partner's jar sits above them on every section.
-const SECTIONS = { jar: "wishes.mine", claims: "claims.title", received: "received.list" } as const;
+// The sections of the Wishes tab; the partner's jar sits above them on every section.
+const SECTIONS = { jar: "wishes.mine", claims: "claims.title" } as const;
 type Section = keyof typeof SECTIONS;
+// My jar lists open and received wishes together, narrowed by a filter.
+const FILTERS = { all: "wishes.filterAll", open: "wishes.filterOpen", received: "received.list" } as const;
+type Filter = keyof typeof FILTERS;
 
 const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
 
@@ -33,6 +37,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
   const [view, setView] = useState<Section | "spin">(() => memory?.wishesSection ?? "jar");
+  const [filter, setFilter] = useState<Filter>(() => memory?.wishesFilter ?? "all");
   const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
@@ -41,7 +46,8 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     if (!memory) return;
     memory.wishes = jar;
     if (view !== "spin") memory.wishesSection = view;
-  }, [jar, view, memory]);
+    memory.wishesFilter = filter;
+  }, [jar, view, filter, memory]);
   const [failed, setFailed] = useState(false);
   const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
@@ -92,24 +98,31 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     </>}
     {view === "spin" && <SpinCard partnerName={partnerName} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
     {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
-    {view === "received" && <>
-      {failed && <p role="alert">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></p>}
-      {!jar && !failed && <Skeleton className="h-28" aria-label={t("loading")} />}
-      {jar?.received.length === 0 && <EmptyState icon={Gift} title={t("received.empty")} />}
-      <div className="flex flex-col gap-3">{jar?.received.map((wish) => <div key={wish.id}>
-        <WishCard wish={wish} actions={optionsButton(wish)} />
-        {wish.receivedOn && <p className="mt-2 text-sm text-muted-foreground">{t("received.on", { date: formatDay(wish.receivedOn, locale) })}</p>}
-        {wish.note && <p className="mt-1 whitespace-pre-line">{wish.note}</p>}
-      </div>)}</div>
-      <Button asChild variant="outline" className="mt-4"><Link href="/journal">{t("received.journal")}</Link></Button>
-    </>}
     {view === "jar" && <>
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!jar && !failed && <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3"><Skeleton className="h-28" /><Skeleton className="h-28" /></div>}
-    {jar && <>
-      {jar.open.length === 0 ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} /> :
-        <div className="flex flex-col gap-3 pb-6">{jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)} />)}</div>}
-    </>}
+    {jar && (jar.open.length + jar.received.length === 0
+      ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />
+      : <>
+        <ToggleGroup type="single" variant="outline" size="sm" spacing={1} aria-label={t("wishes.filter")} className="mb-4" value={filter}
+          onValueChange={(value) => { if (value) setFilter(value as Filter); }}>
+          {(Object.keys(FILTERS) as Filter[]).map((id) => <ToggleGroupItem key={id} value={id} className="px-3">
+            {t(FILTERS[id])}
+            <span className="tabular-nums text-muted-foreground">{id === "all" ? jar.open.length + jar.received.length : jar[id].length}</span>
+          </ToggleGroupItem>)}
+        </ToggleGroup>
+        {filter === "received" && jar.received.length === 0 && <EmptyState icon={Gift} title={t("received.empty")} />}
+        {filter === "open" && jar.open.length === 0 && <EmptyState icon={Gift} title={t("empty.wishes")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />}
+        <div className="flex flex-col gap-3 pb-6">
+          {filter !== "received" && jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)} />)}
+          {filter !== "open" && jar.received.map((wish) => <div key={wish.id}>
+            <WishCard wish={wish} actions={optionsButton(wish)} />
+            {wish.receivedOn && <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><span className="flex size-5 items-center justify-center rounded-full bg-success text-success-foreground"><Check className="size-3.5" strokeWidth={3} aria-hidden="true" /></span>{t("received.on", { date: formatDay(wish.receivedOn, locale) })}</p>}
+            {wish.note && <p className="mt-1 whitespace-pre-line">{wish.note}</p>}
+          </div>)}
+          {filter === "received" && jar.received.length > 0 && <Button asChild variant="outline"><Link href="/journal">{t("received.journal")}</Link></Button>}
+        </div>
+      </>)}
     </>}
     {editing !== undefined && <Suspense fallback={null}><WishSheet fromMenu={fromMenu} key={editing?.id ?? "new"} wish={editing} onClose={() => setEditing(undefined)} onSignedOut={session.onSignedOut} onSaved={(wish) => {
       setJar((j) => j && { ...j, open: [wish, ...j.open.filter((w) => w.id !== wish.id)].sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id)) });
@@ -118,7 +131,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     {receiving && <Suspense fallback={null}><ComposeSheet open receiving={receiving} author={{ name: session.user.displayName ?? "?", tone: couple.members[0]?.id === session.user.id ? "primary" : "secondary" }} partnerName={partnerName}
       onOpenChange={(open) => { if (!open) setReceiving(null); }} onSignedOut={session.onSignedOut} onSaved={(entry) => {
         setJar((j) => j && { open: j.open.filter((w) => w.id !== receiving.id), received: [{ ...receiving, status: "received", receivedOn: entry.date, note: null, updatedAt: entry.updatedAt }, ...j.received] });
-        setView("received"); setCelebrate(true); void refresh();
+        setView("jar"); setFilter("received"); setCelebrate(true); void refresh();
       }} /></Suspense>}
     <Celebration open={celebrate} onOpenChange={setCelebrate} />
     <Dialog open={!!acting} onOpenChange={(open) => { if (!open && !busy) setActing(null); }}>
