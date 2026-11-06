@@ -36,7 +36,7 @@ function Swatches({ theme }: { theme: ThemeDef }) {
 
 export type AppearanceField = "style" | "mode" | "lightTheme" | "darkTheme" | "background" | "language";
 
-/* Shared by individual settings sheets and the /design toolbar. */
+/* Shared by the Appearance page and the /design toolbar. */
 export function ThemeControls({ onLocaleChange, showStyle = true, field, paletteByMode = false, className }: {
   field?: AppearanceField; onLocaleChange?: (l: Locale) => void; showStyle?: boolean; className?: string;
   /* Settings: one palette field for the mode in use, and no language (it has its own row). */
