@@ -76,7 +76,8 @@ Exceptions: AC4 to AC9.
 - Leaving or dissolving a couple: required before the app opens to anyone beyond the two partners.
 - Deleting an account or exporting its data: required before anyone beyond the two partners uses the app.
 - More than two members; switching partner; cancelling an invite.
-- Photos as avatars; milestone reminders or notifications; past milestones.
+- Milestone reminders or notifications; past milestones.
+- Profile photos are covered in [avatar](avatar.md).
 
 ## Open questions
 
