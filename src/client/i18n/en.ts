@@ -88,7 +88,6 @@ export const en: Messages = {
   "nav.journal": "Journal",
   "nav.wishes": "Wishes",
   "nav.garden": "Garden",
-  "nav.soon": "Soon",
   "nav.gardenHint": "Our garden is growing, coming soon",
   "nav.create": "Add something",
   "nav.createHint": "Write a journal entry or add a wish.",

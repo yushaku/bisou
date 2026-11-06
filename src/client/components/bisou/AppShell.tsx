@@ -107,7 +107,6 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
                       <span className={cn("relative flex flex-col items-center gap-0.5", selected && "text-accent-foreground")} style={{ viewTransitionName: `tab-label-${id}` }}>
                         <Icon className="size-5" aria-hidden="true" />
                         {t(label)}
-                        {garden && <span className="text-xs font-normal">{t("nav.soon")}</span>}
                       </span>
                     </span>
                   </button>

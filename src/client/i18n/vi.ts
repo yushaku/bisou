@@ -87,7 +87,6 @@ export const vi = {
   "nav.journal": "Nhật ký",
   "nav.wishes": "Điều ước",
   "nav.garden": "Vườn",
-  "nav.soon": "Sắp có",
   "nav.gardenHint": "Vườn đang được vun, sắp có nhé",
   "nav.create": "Thêm một chút",
   "nav.createHint": "Viết nhật ký hoặc thêm điều ước.",
