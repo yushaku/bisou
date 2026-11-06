@@ -2,7 +2,7 @@ import { BookHeart, Gift, House, Plus, Settings, Sprout, type LucideIcon } from 
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import type { CreateDestination } from "@/lib/navigation";
 import { SettingsRow } from "./SettingsGroup";
 import { useI18n, type MessageKey } from "@/i18n";
@@ -69,6 +69,8 @@ interface BottomBarProps {
 export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  // On Journal and Wishes the + adds to that tab right away; elsewhere it opens the menu.
+  const direct: CreateDestination | null = active === "journal" || active === "wishes" ? active : null;
   // Open the editor after the menu closes, unless the user has left this screen.
   const pending = useRef<CreateDestination | null>(null);
   useEffect(() => () => { pending.current = null; }, []);
@@ -89,18 +91,18 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
             return (
               <Fragment key={id}>
                 {index === 2 && <li className="flex items-center justify-center">
-                  <DrawerTrigger asChild>
-                    <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-card elevate" aria-label={t("nav.create")}>
-                      <Plus className="size-6" aria-hidden="true" />
-                    </Button>
-                  </DrawerTrigger>
+                  <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-card elevate"
+                    aria-label={direct ? t(direct === "journal" ? "journal.new" : "wishes.add") : t("nav.create")}
+                    onClick={() => direct ? onCreate(direct) : setOpen(true)}>
+                    <Plus className="size-6" aria-hidden="true" />
+                  </Button>
                 </li>}
                 <li>
                   <button type="button" aria-current={selected ? "page" : undefined}
                     aria-disabled={garden || undefined} tabIndex={garden ? -1 : undefined}
                     onClick={() => garden ? toast.info(t("nav.gardenHint")) : onSelect(id)}
-                    className={cn("press flex h-16 w-full items-center justify-center text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset", selected ? "text-foreground" : "text-muted-foreground")}>
-                    <span className="relative flex min-w-0 flex-col items-center gap-0.5 px-1 py-0.5">
+                    className={cn("press flex h-16 w-full items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset", selected ? "text-foreground" : "text-muted-foreground")}>
+                    <span className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
                       {selected && <span aria-hidden="true" className="absolute inset-0 rounded-control bg-accent elevate-sm [view-transition-name:tab-pill]" />}
                       <span className={cn("relative flex flex-col items-center gap-0.5", selected && "text-accent-foreground")} style={{ viewTransitionName: `tab-label-${id}` }}>
                         <Icon className="size-5" aria-hidden="true" />
