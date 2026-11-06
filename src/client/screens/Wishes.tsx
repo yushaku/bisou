@@ -1,11 +1,10 @@
-import { ArrowLeft, Check, Ellipsis, Gift, LockKeyhole, Plus } from "lucide-react";
+import { ArrowLeft, Ellipsis, Gift, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import type { Couple, Wish } from "../../shared/types";
 import { api } from "../api";
 import { EmptyState } from "../components/bisou/EmptyState";
-import { PageHeader } from "../components/bisou/PageHeader";
 import { Celebration } from "../components/bisou/Celebration";
 import { ClaimsList } from "../components/bisou/ClaimsList";
 import { SpinCard } from "../components/bisou/SpinCard";
@@ -14,6 +13,7 @@ import { WishCard } from "../components/bisou/WishCard";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Skeleton } from "../components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { wishErrorKey } from "../lib/wishes";
@@ -22,11 +22,15 @@ import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
 
+// The three sections of the Wishes tab; the partner's jar sits above them on every section.
+const SECTIONS = { jar: "wishes.mine", claims: "claims.title", received: "received.list" } as const;
+type Section = keyof typeof SECTIONS;
+
 const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
 
 export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { t, locale } = useI18n();
-  const [view, setView] = useState<"jar" | "spin" | "claims" | "received">("jar");
+  const [view, setView] = useState<Section | "spin">("jar");
   const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
@@ -69,8 +73,16 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const optionsButton = (wish: Wish) => <Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>;
 
   return <SignedInShell {...session} tab="wishes">
-    {view !== "jar" && <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button>}
-    {view !== "spin" && <PageHeader title={t(view === "jar" ? "wishes.mine" : view === "claims" ? "claims.title" : "received.list")} description={view === "jar" ? t("wishes.private") : undefined} />}
+    {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button> : <>
+      <h1 className="sr-only">{t(SECTIONS[view])}</h1>
+      <div className="mb-4"><WishTeaser onOpen={() => setView("spin")} title={t("spin.entry", { name: partnerName })} description={t("spin.entryHint")} /></div>
+      <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
+        <TabsList className="w-full">
+          {(Object.keys(SECTIONS) as Section[]).map((id) => <TabsTrigger key={id} value={id}>{t(SECTIONS[id])}</TabsTrigger>)}
+        </TabsList>
+      </Tabs>
+      {view === "jar" && <p className="mb-4 text-sm text-muted-foreground">{t("wishes.private")}</p>}
+    </>}
     {view === "spin" && <SpinCard partnerName={partnerName} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
     {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
     {view === "received" && <>
@@ -85,8 +97,6 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
       <Button asChild variant="outline" className="mt-4"><Link href="/journal">{t("received.journal")}</Link></Button>
     </>}
     {view === "jar" && <>
-    <WishTeaser onOpen={() => setView("spin")} title={t("spin.entry", { name: partnerName })} description={t("spin.entryHint")} />
-    <div className="my-4 flex justify-between"><Button variant="ghost" onClick={() => setView("claims")}><LockKeyhole aria-hidden="true" />{t("claims.title")}</Button><Button variant="ghost" onClick={() => setView("received")}><Check aria-hidden="true" />{t("received.list")}</Button></div>
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!jar && !failed && <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3"><Skeleton className="h-28" /><Skeleton className="h-28" /></div>}
     {jar && <>
