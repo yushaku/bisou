@@ -7,6 +7,7 @@ import { api } from "../api";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { Celebration } from "../components/bisou/Celebration";
 import { ClaimsList } from "../components/bisou/ClaimsList";
+import { toPeople } from "../components/bisou/CoupleAvatars";
 import { SpinCard } from "../components/bisou/SpinCard";
 import { WishTeaser } from "../components/bisou/WishTeaser";
 import { WishCard } from "../components/bisou/WishCard";
@@ -140,7 +141,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
       setJar((j) => j && { ...j, open: [wish, ...j.open.filter((w) => w.id !== wish.id)].sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id)) });
       toast.success(t("wish.saved"));
     }} /></Suspense>}
-    {receiving && <Suspense fallback={null}><ComposeSheet open receiving={receiving} author={{ name: session.user.displayName ?? "?", tone: couple.members[0]?.id === session.user.id ? "primary" : "secondary" }} partnerName={partnerName}
+    {receiving && <Suspense fallback={null}><ComposeSheet open receiving={receiving} author={toPeople(couple.members, session.user)[couple.members.findIndex((member) => member.id === session.user.id)]!} partnerName={partnerName}
       onOpenChange={(open) => { if (!open) setReceiving(null); }} onSignedOut={session.onSignedOut} onSaved={(entry) => {
         setJar((j) => j && { ...j, open: j.open.filter((w) => w.id !== receiving.id), received: [{ ...receiving, status: "received", receivedOn: entry.date, note: null, updatedAt: entry.updatedAt }, ...j.received] });
         setView("jar"); setFilter("received"); setCelebrate(true); void refresh();

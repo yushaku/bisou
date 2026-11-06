@@ -10,6 +10,7 @@ export interface CropRequest {
   url: string;
   index: number;
   total: number;
+  round?: boolean;
   /* The chosen area in the photo's pixels, or null when the author skips this photo. */
   done: (area: Area | null) => void;
 }
@@ -26,6 +27,7 @@ export function PhotoCropDialog({ request }: { request: CropRequest | null }) {
     <Dialog open={!!request} onOpenChange={(open) => !open && request?.done(null)}>
       <DialogContent
         showCloseButton={false}
+        className="max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] overflow-y-auto"
         // A drag that ends outside the frame must not drop the photo.
         onPointerDownOutside={(e) => e.preventDefault()}
       >
@@ -57,6 +59,8 @@ function CropFrame({ request }: { request: CropRequest }) {
           crop={crop}
           zoom={zoom}
           aspect={1}
+          cropShape={request.round ? "round" : "rect"}
+          showGrid={!request.round}
           minZoom={1}
           maxZoom={MAX_ZOOM}
           objectFit="cover"
@@ -82,7 +86,7 @@ function CropFrame({ request }: { request: CropRequest }) {
       </label>
       <DialogFooter>
         <Button variant="outline" onClick={() => request.done(null)}>
-          {t("crop.skip")}
+          {t(request.round ? "settings.cancel" : "crop.skip")}
         </Button>
         <Button disabled={!area} onClick={() => area && request.done(area)}>
           {t("crop.use")}

@@ -1,6 +1,7 @@
 // Turns a picked photo into the two square renditions the server stores, and uploads them.
 // Only the chosen square leaves the phone, re-encoded; the server strips JPEG metadata (R16, R18).
 import { PHOTO_SIZES } from "../../shared/journal";
+import { AVATAR_MAX_BYTES, AVATAR_PICK_MAX_BYTES, AVATAR_PICK_TYPES, AVATAR_SIDE } from "../../shared/avatar";
 import type { ApiError, PhotoUploadResponse } from "../../shared/types";
 import type { ApiResult } from "../api";
 
@@ -20,6 +21,24 @@ export interface Renditions {
 /* Bakes the EXIF rotation into the pixels before the metadata is dropped by re-encoding. */
 export function decodePhoto(file: File): Promise<ImageBitmap> {
   return createImageBitmap(file, { imageOrientation: "from-image" });
+}
+
+export function avatarFileError(file: File): "avatar.wrongType" | "avatar.tooLarge" | null {
+  if (!AVATAR_PICK_TYPES.includes(file.type) && !(file.type === "" && /\.(jpe?g|png|heic|heif)$/i.test(file.name))) return "avatar.wrongType";
+  return file.size > AVATAR_PICK_MAX_BYTES ? "avatar.tooLarge" : null;
+}
+
+export async function renderAvatar(bitmap: ImageBitmap, area: Area): Promise<Blob> {
+  const [el, ctx] = canvas(AVATAR_SIDE);
+  try {
+    ctx.drawImage(bitmap, area.x, area.y, area.width, area.height, 0, 0, AVATAR_SIDE, AVATAR_SIDE);
+    const blob = await encode(el, AVATAR_MAX_BYTES);
+    if (blob.size > AVATAR_MAX_BYTES) throw new Error("avatar encode too large");
+    return blob;
+  } finally {
+    bitmap.close();
+    el.width = el.height = 0;
+  }
 }
 
 function canvas(side: number): [HTMLCanvasElement, CanvasRenderingContext2D] {

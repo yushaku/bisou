@@ -1,6 +1,24 @@
 import type { PhotoSize } from "../../shared/types";
 import type { Env } from "../env";
 
+export function avatarKey(userId: string, id: string): string {
+  return `users/${userId}/avatar/${id}`;
+}
+
+export async function purgeAvatars(env: Env, userId: string, keepId: string | null): Promise<void> {
+  try {
+    let cursor: string | undefined;
+    do {
+      const page = await env.PHOTOS.list({ prefix: avatarKey(userId, ""), cursor });
+      const keys = page.objects.map((object) => object.key).filter((key) => key !== avatarKey(userId, keepId ?? ""));
+      if (keys.length) await env.PHOTOS.delete(keys);
+      cursor = page.truncated ? page.cursor : undefined;
+    } while (cursor);
+  } catch {
+    console.error("[bisou] avatar purge failed", 1);
+  }
+}
+
 export function photoKey(coupleId: string, id: string, size: PhotoSize): string {
   return `couples/${coupleId}/photos/${id}/${size}`;
 }

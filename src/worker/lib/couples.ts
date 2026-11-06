@@ -42,7 +42,7 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
     db.prepare(`SELECT id, start_date FROM couples WHERE id = ${mine}`).bind(userId),
     db
       .prepare(
-        `SELECT u.id AS id, u.display_name AS display_name, u.birth_date AS birth_date FROM couple_members m JOIN users u ON u.id = m.user_id
+        `SELECT u.id AS id, u.display_name AS display_name, u.birth_date AS birth_date, u.avatar_id FROM couple_members m JOIN users u ON u.id = m.user_id
          WHERE m.couple_id = ${mine} ORDER BY m.joined_at, m.rowid`,
       )
       .bind(userId),
@@ -52,10 +52,11 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
   ]);
   const row = (coupleRes?.results as { id: string; start_date: string | null }[] | undefined)?.[0];
   if (!row) return null;
-  const members = ((membersRes?.results ?? []) as { id: string; display_name: string | null; birth_date: string | null }[]).map((m) => ({
+  const members = ((membersRes?.results ?? []) as { id: string; display_name: string | null; birth_date: string | null; avatar_id: string | null }[]).map((m) => ({
     id: m.id,
     displayName: m.display_name,
     birthDate: m.birth_date,
+    avatarId: m.avatar_id,
   }));
   const couple: Couple = { id: row.id, startDate: row.start_date, members, events: (eventsRes?.results ?? []) as unknown as CoupleEvent[] };
   const code = (codeRes?.results as { code: string; expires_at: number }[] | undefined)?.[0];

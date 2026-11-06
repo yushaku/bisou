@@ -12,7 +12,7 @@ import { useNow } from "../lib/useNow";
 import type { Couple, CoupleEvent } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
-import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
+import { CoupleAvatars, toPeople, type Person } from "../components/bisou/CoupleAvatars";
 import { DaysCounter } from "../components/bisou/DaysCounter";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { useI18n } from "../i18n";
@@ -47,12 +47,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
   const memory = useContext(TabMemory);
 
   // Creator first on both phones, so each partner keeps the same tint everywhere.
-  const tones: Person["tone"][] = ["primary", "secondary"];
-  const people = couple.members.slice(0, 2).map((m, i) => ({
-    name: (m.id === session.user.id ? session.user.displayName : m.displayName) ?? "?",
-    tone: tones[i] ?? "primary",
-    birthDate: m.id === session.user.id ? session.user.birthDate : m.birthDate,
-  })) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
+  const people = toPeople(couple.members.slice(0, 2), session.user) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
 
   async function saveStartDate(day: string): Promise<string | null> {
     const res = await api.setStartDate(day);

@@ -25,8 +25,8 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
     // credentials default to same-origin, so the session cookie goes along.
     res = await fetch(path, {
       method,
-      headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      headers: body === undefined || body instanceof FormData ? undefined : { "Content-Type": "application/json" },
+      body: body instanceof FormData ? body : body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     return { ok: false, status: 0, error: null };
@@ -43,6 +43,12 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  setAvatar: (blob: Blob) => {
+    const form = new FormData();
+    form.set("photo", blob, blob.type === "image/webp" ? "avatar.webp" : "avatar.jpg");
+    return call<{ user: User }>("PUT", "/api/me/avatar", form);
+  },
+  removeAvatar: () => call<{ user: User }>("DELETE", "/api/me/avatar"),
   updateEvent: (id: string, input: CoupleEventInput) => call<CoupleResponse>("PUT", `/api/events/${encodeURIComponent(id)}`, input),
   deleteEvent: (id: string) => call<CoupleResponse>("DELETE", `/api/events/${encodeURIComponent(id)}`),
   createEvent: (input: CoupleEventInput) => call<CoupleResponse>("POST", "/api/events", input),
@@ -80,4 +86,8 @@ export const api = {
 
 export function photoUrl(id: string, size: PhotoSize): string {
   return `/api/photos/${encodeURIComponent(id)}/${size}`;
+}
+
+export function avatarUrl(userId: string, avatarId: string): string {
+  return `/api/avatars/${encodeURIComponent(userId)}/${encodeURIComponent(avatarId)}`;
 }

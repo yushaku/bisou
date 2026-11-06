@@ -1,11 +1,12 @@
-import { Cake, CalendarHeart, CircleCheck, Heart, LogOut, Mail, UserRound } from "lucide-react";
-import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
+import { Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
 import { api } from "../api";
 import { BottomBar } from "../components/bisou/AppShell";
-import { CoupleAvatars, PersonAvatar, type Person } from "../components/bisou/CoupleAvatars";
+import { CoupleAvatars, PersonAvatar, toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import type { CropRequest } from "../components/bisou/PhotoCropDialog";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { SettingsGroup, SettingsRow } from "../components/bisou/SettingsGroup";
 import { AppearanceSettings } from "../components/bisou/ThemeControls";
@@ -17,9 +18,12 @@ import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { startDateError } from "../lib/startDate";
 import { useTabNavigation } from "../lib/useTabNavigation";
+import { avatarFileError, decodePhoto, renderAvatar, type Area } from "../lib/photo";
+import { fitSquare } from "../lib/compose";
 import type { SessionProps } from "./SignedInShell";
 
 const DateSheet = lazy(() => import("../components/bisou/DateSheet").then((m) => ({ default: m.DateSheet })));
+const PhotoCropDialog = lazy(() => import("../components/bisou/PhotoCropDialog").then((m) => ({ default: m.PhotoCropDialog })));
 
 export function Settings({ user, onUser, onSignedOut, couple, onCouple }: SessionProps & {
   couple: Couple | null | undefined;
@@ -33,18 +37,85 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   const [birthdayOpen, setBirthdayOpen] = useState(false);
   const [birthdayLoaded, setBirthdayLoaded] = useState(false);
   const dateButton = useRef<HTMLButtonElement>(null);
-  const [sheet, setSheet] = useState<"profile" | "logout">("profile");
+  const [sheet, setSheet] = useState<"profile" | "logout" | "avatar">("profile");
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
   const [dateLoaded, setDateLoaded] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
+  const avatarInput = useRef<HTMLInputElement>(null);
+  const cancelCrop = useRef<(() => void) | null>(null);
+  const mounted = useRef(true);
+  const [cropping, setCropping] = useState<CropRequest | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; cancelCrop.current?.(); };
+  }, []);
   const paired = (couple?.members.length ?? 0) >= 2;
   const partner = paired ? couple?.members.find((member) => member.id !== user.id) : null;
-  const people = paired ? couple!.members.slice(0, 2).map((member, i) => ({
-    name: (member.id === user.id ? user.displayName : member.displayName) ?? "?",
-    tone: i === 0 ? "primary" : "secondary",
-  })) as [Person, Person] : null;
+  const members = toPeople(couple?.members ?? [], user);
+  const people: [Person, Person] | null = paired ? [members[0]!, members[1]!] : null;
+  const ownPerson = toPeople([user], user)[0]!;
+
+  function openAvatar(button: HTMLButtonElement) {
+    sheetButton.current = button;
+    setSheet("avatar");
+    setRemovingAvatar(false);
+    setOpen(true);
+  }
+
+  async function pickAvatar(file: File) {
+    const error = avatarFileError(file);
+    if (error) { toast.error(t(error)); return; }
+    setAvatarBusy(true);
+    let bitmap: ImageBitmap;
+    try { bitmap = await decodePhoto(file); } catch {
+      toast.error(t("avatar.wrongType"));
+      setAvatarBusy(false);
+      return;
+    }
+    if (!mounted.current) { bitmap.close(); return; }
+    setOpen(false);
+    try {
+      const area = await new Promise<Area | null>((resolve) => {
+        const url = URL.createObjectURL(file);
+        const done = (area: Area | null) => {
+          URL.revokeObjectURL(url);
+          cancelCrop.current = null;
+          if (mounted.current) setCropping(null);
+          resolve(area && fitSquare(area, bitmap));
+        };
+        cancelCrop.current = () => done(null);
+        setCropping({ url, index: 0, total: 1, round: true, done });
+      });
+      if (!area) { bitmap.close(); return; }
+      const blob = await renderAvatar(bitmap, area);
+      const res = await api.setAvatar(blob);
+      if (res.ok) { onUser(res.data.user); toast.success(t("avatar.saved")); }
+      else toast.error(t("avatar.saveFailed"));
+    } catch {
+      bitmap.close();
+      toast.error(t("avatar.saveFailed"));
+    } finally {
+      if (mounted.current) {
+        setAvatarBusy(false);
+        sheetButton.current?.focus({ preventScroll: true });
+      }
+    }
+  }
+
+  async function removeAvatar() {
+    setAvatarBusy(true);
+    const res = await api.removeAvatar();
+    setAvatarBusy(false);
+    if (res.ok) {
+      onUser(res.data.user);
+      setOpen(false);
+      toast.success(t("avatar.removed"));
+    } else toast.error(t("avatar.saveFailed"));
+  }
 
   async function changeLocale(next: Locale) {
     const res = await api.updateMe({ locale: next });
@@ -84,7 +155,11 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
       <SubPageHeader title={t("settings.title")} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
-          {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={{ name: user.displayName ?? user.email, tone: "primary" }} />}
+          <button type="button" aria-label={t("avatar.change")} aria-busy={avatarBusy} disabled={avatarBusy}
+            className="min-h-11 min-w-11 shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            onClick={(event) => openAvatar(event.currentTarget)}>
+            {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={ownPerson} />}
+          </button>
           <div className="min-w-0">
             <p className="break-words font-heading text-xl">{user.displayName ?? t("settings.yourProfile")}</p>
             <p className="break-all text-sm text-muted-foreground">{user.email}</p>
@@ -92,6 +167,8 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
         </div>
         <Drawer open={open} onOpenChange={setOpen}>
           <SettingsGroup title={t("settings.account")}>
+            <SettingsRow icon={CircleUserRound} label={t("avatar.row")} value={t(user.avatarId ? "avatar.set" : "settings.notSet")}
+              disabled={avatarBusy} onClick={(event) => openAvatar(event.currentTarget)} />
             {user.displayName && <DrawerTrigger asChild>
               <SettingsRow icon={UserRound} label={t("home.displayName")} value={user.displayName} onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("profile"); }} />
             </DrawerTrigger>}
@@ -115,19 +192,31 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
           <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); sheetButton.current?.focus({ preventScroll: true }); }}>
             <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
               <DrawerHeader className="px-0 text-left">
-                <DrawerTitle className="font-heading text-2xl">{t(sheet === "profile" ? "home.displayName" : "settings.logoutConfirm")}</DrawerTitle>
-                <DrawerDescription className={sheet === "profile" ? "sr-only" : undefined}>
-                  {t(sheet === "profile" ? "home.displayNamePlaceholder" : "settings.logoutHint")}
+                <DrawerTitle className="font-heading text-2xl">{t(sheet === "avatar" ? "avatar.row" : sheet === "profile" ? "home.displayName" : "settings.logoutConfirm")}</DrawerTitle>
+                <DrawerDescription className={sheet !== "logout" ? "sr-only" : undefined}>
+                  {t(sheet === "avatar" ? "avatar.change" : sheet === "profile" ? "home.displayNamePlaceholder" : "settings.logoutHint")}
                 </DrawerDescription>
               </DrawerHeader>
-              {sheet === "profile" ? <ProfileForm key={String(open)} user={user} onUser={onUser} /> : <>
+              {sheet === "avatar" ? <div className="flex flex-col gap-3">
+                <Button loading={avatarBusy} onClick={() => avatarInput.current?.click()}>{t("avatar.choose")}</Button>
+                {user.avatarId && (removingAvatar ? <>
+                  <p id="avatar-remove-confirm">{t("avatar.removeConfirm")}</p>
+                  <Button autoFocus variant="destructive" aria-describedby="avatar-remove-confirm" loading={avatarBusy} onClick={() => void removeAvatar()}>{t("avatar.remove")}</Button>
+                </> : <Button variant="destructive" disabled={avatarBusy} onClick={() => setRemovingAvatar(true)}>{t("avatar.remove")}</Button>)}
+              </div> : sheet === "profile" ? <ProfileForm key={String(open)} user={user} onUser={onUser} /> : <>
                 {logoutError && <p role="alert" className="mb-3 text-destructive">{t("error.generic")}</p>}
                 <Button variant="destructive" className="w-full" loading={loggingOut} onClick={() => void logout()}>{t("home.logout")}</Button>
               </>}
-              <Button variant="outline" className="mt-3 w-full" onClick={() => setOpen(false)}>{t(sheet === "profile" ? "common.close" : "settings.cancel")}</Button>
+              <Button variant="outline" className="mt-3 w-full" disabled={avatarBusy} onClick={() => setOpen(false)}>{t(sheet === "logout" ? "settings.cancel" : "common.close")}</Button>
             </div>
           </DrawerContent>
         </Drawer>
+        <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={(event) => {
+          const file = event.currentTarget.files?.[0];
+          event.currentTarget.value = "";
+          if (file) void pickAvatar(file);
+        }} />
+        {cropping && <Suspense fallback={null}><PhotoCropDialog request={cropping} /></Suspense>}
         {birthdayLoaded && <Suspense fallback={null}>
           <DateSheet title={t("birthday.title")} hint={t("birthday.hint")} saveLabel={t("birthday.save")}
             firstMonth={new Date(1900, 0, 1)} emptyMonth={new Date(2000, 0, 1)}

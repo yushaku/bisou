@@ -56,7 +56,7 @@ describe("POST /api/couple (create)", () => {
   it("creates a couple with the caller alone and a 24 h code from the no look-alike alphabet", async () => {
     const a = await user("An");
     const couple = await create(a);
-    expect(couple.members).toEqual([{ id: a.id, displayName: "An", birthDate: null }]);
+    expect(couple.members).toEqual([{ id: a.id, displayName: "An", birthDate: null, avatarId: null }]);
     expect(couple.startDate).toBeNull();
     expect(couple.pendingCode!.code).toMatch(new RegExp(`^[${PAIR_CODE_ALPHABET}]{6}$`));
     expect(couple.pendingCode!.code).not.toMatch(/[01OIL]/);
@@ -160,8 +160,8 @@ describe("POST /api/couple/join", () => {
   it("joins with a valid code: both see the same couple, the code is gone", async () => {
     const { a, b, couple, code } = await paired();
     expect(couple.members).toEqual([
-      { id: a.id, displayName: "An", birthDate: null },
-      { id: b.id, displayName: "Minh", birthDate: null },
+      { id: a.id, displayName: "An", birthDate: null, avatarId: null },
+      { id: b.id, displayName: "Minh", birthDate: null, avatarId: null },
     ]);
     expect(couple.pendingCode).toBeUndefined();
     expect(await getCouple(a)).toEqual(couple);

@@ -61,8 +61,8 @@ describe("birthdays", () => {
       expect(res.status).toBe(200);
       for (const who of [a, b]) {
         expect(await members(who)).toEqual([
-          { id: a.id, displayName: "An", birthDate: "1997-11-18" },
-          { id: b.id, displayName: "Minh", birthDate },
+          { id: a.id, displayName: "An", birthDate: "1997-11-18", avatarId: null },
+          { id: b.id, displayName: "Minh", birthDate, avatarId: null },
         ]);
       }
     }
@@ -89,13 +89,13 @@ describe("birthdays", () => {
   it("AC1 R1: birthday queries retain indexed user and membership lookups", async () => {
     const { a } = await paired();
     const plans = [
-      await explain(`SELECT u.id AS id, u.display_name AS display_name, u.birth_date AS birth_date
+      await explain(`SELECT u.id AS id, u.display_name AS display_name, u.birth_date AS birth_date, u.avatar_id
         FROM couple_members m JOIN users u ON u.id = m.user_id
         WHERE m.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?) ORDER BY m.joined_at, m.rowid`, a.id),
-      await explain("SELECT id, email, display_name, locale, birth_date, created_at FROM users WHERE email = ?", "an@example.com"),
-      await explain(`SELECT s.expires_at AS session_expires_at, u.id, u.email, u.display_name, u.locale, u.birth_date, u.created_at
+      await explain("SELECT id, email, display_name, locale, birth_date, avatar_id, created_at FROM users WHERE email = ?", "an@example.com"),
+      await explain(`SELECT s.expires_at AS session_expires_at, u.id, u.email, u.display_name, u.locale, u.birth_date, u.avatar_id, u.created_at
         FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?`, "hash"),
-      await explain("UPDATE users SET display_name = ?, locale = ?, birth_date = ? WHERE id = ? RETURNING id, email, display_name, locale, birth_date, created_at", "An", "vi", null, a.id),
+      await explain("UPDATE users SET display_name = ?, locale = ?, birth_date = ? WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at", "An", "vi", null, a.id),
     ];
     for (const plan of plans) {
       expect(plan.some((line) => line.includes("SEARCH"))).toBe(true);

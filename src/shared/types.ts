@@ -14,6 +14,7 @@ export interface User {
   email: string;
   displayName: string | null;
   birthDate: string | null;
+  avatarId: string | null;
   locale: Locale;
   createdAt: number;
 }
@@ -80,6 +81,7 @@ export interface CoupleMember {
   id: string;
   displayName: string | null;
   birthDate: string | null;
+  avatarId: string | null;
 }
 
 export interface CoupleEventInput {
