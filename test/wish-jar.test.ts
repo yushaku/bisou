@@ -9,7 +9,7 @@ afterEach(() => vi.unstubAllGlobals());
 it.each([
   ["vi", "Hũ của An, mở hũ của mình", "Hũ của Bình, quay quà"],
   ["en", "An&#x27;s jar, open my jar", "Bình&#x27;s jar, spin for a gift"],
-])("renders full %s names without a partner count and unique clip paths", (locale, mine, partner) => {
+])("R25, R27: renders full %s names without a partner count and unique clip paths", (locale, mine, partner) => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const html = renderToString(h(I18nProvider, null,
     h(WishJar, { person: { name: "An", tone: "primary" }, level: 4, mine: true, onOpen: () => {} }),
@@ -23,7 +23,7 @@ it.each([
   expect(html).not.toContain("aria-disabled=");
 });
 
-it("labels only a confirmed empty jar, keeping loading and error jars available", () => {
+it("AC15 (R27): labels only a confirmed empty jar, keeping loading and error jars available", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const render = (empty: boolean) => renderToString(h(I18nProvider, null,
     h(WishJar, { person: { name: "Bình", tone: "secondary" }, level: 0, empty, onOpen: () => {} }),

@@ -4,6 +4,7 @@
 
 ### Added
 
+- Home shows your jar and your partner's jar: yours fills up as you add wishes, your partner's only shows empty or filled, and tapping it opens the spin.
 - When your partner's jar holds no open wish, the jar card says so and spinning is off; it never shows how many wishes there are.
 - Set, replace or remove your profile photo in Settings; only you and your partner can see it.
 

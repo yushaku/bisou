@@ -8,21 +8,21 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("Home wish jars", () => {
   it.each([[0, 0], [1, 1], [2, 1], [3, 2], [5, 2], [6, 3], [9, 3], [10, 4], [100, 4]])(
-    "%i open wishes fills my jar to level %i", (count, level) => {
+    "R26: %i open wishes fill my jar to level %i", (count, level) => {
       expect(wishJarLevels({ open: { length: count }, partnerJarEmpty: false }).mine).toBe(level);
     },
   );
 
-  it.each([0, 1, 5, 10, 100])("partner level ignores my count %i", (count) => {
+  it.each([0, 1, 5, 10, 100])("R27: partner level ignores my count %i", (count) => {
     expect(wishJarLevels({ open: { length: count }, partnerJarEmpty: false }).partner).toBe(2);
     expect(wishJarLevels({ open: { length: count }, partnerJarEmpty: true }).partner).toBe(0);
   });
 
-  it("shows empty glass while data is unknown", () => {
+  it("R27: shows empty glass while data is unknown", () => {
     expect(wishJarLevels(null)).toEqual({ mine: 0, partner: 0 });
   });
 
-  it("carries a spin request to Wishes without opening the editor", () => {
+  it("R28: carries a spin request to Wishes without opening the editor", () => {
     expect(readCreateRequest({ create: "spin" })).toBe("spin");
     expect(tabMove("/", undefined, "/wishes", "spin")).toBe("push");
   });
