@@ -1,5 +1,11 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "install.title": "Mang Bisou về màn hình chính",
+  "install.share": "Chạm vào nút Chia sẻ",
+  "install.addToHome": "Chọn Thêm vào màn hình chính",
+  "install.confirm": "Chạm Thêm để giữ góc nhỏ bên bạn",
+  "install.button": "Cài Bisou",
+  "install.dismiss": "Đóng hướng dẫn cài Bisou",
   "errorScreen.title": "Có chút trục trặc rồi",
   "errorScreen.body": "Bạn thử tải lại để về góc nhỏ của hai đứa nhé.",
   "errorScreen.reload": "Tải lại",

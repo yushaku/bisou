@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p test/tsconfig.json",
-    "test": "vitest run && node --test test/design-system.test.mjs scripts/check-migrations.test.mjs",
+    "test": "vitest run && node --test test/design-system.test.mjs test/pwa-assets.test.mjs scripts/check-migrations.test.mjs",
     "check:migrations": "node scripts/check-migrations.mjs",
     "test:watch": "vitest",
     "icons": "node scripts/gen-icons.mjs",

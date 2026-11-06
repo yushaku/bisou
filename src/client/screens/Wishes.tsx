@@ -40,9 +40,10 @@ const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then(
 export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
-  const request = readCreateRequest(useHistoryState<unknown>());
+  const historyState = useHistoryState<{ shortcut?: boolean } | null>();
+  const request = readCreateRequest(historyState);
   const [view, setView] = useState<Section | "spin">(() => request === "spin" ? "spin" : memory?.wishesSection ?? "jar");
-  const [spinFromHome, setSpinFromHome] = useState(request === "spin");
+  const [spinFromHome, setSpinFromHome] = useState(request === "spin" && !historyState?.shortcut);
   const [filter, setFilter] = useState<Filter>(() => memory?.wishesFilter ?? "all");
   const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [receiving, setReceiving] = useState<Wish | null>(null);
@@ -63,7 +64,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useCreateRequest("spin", () => { setSpinFromHome(true); setView("spin"); });
+  useCreateRequest("spin", () => { setSpinFromHome(!historyState?.shortcut); setView("spin"); });
   useCreateRequest("wishes", () => { setFromMenu(true); setView("jar"); setEditing(null); });
 
   async function remove() {

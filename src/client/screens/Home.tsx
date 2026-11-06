@@ -1,3 +1,4 @@
+import { InstallCard } from "../components/bisou/InstallCard";
 import { CalendarHeart } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useState } from "react";
 import { toast } from "sonner";
@@ -66,6 +67,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
 
   return (
     <SignedInShell {...session} tab="home">
+      <InstallCard />
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={people} size="sm" />
         <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: people[0].name, b: people[1].name })}</p>

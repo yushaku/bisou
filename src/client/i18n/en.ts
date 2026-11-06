@@ -1,6 +1,12 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "install.title": "Keep Bisou on your home screen",
+  "install.share": "Tap the Share button",
+  "install.addToHome": "Choose Add to Home Screen",
+  "install.confirm": "Tap Add to keep your shared space close",
+  "install.button": "Install Bisou",
+  "install.dismiss": "Dismiss Bisou installation tips",
   "errorScreen.title": "Something went wrong",
   "errorScreen.body": "Reload to get back to your shared space.",
   "errorScreen.reload": "Reload",

@@ -30,7 +30,12 @@ export default defineConfig({
       manifest: {
         name: "Bisou",
         short_name: "Bisou",
-        description: "Bisou",
+        description: "Góc nhỏ của hai đứa: lưu kỷ niệm, viết nhật ký và gửi gắm điều ước.",
+        id: "/",
+        shortcuts: [
+          { name: "Viết nhật ký", url: "/journal?compose=1" },
+          { name: "Quay quà", url: "/wishes?spin=1" },
+        ],
         lang: "vi",
         start_url: "/",
         scope: "/",
@@ -50,6 +55,7 @@ export default defineConfig({
         clientsClaim: true,
         // App shell only (fonts included, for offline): never cache the API.
         globPatterns: ["**/*.{js,css,html,svg,png,webp,webmanifest,woff2}"],
+        globIgnores: ["splash/**"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [],
