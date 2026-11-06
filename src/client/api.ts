@@ -43,6 +43,8 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  updateEvent: (id: string, input: CoupleEventInput) => call<CoupleResponse>("PUT", `/api/events/${encodeURIComponent(id)}`, input),
+  deleteEvent: (id: string) => call<CoupleResponse>("DELETE", `/api/events/${encodeURIComponent(id)}`),
   createEvent: (input: CoupleEventInput) => call<CoupleResponse>("POST", "/api/events", input),
   receiveWish: (id: string, input: ReceiveWishInput) => call<{ wish: Wish; entry: JournalEntry }>("POST", `/api/wishes/${encodeURIComponent(id)}/received`, input),
   spin: (budget: number) => call<{ wish: SpinWish | null }>("POST", "/api/wishes/spin", { budget }),

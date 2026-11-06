@@ -4,6 +4,8 @@
 
 ### Added
 
+- Add shared one-off or yearly events from Home, edit or delete them together, and see distant plans under Later.
+
 - Keep a private wish jar with optional photos, spin your partner's jar within a budget, and secretly claim a wish.
 - Mark a wish received to keep a shared journal memory with a note and up to four photos.
 - Open the shared journal from Home: entries grouped by day, newest first, with older days loading as you scroll.

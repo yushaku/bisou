@@ -9,7 +9,7 @@ import { Button } from "../components/ui/button";
 import { TabMemory } from "../lib/tabMemory";
 import { useCreateRequest } from "../lib/useTabNavigation";
 import { useNow } from "../lib/useNow";
-import type { Couple } from "../../shared/types";
+import type { Couple, CoupleEvent } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, type Person } from "../components/bisou/CoupleAvatars";
@@ -34,8 +34,8 @@ interface HomeProps extends SessionProps {
 
 export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
-  const [addingEvent, setAddingEvent] = useState(false);
-  const openAdd = useCallback(() => setAddingEvent(true), []);
+  const [editingEvent, setEditingEvent] = useState<CoupleEvent | null>();
+  const openAdd = useCallback(() => setEditingEvent(null), []);
   useCreateRequest("event", openAdd);
   const [picking, setPicking] = useState(false);
   // Stays mounted after the first open so the sheet can animate closed.
@@ -81,7 +81,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
         />
       )}
 
-      <UpcomingCard events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter((event) => !(event.kind === "custom" && event.later))} action={
+      <UpcomingCard onOpen={(id) => setEditingEvent(couple.events.find((event) => event.id === id))} events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter((event) => !(event.kind === "custom" && event.later))} action={
         <Button asChild variant="ghost" size="sm">
           <Link id="events-see-all" href="/events" state={{ from: "/" }} onClick={() => {
             if (memory) {
@@ -92,7 +92,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
         </Button>
       } />
 
-      {addingEvent && <Suspense fallback={null}><EventSheet onClose={() => setAddingEvent(false)} onCouple={onCouple} onSignedOut={session.onSignedOut} /></Suspense>}
+      {editingEvent !== undefined && <Suspense fallback={null}><EventSheet event={editingEvent} onClose={() => setEditingEvent(undefined)} onCouple={onCouple} onSignedOut={session.onSignedOut} /></Suspense>}
       {sheetLoaded && (
         <Suspense fallback={null}>
           <DateSheet title={t("startDate.title")} hint={t("startDate.hint")} saveLabel={t("startDate.save")} firstMonth={new Date(1950, 0, 1)} open={picking} onOpenChange={setPicking} value={couple.startDate} onSave={saveStartDate} />

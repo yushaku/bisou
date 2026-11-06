@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { toDayString } from "../../shared/days";
 import { upcomingEvents, type UpcomingEvent } from "../../shared/events";
-import type { Couple, User } from "../../shared/types";
+import type { Couple, CoupleEvent, User } from "../../shared/types";
 import { BottomBar } from "../components/bisou/AppShell";
 import { EventRow } from "../components/bisou/EventRow";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
@@ -14,7 +14,8 @@ import { useTabNavigation } from "../lib/useTabNavigation";
 const EventSheet = lazy(() => import("../components/bisou/EventSheet").then((m) => ({ default: m.EventSheet })));
 
 export function Events({ couple, user, onCouple, onSignedOut }: { couple: Couple; user: User; onCouple: (couple: Couple | null) => void; onSignedOut: () => void }) {
-  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<CoupleEvent | null>();
+  const openEvent = (id: string) => setEditing(couple.events.find((event) => event.id === id));
   const { t, locale } = useI18n();
   const now = useNow();
   const navigation = useTabNavigation();
@@ -41,17 +42,17 @@ export function Events({ couple, user, onCouple, onSignedOut }: { couple: Couple
               <time dateTime={month}>{formatDay(`${month}-01`, locale, "month")}</time>
             </h2>
             <Card className="gap-0 py-0">
-              <ul className="divide-y divide-border">{events.map((event, index) => <EventRow key={index} event={event} />)}</ul>
+              <ul className="divide-y divide-border">{events.map((event, index) => <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={openEvent} />)}</ul>
             </Card>
           </section>
         ))}
         {later.length > 0 && <section aria-labelledby="events-later" className="flex flex-col gap-3">
           <h2 id="events-later" className="font-heading text-xl">{t("events.later")}</h2>
-          <Card className="gap-0 py-0"><ul className="divide-y divide-border">{later.map((event, index) => <EventRow key={index} event={event} />)}</ul></Card>
+          <Card className="gap-0 py-0"><ul className="divide-y divide-border">{later.map((event, index) => <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={openEvent} />)}</ul></Card>
         </section>}
-        {adding && <Suspense fallback={null}><EventSheet onClose={() => setAdding(false)} onCouple={onCouple} onSignedOut={onSignedOut} /></Suspense>}
+        {editing !== undefined && <Suspense fallback={null}><EventSheet event={editing} onClose={() => setEditing(undefined)} onCouple={onCouple} onSignedOut={onSignedOut} /></Suspense>}
       </main>
-      <BottomBar active="home" {...navigation} onCreate={() => setAdding(true)} />
+      <BottomBar active="home" {...navigation} onCreate={() => setEditing(null)} />
     </div>
   );
 }

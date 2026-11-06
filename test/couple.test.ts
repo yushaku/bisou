@@ -375,11 +375,13 @@ describe("GET /api/couple", () => {
   it("shapes: alone with a pending code, paired without one", async () => {
     const a = await user("An");
     const alone = await create(a);
-    expect(Object.keys(alone).sort()).toEqual(["id", "members", "pendingCode", "startDate"]);
+    expect(Object.keys(alone).sort()).toEqual(["events", "id", "members", "pendingCode", "startDate"]);
+    expect(alone.events).toEqual([]);
     const b = await user("Minh");
     await join(b, alone.pendingCode!.code);
     const both = await getCouple(a);
-    expect(Object.keys(both!).sort()).toEqual(["id", "members", "startDate"]);
+    expect(Object.keys(both!).sort()).toEqual(["events", "id", "members", "startDate"]);
+    expect(both!.events).toEqual([]);
     expect(both!.members).toHaveLength(2);
   });
 
