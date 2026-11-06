@@ -31,3 +31,16 @@ test("every portrait splash link has matching pixels and the approved background
     for (let i = 0; i < 3; i++) assert.ok(Math.abs(pixel[i] - background[i]) < 16);
   }
 });
+
+test("manifest shortcuts open the journal composer and the spin through the paths the app reads", async () => {
+  const config = await readFile("vite.config.ts", "utf8");
+  const urls = [...config.matchAll(/shortcuts: \[([^\]]*)\]/g)][0][1].match(/url: "([^"]+)"/g).map((entry) => entry.slice(6, -1));
+  assert.deepEqual(urls, ["/journal?compose=1", "/wishes?spin=1"]);
+});
+
+test("browser bar colour starts from the light and dark theme backgrounds and the status bar style stays default", async () => {
+  const html = await readFile("index.html", "utf8");
+  assert.ok(html.includes(`<meta name="theme-color" content="${palettes.peach.tokens.background}" media="(prefers-color-scheme: light)"`));
+  assert.ok(html.includes(`<meta name="theme-color" content="${palettes.cocoa.tokens.background}" media="(prefers-color-scheme: dark)"`));
+  assert.ok(html.includes('<meta name="apple-mobile-web-app-status-bar-style" content="default" />'));
+});

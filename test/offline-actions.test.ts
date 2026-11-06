@@ -4,6 +4,8 @@ import { api } from "../src/client/api";
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
 import { ClaimsList } from "../src/client/components/bisou/ClaimsList";
 import { ComposeSheet } from "../src/client/components/bisou/ComposeSheet";
+import { AppShell } from "../src/client/components/bisou/AppShell";
+import { WishSheet } from "../src/client/components/bisou/WishSheet";
 import { Wishes } from "../src/client/screens/Wishes";
 
 const state = vi.hoisted(() => [] as unknown[]);
@@ -82,4 +84,36 @@ it("ComposeSheet keeps a valid draft but refuses submission offline", async () =
   expect(save).not.toHaveBeenCalled();
   expect(nodes.find((node) => node.props.children === "compose.save")!.props.disabled).toBe(true);
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
+});
+
+it("AC11 R11: a new journal entry is not sent offline and its save button is disabled with the offline note", async () => {
+  vi.stubGlobal("navigator", { onLine: false });
+  const create = vi.spyOn(api, "createEntry");
+  const sheet = ComposeSheet({ open: true, onOpenChange: vi.fn(), author: { name: "An", tone: "primary" }, partnerName: "Binh", onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const form = sheet.props.children[0].props.children;
+  state.push(Date.UTC(2026, 10, 6), "2026-11-06", "A new memory");
+  const nodes = elements(form.type(form.props));
+  nodes.find((node) => node.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await Promise.resolve();
+  expect(create).not.toHaveBeenCalled();
+  expect(nodes.find((node) => node.props.children === "compose.save")!.props.disabled).toBe(true);
+  expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
+});
+
+it("AC11 R11: a new wish is not sent offline and its save button is disabled with the offline note", async () => {
+  vi.stubGlobal("navigator", { onLine: false });
+  const create = vi.spyOn(api, "createWish");
+  state.push("A book");
+  const nodes = elements(WishSheet({ wish: null, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() }));
+  nodes.find((node) => node.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await Promise.resolve();
+  expect(create).not.toHaveBeenCalled();
+  expect(nodes.find((node) => node.props.children === "wish.save")!.props.disabled).toBe(true);
+  expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
+});
+
+it.each([false, true])("AC9 R9: the app shell shows one offline bar only while offline: online=%s", (online) => {
+  vi.stubGlobal("navigator", { onLine: online });
+  const bar = elements(AppShell({ title: "Home", children: null })).filter((node) => node.props.children === "offline.bar");
+  expect(bar).toHaveLength(online ? 0 : 1);
 });
