@@ -49,13 +49,18 @@ export function WishCard({ wish, className, actions }: { wish: Wish; className?:
         {wish.price !== null && <p className="mt-0.5 font-heading text-lg tabular-nums">{formatVnd(wish.price, locale)}</p>}
         <WishPriority priority={wish.priority} />
       </div>
-      {actions}
-      {wish.link && (
-        <Button asChild variant="ghost" size="icon" className="shrink-0 self-start">
-          <a href={wish.link} target="_blank" rel="noreferrer noopener" aria-label={`${t("wish.openLink")}: ${wish.title}`}>
-            <ExternalLink />
-          </a>
-        </Button>
+      {(wish.link || actions) && (
+        // One narrow column on the right keeps the title wide: link on top, menu below.
+        <div className="-my-1 -mr-1 flex shrink-0 flex-col items-center justify-between self-stretch">
+          {wish.link && (
+            <Button asChild variant="ghost" size="icon">
+              <a href={wish.link} target="_blank" rel="noreferrer noopener" aria-label={`${t("wish.openLink")}: ${wish.title}`}>
+                <ExternalLink />
+              </a>
+            </Button>
+          )}
+          {actions}
+        </div>
       )}
     </Card>
   );
