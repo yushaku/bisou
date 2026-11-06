@@ -70,6 +70,6 @@ describe("profile photo client", () => {
     ]);
     expect(toPeople(members, { ...user, avatarId: null }, t)[0]?.photoUrl).toBeUndefined();
     expect(toPeople([user], { ...user, displayName: null }, t)[0]).toMatchObject({ name: "an", initial: "A" });
-    expect(toPeople([{ ...members[1]!, displayName: null }], user, t)[0]).toMatchObject({ name: messages["common.person"], initial: "V" });
+    expect(toPeople([{ ...members[1]!, displayName: null }], user, t)[0]).toMatchObject({ name: messages["common.person"], initial: "Ấ" });
   });
 });

@@ -174,7 +174,7 @@ export const en: Messages = {
   "settings.title": "Settings",
   "settings.open": "Open settings",
   "common.close": "Close",
-  "common.person": "Member",
+  "common.person": "Partner",
   "settings.appearance": "Appearance",
   "settings.mode": "Light or dark",
   "settings.lightTheme": "Light palette",

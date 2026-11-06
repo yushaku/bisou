@@ -173,7 +173,7 @@ export const vi = {
   "settings.title": "Cài đặt",
   "settings.open": "Mở cài đặt",
   "common.close": "Đóng",
-  "common.person": "Thành viên",
+  "common.person": "Người ấy",
   "settings.appearance": "Giao diện",
   "settings.mode": "Sáng / tối",
   "settings.lightTheme": "Bảng màu sáng",
