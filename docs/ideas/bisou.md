@@ -26,14 +26,38 @@ In: OTP login, pairing code, days-together counter, journal entries with photos,
 Out: everything in Not Doing.
 
 ## Not Doing (and Why)
-- Push notifications: setup cost on iOS PWA, revisit after 2 weeks of use.
+- Push notifications: setup cost on iOS PWA, revisit after 2 weeks of use (now the first item in Next Ideas).
 - Comments and reactions: add only if the two of us ask for them.
 - Offline editing and sync: data lives on the server, only the app shell is cached.
 - End to end encryption: worth it if the app goes public, not for the MVP.
-- Notion import, "two perspectives" mode, daily questions, Love Tree: later or never.
+- Notion import and "two perspectives" mode: later or never. Daily questions and the garden moved to Next Ideas.
 - Native app and App Store: the PWA covers both phones.
 - Custom domain: workers.dev until a domain is bought.
 
 ## Decisions
 - OTP mail is sent from `mail.yuchi-education.com` through Resend free.
 - The UI ships in Vietnamese and English (follows the browser language: vi for Vietnamese browsers, en otherwise; switchable in the app).
+
+## Next Ideas (brainstorm, Nov 2026)
+What similar couple apps charge for (prices from Oct 2026 comparisons): a daily question with answers hidden until both reply (Paired about $80 a year per couple, Agapé, SumOne), home screen widgets with the partner's photo or drawing (Locket, I Choose You, Widgetable), a shared pet or plant that grows with daily use (SumOne, Widgetable, Cozy Couples), Between Plus (love letters, themes, longer voice and video, no ads), date idea libraries with filters and a monthly date goal (Lovewick, Cupla), a "thumb kiss" tap that buzzes the other phone (Candle, Love8), and AI coaching for conflicts (Connected, Lasting). Most charge one plan for both partners.
+
+Ideas for Bisou, in three directions:
+
+- **A. Daily ritual** (what the market pays for most)
+  - Daily question: write separately, reveal together once both answered. D1 is simple; the hard part is about 365 good Vietnamese questions.
+  - Garden (the planned tab): a shared plant that grows from daily questions, journal entries and received wishes. Risk: a streak can turn into pressure.
+- **B. Memories** (cheap, reuses existing data)
+  - On this day: journal entries from the same date in past years, shown on Home.
+  - Time capsule letters: written now, locked until an anniversary or a chosen event.
+  - Milestone timeline and a yearly recap built from journal, events and received wishes.
+- **C. Staying in touch**
+  - Web Push: event reminders, "your partner wrote in the journal", and a light tap. On iPhone it works only after Add to Home Screen; the Worker can send it and Cron Triggers are free. The other ideas work better once this exists.
+  - Date jar: spin for a date idea, reusing the wish jar spin.
+
+Not worth it here: home screen widgets (a PWA cannot ship them), AI coaching (cost and privacy), chat (Zalo or Messenger already does it).
+
+Suggested order: Web Push first, then the daily question feeding the Garden, with On this day slotted in between as a quick win.
+
+Open questions:
+- Only the two of us, or other couples later with a paid plan? This decides whether a free and paid split is needed.
+- Near each other or long distance? Long distance makes direction C matter more.
