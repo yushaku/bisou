@@ -11,7 +11,9 @@
     "noUncheckedIndexedAccess": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-plugin/types"]
+    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-plugin/types", "vite/client"],
+    "resolveJsonModule": true,
+    "paths": { "@/*": ["../src/client/*"] }
   },
-  "include": ["./**/*.ts", "../src/worker", "../src/shared", "../src/client/api.ts", "../src/client/lib/journalFeed.ts", "../src/client/lib/photoSwipe.ts", "../src/client/lib/compose.ts", "../src/client/lib/wishes.ts", "../src/client/lib/startDate.ts", "../src/client/lib/navigation.ts", "../src/client/lib/tabMemory.ts", "../src/client/i18n", "../src/client/lib/photo.ts", "../src/client/lib/utils.ts", "../src/client/components/bisou/CoupleAvatars.tsx", "../src/client/components/bisou/WishJar.tsx", "../src/client/components/ui/avatar.tsx"]
+  "include": ["./**/*.ts", "../src/worker", "../src/shared", "../src/client"]
 }

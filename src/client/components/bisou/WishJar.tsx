@@ -14,6 +14,7 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
   const { t } = useI18n();
   return (
     <button type="button" aria-label={t(mine ? "home.jarMine" : "home.jarPartner", { name: person.name })}
+      aria-describedby={empty ? `${id}-empty` : undefined}
       aria-disabled={empty || undefined} onClick={() => { if (!empty) onOpen(); }}
       className="flex min-w-0 flex-col items-center rounded-xl py-1 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-disabled:cursor-default">
       <span className="w-full break-words font-heading text-lg">{t("home.jarTitle", { name: person.name })}</span>
@@ -143,7 +144,7 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
             <use href={`#${id}-k`} className="jar-sp jar-tw" style={{ animationDelay: "-1.8s" }} />
           </g>
         </svg>
-        {empty && <span className="absolute top-21 right-6 left-6 text-xs leading-snug font-semibold text-balance text-muted-foreground">{t("home.jarEmpty")}</span>}
+        {empty && <span id={`${id}-empty`} className="absolute top-21 right-6 left-6 text-xs leading-snug font-semibold text-balance text-muted-foreground">{t("home.jarEmpty")}</span>}
       </span>
       <PersonAvatar person={person} size="sm" className="mt-0.5" />
     </button>

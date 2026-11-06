@@ -85,7 +85,7 @@ export const en: Messages = {
   "home.jarTitle": "{name}'s jar",
   "home.jarMine": "{name}'s jar, open my jar",
   "home.jarPartner": "{name}'s jar, spin for a gift",
-  "home.jarEmpty": "No wishes added yet",
+  "home.jarEmpty": "No wishes yet",
   "home.seeAll": "See all",
   "nav.label": "Main navigation",
   "nav.home": "Home",

@@ -16,7 +16,7 @@ export function useWishJar(onSignedOut: () => void) {
   }, [memory, onSignedOut]);
 
   useEffect(() => {
-    void refresh(false);
+    void refresh();
     const visible = () => { if (document.visibilityState === "visible") void refresh(); };
     document.addEventListener("visibilitychange", visible);
     window.addEventListener("online", visible);

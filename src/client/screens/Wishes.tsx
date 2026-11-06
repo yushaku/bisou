@@ -42,6 +42,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const memory = useContext(TabMemory);
   const request = readCreateRequest(useHistoryState<unknown>());
   const [view, setView] = useState<Section | "spin">(() => request === "spin" ? "spin" : memory?.wishesSection ?? "jar");
+  const [spinFromHome, setSpinFromHome] = useState(request === "spin");
   const [filter, setFilter] = useState<Filter>(() => memory?.wishesFilter ?? "all");
   const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [receiving, setReceiving] = useState<Wish | null>(null);
@@ -62,7 +63,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useCreateRequest("spin", () => setView("spin"));
+  useCreateRequest("spin", () => { setSpinFromHome(true); setView("spin"); });
   useCreateRequest("wishes", () => { setFromMenu(true); setView("jar"); setEditing(null); });
 
   async function remove() {
@@ -80,8 +81,8 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const optionsButton = (wish: Wish) => <Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>;
 
   return <SignedInShell {...session} tab="wishes">
-    {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button> : <>
-      <div className="mb-4"><WishTeaser onOpen={() => setView("spin")} disabled={jar?.partnerJarEmpty === true} title={t("spin.entry", { name: partnerName })} description={t(jar?.partnerJarEmpty ? "spin.jarEmpty" : "spin.entryHint", { name: partnerName })} /></div>
+    {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => spinFromHome ? history.back() : setView("jar")}><ArrowLeft aria-hidden="true" />{t(spinFromHome ? "common.back" : "wishes.back")}</Button> : <>
+      <div className="mb-4"><WishTeaser onOpen={() => { setSpinFromHome(false); setView("spin"); }} disabled={jar?.partnerJarEmpty === true} title={t("spin.entry", { name: partnerName })} description={t(jar?.partnerJarEmpty ? "spin.jarEmpty" : "spin.entryHint", { name: partnerName })} /></div>
       <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
         <TabsList className="w-full">
           {(Object.keys(SECTIONS) as Section[]).map((id) => <TabsTrigger key={id} value={id}>{t(SECTIONS[id])}</TabsTrigger>)}
