@@ -15,9 +15,10 @@ export interface Person {
 export function toPeople(members: CoupleMember[], user: User): (Person & { birthDate: string | null })[] {
   return members.map((member, index) => {
     const person = member.id === user.id ? user : member;
+    const name = person.displayName || (member.id === user.id ? user.email.split("@")[0] : null) || (user.locale === "vi" ? "Người ấy" : "Partner");
     return {
-      name: person.displayName ?? "?",
-      initial: initials(person.displayName ?? (member.id === user.id ? user.email : "?")),
+      name,
+      initial: initials(name),
       birthDate: person.birthDate,
       photoUrl: person.avatarId ? avatarUrl(member.id, person.avatarId) : undefined,
       tone: index === 0 ? "primary" : "secondary",

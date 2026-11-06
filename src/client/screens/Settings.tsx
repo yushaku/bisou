@@ -95,7 +95,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
       const res = await api.setAvatar(blob);
       if (res.ok) { onUser(res.data.user); toast.success(t("avatar.saved")); }
       else toast.error(res.status === 429
-        ? t("avatar.rateLimited", { wait: avatarRetryWait(res.error?.retryAfter, locale) })
+        ? t("avatar.rateLimited", { wait: avatarRetryWait(locale, res.error?.retryAfter ?? 60) })
         : t("avatar.saveFailed"));
     } catch {
       bitmap.close();

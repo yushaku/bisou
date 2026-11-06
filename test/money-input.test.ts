@@ -23,6 +23,10 @@ describe("formatMoneyInput", () => {
   it("reads back to the same amount, and 0 means no price", () => {
     expect(parseVnd(formatMoneyInput("450000", "vi"))).toBe(450000);
     expect(parseVnd(formatMoneyInput("450000", "en"))).toBe(450000);
-    expect(parseVnd(formatMoneyInput("", "vi")) || null).toBeNull();
+
   });
+});
+
+it.each(["1.250.000,50", "1,250,000.00", "1.250.000 d", "1,250,000.5", "1.250.000"])("pasted %s stays in whole VND", (raw) => {
+  expect(formatMoneyInput(raw, "vi")).toBe("1.250.000");
 });

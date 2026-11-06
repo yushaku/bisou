@@ -28,8 +28,8 @@ export function avatarFileError(file: File): "avatar.wrongType" | "avatar.tooLar
   return file.size > AVATAR_PICK_MAX_BYTES ? "avatar.tooLarge" : null;
 }
 
-export function avatarRetryWait(seconds = 60, locale: Locale): string {
-  const hours = seconds > 3600;
+export function avatarRetryWait(locale: Locale, seconds = 60): string {
+  const hours = seconds >= 3600;
   const count = Math.max(1, Math.ceil(seconds / (hours ? 3600 : 60)));
   return new Intl.NumberFormat(locale, {
     style: "unit", unit: hours ? "hour" : "minute", unitDisplay: "long",

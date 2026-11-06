@@ -10,12 +10,12 @@ describe("profile photo client", () => {
     [undefined, "1 minute", "1 phút"],
     [1, "1 minute", "1 phút"],
     [61, "2 minutes", "2 phút"],
-    [3600, "60 minutes", "60 phút"],
+    [3600, "1 hour", "1 giờ"],
     [3601, "2 hours", "2 giờ"],
     [10800, "3 hours", "3 giờ"],
   ])("formats the retry wait for %s seconds", (seconds, en, vi) => {
-    expect(avatarRetryWait(seconds, "en")).toBe(en);
-    expect(avatarRetryWait(seconds, "vi")).toBe(vi);
+    expect(avatarRetryWait("en", seconds)).toBe(en);
+    expect(avatarRetryWait("vi", seconds)).toBe(vi);
   });
   it.each(["image/jpeg", "image/png", "image/heic", "image/heif"])("AC3 R4: accepts %s", (type) => {
     expect(avatarFileError(new File(["photo"], "photo", { type }))).toBeNull();
@@ -66,7 +66,7 @@ describe("profile photo client", () => {
       ["An", "/api/avatars/a/new", "primary"], ["Binh", "/api/avatars/b/partner", "secondary"],
     ]);
     expect(toPeople(members, { ...user, avatarId: null })[0]?.photoUrl).toBeUndefined();
-    expect(toPeople([user], { ...user, displayName: null })[0]).toMatchObject({ name: "?", initial: "A" });
-    expect(toPeople([{ ...members[1]!, displayName: null }], user)[0]).toMatchObject({ name: "?", initial: "?" });
+    expect(toPeople([user], { ...user, displayName: null })[0]).toMatchObject({ name: "an", initial: "A" });
+    expect(toPeople([{ ...members[1]!, displayName: null }], user)[0]).toMatchObject({ name: "Người ấy", initial: "Ấ" });
   });
 });

@@ -58,6 +58,7 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
     let removed = 0;
     let offset = 2;
     let scanned = false;
+    let iccBytes = 0;
     while (offset < bytes.length) {
       const markerStart = offset;
       if (bytes[offset++] !== 0xff) return null;
@@ -80,6 +81,10 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
       }
       const icc = marker === 0xe2 && length >= 16
         && String.fromCharCode(...bytes.subarray(offset + 2, offset + 14)) === "ICC_PROFILE\0";
+      if (icc) {
+        iccBytes += length - 2;
+        if (iccBytes > 65_536) return null;
+      }
       const identifier = length >= 7 ? String.fromCharCode(...bytes.subarray(offset + 2, offset + 7)) : "";
       const jfif = marker === 0xe0 && length === 16 && identifier === "JFIF\0";
       const adobe = marker === 0xee && length === 14 && identifier === "Adobe";

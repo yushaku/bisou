@@ -318,6 +318,14 @@ describe("photo header bounds", () => {
     }
   });
 
+  it("caps the total ICC APP2 payload at 64 KB across segments", () => {
+    const chunk = segment(0xe2, "ICC_PROFILE\0\x01\x02" + "x".repeat(32754));
+    const atLimit = new Uint8Array([...baseline.subarray(0, 2), ...chunk, ...chunk, ...baseline.subarray(2)]);
+    expect(checkPhotoBytes(atLimit, "image/jpeg")).not.toBeNull();
+    const overLimit = new Uint8Array([...baseline.subarray(0, 2), ...chunk, ...chunk, ...segment(0xe2, "ICC_PROFILE\0\x03\x03x"), ...baseline.subarray(2)]);
+    expect(checkPhotoBytes(overLimit, "image/jpeg")).toBeNull();
+  });
+
   it("R16: keeps JFIF, ICC APP2 and Adobe with fill bytes in an APP0, APP1 and APP2 mix (AC12)", () => {
     const jfif = segment(0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0");
     const icc = segment(0xe2, "ICC_PROFILE\0\x01\x01color profile");

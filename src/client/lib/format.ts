@@ -13,7 +13,7 @@ export function formatNumber(value: number, locale: Locale): string {
 
 /* A money field as typed: digits only, grouped ("500000" -> "500.000" vi, "500,000" en), empty reads "0", at most 15 digits. */
 export function formatMoneyInput(raw: string, locale: Locale): string {
-  const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 15);
+  const digits = raw.replace(/[.,]\d{1,2}\D*$/, "").replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 15);
   return digits ? formatNumber(Number(digits), locale) : "0";
 }
 

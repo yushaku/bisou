@@ -1,3 +1,4 @@
+import { CONTROL_CHARACTERS } from "./text";
 import { addDays, anniversaryDate, daysBetween, daysTogether, isValidDay } from "./days";
 
 import type { ApiError, CoupleEvent, CoupleEventInput } from "./types";
@@ -10,7 +11,7 @@ export const EVENTS_MAX = 100;
 export function validateEvent(body: unknown, earliest: string, current?: CoupleEventInput): { input: CoupleEventInput } | ApiError {
   if (!body || typeof body !== "object") return { error: "invalid_body" };
   const { title, date, repeat, icon } = body as Record<string, unknown>;
-  if (typeof title !== "string" || /[\p{Cc}\u202a-\u202e\u2066-\u2069]/u.test(title)
+  if (typeof title !== "string" || CONTROL_CHARACTERS.test(title)
     || !title.replace(/\p{Cf}/gu, "").trim() || Array.from(title.trim()).length > EVENT_TITLE_MAX) return { error: "event_title_invalid" };
   if ((repeat !== "once" && repeat !== "yearly") || typeof icon !== "string" || !(EVENT_ICONS as readonly string[]).includes(icon)) return { error: "invalid_body" };
   if (!isValidDay(date) || (repeat === "once" && date < earliest && !(date === current?.date && repeat === current.repeat))) return { error: "event_date_invalid" };
