@@ -5,12 +5,29 @@
 ### Added
 
 - Home shows your jar and your partner's jar: yours fills up as you add wishes, your partner's only shows empty or filled, and tapping it opens the spin.
+
+### Changed
+
+- Money fields group digits as you type (500.000) and start at 0; a wish price of 0 means no price yet.
+
+## [2026-11-06]
+
+### Added
+
 - When your partner's jar holds no open wish, the jar card says so and spinning is off; it never shows how many wishes there are.
 - Set, replace or remove your profile photo in Settings; only you and your partner can see it.
+- Add shared one-off or yearly events from Home, edit or delete them together, and see distant plans under Later.
+- The + in the tab bar adds an event on Home, an entry on Journal and a wish on Wishes.
+- See the next 3 events on Home and the next 12 months under See all: anniversaries, every 1,000th day, both birthdays and four holidays.
+- Add, change or remove your own birthday in Settings; your partner sees it only as an event.
 
 ### Changed
 
 - The top bar shows each tab's name (Our little corner, Our journal, Wishes) instead of Bisou, and the screens drop their own heading.
+- The active tab's highlight fills more of its tab, and Garden no longer shows a Soon label.
+- Wishes has two sections, My jar and My claims, under your partner's jar; My jar lists open and received wishes together with an icon filter (All, Wishing, Received), and the received day sits inside the card.
+- Wish options open as a bottom sheet; received claims show a check badge.
+- Settings groups style, light or dark, the palette for the current mode and the background in one Appearance sheet; language is a dropdown.
 
 ### Fixed
 
@@ -18,29 +35,10 @@
 - Back from Appearance returns to Settings with focus on the Appearance row.
 - Screen readers announce the panel each Wishes tab controls.
 - Deleting a wish moves focus to the confirm button.
-
-## [2026-11-06]
-
-### Added
-
-- Add shared one-off or yearly events from Home, edit or delete them together, and see distant plans under Later.
-- The + in the tab bar adds an event on Home, an entry on Journal and a wish on Wishes.
-- See the next 3 events on Home and the next 12 months under See all: anniversaries, every 1,000th day, both birthdays and four holidays.
-- Add, change or remove your own birthday in Settings; your partner sees it only as an event.
-
-### Fixed
-
 - Event JSON requests are limited to 16 KB.
 - Event and wish titles refuse control characters, text direction overrides and titles made only of invisible characters.
 - Switching sections in Wishes shows the loaded lists at once instead of a loading state.
 - Profile JSON requests are limited to 16 KB.
-
-### Changed
-
-- The active tab's highlight fills more of its tab, and Garden no longer shows a Soon label.
-- Wishes has two sections, My jar and My claims, under your partner's jar; My jar lists open and received wishes together with an icon filter (All, Wishing, Received), and the received day sits inside the card.
-- Wish options open as a bottom sheet; received claims show a check badge.
-- Settings groups style, light or dark, the palette for the current mode and the background in one Appearance sheet; language is a dropdown.
 
 ## [2026-11-05]
 
