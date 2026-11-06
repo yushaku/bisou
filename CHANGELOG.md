@@ -4,23 +4,19 @@
 
 ### Added
 
-- Home shows your jar and your partner's jar: yours fills up as you add wishes, your partner's only shows empty or filled, and tapping it opens the spin.
 - Opening the installed app on iPhone shows the felt heart on linen, light or dark, instead of a white flash.
-- In a browser tab, Home shows a small card on how to install Bisou: 3 steps on iPhone Safari, an install button on Android; closing it hides it for good on that device.
+- In a browser tab, Home shows a small card on how to install Bisou: 3 steps on iPhone Safari, an install button on Android below the jars; closing it hides it for good on that device.
 - On Android, a long press on the app icon offers Write in the journal and Spin.
-- Without a connection, one offline bar shows on every tab and loaded data stays visible.
+- Without a connection, one offline bar shows under the top bar on every tab and loaded data stays visible.
 - An unexpected error shows a friendly screen with a Reload button instead of a white page.
 
 ### Changed
 
-- Money fields group digits as you type (500.000) and start at 0; a wish price of 0 means no price yet.
 - While offline, save and delete buttons say they need a connection; nothing is saved later on its own.
-- The iPhone status bar and the browser bar follow the chosen theme.
-- A person without a display name shows the start of their email, or Member, instead of "?".
+- The browser bar follows the chosen theme, and the saved theme applies before the first paint.
+- A person without a display name shows the start of their email, or "Người ấy" for the partner, instead of "?".
 
 ### Fixed
-
-- The Android install tip appears below the jars; the offline bar stays visible while scrolling, and the saved theme applies before the first paint.
 
 - Pasting an amount with decimals (500.000,50) keeps only the whole number, and the caret stays put when you delete at the start of a money field.
 - A wait of exactly one hour before the next profile photo change reads "1 hour" instead of "60 minutes".
@@ -30,6 +26,7 @@
 
 ### Added
 
+- Home shows your jar and your partner's jar: yours fills up as you add wishes, your partner's only shows empty or filled, and tapping it opens the spin.
 - When your partner's jar holds no open wish, the jar card says so and spinning is off; it never shows how many wishes there are.
 - Set, replace or remove your profile photo in Settings; only you and your partner can see it.
 - Add shared one-off or yearly events from Home, edit or delete them together, and see distant plans under Later.
@@ -39,6 +36,7 @@
 
 ### Changed
 
+- Money fields group digits as you type (500.000) and start at 0; a wish price of 0 means no price yet.
 - The top bar shows each tab's name (Our little corner, Our journal, Wishes) instead of Bisou, and the screens drop their own heading.
 - The active tab's highlight fills more of its tab, and Garden no longer shows a Soon label.
 - Wishes has two sections, My jar and My claims, under your partner's jar; My jar lists open and received wishes together with an icon filter (All, Wishing, Received), and the received day sits inside the card.
@@ -47,6 +45,7 @@
 
 ### Fixed
 
+- On iPhone, writing in a sheet no longer pushes the form above the screen when the keyboard opens.
 - Appearance opens as its own page; on iPhone the tall sheet closed on a tap instead of applying the choice.
 - Back from Appearance returns to Settings with focus on the Appearance row.
 - Screen readers announce the panel each Wishes tab controls.
