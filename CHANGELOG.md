@@ -5,6 +5,7 @@
 ### Added
 
 - When your partner's jar holds no open wish, the jar card says so and spinning is off; it never shows how many wishes there are.
+- Set, replace or remove your profile photo in Settings; only you and your partner can see it.
 
 ### Changed
 
@@ -13,6 +14,9 @@
 ### Fixed
 
 - Appearance opens as its own page; on iPhone the tall sheet closed on a tap instead of applying the choice.
+- Back from Appearance returns to Settings with focus on the Appearance row.
+- Screen readers announce the panel each Wishes tab controls.
+- Deleting a wish moves focus to the confirm button.
 
 ## [2026-11-06]
 

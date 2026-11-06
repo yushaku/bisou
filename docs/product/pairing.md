@@ -31,7 +31,7 @@ Bisou is private to exactly two partners. Their two accounts must first become o
 - R18. The next milestone is the next multiple of 100 days or the next yearly anniversary, whichever comes first; on the same day, the anniversary is shown.
 - R19. A milestone that falls today is announced as today; the next day, the following one is shown.
 - R20. For a 29 February start date, the anniversary falls on 28 February in other years.
-- R21. Bisou keeps only the email (to sign in) and the display name (so the partner knows who they are with), for as long as the account exists.
+- R21. Bisou keeps only the email (to sign in), the display name (so the partner knows who they are with), the optional birthday ([events](events.md)) and the optional profile photo ([avatar](avatar.md)), for as long as the account exists.
 
 ## Main flow
 

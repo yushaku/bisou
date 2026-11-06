@@ -10,7 +10,7 @@ Home shows the next 3 upcoming events; See all lists the next 12 months: yearly 
 
 Switching tabs restores their scroll positions and keeps loaded journal pages for the current session. Journal text appears before its photos, and the photo viewer supports horizontal swipes as well as its buttons and arrow keys.
 
-One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. D1 stores couples, journal entries, photo records, wishes, birthdays and events; the private R2 bucket `bisou`, bound as `PHOTOS` in `wrangler.jsonc`, stores the cropped photos. Free plan only.
+One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. D1 stores couples, journal entries, photo records, wishes, birthdays and events; the private R2 bucket `bisou`, bound as `PHOTOS` in `wrangler.jsonc`, stores the cropped photos, and profile photos under `users/<id>/avatar/`. Free plan only.
 
 ## Layout
 
