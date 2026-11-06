@@ -31,6 +31,7 @@ interface SpinCardProps {
 export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, initialState, onSpin = api.spin, onClaim = api.claim, onSignedOut, onViewClaims, className }: SpinCardProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
+  const offlineId = useId();
   const budgetId = useId();
   const [budget, setBudget] = useState(formatNumber(initialBudget ?? 0, locale));
   const [state, setState] = useState<SpinState>(initialState ?? { step: "idle" });
@@ -77,15 +78,15 @@ export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, 
     <PageHeader as="h2" className="pb-0" title={t(state.step === "result" ? "spin.result" : "spin.title", { name: partnerName })}
       description={partnerJarEmpty ? t("spin.jarEmpty", { name: partnerName }) : state.step === "result" ? `${t("spin.budget")}: ${formatVnd(parseVnd(budget) ?? 0, locale)}` : t("spin.hint", { name: partnerName })} />
     {retryAt !== null && <p role="status" className="rounded-lg bg-muted p-3">{t("spin.limit", { time: new Date(retryAt).toLocaleString(locale) })}</p>}
-    {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+    {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
     <p role="alert" className="text-destructive empty:hidden">{error}</p>
     <Card className="gap-4 p-4" aria-live="polite">
       {state.step !== "result" && <form onSubmit={(e) => void spin(e)} className="flex flex-col gap-2">
         <Label htmlFor={budgetId}>{t("spin.budget")}</Label>
         <div className="flex flex-wrap gap-2">
-          <MoneyInput id={budgetId} disabled={!online || partnerJarEmpty || spinning || claiming} value={budget} className="min-w-40 flex-1 text-lg tabular-nums"
+          <MoneyInput id={budgetId} aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online || partnerJarEmpty || spinning || claiming} value={budget} className="min-w-40 flex-1 text-lg tabular-nums"
             onValueChange={(value) => { setBudget(value); setError(null); }} />
-          <Button type="submit" loading={spinning} disabled={!online || partnerJarEmpty || claiming || retryAt !== null}><Dices aria-hidden="true" />{t(spinning ? "spin.spinning" : "spin.spin")}</Button>
+          <Button type="submit" loading={spinning} aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online || partnerJarEmpty || claiming || retryAt !== null}><Dices aria-hidden="true" />{t(spinning ? "spin.spinning" : "spin.spin")}</Button>
         </div>
       </form>}
       {(state.step === "idle" || spinning) && <img src={pouch} alt="" className={cn("mx-auto size-32 object-contain", spinning && "animate-pulse motion-reduce:animate-none")} />}
@@ -103,8 +104,8 @@ export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, 
       {state.step === "empty" && !partnerJarEmpty && <p className="rounded-lg bg-muted p-3">{t("spin.empty")}</p>}
     </Card>
     {state.step === "result" && <div className="flex flex-col gap-3" aria-live="polite">
-        {claimed ? <><p>{t("spin.claimed")}</p>{onViewClaims && <Button onClick={onViewClaims}>{t("claims.title")}</Button>}</> : <Button disabled={!online} loading={claiming} onClick={() => void claim()}><Gift aria-hidden="true" />{t("spin.claim")}</Button>}
-        <Button variant="outline" disabled={!online || partnerJarEmpty || claiming || retryAt !== null} onClick={() => void spin()}><RotateCcw aria-hidden="true" />{t("spin.again")}</Button>
+        {claimed ? <><p>{t("spin.claimed")}</p>{onViewClaims && <Button onClick={onViewClaims}>{t("claims.title")}</Button>}</> : <Button aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online} loading={claiming} onClick={() => void claim()}><Gift aria-hidden="true" />{t("spin.claim")}</Button>}
+        <Button variant="outline" aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online || partnerJarEmpty || claiming || retryAt !== null} onClick={() => void spin()}><RotateCcw aria-hidden="true" />{t("spin.again")}</Button>
         <p className="text-sm text-muted-foreground">{t("spin.secret", { name: partnerName })}</p>
     </div>}
   </div>;

@@ -55,11 +55,10 @@ export function AppShell({ title, onOpenSettings, action, tabs, children, classN
             </Button>
           )}
         </div>
+        <p role="status" className="absolute top-full w-full bg-warning px-4 py-3 text-center text-sm text-warning-foreground empty:py-0">{!online ? t("offline.bar") : ""}</p>
       </header>
 
-      {!online && <p role="status" className="bg-warning px-4 py-3 text-center text-sm text-warning-foreground">{t("offline.bar")}</p>}
-
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">{children}</main>
+      <main tabIndex={-1} className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">{children}</main>
 
       {tabs && <BottomBar {...tabs} />}
     </div>

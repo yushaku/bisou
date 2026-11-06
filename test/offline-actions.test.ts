@@ -24,7 +24,7 @@ vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue
 
 afterEach(() => { state.length = 0; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-type Props = { children?: ReactNode; disabled?: boolean; onClick?: () => void; onSubmit?: (event: { preventDefault: () => void }) => void };
+type Props = { role?: string; id?: string; className?: string; "aria-describedby"?: string; children?: ReactNode; disabled?: boolean; onClick?: () => void; onSubmit?: (event: { preventDefault: () => void }) => void };
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -116,4 +116,25 @@ it.each([false, true])("AC9 R9: the app shell shows one offline bar only while o
   vi.stubGlobal("navigator", { onLine: online });
   const bar = elements(AppShell({ title: "Home", children: null })).filter((node) => node.props.children === "offline.bar");
   expect(bar).toHaveLength(online ? 0 : 1);
+});
+
+
+it("keeps an empty shell status region mounted inside the sticky header online", () => {
+  vi.stubGlobal("navigator", { onLine: true });
+  const tree = AppShell({ children: null });
+  const header = elements(tree).find((node) => node.type === "header")!;
+  const status = elements(header).filter((node) => node.props.role === "status");
+  expect(status).toHaveLength(1);
+  expect(status[0]!.props.children).toBe("");
+  expect(status[0]!.props.className).toContain("absolute top-full");
+});
+
+it("describes disabled entry deletion with plain offline text", () => {
+  vi.stubGlobal("navigator", { onLine: false });
+  state.push(entry, false, null);
+  const nodes = elements(EntryActions({ entry, onClose: vi.fn(), onEdit: vi.fn(), onDeleted: vi.fn(), onSignedOut: vi.fn() }));
+  const confirm = nodes.find((node) => node.props.children === "entry.deleteYes")!;
+  const hint = nodes.find((node) => node.props.id === confirm.props["aria-describedby"]);
+  expect(hint?.props.children).toBe("offline.save");
+  expect(hint?.props.role).toBeUndefined();
 });

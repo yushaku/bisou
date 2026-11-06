@@ -45,9 +45,10 @@ export function InstallCard() {
     }
   }
 
-  return <Card className="relative mb-5 gap-3 p-4">
+  return <Card className={`relative mb-5 gap-3 p-4 ${iphoneSafari ? "order-first" : "mt-5"}`}>
     <h2 className="pr-10 font-heading text-xl">{t("install.title")}</h2>
     <Button variant="ghost" size="icon" className="absolute top-2 right-2" aria-label={t("install.dismiss")} onClick={() => {
+      document.querySelector<HTMLElement>("main")?.focus({ preventScroll: true });
       setDismissed(true);
       try { localStorage.setItem(DISMISSED, "1"); } catch { /* The dismissal still lasts for this visit. */ }
     }}><X aria-hidden="true" /></Button>

@@ -163,7 +163,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   return (
     <div className="flex min-h-dvh flex-col">
       <SubPageHeader title={t("settings.title")} />
-      {!online && <p role="status" className="bg-warning px-4 py-3 text-center text-sm text-warning-foreground">{t("offline.save")}</p>}
+      <p id="settings-offline" role="status" className="sticky top-[calc(env(safe-area-inset-top)+--spacing(14))] z-30 bg-warning px-4 py-3 text-center text-sm text-warning-foreground empty:py-0">{!online ? t("offline.bar") : ""}</p>
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
           <button type="button" aria-label={t("avatar.change")} aria-busy={avatarBusy} disabled={avatarBusy}
@@ -211,16 +211,15 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
                   {t(sheet === "avatar" ? "avatar.change" : sheet === "profile" ? "home.displayNamePlaceholder" : "settings.logoutHint")}
                 </DrawerDescription>
               </DrawerHeader>
-              {!online && sheet !== "profile" && <p role="status" className="mb-3 text-sm text-muted-foreground">{t("offline.save")}</p>}
               {sheet === "avatar" ? <div className="flex flex-col gap-3">
-                <Button disabled={!online} loading={avatarBusy} onClick={() => avatarInput.current?.click()}>{t("avatar.choose")}</Button>
+                <Button aria-describedby={!online ? "settings-offline" : undefined} disabled={!online} loading={avatarBusy} onClick={() => avatarInput.current?.click()}>{t("avatar.choose")}</Button>
                 {user.avatarId && (removingAvatar ? <>
                   <p id="avatar-remove-confirm">{t("avatar.removeConfirm")}</p>
-                  <Button autoFocus variant="destructive" aria-describedby="avatar-remove-confirm" disabled={!online} loading={avatarBusy} onClick={() => void removeAvatar()}>{t("avatar.remove")}</Button>
+                  <Button autoFocus variant="destructive" aria-describedby={!online ? "avatar-remove-confirm settings-offline" : "avatar-remove-confirm"} disabled={!online} loading={avatarBusy} onClick={() => void removeAvatar()}>{t("avatar.remove")}</Button>
                 </> : <Button variant="destructive" disabled={avatarBusy} onClick={() => setRemovingAvatar(true)}>{t("avatar.remove")}</Button>)}
               </div> : sheet === "profile" ? <ProfileForm key={String(open)} user={user} onUser={onUser} /> : <>
                 {logoutError && <p role="alert" className="mb-3 text-destructive">{t("error.generic")}</p>}
-                <Button variant="destructive" disabled={!online} className="w-full" loading={loggingOut} onClick={() => void logout()}>{t("home.logout")}</Button>
+                <Button variant="destructive" aria-describedby={!online ? "settings-offline" : undefined} disabled={!online} className="w-full" loading={loggingOut} onClick={() => void logout()}>{t("home.logout")}</Button>
               </>}
               <Button variant="outline" className="mt-3 w-full" disabled={avatarBusy} onClick={() => setOpen(false)}>{t(sheet === "logout" ? "settings.cancel" : "common.close")}</Button>
             </div>
@@ -296,8 +295,7 @@ function ProfileForm({ user, onUser }: Pick<SessionProps, "user" | "onUser">) {
           {t("error.generic")}
         </p>
       )}
-      {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
-      <Button type="submit" variant="outline" loading={status === "saving"} disabled={!online || !name.trim()}>
+      <Button type="submit" variant="outline" loading={status === "saving"} aria-describedby={!online ? "settings-offline" : undefined} disabled={!online || !name.trim()}>
         {status === "saving" ? t("home.saving") : t("home.save")}
       </Button>
     </form>

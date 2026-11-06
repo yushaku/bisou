@@ -20,6 +20,8 @@
 
 ### Fixed
 
+- The Android install tip appears below the jars; the offline bar stays visible while scrolling, and the saved theme applies before the first paint.
+
 - Pasting an amount with decimals (500.000,50) keeps only the whole number, and the caret stays put when you delete at the start of a money field.
 - A wait of exactly one hour before the next profile photo change reads "1 hour" instead of "60 minutes".
 - Photos with an oversized color profile are refused, and profile photo uploads left unfinished for a day are cleaned up.

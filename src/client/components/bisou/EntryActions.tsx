@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { PencilLine, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { JournalEntry } from "../../../shared/types";
@@ -25,6 +26,7 @@ interface EntryActionsProps {
 export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }: EntryActionsProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
+  const offlineId = useId();
   // The sheet still shows its entry while it animates closed.
   const last = useRef(entry);
   if (entry) last.current = entry;
@@ -60,7 +62,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
             <DrawerHeader className="px-0 text-left">
               <DrawerTitle className="font-heading text-xl">{shown ? formatDay(shown.date, locale) : ""}</DrawerTitle>
             </DrawerHeader>
-            {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+            {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
             <Button
               variant="outline"
               size="lg"
@@ -78,7 +80,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
               variant="outline"
               size="lg"
               className="justify-start text-destructive"
-              disabled={!online}
+              aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online}
               onClick={() => {
                 setError(null);
                 setTarget(shown);
@@ -103,12 +105,12 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
               {count > 0 ? t("entry.deleteBody", { day, count }) : t("entry.deleteBodyText", { day })}
             </DialogDescription>
           </DialogHeader>
-          {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+          {!online && <p id={`${offlineId}-2`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
           <p role="alert" className="text-base text-destructive empty:hidden">
             {error}
           </p>
           <DialogFooter>
-            <Button variant="destructive" disabled={!online} loading={deleting} onClick={() => target && void remove(target)}>
+            <Button variant="destructive" aria-describedby={!online ? `${offlineId}-2` : undefined} disabled={!online} loading={deleting} onClick={() => target && void remove(target)}>
               {t("entry.deleteYes")}
             </Button>
             <Button autoFocus disabled={deleting} onClick={() => setTarget(null)}>

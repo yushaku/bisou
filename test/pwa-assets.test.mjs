@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { test } from "node:test";
 import sharp from "sharp";
+import { themeHead } from "../scripts/theme-bootstrap.ts";
 import palettes from "../src/client/theme/palettes.json" with { type: "json" };
 
 test("portrait splash PNGs total less than 3 MB", async () => {
@@ -40,7 +41,11 @@ test("manifest shortcuts open the journal composer and the spin through the path
 
 test("browser bar colour starts from the light and dark theme backgrounds and the status bar style stays default", async () => {
   const html = await readFile("index.html", "utf8");
-  assert.ok(html.includes(`<meta name="theme-color" content="${palettes.peach.tokens.background}" media="(prefers-color-scheme: light)"`));
-  assert.ok(html.includes(`<meta name="theme-color" content="${palettes.cocoa.tokens.background}" media="(prefers-color-scheme: dark)"`));
+  const tags = themeHead(palettes);
+  const scriptIndex = tags.findIndex((tag) => tag.tag === "script");
+  const colors = tags.filter((tag) => tag.tag === "meta");
+  assert.deepEqual(colors.map((tag) => tag.attrs.content), [palettes.peach.tokens.background, palettes.cocoa.tokens.background]);
+  assert.ok(colors.every((tag) => tags.indexOf(tag) < scriptIndex));
+  assert.ok(tags.every((tag) => tag.injectTo === "head-prepend"));
   assert.ok(html.includes('<meta name="apple-mobile-web-app-status-bar-style" content="default" />'));
 });

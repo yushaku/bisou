@@ -67,7 +67,6 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
 
   return (
     <SignedInShell {...session} tab="home">
-      <InstallCard />
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={people} size="sm" />
         <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: people[0].name, b: people[1].name })}</p>
@@ -96,6 +95,8 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
           navigation.onCreate("spin");
         }} />
       </section>
+
+      <InstallCard />
 
       <UpcomingCard onOpen={(id) => setEditingEvent(couple.events.find((event) => event.id === id))} events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter((event) => !(event.kind === "custom" && event.later))} action={
         <Button asChild variant="ghost" size="sm">

@@ -149,14 +149,14 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
             {deleting && <p id="wish-delete-confirm" className="text-sm text-muted-foreground">{t("wish.deleteConfirm", { title: shownWish?.title ?? "" })}</p>}
           </DrawerHeader>
           <p role="alert" className="text-destructive empty:hidden">{error}</p>
-          {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+          {!online && <p id="wish-action-offline" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
           {deleting ? <>
-            <Button key="confirm-delete" autoFocus aria-describedby="wish-delete-confirm" variant="destructive" size="lg" disabled={!online} loading={busy} onClick={() => void remove()}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
+            <Button key="confirm-delete" autoFocus aria-describedby={!online ? "wish-delete-confirm wish-action-offline" : "wish-delete-confirm"} variant="destructive" size="lg" disabled={!online} loading={busy} onClick={() => void remove()}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
             <Button variant="outline" size="lg" disabled={busy} onClick={() => { setDeleting(false); setError(null); }}>{t("common.back")}</Button>
           </> : <>
             {shownWish?.status === "open" && <Button size="lg" className="justify-start" onClick={() => { setReceiving(acting); setActing(null); }}><Check aria-hidden="true" />{t("received.action")}</Button>}
             {shownWish?.status === "open" && <Button variant="outline" size="lg" className="justify-start" onClick={() => { setFromMenu(false); setEditing(acting); setActing(null); }}><PencilLine aria-hidden="true" />{t("wish.edit")}</Button>}
-            <Button variant="outline" size="lg" disabled={!online} className="justify-start text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
+            <Button aria-describedby={!online ? "wish-action-offline" : undefined} variant="outline" size="lg" disabled={!online} className="justify-start text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
             <Button variant="ghost" size="lg" onClick={() => setActing(null)}>{t("common.close")}</Button>
           </>}
         </div>

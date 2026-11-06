@@ -6,7 +6,7 @@ export const en: Messages = {
   "install.addToHome": "Choose Add to Home Screen",
   "install.confirm": "Tap Add",
   "install.button": "Install Bisou",
-  "install.dismiss": "Dismiss Bisou installation tips",
+  "install.dismiss": "Hide the install tip",
   "errorScreen.title": "Something went wrong",
   "errorScreen.body": "Reload to get back to your shared space.",
   "errorScreen.reload": "Reload",

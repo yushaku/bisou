@@ -5,7 +5,7 @@ export const vi = {
   "install.addToHome": "Chọn Thêm vào màn hình chính",
   "install.confirm": "Chạm Thêm",
   "install.button": "Cài Bisou",
-  "install.dismiss": "Đóng hướng dẫn cài Bisou",
+  "install.dismiss": "Ẩn hướng dẫn cài Bisou",
   "errorScreen.title": "Có chút trục trặc rồi",
   "errorScreen.body": "Bạn thử tải lại để về góc nhỏ của hai đứa nhé.",
   "errorScreen.reload": "Tải lại",

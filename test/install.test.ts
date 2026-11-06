@@ -24,6 +24,7 @@ it("shows the three iPhone Safari steps", () => {
   const html = renderToString(h(InstallCard));
   for (const key of ["install.share", "install.addToHome", "install.confirm"]) expect(html).toContain(key);
   expect(html).toContain('aria-label="install.dismiss"');
+  expect(html).toContain("order-first");
 });
 it.each(["installed", "dismissed", "other"])("hides the card when %s", (kind) => {
   setup(kind === "other" ? "Firefox/140" : safari, kind === "installed", kind === "dismissed");
@@ -36,7 +37,9 @@ it("captures and opens the Chromium prompt before Home mounts", async () => {
   const event = Object.assign(new Event("beforeinstallprompt", { cancelable: true }), { prompt, userChoice: Promise.resolve({ outcome: "accepted" }) });
   window.dispatchEvent(event);
   expect(event.defaultPrevented).toBe(true);
-  expect(renderToString(h(InstallCard))).toContain("install.button");
+  const html = renderToString(h(InstallCard));
+  expect(html).toContain("install.button");
+  expect(html).not.toContain("order-first");
   const [, snapshot] = vi.mocked(useSyncExternalStore).mock.calls.at(-1)!;
   expect(snapshot()).toBe(event);
   buttons.get("install.button")!();
@@ -50,8 +53,11 @@ it("stores dismissal and hides it on the next visit", () => {
   setup(safari);
   const storage = new Map<string, string>();
   vi.stubGlobal("localStorage", { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value) });
+  const focus = vi.fn();
+  vi.stubGlobal("document", { querySelector: () => ({ focus }) });
   renderToString(h(InstallCard));
   buttons.get("install.dismiss")!();
+  expect(focus).toHaveBeenCalledWith({ preventScroll: true });
   expect(storage.get("bisou.install.dismissed")).toBe("1");
   expect(renderToString(h(InstallCard))).toBe("");
 });

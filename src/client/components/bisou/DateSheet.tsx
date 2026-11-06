@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { useOnline } from "@/lib/useOnline";
 import { useEffect, useState } from "react";
 import { toDayString } from "../../../shared/days";
@@ -26,6 +27,7 @@ interface DateSheetProps {
 export function DateSheet({ open, onOpenChange, value, onSave, title, hint, saveLabel, firstMonth, emptyMonth, onRemove }: DateSheetProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
+  const offlineId = useId();
   const [selected, setSelected] = useState<Date | undefined>(value ? parseDay(value) : undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,11 +80,11 @@ export function DateSheet({ open, onOpenChange, value, onSave, title, hint, save
               {error}
             </p>
           )}
-          {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
-          <Button size="lg" className="mt-3" loading={busy} disabled={!online || !selected || busy} onClick={() => void save()}>
+          {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+          <Button size="lg" className="mt-3" loading={busy} aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online || !selected || busy} onClick={() => void save()}>
             {saveLabel}
           </Button>
-          {value && onRemove && <Button variant="outline" className="mt-3 text-destructive" disabled={!online || busy} onClick={() => void save(true)}>
+          {value && onRemove && <Button variant="outline" className="mt-3 text-destructive" aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online || busy} onClick={() => void save(true)}>
             {t("birthday.remove")}
           </Button>}
           <Button variant="outline" className="mt-3" disabled={busy} onClick={() => onOpenChange(false)}>

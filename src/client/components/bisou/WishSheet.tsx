@@ -25,6 +25,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
 }) {
   const { t, locale } = useI18n();
   const online = useOnline();
+  const offlineId = useId();
   const ids = useId();
   const [title, setTitle] = useState(wish?.title ?? "");
   const [price, setPrice] = useState(formatNumber(wish?.price ?? 0, locale));
@@ -80,8 +81,8 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
           </fieldset>
           <div className="flex flex-col gap-2 border-t bg-popover px-5 pt-3 pb-5">
             <p role="alert" className="text-sm text-destructive empty:hidden">{error ?? (dirty && block ? t(block) : null)}</p>
-            {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
-            <Button type="submit" size="lg" loading={saving} disabled={!online || !!block}>{t("wish.save")}</Button>
+            {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+            <Button type="submit" size="lg" loading={saving} aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online || !!block}>{t("wish.save")}</Button>
           </div>
         </form>
       </DrawerContent>

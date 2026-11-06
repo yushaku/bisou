@@ -49,7 +49,7 @@ test("mode, palette, style and background resolve independently, including befor
 
 test("pre-paint theme works when browser storage is blocked", () => {
   const root = { dataset: {}, classList: { toggle() {} } };
-  runInNewContext(themeHead(palettes)[1].children, {
+  runInNewContext(themeHead(palettes).find((tag) => tag.tag === "script").children, {
     localStorage: { getItem() { throw new Error("blocked"); } },
     window: {}, document: { documentElement: root, querySelector: () => null, querySelectorAll: () => [] },
   });
@@ -61,7 +61,7 @@ test("pre-paint theme works when browser storage is blocked", () => {
 test("the fabric preset resolves before paint and existing choices are retained", () => {
   const root = { dataset: {}, classList: { toggle() {} } };
   for (const systemDark of [false, true]) {
-    runInNewContext(themeHead(palettes)[1].children, {
+    runInNewContext(themeHead(palettes).find((tag) => tag.tag === "script").children, {
       localStorage: { getItem: () => null },
       window: { matchMedia: () => ({ matches: systemDark }) },
       document: { documentElement: root, querySelector: () => null, querySelectorAll: () => [] },
