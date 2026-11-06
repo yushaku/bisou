@@ -26,7 +26,7 @@ Spin
 - R7. The spinner enters a budget in VND and Bisou picks one wish at random among those priced at or below it; the same wish may come up again later.
 - R8. A wish without a price, a received wish or a claimed wish never comes up.
 - R9. In the pick, a dream counts three times and a really want twice as much as a nice to have.
-- R10. When nothing fits, the spinner is told only that, whether the jar is empty or not.
+- R10. When the owner's jar holds no open wish (received or deleted ones do not count, claimed ones do), the spinner is told so before spinning, for example "Bình chưa bỏ điều ước nào vào hũ" or "Binh hasn't put any wishes in the jar yet", and no spin is offered. When the jar has wishes but none fits the budget, the spinner is told only that nothing fits. Neither shows a count, a price or a claim.
 - R11. A partner may spin at most 20 times in any rolling 24 hours; further spins wait until the oldest is 24 hours old.
 - R12. The spinner sees only the wish landed on: title, photo, price and link, never its priority or any other wish.
 
@@ -80,6 +80,7 @@ Keep wishes (owner); spin, claim, release (partner); mark received (owner). Rule
 - AC11 (R18, R19, R22). Given the scarf, then An cannot mark it received; Binh can, not for a future day, and it leaves the jar for good, the celebration plays and An's claim shows received.
 - AC12 (R20, R21). Given Binh marks it received on 20 November, then both see Binh's entry under that day, made from a wish; only Binh can change or delete it, and deleting keeps the scarf received.
 - AC13 (R6). Given Binh adds a photo to the scarf, then it is saved square and kept like journal photos, and the wish never holds more than one photo.
+- AC14 (R10, R1). Given Binh has no wishes, when An opens the spin card, then it reads "Binh hasn't put any wishes in the jar yet" and no spin is offered; if Binh's only wish is one An claimed, the spin is offered and An is told nothing fits; an outsider learns neither.
 
 ## Glossary
 
