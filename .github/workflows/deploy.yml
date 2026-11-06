@@ -3,6 +3,11 @@ name: Deploy production
 on:
   push:
     branches: [main]
+    # A push that only touches docs (CHANGELOG, todo, docs/) ships nothing: skip the deploy.
+    # A push with any other file still deploys; run it by hand with workflow_dispatch if needed.
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
   workflow_dispatch:
 
 permissions:
