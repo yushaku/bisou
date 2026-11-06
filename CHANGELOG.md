@@ -10,6 +10,10 @@
 
 - The top bar shows each tab's name (Our little corner, Our journal, Wishes) instead of Bisou, and the screens drop their own heading.
 
+### Fixed
+
+- Appearance opens as its own page; on iPhone the tall sheet closed on a tap instead of applying the choice.
+
 ## [2026-11-06]
 
 ### Added
