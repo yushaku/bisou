@@ -1,5 +1,5 @@
 import { ExternalLink, Gift } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Claim } from "../../../shared/types";
 import { api, photoUrl } from "@/api";
@@ -9,11 +9,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { formatVnd } from "@/lib/format";
+import { TabMemory } from "@/lib/tabMemory";
 import { EmptyState } from "./EmptyState";
 
 export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
   const { t, locale } = useI18n();
-  const [claims, setClaims] = useState<Claim[] | null>(null);
+  const memory = useContext(TabMemory);
+  const [claims, setClaims] = useState<Claim[] | null>(() => memory?.claims ?? null);
+  useLayoutEffect(() => {
+    // Deletion notices are shown once, so they are not kept for the next visit.
+    if (memory) memory.claims = claims && claims.filter((c) => c.status !== "gone");
+  }, [claims, memory]);
   const [failed, setFailed] = useState(false);
   const [releasing, setReleasing] = useState<Claim | null>(null);
   const [busy, setBusy] = useState(false);

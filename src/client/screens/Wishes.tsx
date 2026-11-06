@@ -1,5 +1,5 @@
 import { ArrowLeft, Ellipsis, Gift, Plus } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { Link } from "wouter";
 import { toast } from "sonner";
 import type { Couple, Wish } from "../../shared/types";
@@ -18,6 +18,7 @@ import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { wishErrorKey } from "../lib/wishes";
 import { useCreateRequest } from "../lib/useTabNavigation";
+import { TabMemory } from "../lib/tabMemory";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
@@ -30,11 +31,17 @@ const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then(
 
 export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { t, locale } = useI18n();
-  const [view, setView] = useState<Section | "spin">("jar");
+  const memory = useContext(TabMemory);
+  const [view, setView] = useState<Section | "spin">(() => memory?.wishesSection ?? "jar");
   const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
-  const [jar, setJar] = useState<{ open: Wish[]; received: Wish[] } | null>(null);
+  const [jar, setJar] = useState<{ open: Wish[]; received: Wish[] } | null>(() => memory?.wishes ?? null);
+  useLayoutEffect(() => {
+    if (!memory) return;
+    memory.wishes = jar;
+    if (view !== "spin") memory.wishesSection = view;
+  }, [jar, view, memory]);
   const [failed, setFailed] = useState(false);
   const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
