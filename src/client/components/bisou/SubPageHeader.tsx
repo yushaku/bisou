@@ -9,8 +9,14 @@ export function SubPageHeader({ title }: { title: string }) {
   const [, navigate] = useLocation();
   const heading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
-    heading.current?.focus({ preventScroll: true });
+    const target = history.state?.focus && document.getElementById(history.state.focus);
+    if (target) {
+      target.scrollIntoView({ block: "center" });
+      target.focus({ preventScroll: true });
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" });
+      heading.current?.focus({ preventScroll: true });
+    }
   }, []);
   return (
     <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">

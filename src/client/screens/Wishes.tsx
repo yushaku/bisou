@@ -14,7 +14,7 @@ import { WishCard } from "../components/bisou/WishCard";
 import { Button } from "../components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../components/ui/drawer";
 import { Skeleton } from "../components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../components/ui/select";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
@@ -97,8 +97,8 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         <TabsList className="w-full">
           {(Object.keys(SECTIONS) as Section[]).map((id) => <TabsTrigger key={id} value={id}>{t(SECTIONS[id])}</TabsTrigger>)}
         </TabsList>
-      </Tabs>
-      {view === "jar" && <div className="mb-4 flex items-center gap-3">
+      <TabsContent value="jar">
+      <div className="mb-4 flex items-center gap-3">
         <p className="min-w-0 flex-1 text-sm text-muted-foreground">{t("wishes.private")}</p>
         {jar && jar.open.length + jar.received.length > 0 && <>
           <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
@@ -115,11 +115,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
             </SelectContent>
           </Select>
         </>}
-      </div>}
-    </>}
-    {view === "spin" && <SpinCard partnerName={partnerName} partnerJarEmpty={jar?.partnerJarEmpty === true} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
-    {view === "claims" && <ClaimsList onSignedOut={session.onSignedOut} />}
-    {view === "jar" && <>
+      </div>
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!jar && !failed && <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3"><Skeleton className="h-28" /><Skeleton className="h-28" /></div>}
     {jar && (jar.open.length + jar.received.length === 0
@@ -136,7 +132,11 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
           {filter === "received" && jar.received.length > 0 && <Button asChild variant="outline"><Link href="/journal">{t("received.journal")}</Link></Button>}
         </div>
       </>)}
+      </TabsContent>
+      <TabsContent value="claims"><ClaimsList onSignedOut={session.onSignedOut} /></TabsContent>
+      </Tabs>
     </>}
+    {view === "spin" && <SpinCard partnerName={partnerName} partnerJarEmpty={jar?.partnerJarEmpty === true} onSignedOut={session.onSignedOut} onViewClaims={() => setView("claims")} />}
     {editing !== undefined && <Suspense fallback={null}><WishSheet fromMenu={fromMenu} key={editing?.id ?? "new"} wish={editing} onClose={() => setEditing(undefined)} onSignedOut={session.onSignedOut} onSaved={(wish) => {
       setJar((j) => j && { ...j, open: [wish, ...j.open.filter((w) => w.id !== wish.id)].sort((a, b) => b.createdAt - a.createdAt || b.id.localeCompare(a.id)) });
       toast.success(t("wish.saved"));
@@ -152,11 +152,11 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-5">
           <DrawerHeader className="px-0 text-left">
             <DrawerTitle className="font-heading text-xl">{shownWish?.title}</DrawerTitle>
-            {deleting && <p className="text-sm text-muted-foreground">{t("wish.deleteConfirm", { title: shownWish?.title ?? "" })}</p>}
+            {deleting && <p id="wish-delete-confirm" className="text-sm text-muted-foreground">{t("wish.deleteConfirm", { title: shownWish?.title ?? "" })}</p>}
           </DrawerHeader>
           <p role="alert" className="text-destructive empty:hidden">{error}</p>
           {deleting ? <>
-            <Button variant="destructive" size="lg" loading={busy} onClick={() => void remove()}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
+            <Button key="confirm-delete" autoFocus aria-describedby="wish-delete-confirm" variant="destructive" size="lg" loading={busy} onClick={() => void remove()}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
             <Button variant="outline" size="lg" disabled={busy} onClick={() => { setDeleting(false); setError(null); }}>{t("common.back")}</Button>
           </> : <>
             {shownWish?.status === "open" && <Button size="lg" className="justify-start" onClick={() => { setReceiving(acting); setActing(null); }}><Check aria-hidden="true" />{t("received.action")}</Button>}

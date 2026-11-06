@@ -24,8 +24,10 @@ describe("subpage and tab history", () => {
     ["/journal", undefined, "/journal", "journal", "replace"],
     ["/journal", undefined, "/wishes", undefined, "push"],
     ["/settings", undefined, "/", undefined, "replace"],
+    ["/settings/appearance", undefined, "/", undefined, "replace"],
+    ["/settings/appearance", "/settings", "/journal", undefined, "replace"],
     ["/events", undefined, "/", undefined, "replace"],
-  ] as const)("%s from %s to %s (create %s) uses %s", (location, from, path, create, move) => {
+  ] as const)("CO6: %s from %s to %s (create %s) uses %s", (location, from, path, create, move) => {
     expect(tabMove(location, from, path, create)).toBe(move);
   });
 });

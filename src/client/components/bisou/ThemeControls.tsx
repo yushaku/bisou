@@ -34,23 +34,21 @@ function Swatches({ theme }: { theme: ThemeDef }) {
   );
 }
 
-export type AppearanceField = "style" | "mode" | "lightTheme" | "darkTheme" | "background" | "language";
-
 /* Shared by the Appearance page and the /design toolbar. */
-export function ThemeControls({ onLocaleChange, showStyle = true, field, paletteByMode = false, className }: {
-  field?: AppearanceField; onLocaleChange?: (l: Locale) => void; showStyle?: boolean; className?: string;
+export function ThemeControls({ paletteByMode = false, className }: {
+  className?: string;
   /* Settings: one palette field for the mode in use, and no language (it has its own row). */
   paletteByMode?: boolean;
 }) {
   const { t } = useI18n();
   const { prefs, setPrefs, kind } = useTheme();
-  const showLight = (!field || field === "lightTheme") && (!paletteByMode || kind === "light");
-  const showDark = (!field || field === "darkTheme") && (!paletteByMode || kind === "dark");
+  const showLight = !paletteByMode || kind === "light";
+  const showDark = !paletteByMode || kind === "dark";
   const item = "flex-1 basis-0";
 
   return (
     <div className={cn("flex flex-col gap-5", className)}>
-      {(!field || field === "style") && showStyle && STYLES.length > 1 && (
+      {STYLES.length > 1 && (
         <Field label={t("settings.style")}>
           {(id) => (
             <ToggleGroup type="single" variant="outline" spacing={1} className="w-full" aria-labelledby={id} value={prefs.style}
@@ -63,7 +61,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, palette
         </Field>
       )}
 
-      {(!field || field === "mode") && <Field label={t("settings.mode")}>
+      <Field label={t("settings.mode")}>
         {(id) => (
           <ToggleGroup type="single" variant="outline" spacing={1} className="w-full" aria-labelledby={id} value={prefs.mode}
             onValueChange={(v) => { const m = MODES.find((x) => x === v); if (m) setPrefs({ mode: m }); }}>
@@ -78,7 +76,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, palette
             })}
           </ToggleGroup>
         )}
-      </Field>}
+      </Field>
 
       {showLight && LIGHT_THEMES.length > 0 && (
         <Field label={t("settings.lightTheme")}>
@@ -107,7 +105,7 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, palette
         )}
       </Field>}
 
-      {(!field || field === "background") && <Field label={t("settings.background")}>
+      <Field label={t("settings.background")}>
         {(id) => (
           <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-3" aria-labelledby={id} value={prefs.background}
             onValueChange={(v) => { const b = BACKGROUNDS.find((x) => x.id === v); if (b) setPrefs({ background: b.id }); }}>
@@ -116,9 +114,9 @@ export function ThemeControls({ onLocaleChange, showStyle = true, field, palette
             ))}
           </ToggleGroup>
         )}
-      </Field>}
+      </Field>
 
-      {(!field || field === "language") && !paletteByMode && <Field label={t("language")}>{() => <LanguageToggle onChange={onLocaleChange} />}</Field>}
+      {!paletteByMode && <Field label={t("language")}>{() => <LanguageToggle />}</Field>}
     </div>
   );
 }
