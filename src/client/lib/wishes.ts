@@ -3,6 +3,16 @@ import type { ApiErrorCode, WishInput } from "../../shared/types";
 import type { MessageKey } from "../i18n/vi";
 import type { PhotoState } from "./compose";
 
+export type JarLevel = 0 | 1 | 2 | 3 | 4;
+
+export function wishJarLevels(jar: { open: { length: number }; partnerJarEmpty: boolean } | null): { mine: JarLevel; partner: JarLevel } {
+  const count = jar?.open.length ?? 0;
+  return {
+    mine: count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4,
+    partner: jar && !jar.partnerJarEmpty ? 2 : 0,
+  };
+}
+
 export function parseVnd(input: string): number | null {
   const value = input.trim();
   if (!value) return null;

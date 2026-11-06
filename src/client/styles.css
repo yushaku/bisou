@@ -146,3 +146,82 @@
     transform: translateX(calc(var(--tab-dir, 1) * 1.5rem));
   }
 }
+
+/* Hand-drawn wish jar, with cumulative paper layers. */
+.jar-ink {
+  fill: none;
+  stroke: var(--jar-ink, currentColor);
+  stroke-width: var(--jar-edge, 2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.jar-glass {
+  fill: var(--jar-glass, color-mix(in oklab, var(--card) 62%, transparent));
+}
+.jar-shine {
+  fill: none;
+  stroke: var(--jar-shine, var(--primary-foreground));
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: .7;
+}
+.dark .jar-shine {
+  opacity: .22;
+}
+.dark .jar {
+  --jar-paper: 78%;
+}
+.jar-pc {
+  stroke: color-mix(in oklab, var(--foreground) 30%, transparent);
+  stroke-width: .7;
+  stroke-linejoin: round;
+}
+.jar-fold {
+  fill: none;
+}
+.jar-p1 {
+  fill: color-mix(in oklab, var(--chart-1) var(--jar-paper, 55%), var(--card));
+}
+.jar-p2 {
+  fill: color-mix(in oklab, var(--chart-3) var(--jar-paper, 55%), var(--card));
+}
+.jar-p3 {
+  fill: color-mix(in oklab, var(--chart-4) var(--jar-paper, 55%), var(--card));
+}
+.jar-p4 {
+  fill: color-mix(in oklab, var(--chart-5) var(--jar-paper, 55%), var(--card));
+}
+.jar-p5 {
+  fill: color-mix(in oklab, var(--chart-2) var(--jar-paper, 55%), var(--card));
+}
+.jar-sp {
+  fill: var(--jar-spark, color-mix(in oklab, var(--chart-3) 88%, var(--foreground)));
+}
+.jar-l1, .jar-l2, .jar-l3, .jar-l4 {
+  display: none;
+}
+.jar[data-level="1"] .jar-l1,
+.jar[data-level="2"] :is(.jar-l1, .jar-l2),
+.jar[data-level="3"] :is(.jar-l1, .jar-l2, .jar-l3),
+.jar[data-level="4"] .jar-pc g {
+  display: inline;
+}
+.jar[data-level="0"] .jar-sp {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .jar-tw {
+    animation: jar-tw 3.6s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+@keyframes jar-tw {
+  50% {
+    opacity: .3;
+    transform: scale(.6);
+  }
+}
+.jar-wrap {
+  color: color-mix(in oklab, var(--foreground) 80%, transparent);
+}

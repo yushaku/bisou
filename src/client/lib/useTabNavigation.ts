@@ -48,7 +48,7 @@ export function useTabNavigation(tab?: TabId) {
 
   return {
     onSelect: (next: TabId) => { if (next !== "garden") go(next); },
-    onCreate: (destination: CreateDestination) => go(destination === "event" ? "home" : destination, destination),
+    onCreate: (destination: CreateDestination) => go(destination === "event" ? "home" : destination === "spin" ? "wishes" : destination, destination),
   };
 }
 

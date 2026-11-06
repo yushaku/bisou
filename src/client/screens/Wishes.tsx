@@ -1,6 +1,7 @@
 import { ArrowLeft, Check, Ellipsis, Gift, ListFilter, PencilLine, Plus, Trash2 } from "lucide-react";
-import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useContext, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import { useHistoryState } from "wouter/use-browser-location";
 import { toast } from "sonner";
 import type { Couple, Wish } from "../../shared/types";
 import { api } from "../api";
@@ -20,6 +21,8 @@ import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { wishErrorKey } from "../lib/wishes";
 import { useCreateRequest } from "../lib/useTabNavigation";
+import { readCreateRequest } from "../lib/navigation";
+import { useWishJar } from "../lib/useWishJar";
 import { TabMemory } from "../lib/tabMemory";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
@@ -37,19 +40,18 @@ const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then(
 export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
-  const [view, setView] = useState<Section | "spin">(() => memory?.wishesSection ?? "jar");
+  const request = readCreateRequest(useHistoryState<unknown>());
+  const [view, setView] = useState<Section | "spin">(() => request === "spin" ? "spin" : memory?.wishesSection ?? "jar");
   const [filter, setFilter] = useState<Filter>(() => memory?.wishesFilter ?? "all");
   const partnerName = couple.members.find((m) => m.id !== session.user.id)?.displayName ?? "?";
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
-  const [jar, setJar] = useState<{ open: Wish[]; received: Wish[]; partnerJarEmpty: boolean } | null>(() => memory?.wishes ?? null);
+  const { jar, setJar, failed, refresh } = useWishJar(session.onSignedOut);
   useLayoutEffect(() => {
     if (!memory) return;
-    memory.wishes = jar;
     if (view !== "spin") memory.wishesSection = view;
     memory.wishesFilter = filter;
-  }, [jar, view, filter, memory]);
-  const [failed, setFailed] = useState(false);
+  }, [view, filter, memory]);
   const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
   const [acting, setActing] = useState<Wish | null>(null);
@@ -60,20 +62,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const refresh = useCallback(async () => {
-    const res = await api.wishes();
-    if (res.ok) { setJar(res.data); setFailed(false); }
-    else if (res.status === 401) session.onSignedOut();
-    else setFailed(true);
-  }, [session.onSignedOut]);
-  useEffect(() => {
-    void refresh();
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    document.addEventListener("visibilitychange", visible);
-    window.addEventListener("online", visible);
-    return () => { document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
-  }, [refresh]);
-
+  useCreateRequest("spin", () => setView("spin"));
   useCreateRequest("wishes", () => { setFromMenu(true); setView("jar"); setEditing(null); });
 
   async function remove() {

@@ -8,6 +8,7 @@ import { EntryCard } from "@/components/bisou/EntryCard";
 import { AppearanceSettings } from "@/components/bisou/ThemeControls";
 import { SpinCard } from "@/components/bisou/SpinCard";
 import { WishCard } from "@/components/bisou/WishCard";
+import { WishJar } from "@/components/bisou/WishJar";
 import { CoupleAvatars } from "@/components/bisou/CoupleAvatars";
 import { UpcomingCard } from "@/components/bisou/EventRow";
 import { upcomingEvents } from "../../shared/events";
@@ -34,7 +35,7 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
     onSelect: (tab: TabId) => {
       if (tab === "home" || tab === "journal" || tab === "wishes") { setScreen(tab); setSettings(false); }
     },
-    onCreate: (tab: CreateDestination) => { setScreen(tab === "event" ? "home" : tab); setSettings(false); toast.info(d("previewOnly")); },
+    onCreate: (tab: CreateDestination) => { setScreen(tab === "event" ? "home" : tab === "spin" ? "wishes" : tab); setSettings(false); toast.info(d("previewOnly")); },
   };
   if (settings) return (
     <AppShell tabs={tabs} title={t("settings.title")} className={cn(framed && "min-h-full")} action={
@@ -76,6 +77,10 @@ function HomeScreen() {
         <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: COUPLE[0].name, b: COUPLE[1].name })}</p>
       </div>
       <DaysCounter startDate={START_DATE} people={COUPLE} today={TODAY} />
+      <section aria-label={t("nav.wishes")} className="mt-5 grid grid-cols-2 gap-2">
+        <WishJar person={COUPLE[0]} level={3} mine onOpen={() => toast.info(d("previewOnly"))} />
+        <WishJar person={COUPLE[1]} level={2} onOpen={() => toast.info(d("previewOnly"))} />
+      </section>
       <UpcomingCard events={upcomingEvents(START_DATE, COUPLE, toDayString(TODAY))} action={
         <Button variant="ghost" size="sm" onClick={() => toast.info(d("previewOnly"))}>{t("home.seeAll")}</Button>
       } />
