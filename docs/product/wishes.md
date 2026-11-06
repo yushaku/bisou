@@ -51,6 +51,13 @@ Personal data
 - R23. Wishes and photos are the owner's personal data, kept only for the jar while the couple exists or until the owner deletes them for good.
 - R24. Claims and spins belong to the spinner; spins are kept only to count the limit.
 
+Home
+
+- R25. Home shows both jars under the days counter: mine on the left, my partner's on the right, each titled "Hũ của {tên}" ("{name}'s jar") with that person's photo or initial.
+- R26. My jar looks fuller the more open wishes it holds (open as in R10): empty at none, then a few steps up to full at about ten.
+- R27. My partner's jar shows only empty or filled, the same one bit as R10, never how many; when empty it reads "Chưa bỏ điều ước nào" ("No wishes yet") and cannot be opened.
+- R28. Tapping my jar opens my jar; tapping my partner's filled jar opens the spin.
+
 ## Running example
 
 An and Binh, together since 12 February 2023. Binh's jar on 6 November 2026: scented candle 350,000 VND, nice to have; linen scarf 450,000 VND, really want, with photo; ceramic mug set 280,000 VND, really want; pottery class for two 900,000 VND, dream, with link; weekend in Da Lat, no price, dream.
@@ -81,6 +88,7 @@ Keep wishes (owner); spin, claim, release (partner); mark received (owner). Rule
 - AC12 (R20, R21). Given Binh marks it received on 20 November, then both see Binh's entry under that day, made from a wish; only Binh can change or delete it, and deleting keeps the scarf received.
 - AC13 (R6). Given Binh adds a photo to the scarf, then it is saved square and kept like journal photos, and the wish never holds more than one photo.
 - AC14 (R10, R1). Given Binh has no wishes, when An opens the spin card, then it reads "Binh hasn't put any wishes in the jar yet" and no spin is offered; if Binh's only wish is one An claimed, the spin is offered and An is told nothing fits; an outsider learns neither.
+- AC15 (R25, R26, R27, R28). Given Binh has no wishes and An has 7, then An's home shows her jar on the left mostly full and Binh's jar on the right empty, reading "Chưa bỏ điều ước nào" and not opening; Binh's home shows An's jar filled, looking the same as if she had 1 or 30, and tapping it opens the spin.
 
 ## Glossary
 
