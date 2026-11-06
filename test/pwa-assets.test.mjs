@@ -15,7 +15,7 @@ test("every portrait splash link has matching pixels and the approved background
   const links = [...html.matchAll(/<link rel="apple-touch-startup-image" href="([^"]+)" media="([^"]+)"/g)];
   assert.equal(links.length, 22);
   for (const [, href, media] of links) {
-    const [, width, height, dpr, mode] = href.match(/(\d+)x(\d+)@(\d)x-(light|dark)/);
+    const [, width, height, dpr, mode] = href.match(/(\d+)x(\d+)-(\d)x-(light|dark)/);
     const image = sharp(`public${href}`);
     const meta = await image.metadata();
     assert.equal(meta.width, Number(width) * Number(dpr));

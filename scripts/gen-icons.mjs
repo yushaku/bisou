@@ -44,7 +44,7 @@ for (const { width, height, dpr } of phones) {
   const pixelsHigh = height * dpr;
   const heart = await sharp("assets/brand-heart.webp").resize(Math.round(pixelsWide * 0.28)).toBuffer();
   for (const [mode, palette] of [["light", "peach"], ["dark", "cocoa"]]) {
-    const href = `/splash/${width}x${height}@${dpr}x-${mode}.png`;
+    const href = `/splash/${width}x${height}-${dpr}x-${mode}.png`;
     // A smaller, quieter weave compresses well across the full launch screen.
     const linen = await sharp("src/client/assets/linen.webp").resize(64 * dpr, 64 * dpr)
       .removeAlpha().linear(mode === "light" ? 0.08 : 0.025, mode === "light" ? 255 * 0.92 : 0).png().toBuffer();
