@@ -11,10 +11,14 @@
 
 - Event JSON requests are limited to 16 KB.
 - Event and wish titles refuse control characters, text direction overrides and titles made only of invisible characters.
+- Switching sections in Wishes shows the loaded lists at once instead of a loading state.
 
 ### Changed
 
-- The active tab's highlight fills more of its tab.
+- The active tab's highlight fills more of its tab, and Garden no longer shows a Soon label.
+- Wishes has two sections, My jar and My claims, under your partner's jar; My jar lists open and received wishes together with an icon filter (All, Wishing, Received), and the received day sits inside the card.
+- Wish options open as a bottom sheet; received claims show a check badge.
+- Settings groups style, light or dark, the palette for the current mode and the background in one Appearance sheet; language is a dropdown.
 
 ## [2026-11-06]
 
