@@ -4,10 +4,12 @@ import * as React from "react"
 import { cn } from "cn"
 import { Drawer as DrawerPrimitive } from "vaul"
 
+/* repositionInputs off: on iPhone vaul lifted the sheet for the keyboard while iOS also scrolled it, so the form slid above the screen. */
 function Drawer({
+  repositionInputs = false,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  return <DrawerPrimitive.Root data-slot="drawer" repositionInputs={repositionInputs} {...props} />
 }
 
 function DrawerTrigger({
