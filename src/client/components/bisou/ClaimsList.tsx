@@ -1,4 +1,4 @@
-import { ExternalLink, Gift } from "lucide-react";
+import { Check, ExternalLink, Gift } from "lucide-react";
 import { useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Claim } from "../../../shared/types";
@@ -65,8 +65,14 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
           {claim.photoId && <img src={photoUrl(claim.photoId, "thumb")} alt={claim.title} loading="lazy" className="size-20 rounded-lg object-cover" />}
           <div className="min-w-0 flex-1"><h2 className="font-semibold">{claim.title}</h2>{claim.price !== null && <p className="font-heading text-lg">{formatVnd(claim.price, locale)}</p>}</div>
           {claim.link && <Button asChild variant="ghost" size="icon"><a href={claim.link} target="_blank" rel="noreferrer noopener" aria-label={t("wish.openLink")}><ExternalLink aria-hidden="true" /></a></Button>}
+          {claim.status === "received" && <span className="flex size-11 shrink-0 items-center justify-center">
+            <span className="flex size-9 items-center justify-center rounded-full bg-success text-success-foreground elevate-sm motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-300">
+              <Check className="size-5" strokeWidth={3} aria-hidden="true" />
+            </span>
+            <span className="sr-only">{t("claims.received")}</span>
+          </span>}
         </div>
-        {claim.status === "received" ? <p className="text-success">{t("claims.received")}</p> : <Button variant="outline" onClick={() => { setReleasing(claim); setError(null); }}>{t("claims.release")}</Button>}
+        {claim.status !== "received" && <Button variant="outline" onClick={() => { setReleasing(claim); setError(null); }}>{t("claims.release")}</Button>}
       </>}
     </Card>)}</div>
     <Dialog open={!!releasing} onOpenChange={(open) => { if (!open && !busy) setReleasing(null); }}>
