@@ -82,7 +82,7 @@ Glance at Home, open the full list, set one's own birthday; a wrong birthday is 
 ## Out of scope
 
 - Lunar events: Tet, Valentine on 7 July lunar.
-- Reminders, past events, hiding a holiday, recording gender.
+- Past events, hiding a holiday, recording gender; reminders are in [notifications](notifications.md).
 - Export and full deletion come with account deletion.
 
 ## Open questions

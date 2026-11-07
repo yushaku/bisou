@@ -80,9 +80,9 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: a recap built from journal entries, events and received wishes.
 
 ## Phase 5: Daily connection
-- [ ] **Web Push** (in progress, first)
+- [x] **Web Push**
   - Goal: the app reaches the partner without being opened.
-  - Outcome: opt-in notifications for event reminders, "your partner wrote in the journal" and a light tap; later the daily question and the garden use it. On iPhone it works only after Add to Home Screen; the Worker sends it, Cron Triggers are free.
+  - Outcome: device opt-in notifications for partner journal entries and event reminders, quiet hours with batched night entries, and an installed-app invitation on Home. On iPhone it works only after Add to Home Screen; the Worker sends it, Cron Triggers are free.
 - [ ] **Questions and the Garden**
   - Goal: a relationship built on understanding and respect, cared for a little every day.
   - Outcome: a daily question both answer separately and see once both answered; question sets by love stage; weekly compliments; a shared garden that grows from that care and fades gently without it.

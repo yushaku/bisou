@@ -38,7 +38,7 @@ Adding and changing
 - R13. Tapping a custom event opens it to change or delete.
 - R14. Deleting asks first ("Xoá “Bay đi Đà Lạt”? Cả hai sẽ không thấy sự kiện này nữa."); it cannot be undone.
 - R15. Computed events cannot be opened; birthdays change in Settings, as today.
-- R16. No reminders or notifications.
+- R16. Replaced by [notifications](notifications.md) R10: a custom event gets the same two reminders as other events, for devices that turned them on.
 
 Personal data
 
@@ -90,12 +90,12 @@ Add, change, delete. Rule breaks are refused with a reason ("Tên sự kiện t�
 
 ## Decided at Gate 1
 
-- PO: R1, R5, R6, R10, R11, R15, R16; R2 without an upper limit; R12; R9 count as years since the first date ("(3 năm)" / "(3 years)").
+- PO: R1, R5, R6, R10, R11, R15, R16; R2 without an upper limit; R12; R9 count as years since the first date ("(3 năm)" / "(3 years)"). R16 (no reminders) was later replaced by [notifications](notifications.md) R10.
 - Orchestrator defaults, PO may veto: yearly past dates (R2), cap (R4), "Xa hơn" (R18).
 
 ## Out of scope
 
-- Reminders, a timeline, past one-off events.
+- A timeline, past one-off events; reminders are in [notifications](notifications.md).
 - Leaving (see pairing); export and full deletion.
 
 ## Open questions

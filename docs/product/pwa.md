@@ -9,7 +9,7 @@
 - Errors: a friendly screen with a Reload button instead of a white page.
 - Status bar: follows the chosen theme.
 - Android shortcuts: Write in the journal, Spin.
-- Out: push notifications, offline writes, update prompt.
+- Out: offline writes, update prompt; push notifications are in [notifications](notifications.md).
 
 ## Purpose
 
@@ -81,7 +81,7 @@ Open Bisou in a tab, follow the card to install, open from the icon, use it on a
 
 ## Out of scope
 
-- Push notifications.
+- Push notifications are in [notifications](notifications.md).
 - Offline writes and a queue of pending saves.
 - An update prompt before reloading.
 

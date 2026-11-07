@@ -101,7 +101,8 @@ Keep wishes (owner); spin, claim, release (partner); mark received (owner). Rule
 
 - Wishes and claims when a partner leaves; decide with leaving (see pairing).
 - Export and full deletion; they come with account deletion.
-- Other currencies, notifications, a celebration for the claimer, undoing received.
+- Other currencies, a celebration for the claimer, undoing received.
+- Notifications about wishes, spins, claims or the jar: never sent ([notifications](notifications.md) R9); an entry made from a received wish notifies only as a journal entry.
 
 ## Open questions
 

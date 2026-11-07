@@ -59,6 +59,8 @@ Pushing `main` releases production through GitHub Actions after typecheck, tests
 
 The GitHub `production` environment needs the `CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` variable. In addition to Worker deployment and D1 permissions, the CI token needs **Workers R2 Storage: Read** so Wrangler can validate the `PHOTOS` bucket binding.
 
+Before the first deploy of this branch, run `node scripts/vapid-key.mjs` and `npx wrangler secret put VAPID_PRIVATE_KEY`, then paste the printed JWK. Never reuse the development key from `.dev.vars.example`. The push cron now runs hourly (`0 * * * *`).
+
 To retry a failed release, open **Actions**, select **Deploy production**, then **Run workflow** on `main`.
 
 ## Setup steps for a human (not automated)

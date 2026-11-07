@@ -79,7 +79,7 @@ Write (text, photos, a day), read the feed, change or delete one's own entry. An
 ## Out of scope
 
 - Milestones and timeline; wishes and entries made from them.
-- Reactions, comments, drafts, later reveal, notifications, search, videos.
+- Reactions, comments, drafts, later reveal, search, videos; notifying the partner of a new entry is in [notifications](notifications.md).
 - Undoing a delete, such as a recovery bin; export and full deletion come with account deletion (see pairing).
 - The journal when a partner leaves the couple; decide it with leaving, which pairing also leaves out.
 
