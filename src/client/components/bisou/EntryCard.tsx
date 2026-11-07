@@ -38,12 +38,14 @@ export function EntryCard({
   id,
   actions,
   onOpenPhoto,
+  onOpen,
   className,
 }: {
   entry: Entry;
   showDate?: boolean;
   id?: string;
   actions?: ReactNode;
+  onOpen?: () => void;
   onOpenPhoto?: (index: number) => void;
   className?: string;
 }) {
@@ -53,7 +55,8 @@ export function EntryCard({
   const long = entry.body.length > CLAMP_AT;
 
   return (
-    <Card id={id} tabIndex={id ? -1 : undefined} className={cn("gap-4 px-4 py-4 outline-none focus-visible:ring-3 focus-visible:ring-ring", className)}>
+    <Card id={id} tabIndex={id ? -1 : undefined} className={cn("relative gap-4 px-4 py-4 outline-none focus-visible:ring-3 focus-visible:ring-ring", className)}>
+      {onOpen && <button type="button" className="absolute inset-0 rounded-xl focus-visible:ring-3 focus-visible:ring-ring" aria-label={t("entry.open", { name: entry.author.name, time: entry.time ?? "" })} onClick={onOpen} />}
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <PersonAvatar person={entry.author} size="sm" />
         <div className="min-w-0 flex-1">
@@ -72,7 +75,7 @@ export function EntryCard({
             {t("milestone.label")}
           </Badge>
         )}
-        {actions}
+        <div className="relative">{actions}</div>
       </header>
 
       {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}
@@ -89,10 +92,10 @@ export function EntryCard({
             <Button
               variant="link"
               size="sm"
-              className="mt-1 h-9"
-              aria-expanded={open}
+              className="relative mt-1 h-9"
+              aria-expanded={onOpen ? undefined : open}
               aria-controls={bodyId}
-              onClick={() => setOpen((v) => !v)}
+              onClick={onOpen ?? (() => setOpen((v) => !v))}
             >
               {open ? t("entry.less") : t("entry.more")}
             </Button>
@@ -100,9 +103,9 @@ export function EntryCard({
         </div>
       )}
 
-      {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
 
-      <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="px-1" />
+
+      <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="relative px-1" />
     </Card>
   );
 }

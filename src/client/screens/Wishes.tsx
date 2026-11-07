@@ -1,5 +1,5 @@
 import { ArrowLeft, Check, Ellipsis, Gift, ListFilter, PencilLine, Plus, Trash2 } from "lucide-react";
-import { lazy, Suspense, useContext, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { ClaimsList } from "../components/bisou/ClaimsList";
 import { toPeople } from "../components/bisou/CoupleAvatars";
 import { SpinCard } from "../components/bisou/SpinCard";
 import { WishTeaser } from "../components/bisou/WishTeaser";
+import { WishDetailSheet } from "../components/bisou/WishDetailSheet";
 import { WishCard } from "../components/bisou/WishCard";
 import { Button } from "../components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../components/ui/drawer";
@@ -60,6 +61,8 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
   const [acting, setActing] = useState<Wish | null>(null);
+  const [detail, setDetail] = useState(false);
+  useEffect(() => { if (acting && jar && ![...jar.open, ...jar.received].some((wish) => wish.id === acting.id)) setActing(null); }, [jar, acting]);
   // The options sheet still shows its wish while it animates closed.
   const lastActing = useRef(acting);
   if (acting) lastActing.current = acting;
@@ -82,7 +85,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     else setError(t(wishErrorKey(res.error?.error)));
   }
 
-  const optionsButton = (wish: Wish) => <Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>;
+  const optionsButton = (wish: Wish) => <Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setDetail(false); setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>;
 
   return <SignedInShell {...session} tab="wishes">
     {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => spinFromHome ? history.back() : setView("jar")}><ArrowLeft aria-hidden="true" />{t(spinFromHome ? "common.back" : "wishes.back")}</Button> : <>
@@ -118,8 +121,8 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
         {filter === "received" && jar.received.length === 0 && <EmptyState icon={Gift} title={t("received.empty")} />}
         {filter === "open" && jar.open.length === 0 && <EmptyState icon={Gift} title={t("empty.wishes")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />}
         <div className="flex flex-col gap-3 pb-6">
-          {filter !== "received" && jar.open.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)} />)}
-          {filter !== "open" && jar.received.map((wish) => <WishCard key={wish.id} wish={wish} actions={optionsButton(wish)}>
+          {filter !== "received" && jar.open.map((wish) => <WishCard key={wish.id} wish={wish} onOpen={() => { setDetail(true); setActing(wish); setDeleting(false); setError(null); }} actions={optionsButton(wish)} />)}
+          {filter !== "open" && jar.received.map((wish) => <WishCard key={wish.id} wish={wish} onOpen={() => { setDetail(true); setActing(wish); setDeleting(false); setError(null); }} actions={optionsButton(wish)}>
             {wish.receivedOn && <p className="mt-1 flex items-start gap-1.5 text-sm text-muted-foreground"><span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"><Check className="size-3" strokeWidth={3} aria-hidden="true" /></span>{t("received.on", { date: formatDay(wish.receivedOn, locale) })}</p>}
             {wish.note && <p className="mt-1 whitespace-pre-line text-sm">{wish.note}</p>}
           </WishCard>)}
@@ -142,12 +145,14 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
       }} /></Suspense>}
     <Celebration open={celebrate} onOpenChange={setCelebrate} />
     <Drawer open={!!acting} onOpenChange={(open) => { if (!open && !busy) setActing(null); }}>
-      <DrawerContent aria-describedby={undefined}>
-        <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-5">
+      <DrawerContent className="max-h-[80vh]" aria-describedby={undefined}>
+        <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col gap-2 px-5 pb-5">
           <DrawerHeader className="px-0 text-left">
             <DrawerTitle className="font-heading text-xl">{shownWish?.title}</DrawerTitle>
             {deleting && <p id="wish-delete-confirm" className="text-sm text-muted-foreground">{t("wish.deleteConfirm", { title: shownWish?.title ?? "" })}</p>}
           </DrawerHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto space-y-2">
+          {detail && shownWish && !deleting && <WishDetailSheet wish={shownWish} />}
           <p role="alert" className="text-destructive empty:hidden">{error}</p>
           {!online && <p id="wish-action-offline" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
           {deleting ? <>
@@ -159,6 +164,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
             <Button aria-describedby={!online ? "wish-action-offline" : undefined} variant="outline" size="lg" disabled={!online} className="justify-start text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
             <Button variant="ghost" size="lg" onClick={() => setActing(null)}>{t("common.close")}</Button>
           </>}
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

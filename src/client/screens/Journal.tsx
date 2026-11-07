@@ -8,6 +8,7 @@ import { api, photoUrl } from "../api";
 import { toPeople, type Person } from "../components/bisou/CoupleAvatars";
 import { displayName } from "../lib/displayName";
 import { EmptyState } from "../components/bisou/EmptyState";
+import { JournalDetailSheet } from "../components/bisou/JournalDetailSheet";
 import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard, type Entry } from "../components/bisou/EntryCard";
 import { PhotoViewer } from "../components/bisou/PhotoViewer";
@@ -81,6 +82,9 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [editing, setEditing] = useState<JournalEntry | null>(null);
   // Own entry whose edit and delete actions are open.
   const [acting, setActing] = useState<JournalEntry | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const detail = feed?.entries.find((e) => e.id === detailId);
+  useEffect(() => { if (!detail) setDetailId(null); }, [detail]);
   const write = (entry: JournalEntry | null = null, fromMenu = false) => {
     setFromMenu(fromMenu);
     setEditing(entry);
@@ -235,6 +239,7 @@ export function Journal({ couple, ...session }: JournalProps) {
                     id={`entry-${e.id}`}
                     entry={card}
                     showDate={false}
+                    onOpen={() => setDetailId(e.id)}
                     onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
                     // Only the author changes or deletes an entry (R10, R11); the server checks it again.
                     actions={
@@ -296,6 +301,8 @@ export function Journal({ couple, ...session }: JournalProps) {
         }
       />
 
+      <EntryActions entry={detail ?? null} own={detail?.authorId === user.id} onClose={() => setDetailId(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut}
+        detail={detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={(index) => { setDetailId(null); setViewer({ entry: detail, index, open: true }); }} />} />
       <EntryActions entry={acting} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
 
       {composeLoaded && (

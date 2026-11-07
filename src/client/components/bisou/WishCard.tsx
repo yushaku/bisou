@@ -27,12 +27,13 @@ export function WishPriority({ priority }: { priority: Wish["priority"] }) {
   );
 }
 
-export function WishCard({ wish, className, actions, children }: { wish: Wish; className?: string; actions?: ReactNode; children?: ReactNode }) {
+export function WishCard({ wish, className, actions, children, onOpen }: { wish: Wish; className?: string; actions?: ReactNode; children?: ReactNode; onOpen?: () => void }) {
   const { t, locale } = useI18n();
   const photo = wish.photo ?? (wish.photoId ? { src: photoUrl(wish.photoId, "thumb"), alt: wish.title } : null);
   return (
-    <Card className={cn("flex-row items-center gap-3 p-3", className)}>
-      <div className="photo-frame shrink-0 [--photo-pad-bottom:var(--photo-pad)] [--photo-tilt:0deg]">
+    <Card className={cn("relative flex-row items-center gap-3 p-3", className)}>
+      {onOpen && <button type="button" className="absolute inset-0 rounded-xl focus-visible:ring-3 focus-visible:ring-ring" aria-label={t("wish.open", { title: wish.title })} onClick={onOpen} />}
+      <div style={onOpen ? { pointerEvents: "none" } : undefined} className="photo-frame shrink-0 [--photo-pad-bottom:var(--photo-pad)] [--photo-tilt:0deg]">
         <div data-slot="photo" className="relative size-20 overflow-hidden bg-muted">
           {photo ? (
             <img src={photo.src} alt={photo.alt} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
@@ -52,7 +53,7 @@ export function WishCard({ wish, className, actions, children }: { wish: Wish; c
       </div>
       {(wish.link || actions) && (
         // One narrow column on the right keeps the title wide: link on top, menu below.
-        <div className="-my-1 -mr-1 flex shrink-0 flex-col items-center justify-between self-stretch">
+        <div className="relative -my-1 -mr-1 flex shrink-0 flex-col items-center justify-between self-stretch">
           {wish.link && (
             <Button asChild variant="ghost" size="icon">
               <a href={wish.link} target="_blank" rel="noreferrer noopener" aria-label={`${t("wish.openLink")}: ${wish.title}`}>

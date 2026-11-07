@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import { PencilLine, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { JournalEntry } from "../../../shared/types";
@@ -13,6 +13,8 @@ import { useOnline } from "@/lib/useOnline";
 interface EntryActionsProps {
   /* The author's own entry whose actions are open, or null. */
   entry: JournalEntry | null;
+  detail?: ReactNode;
+  own?: boolean;
   onClose: () => void;
   onEdit: (entry: JournalEntry) => void;
   onDeleted: (id: string) => void;
@@ -23,7 +25,7 @@ interface EntryActionsProps {
  * Edit or delete one's own entry (R10, R11). Delete asks first, naming the day and photo
  * count; a failure keeps the entry and the dialog for another try. There is no undo.
  */
-export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }: EntryActionsProps) {
+export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, own = true }: EntryActionsProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const offlineId = useId();
@@ -57,11 +59,14 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
   return (
     <>
       <Drawer open={!!entry} onOpenChange={(open) => !open && onClose()}>
-        <DrawerContent aria-describedby={undefined}>
-          <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-5 pb-5">
+        <DrawerContent className="max-h-[80vh]" aria-describedby={undefined}>
+          <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col gap-2 px-5 pb-5">
             <DrawerHeader className="px-0 text-left">
               <DrawerTitle className="font-heading text-xl">{shown ? formatDay(shown.date, locale) : ""}</DrawerTitle>
             </DrawerHeader>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+            {detail}
+            {own && <>
             {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
             <Button
               variant="outline"
@@ -90,6 +95,8 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut }:
               <Trash2 aria-hidden="true" />
               {t("entry.delete")}
             </Button>
+            </>}
+            </div>
             <Button variant="ghost" size="lg" onClick={onClose}>
               {t("entry.cancel")}
             </Button>

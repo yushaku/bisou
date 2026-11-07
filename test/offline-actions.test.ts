@@ -54,7 +54,7 @@ it.each([false, true])("entry deletion respects connectivity: online=%s", async 
 it.each([false, true])("wish deletion respects connectivity: online=%s", async (online) => {
   vi.stubGlobal("navigator", { onLine: online });
   const remove = vi.spyOn(api, "deleteWish").mockResolvedValue({ ok: false, status: 0, error: null });
-  state.push("jar", false, "all", null, false, false, undefined, wish, true, false, null);
+  state.push("jar", false, "all", null, false, false, undefined, wish, false, true, false, null);
   const nodes = elements(Wishes({ user, couple: { id: "couple", startDate: null, members: [user], events: [] }, onUser: vi.fn(), onSignedOut: vi.fn() }));
   const confirm = nodes.find((node) => node.key === "confirm-delete")!;
   expect(Boolean(confirm.props.disabled)).toBe(!online);
