@@ -2,6 +2,14 @@ import { env } from "cloudflare:test";
 import { expect, vi } from "vitest";
 import { fromBase64Url, toBase64Url } from "../src/worker/lib/crypto";
 import { call, type TestUser } from "./helpers";
+import worker from "../src/worker/index";
+
+export async function runPushCron(time: string) {
+  const pending: Promise<unknown>[] = [];
+  const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); }, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
+  worker.scheduled({ scheduledTime: Date.parse(time), cron: "0 * * * *", noRetry: () => {} } as ScheduledController, env, ctx);
+  await Promise.all(pending);
+}
 
 export async function device(id: string, kinds = { journal: true, reminders: true }) {
   const keys = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);

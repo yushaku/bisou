@@ -7,6 +7,12 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("push query plans", () => {
   it.each([
+    ["AC12, AC13, R18: night window", "SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ?", [100, 200], ["journal_entries_created"]],
+    ["AC12, R17: night recipient", `SELECT u.id, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name
+      FROM couple_members m JOIN users u ON u.id = m.user_id WHERE m.couple_id = ? AND m.user_id <> ?`, ["author", "couple", "author"], ["sqlite_autoindex_users_1", "sqlite_autoindex_couple_members_"]],
+    ["AC12, R18: night device claim", `UPDATE push_subscriptions SET journal_slot = ?
+      WHERE user_id = ? AND journal = 1 AND (journal_slot IS NULL OR journal_slot <> ?)
+      RETURNING id, endpoint, p256dh, auth`, ["2026-11-08", "user", "2026-11-08"], ["push_subscriptions_user"]],
     ["AC14, R2: own devices", "SELECT endpoint, journal, reminders FROM push_subscriptions WHERE user_id = ?", ["user"], ["push_subscriptions_user"]],
     ["R27: device cap", `DELETE FROM push_subscriptions WHERE id IN (
       SELECT id FROM push_subscriptions WHERE user_id = ? AND endpoint <> ? ORDER BY created_at DESC LIMIT -1 OFFSET 9

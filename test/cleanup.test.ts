@@ -167,7 +167,7 @@ describe("scheduled handler", () => {
       passThroughOnException: () => {},
       props: {},
     } as unknown as ExecutionContext;
-    const controller = { scheduledTime: NOW, cron: "0 20 * * *", noRetry: () => {} } as ScheduledController;
+    const controller = { scheduledTime: NOW, cron: "0 * * * *", noRetry: () => {} } as ScheduledController;
 
     await worker.scheduled!(controller, env, ctx);
     expect(pending).toHaveLength(1);
@@ -192,7 +192,7 @@ describe("scheduled handler", () => {
 async function scheduled() {
   const pending: Promise<unknown>[] = [];
   const ctx = { waitUntil: (promise: Promise<unknown>) => pending.push(promise), passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
-  await worker.scheduled({ scheduledTime: NOW, cron: "0 20 * * *", noRetry: () => {} } as ScheduledController, env, ctx);
+  await worker.scheduled({ scheduledTime: NOW, cron: "0 * * * *", noRetry: () => {} } as ScheduledController, env, ctx);
   await Promise.all(pending);
 }
 

@@ -1,6 +1,8 @@
 import type { Env } from "./env";
 import { app } from "./app";
 import { runCleanup, sweepPhotos } from "./lib/cleanup";
+import { vnHour } from "../shared/days";
+import { releaseNightJournal } from "./lib/notify";
 
 // Static assets (the SPA) are served by Workers assets; only /api/* reaches this Worker
 // (see assets.run_worker_first in wrangler.jsonc).
@@ -9,8 +11,17 @@ export default {
     return app.fetch(request, env, ctx);
   },
 
-  // Daily Cron Trigger (triggers.crons in wrangler.jsonc): removes expired rows.
+  // One hourly trigger dispatches jobs using Vietnam time.
   scheduled(controller, env, ctx) {
+    switch (vnHour(controller.scheduledTime)) {
+      case 7:
+        ctx.waitUntil(releaseNightJournal(env, controller.scheduledTime).catch(() => console.error("[bisou] night journal push failed")));
+        return;
+      case 3:
+        break;
+      default:
+        return;
+    }
     ctx.waitUntil(
       Promise.allSettled([
         runCleanup(env.DB, controller.scheduledTime),

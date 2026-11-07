@@ -1,6 +1,7 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
   "push.journal.one": "{name} vừa viết nhật ký",
+  "push.journal.many": "{name} đã viết {n} bài nhật ký",
   "push.title": "Thông báo",
   "push.journal": "Nhật ký của người ấy",
   "push.reminders": "Nhắc ngày đặc biệt",
