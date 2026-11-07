@@ -43,7 +43,7 @@ export interface DrawInput { played?: string[]; previousDeck?: string; excludedC
 export function drawCard(input: DrawInput, seed: number): GardenCard | null {
   const cards = CARDS.filter((card) => !card.retired && !input.played?.includes(card.id) && card.id !== input.excludedCard);
   let decks = DECKS.filter((deck) => cards.some((card) => card.deckId === deck.id));
-  for (const excluded of [input.excludedDeck, input.previousDeck]) {
+  for (const excluded of [input.previousDeck, input.excludedDeck]) {
     const alternatives = decks.filter((deck) => deck.id !== excluded);
     if (alternatives.length) decks = alternatives;
   }
@@ -51,7 +51,9 @@ export function drawCard(input: DrawInput, seed: number): GardenCard | null {
   const weight = (deckId: string) => 1 + Math.min(2, Math.max(0, 7 - (input.stages?.[deckId] ?? 0)));
   let bucket = (seed >>> 0) % decks.reduce((sum, deck) => sum + weight(deck.id), 0);
   const deck = decks.find((candidate) => { bucket -= weight(candidate.id); return bucket < 0; })!;
-  return cards.find((card) => card.deckId === deck.id) ?? null;
+  const inDeck = cards.filter((card) => card.deckId === deck.id);
+  return inDeck.find((card) => !input.swapped?.includes(card.id))
+    ?? inDeck.sort((a, b) => input.swapped!.indexOf(a.id) - input.swapped!.indexOf(b.id))[0] ?? null;
 }
 
 interface GardenDeck { id: string; name: Record<Locale, string>; purpose: Record<Locale, string> }

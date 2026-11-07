@@ -49,6 +49,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 export const api = {
   garden: () => call<GardenState>("GET", "/api/garden"),
   gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
+  swapGarden: (cardId: string) => call<GardenState>("POST", "/api/garden/today/swap", { cardId }),
   answerGarden: (id: string, text: string) => call<{ card: GardenCardState }>("POST", `/api/garden/cards/${encodeURIComponent(id)}/answer`, { text }),
   editGardenAnswer: (id: string, text: string) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/answer`, { text }),
   deleteGardenAnswer: (id: string) => call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/answer`),

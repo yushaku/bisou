@@ -1,9 +1,9 @@
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { vnDay } from "../../shared/days";
-import { answerText, cardById } from "../../shared/garden";
+import { answerText, cardById, DECKS, drawCard } from "../../shared/garden";
 import type { AppEnv } from "../env";
-import { cardStates, gardenState } from "../lib/garden";
+import { cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday } from "../lib/garden";
 
 type GardenEnv = AppEnv & { Variables: { gardenCoupleId: string } };
 export const garden = new Hono<GardenEnv>();
@@ -19,6 +19,39 @@ garden.use("*", async (c, next) => {
 });
 
 garden.get("/", async (c) => c.json(await gardenState(c.env.DB, c.get("gardenCoupleId"), c.get("user").id, Date.now())));
+
+garden.get("/decks/:deckId", async (c) => {
+  const deck = DECKS.find((d) => d.id === c.req.param("deckId"));
+  if (!deck) return c.json({ error: "not_found" }, 404);
+  return c.json(await gardenDeck(c.env.DB, c.get("gardenCoupleId"), c.get("user").id, deck.id, Date.now()));
+});
+
+garden.post("/today/swap", limitBody, async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const requested = typeof body?.cardId === "string" ? cardById(body.cardId) : undefined;
+  if (!requested || requested.retired) return c.json({ error: "invalid_body" }, 400);
+  const db = c.env.DB;
+  const couple = c.get("gardenCoupleId");
+  const user = c.get("user").id;
+  const now = Date.now();
+  const today = await loadToday(db, couple, now);
+  const state = () => gardenState(db, couple, user, now);
+  if (!today || today.card_id !== requested.id) return c.json(await state());
+  const locked = () => db.prepare("SELECT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) AS locked").bind(couple, today.card_id).first<number>("locked");
+  if (await locked()) return c.json({ error: "swap_locked" }, 409);
+  const card = drawCard({ ...await drawInput(db, couple, today.day), excludedCard: today.card_id, excludedDeck: today.deck_id }, await drawSeed(couple, today.day, today.swaps + 1));
+  if (!card) return c.json({ error: "no_other_card" }, 409);
+  const updated = await db.prepare(`UPDATE garden_days SET card_id = ?, deck_id = ?, swaps = swaps + 1,
+    swapped_cards = json_set(swapped_cards, ?, ?) WHERE couple_id = ? AND day = ? AND card_id = ?
+    AND NOT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1)
+    AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) < 2`)
+    .bind(card.id, card.deckId, `$."${today.card_id}"`, `${today.day}:${String(today.swaps + 1).padStart(12, "0")}`, couple, today.day, today.card_id, couple, today.card_id, couple, card.id).run();
+  if (!updated.meta.changes) {
+    const current = await loadToday(db, couple, now);
+    if (current?.card_id === today.card_id && await locked()) return c.json({ error: "swap_locked" }, 409);
+  }
+  return c.json(await state());
+});
 
 const saveAnswer: Handler<GardenEnv> = async (c) => {
   const card = cardById(c.req.param("cardId") ?? "");

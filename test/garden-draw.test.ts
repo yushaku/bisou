@@ -28,4 +28,10 @@ describe("Garden draw", () => {
     }
     expect(counts).toEqual({ [small!.id]: 300, [big!.id]: 100 });
   });
+  it("R10 AC5: swapped cards return at the back of their deck in swap order", () => {
+    const deck = DECKS[0]!.id;
+    const others = CARDS.filter((c) => c.deckId !== deck).map((c) => c.id);
+    expect(drawCard({ played: others, swapped: [`${deck}-01`] }, 0)?.id).toBe(`${deck}-02`);
+    expect(drawCard({ played: CARDS.filter((c) => c.id !== `${deck}-01` && c.id !== `${deck}-02`).map((c) => c.id), swapped: [`${deck}-02`, `${deck}-01`] }, 0)?.id).toBe(`${deck}-02`);
+  });
 });

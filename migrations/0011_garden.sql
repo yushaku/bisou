@@ -4,7 +4,7 @@ CREATE TABLE garden_days (
   deck_id TEXT NOT NULL,
   card_id TEXT NOT NULL,
   swaps INTEGER NOT NULL DEFAULT 0,
-  swapped_cards TEXT NOT NULL DEFAULT '[]' CHECK (json_valid(swapped_cards)),
+  swapped_cards TEXT NOT NULL DEFAULT '{}' CHECK (json_valid(swapped_cards)),
   flipped INTEGER NOT NULL DEFAULT 0 CHECK (flipped IN (0, 1)),
   created_at INTEGER NOT NULL,
   PRIMARY KEY (couple_id, day)

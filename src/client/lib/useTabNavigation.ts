@@ -20,7 +20,7 @@ export function useTabNavigation(tab?: TabId) {
   const state = useHistoryState<{ from?: string } | null>();
   const memory = useContext(TabMemory);
   const origin = state?.from ?? location;
-  const current = LIVE_TABS.find((id) => TAB_PATH[id] === origin) ?? "home";
+  const current = LIVE_TABS.find((id) => TAB_PATH[id] === origin || (id === "garden" && origin.startsWith("/garden/"))) ?? "home";
 
   function go(next: TabId, create?: CreateDestination) {
     if (tab) memory?.scroll.set(tab, window.scrollY);

@@ -1,16 +1,19 @@
 import { vnDay } from "../../shared/days";
-import { DECKS, drawCard, freshness, plantStage, type GardenCardState, type GardenState } from "../../shared/garden";
+import { CARDS, DECKS, drawCard, freshness, plantStage, type GardenCardState, type GardenState, type GardenDeckState } from "../../shared/garden";
 
 export interface GardenDay { day: string; card_id: string; deck_id: string; swaps: number; flipped: number }
 
 export async function drawInput(db: D1Database, coupleId: string, day: string) {
-  const [played, previous, growth] = await db.batch<{ card_id: string; deck_id: string; days: number }>([
+  const [played, previous, growth, swapped] = await db.batch<{ card_id: string; deck_id: string; days: number }>([
     db.prepare("SELECT card_id FROM garden_answers WHERE couple_id = ? AND round = 1 GROUP BY card_id HAVING COUNT(*) = 2").bind(coupleId),
     db.prepare("SELECT deck_id FROM garden_days WHERE couple_id = ? AND day < ? ORDER BY day DESC LIMIT 1").bind(coupleId, day),
     db.prepare("SELECT deck_id, COUNT(*) days FROM garden_growth WHERE couple_id = ? GROUP BY deck_id").bind(coupleId),
+    db.prepare(`SELECT skipped.key AS card_id, MAX(skipped.value) AS position FROM garden_days d, json_each(d.swapped_cards) skipped
+      WHERE d.couple_id = ? GROUP BY skipped.key ORDER BY position`).bind(coupleId),
   ]);
   return { played: played!.results.map((r) => r.card_id), previousDeck: previous!.results[0]?.deck_id,
-    stages: Object.fromEntries(growth!.results.map((r) => [r.deck_id, plantStage(r.days)])) };
+    stages: Object.fromEntries(growth!.results.map((r) => [r.deck_id, plantStage(r.days)])),
+    swapped: swapped!.results.map((r) => r.card_id) };
 }
 
 export async function drawSeed(coupleId: string, day: string, swaps: number): Promise<number> {
@@ -26,11 +29,12 @@ export async function loadToday(db: D1Database, coupleId: string, now: number): 
   const card = drawCard(await drawInput(db, coupleId, day), await drawSeed(coupleId, day, 0));
   if (!card) return null;
   const results = await db.batch<GardenDay>([
-    db.prepare(`INSERT INTO garden_days(couple_id, day, deck_id, card_id, created_at) VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(couple_id, day) DO NOTHING`).bind(coupleId, day, card.deckId, card.id, now),
+    db.prepare(`INSERT INTO garden_days(couple_id, day, deck_id, card_id, created_at) SELECT ?, ?, ?, ?, ?
+      WHERE (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) < 2
+      ON CONFLICT(couple_id, day) DO NOTHING`).bind(coupleId, day, card.deckId, card.id, now, coupleId, card.id),
     select(),
   ]);
-  return results[1]!.results[0]!;
+  return results[1]!.results[0] ?? loadToday(db, coupleId, now);
 }
 
 export async function cardStates(db: D1Database, coupleId: string, userId: string, cardIds: string[]): Promise<GardenCardState[]> {
@@ -66,5 +70,22 @@ export async function gardenState(db: D1Database, coupleId: string, userId: stri
   return { day: vnDay(now), today: state, swapLocked: !!locked,
     plants: DECKS.map((deck) => ({ deckId: deck.id, stage: plantStage(growth!.results.find((r) => r.deck_id === deck.id)?.days ?? 0) })),
     freshness: today ? freshness(last!.results[0]?.day ?? vnDay(now), vnDay(now)) : "fresh" };
+}
+
+export async function gardenDeck(db: D1Database, coupleId: string, userId: string, deckId: string, now: number): Promise<GardenDeckState> {
+  const today = await loadToday(db, coupleId, now);
+  const input = await drawInput(db, coupleId, vnDay(now));
+  const states = await cardStates(db, coupleId, userId, CARDS.filter((card) => card.deckId === deckId).map((card) => card.id));
+  const activeId = today?.deck_id === deckId && !input.played.includes(today.card_id) ? today.card_id
+    : drawCard({ ...input, previousDeck: undefined, played: [...input.played, ...CARDS.filter((c) => c.deckId !== deckId).map((c) => c.id)] }, 0)?.id;
+  const [drawn, answered] = await db.batch<{ card_id: string; stamp: number }>([
+    db.prepare("SELECT card_id, MAX(created_at) stamp FROM garden_days WHERE couple_id = ? AND deck_id = ? GROUP BY card_id").bind(coupleId, deckId),
+    db.prepare("SELECT card_id, MAX(created_at) stamp FROM garden_answers WHERE couple_id = ? AND round = 1 AND (user_id = ? OR flipped_day IS NOT NULL) GROUP BY card_id").bind(coupleId, userId),
+  ]);
+  const stamp = (cardId: string) => answered!.results.find((row) => row.card_id === cardId)?.stamp ?? drawn!.results.find((row) => row.card_id === cardId)?.stamp ?? 0;
+  // Past daily cards stay accessible to both even when untouched, so their presence cannot expose a waiting answer.
+  const history = states.filter((card) => card.cardId !== activeId && (card.mine !== null || card.mineDeleted || card.flippedDay || drawn!.results.some((row) => row.card_id === card.cardId)))
+    .sort((a, b) => stamp(b.cardId) - stamp(a.cardId) || b.cardId.localeCompare(a.cardId));
+  return { active: states.find((card) => card.cardId === activeId) ?? null, history };
 }
 

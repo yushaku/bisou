@@ -25,6 +25,7 @@ export type ApiErrorCode =
   | "answer_too_long"
   | "already_answered"
   | "swap_locked"
+  | "no_other_card"
   | "invalid_subscription"
   | "push_unavailable"
   | "body_too_large"

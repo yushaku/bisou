@@ -18,6 +18,7 @@ import { Onboarding } from "./screens/Onboarding";
 import { Pairing } from "./screens/Pairing";
 import { Settings } from "./screens/Settings";
 import { Garden } from "./screens/Garden";
+import { GardenDeck } from "./screens/GardenDeck";
 
 // Dev only: import.meta.env.DEV is false in production builds, so this import and the
 // whole design folder are dropped from the bundle (checked by grepping dist).
@@ -154,6 +155,7 @@ function SignedIn({
       <Route path="/journal">
         <Journal {...session} couple={couple} />
       </Route>
+      <Route path="/garden/:deckId">{(params) => <GardenDeck key={params.deckId} {...session} couple={couple} deckId={params.deckId} />}</Route>
       <Route path="/garden">
         <Garden {...session} couple={couple} />
       </Route>

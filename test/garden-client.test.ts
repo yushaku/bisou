@@ -42,7 +42,7 @@ it("R2 R23 R28 R30 AC2 AC14: plants have eight layered sizes, unique SVG ids, de
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const html = renderToString(h(I18nProvider, null, h("div", null,
     ...Array.from({ length: 8 }, (_, stage) => h(Plant, { deckId: "money", stage, key: stage })),
-    h(Planter, { plants: DECKS.map((d) => ({ deckId: d.id, stage: 0 })), freshness: "wilted" }))));
+    h(Planter, { plants: DECKS.map((d) => ({ deckId: d.id, stage: 0 })), freshness: "wilted", onOpen: () => {} }))));
   for (let stage = 0; stage < 8; stage++) expect(html).toContain(`data-stage="${stage}"`);
   const ids = [...html.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
   expect(new Set(ids).size).toBe(ids.length);
