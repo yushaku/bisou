@@ -1,0 +1,20 @@
+# ADR 0008: Garden cards live in code, answers in D1 keyed by card, and the server hides the partner's answer until both answered
+
+Status: proposed (November 2026)
+
+## Context
+The garden ([garden spec](../product/garden.md)) draws one daily card per couple from topic decks; each partner answers privately, the card flips when both answered, each deck is a plant that grows at most one step a day and never shrinks, and the garden's freshness follows the last flipped daily card. Nothing on screen or in a response may reveal who is late ([ADR 0005](0005-wish-jar-privacy-and-photo-reuse.md) patterns). About 60 cards ship now and more come later. Migrations are additive only.
+
+## Decision
+- Cards and decks are a typed module in `src/shared/garden.ts` shared by the client and the Worker: deck id slugs, card ids assigned once (`<deck>-NNN`), never renumbered, reused or deleted (a retired card stays with `retired: true`), array order is the draw order from light to deep, text in vi and en. D1 stores only ids, so adding cards needs no migration. A D1 seed was rejected: every text fix would be a migration.
+- Migration `0011_garden.sql` adds three tables. `garden_days` (PK couple_id, day): today's card per couple per Vietnam day, `swaps`, `flipped`. `garden_answers` (PK couple_id, card_id, round, user_id): one immutable answer per partner per card; `round` stays 1 until returning cards exist. `garden_growth` (PK couple_id, deck_id, day): one row per deck per day a card of it was flipped, so the PK enforces one step a day and nothing ever deletes a step.
+- The day is the Vietnam calendar day (`vnDay`), as the push cron uses. The first request of the day draws and stores the card with `INSERT ... ON CONFLICT DO NOTHING`, then reads the row, so both partners always get the stored card even when both open the app at midnight.
+- The draw is a pure function seeded by SHA-256 of `couple:day:swaps`: candidate decks have a card not yet answered by both, never yesterday's deck unless it is the only one left; deck weight is 1 + min(2, biggest stage minus its stage); the card is the first one in deck order not yet answered by both. A swap redraws excluding the current deck and applies only `WHERE card_id = <the card the client saw>` and the caller has not answered it, so two swaps at once move the card once.
+- A flip is the second answer's batch: it inserts the answer, then `INSERT OR IGNORE` the growth row and `UPDATE garden_days SET flipped = 1 ... AND flipped = 0 RETURNING` only when both answers exist. D1 runs a batch as one transaction, so exactly one request flips and sends the push.
+- Privacy: every query that returns the partner's answer requires the caller's own answer to the same card and round in SQL. A partner who has not answered gets the same response, status codes and actions (swap included) whether the other answered or not. Plants and freshness change only on a flip. The flip push follows the existing `journal` switch, because a third kind needs a rebuild of `push_subscriptions` (its CHECK requires journal or reminders).
+
+## Consequences
+- New cards are a code change reviewed with the client; a client older than the Worker can meet an unknown card id and must show a fallback.
+- A swap after the partner answered moves the partner's answer back into that card's deck, where it waits; the partner sees today's card changed.
+- Answers are new personal data about the relationship; they are deleted with the user by CASCADE and never logged.
+- A third push switch, edited answers or returning cards each need a new decision.
