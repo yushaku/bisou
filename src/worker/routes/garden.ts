@@ -75,10 +75,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
   } else {
     const deck = await gardenDeck(db, couple, user, card.deckId, now);
     const today = await loadToday(db, couple, now);
-    const waiting = await db.prepare(`SELECT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ?
-      AND card_id = ? AND round = 1 AND user_id <> ? AND flipped_day IS NULL) AS waiting`)
-      .bind(couple, card.id, user).first<number>("waiting");
-    if (today?.card_id !== card.id && deck.active?.cardId !== card.id && !waiting) return c.json({ error: "not_found" }, 404);
+    if (today?.card_id !== card.id && deck.active?.cardId !== card.id) return c.json({ error: "not_found" }, 404);
     // D1 batches run transactionally; concurrent saves can claim the daily flip only once.
     // https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
     const changes = await db.batch([

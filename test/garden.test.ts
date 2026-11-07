@@ -294,7 +294,7 @@ describe("Garden daily cards", () => {
     expect(attempts).toBe(2);
   });
 
-  it("R37: storage permits future rounds without offering them in v1", async () => {
+  it("migration 0011: round has no CHECK", async () => {
     const { a, couple } = await paired();
     await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, round, user_id, body, created_at, updated_at) VALUES (?, 'money-01', 2, ?, 'future', ?, ?)").bind(couple.id, a.id, NOW, NOW).run();
     expect(await env.DB.prepare("SELECT round FROM garden_answers WHERE couple_id = ?").bind(couple.id).first("round")).toBe(2);
@@ -303,20 +303,35 @@ describe("Garden daily cards", () => {
   it("R12: line breaks save and CRLF is normalized, while NUL and bidi controls are rejected", async () => {
     const { a } = await paired();
     const id = (await garden(a)).today!.cardId;
-    for (const text of ["a\u0000b", "a\u202eb"]) expect((await answer(a, id, text)).status).toBe(400);
+    for (const text of ["a\u0000b", "a\u202eb", "a\rb"]) expect((await answer(a, id, text)).status).toBe(400);
     expect((await answer(a, id, "a\nb")).status).toBe(201);
     expect((await call("PUT", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "a\r\nb" } })).status).toBe(200);
     expect((await garden(a)).today?.mine).toBe("a\nb");
   });
 
-  it("R3 R21 D8: only today's card, a deck's active card or a partner's waiting card accepts POST", async () => {
+  it("R3 R21 D8: only today's card or a deck's active card accepts POST", async () => {
     const { a, b, couple } = await paired();
     await garden(a);
     expect((await answer(a, "money-10")).status).toBe(404);
     const deck = await (await call("GET", "/api/garden/decks/money", { cookie: a.cookie })).json<GardenDeckState>();
     expect((await answer(a, deck.active!.cardId)).status).toBe(201);
     await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, user_id, body, created_at, updated_at) VALUES (?, 'money-09', ?, 'waiting', ?, ?)").bind(couple.id, b.id, NOW, NOW).run();
-    expect((await answer(a, "money-09")).status).toBe(201);
+    expect((await answer(a, "money-09")).status).toBe(404);
+  });
+
+  it("R13: POST to an unavailable card does not reveal a partner waiting answer", async () => {
+    const { a, b, couple } = await paired();
+    const today = (await garden(a)).today!.cardId;
+    const deck = await (await call("GET", "/api/garden/decks/money", { cookie: a.cookie })).json<GardenDeckState>();
+    const id = CARDS.find((card) => card.deckId === "money" && card.id !== today && card.id !== deck.active!.cardId)!.id;
+    const unanswered = await answer(a, id);
+    expect(unanswered.status).toBe(404);
+    const body = await unanswered.json();
+    expect(body).toEqual({ error: "not_found" });
+    await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, user_id, body, created_at, updated_at) VALUES (?, ?, ?, 'waiting', ?, ?)").bind(couple.id, id, b.id, NOW, NOW).run();
+    const waiting = await answer(a, id);
+    expect(waiting.status).toBe(unanswered.status);
+    expect(await waiting.json()).toEqual(body);
   });
 
   it("R38: retired cards still allow authors to edit and delete existing answers", async () => {
