@@ -6,7 +6,8 @@
 - PO: nothing about spins, claims or a partner's jar (R9).
 - PO: the text says who and what, never journal text; tapping opens the journal or the events list (R8, R15).
 - PO: a Notifications page in Settings with one switch per kind and the device's state; a Home card inviting to turn them on, only in the installed app while undecided, closable for good on that device (R20 to R25).
-- PO: quiet hours 22:00 to 07:00 Vietnam time; journal notifications from the night are held to 07:00, combined (R16, R17).
+- PO: quiet hours 22:00 to 07:00 Vietnam time; journal notifications from the night are held to 07:00, combined (R16, R17); garden "both answered" notifications follow the same quiet hours rule.
+- PO: garden's "both answered" notification uses the partner journal kind switch; no separate switch or push_subscriptions change (R3, R16-R18 cover it).
 - PO: signing out stops that device (R26); personal data as R27 to R30.
 - PM defaults, PO may veto: unpaired people get none (R4); no reminder of one's own birthday (R12); same-day events share one reminder (R11); no late reminders, and a changed or deleted event is reminded as it then stands (R13, R14); a held entry deleted before 07:00 is left out and held messages go to the devices on at 07:00 (R18); a newer journal notification replaces an older one still showing (R19); the Home card turns both kinds on (R24); a browser without notifications shows "not available in this browser" (R20); signing back in leaves them off (R26); texts follow the recipient's app language (R31).
 
@@ -128,7 +129,7 @@ Turn on from the Home card or the Notifications page, get a notification and tap
 
 ## Out of scope
 
-- Notifications for a light tap, avatar or start date changes, the daily question and the garden; they will reuse this later.
+- Notifications for a light tap, avatar or start date changes, the daily question; they will reuse this framework later.
 - Email instead of a notification, choosing other times or quiet hours, reminders more than one day ahead.
 - Notifications when a partner leaves the couple; decide with leaving (see pairing).
 - Export and full deletion; they come with account deletion.
