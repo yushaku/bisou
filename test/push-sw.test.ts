@@ -17,7 +17,7 @@ function worker() {
   return { dispatch, showNotification, clients };
 }
 
-it("R5: opens a new window when existing client navigation rejects", async () => {
+it("R15: opens a new window when existing client navigation rejects", async () => {
   const sw = worker();
   sw.clients.matchAll.mockResolvedValue([{ focus: vi.fn().mockResolvedValue(undefined), navigate: vi.fn().mockRejectedValue(new Error("closed")) }]);
   await sw.dispatch("notificationclick", { notification: { close: vi.fn(), data: { url: "/events" } } });

@@ -42,7 +42,7 @@ it("AC20, R28: turning both off deletes on the server before unsubscribing local
   await turnOff(); expect(remove).toHaveBeenCalledWith("endpoint"); expect(unsubscribe).toHaveBeenCalledOnce();
 });
 
-it("R3: key rotation unsubscribes the old key before subscribing", async () => {
+it("R32: key rotation unsubscribes the old key before subscribing", async () => {
   setup();
   const unsubscribe = vi.fn().mockResolvedValue(true);
   const old = { options: { applicationServerKey: new Uint8Array([1]).buffer }, unsubscribe } as unknown as PushSubscription;

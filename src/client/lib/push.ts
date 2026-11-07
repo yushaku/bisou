@@ -22,7 +22,7 @@ export async function turnOn(registration: ServiceWorkerRegistration, publicKey:
   if (existing && (!key || btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") !== publicKey.replace(/=+$/, ""))) {
     await existing.unsubscribe();
   }
-  // Keep subscribe in the tap's user activation, before any network await.
+  // Keep subscribe in the tap's user activation, before any API call.
   const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: publicKey });
   const res = await api.savePush({ ...subscription.toJSON(), ...kinds } as PushSubscriptionInput);
   if (!res.ok) {

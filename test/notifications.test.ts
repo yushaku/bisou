@@ -62,7 +62,7 @@ it("AC15, R21: opt in saves only the selected kind after a tap", async () => {
   expect(render().find((n) => n.props.id === "push-journal")!.props.checked).toBe(true);
 });
 
-it("R7: visibility reload cannot replace an in-flight switch change", async () => {
+it("R21: visibility reload cannot replace an in-flight switch change", async () => {
   await setup();
   Object.defineProperty(document, "visibilityState", { value: "visible" });
   let finish!: (value: Awaited<ReturnType<typeof api.savePush>>) => void;
@@ -77,7 +77,7 @@ it("R7: visibility reload cannot replace an in-flight switch change", async () =
   expect(render().find(n => n.props.id === "push-journal")!.props.checked).toBe(true);
 });
 
-it("R3: a browser endpoint unknown to the server shows off and registers again", async () => {
+it("R20, R32: a browser endpoint unknown to the server shows off and registers again", async () => {
   const { registration, subscription } = await setup();
   registration.pushManager.getSubscription.mockResolvedValue(subscription as never);
   Object.defineProperty(document, "visibilityState", { value: "visible" });

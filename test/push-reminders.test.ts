@@ -129,7 +129,7 @@ it("R4: an unpaired recipient is skipped and a couple is loaded only once", asyn
   await runPushCron("2027-02-12T08:00:00+07:00"); expect(send.sent).toHaveLength(0);
 });
 
-it("R6: a recipient D1 failure does not stop the next recipient", async () => {
+it("R10: a recipient D1 failure does not stop the next recipient", async () => {
   await example();
   const batch = env.DB.batch.bind(env.DB);
   vi.spyOn(env.DB, "batch").mockRejectedValueOnce(new Error("private")).mockImplementation(batch);
