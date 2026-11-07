@@ -93,7 +93,7 @@ test("every palette supplies the same semantic tokens with readable text pairs",
       const b = luminance(tokens[bg]);
       assert.ok((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 4.5, `${id}: ${fg}/${bg}`);
     }
-    for (const [fg, bg] of [["input", "card"], ["ring", "background"]]) {
+    for (const [fg, bg] of [["foreground", "card"], ["input", "card"], ["ring", "background"]]) {
       const a = luminance(tokens[fg]);
       const b = luminance(tokens[bg]);
       assert.ok((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3, `${id}: ${fg}/${bg}`);

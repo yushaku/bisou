@@ -41,3 +41,14 @@ it("AC20, R28: turning both off deletes on the server before unsubscribing local
   const remove = vi.spyOn(api, "deletePush").mockImplementation(async () => { expect(unsubscribe).not.toHaveBeenCalled(); return { ok: true, data: { ok: true } }; });
   await turnOff(); expect(remove).toHaveBeenCalledWith("endpoint"); expect(unsubscribe).toHaveBeenCalledOnce();
 });
+
+it("R3: key rotation unsubscribes the old key before subscribing", async () => {
+  setup();
+  const unsubscribe = vi.fn().mockResolvedValue(true);
+  const old = { options: { applicationServerKey: new Uint8Array([1]).buffer }, unsubscribe } as unknown as PushSubscription;
+  const subscription = { toJSON: () => ({}), unsubscribe: vi.fn() };
+  const subscribe = vi.fn().mockImplementation(async () => { expect(unsubscribe).toHaveBeenCalledOnce(); return subscription; });
+  vi.spyOn(api, "savePush").mockResolvedValue({ ok: true, data: { device: { endpoint: "new", journal: true, reminders: false } } });
+  await turnOn({ pushManager: { subscribe } } as unknown as ServiceWorkerRegistration, "Ag", { journal: true, reminders: false }, old);
+  expect(subscribe).toHaveBeenCalledOnce();
+});

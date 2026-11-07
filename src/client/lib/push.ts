@@ -17,7 +17,11 @@ export async function currentSubscription(): Promise<PushSubscription | null> {
   return registration?.pushManager ? registration.pushManager.getSubscription() : null;
 }
 
-export async function turnOn(registration: ServiceWorkerRegistration, publicKey: string, kinds: Pick<PushDevice, "journal" | "reminders">) {
+export async function turnOn(registration: ServiceWorkerRegistration, publicKey: string, kinds: Pick<PushDevice, "journal" | "reminders">, existing: PushSubscription | null = null) {
+  const key = existing?.options.applicationServerKey;
+  if (existing && (!key || btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") !== publicKey.replace(/=+$/, ""))) {
+    await existing.unsubscribe();
+  }
   // Keep subscribe in the tap's user activation, before any network await.
   const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: publicKey });
   const res = await api.savePush({ ...subscription.toJSON(), ...kinds } as PushSubscriptionInput);

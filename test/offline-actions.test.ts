@@ -6,6 +6,9 @@ import { ClaimsList } from "../src/client/components/bisou/ClaimsList";
 import { ComposeSheet } from "../src/client/components/bisou/ComposeSheet";
 import { AppShell } from "../src/client/components/bisou/AppShell";
 import { WishSheet } from "../src/client/components/bisou/WishSheet";
+import { Settings } from "../src/client/screens/Settings";
+import { Home } from "../src/client/screens/Home";
+import { NotificationCard } from "../src/client/components/bisou/NotificationCard";
 import { Wishes } from "../src/client/screens/Wishes";
 
 const state = vi.hoisted(() => [] as unknown[]);
@@ -17,8 +20,9 @@ vi.mock("react", async (original) => ({
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "en", t: (key: string) => key }) }));
+vi.mock("wouter", () => ({ useLocation: () => ["/", vi.fn()], Link: "a" }));
 vi.mock("wouter/use-browser-location", () => ({ useHistoryState: () => null }));
-vi.mock("../src/client/lib/useTabNavigation", () => ({ useCreateRequest: vi.fn() }));
+vi.mock("../src/client/lib/useTabNavigation", () => ({ useCreateRequest: vi.fn(), useTabNavigation: () => ({}) }));
 vi.mock("../src/client/lib/useWishJar", () => ({ useWishJar: () => ({ jar: null }) }));
 vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
 
@@ -137,4 +141,20 @@ it("describes disabled entry deletion with plain offline text", () => {
   const hint = nodes.find((node) => node.props.id === confirm.props["aria-describedby"]);
   expect(hint?.props.children).toBe("offline.save");
   expect(hint?.props.role).toBeUndefined();
+});
+
+it("R26: sign out sends this endpoint before unsubscribing", async () => {
+  const unsubscribe = vi.fn().mockResolvedValue(true);
+  vi.stubGlobal("navigator", { onLine: true, serviceWorker: { getRegistration: async () => ({ pushManager: { getSubscription: async () => ({ endpoint: "device", unsubscribe }) } }) } });
+  const logout = vi.spyOn(api, "logout").mockImplementation(async () => { expect(unsubscribe).not.toHaveBeenCalled(); return { ok: true, data: { ok: true } }; });
+  state.push(false, false, "logout");
+  const nodes = elements(Settings({ user, onUser: vi.fn(), onSignedOut: vi.fn(), couple: null, onCouple: vi.fn() }));
+  nodes.find(n => n.props.children === "home.logout" && n.props.onClick)!.props.onClick!();
+  await vi.waitFor(() => expect(unsubscribe).toHaveBeenCalledOnce());
+  expect(logout).toHaveBeenCalledWith("device");
+});
+it("AC19: Home hides the invitation for an unpaired user", () => {
+  vi.stubGlobal("navigator", { onLine: true });
+  const nodes = elements(Home({ user, onUser: vi.fn(), onSignedOut: vi.fn(), couple: { id: "c", members: [user], events: [], startDate: null } as never, onCouple: vi.fn(), celebrate: false, onCelebrated: vi.fn() }));
+  expect(nodes.some(n => n.type === NotificationCard)).toBe(false);
 });

@@ -26,7 +26,8 @@ self.addEventListener("notificationclick", (event) => {
     const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     if (windows[0]) {
       await windows[0].focus();
-      await windows[0].navigate(url);
+      try { await windows[0].navigate(url); }
+      catch { await self.clients.openWindow(url); }
     } else await self.clients.openWindow(url);
   })());
 });

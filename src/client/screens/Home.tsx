@@ -66,6 +66,8 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
     return null;
   }
 
+  if (couple.members.length !== 2) return null;
+
   return (
     <SignedInShell {...session} tab="home">
       <div className="mb-4 flex items-center gap-3">
@@ -98,7 +100,6 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
       </section>
 
       <InstallCard />
-      {couple.members.length === 2 && <NotificationCard />}
 
       <UpcomingCard onOpen={(id) => setEditingEvent(couple.events.find((event) => event.id === id))} events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter((event) => !(event.kind === "custom" && event.later))} action={
         <Button asChild variant="ghost" size="sm">
@@ -110,6 +111,8 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
           }}>{t("home.seeAll")}</Link>
         </Button>
       } />
+
+      <NotificationCard />
 
       {editingEvent !== undefined && <Suspense fallback={null}><EventSheet event={editingEvent} onClose={() => setEditingEvent(undefined)} onCouple={onCouple} onSignedOut={session.onSignedOut} /></Suspense>}
       {sheetLoaded && (

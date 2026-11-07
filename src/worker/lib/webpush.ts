@@ -89,7 +89,7 @@ export async function sendPush(env: Env, row: PushRow, message: PushMessage, opt
       .bind(Date.now(), row.id).run();
     return "sent";
   }
-  if (status === 404 || status === 410) {
+  if ([401, 403, 404, 410].includes(status)) {
     await env.DB.prepare("DELETE FROM push_subscriptions WHERE id = ?").bind(row.id).run();
     return "gone";
   }

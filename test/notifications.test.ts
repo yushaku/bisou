@@ -11,6 +11,7 @@ vi.mock("react", async (original) => ({
     if (!(index in hooks.values)) hooks.values[index] = typeof initial === "function" ? initial() : initial;
     return [hooks.values[index], (value: unknown) => { hooks.values[index] = value; }];
   },
+  useRef: (initial: unknown) => { const index = hooks.index++; return hooks.values[index] ??= { current: initial }; },
   useEffect: (fn: () => unknown) => { hooks.effects.push(fn); },
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
@@ -25,7 +26,7 @@ function elements(node: ReactNode): ReactElement<Props>[] {
 }
 function render() { hooks.index = 0; return elements(Notifications({ onSignedOut: vi.fn() })); }
 async function setup({ permission = "default", online = true, key = "public-key", registered = true, userAgent = "Chrome" } = {}) {
-  const subscription = { endpoint: "this-device", toJSON: () => ({ endpoint: "this-device", keys: { p256dh: "key", auth: "auth" } }), unsubscribe: vi.fn().mockResolvedValue(true) };
+  const subscription = { options: { applicationServerKey: new Uint8Array([1]).buffer }, endpoint: "this-device", toJSON: () => ({ endpoint: "this-device", keys: { p256dh: "key", auth: "auth" } }), unsubscribe: vi.fn().mockResolvedValue(true) };
   const registration = { pushManager: { subscribe: vi.fn().mockResolvedValue(subscription), getSubscription: vi.fn().mockResolvedValue(null) } };
   vi.stubGlobal("navigator", { userAgent, maxTouchPoints: 5, onLine: online, serviceWorker: { getRegistration: vi.fn().mockResolvedValue(registered ? registration : undefined) } });
   vi.stubGlobal("Notification", { permission }); vi.stubGlobal("PushManager", {});
@@ -59,4 +60,34 @@ it("AC15, R21: opt in saves only the selected kind after a tap", async () => {
   await pending;
   expect(save).toHaveBeenCalledWith(expect.objectContaining({ journal: true, reminders: false }));
   expect(render().find((n) => n.props.id === "push-journal")!.props.checked).toBe(true);
+});
+
+it("R7: visibility reload cannot replace an in-flight switch change", async () => {
+  await setup();
+  Object.defineProperty(document, "visibilityState", { value: "visible" });
+  let finish!: (value: Awaited<ReturnType<typeof api.savePush>>) => void;
+  vi.spyOn(api, "savePush").mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  const pending = render().find(n => n.props.id === "push-journal")!.props.onCheckedChange!(true);
+  await vi.waitFor(() => expect(finish).toBeDefined());
+  const calls = vi.mocked(api.push).mock.calls.length;
+  document.dispatchEvent(new Event("visibilitychange"));
+  expect(api.push).toHaveBeenCalledTimes(calls);
+  finish({ ok: true, data: { device: { endpoint: "this-device", journal: true, reminders: false } } });
+  await pending;
+  expect(render().find(n => n.props.id === "push-journal")!.props.checked).toBe(true);
+});
+
+it("R3: a browser endpoint unknown to the server shows off and registers again", async () => {
+  const { registration, subscription } = await setup();
+  registration.pushManager.getSubscription.mockResolvedValue(subscription as never);
+  Object.defineProperty(document, "visibilityState", { value: "visible" });
+  document.dispatchEvent(new Event("visibilitychange"));
+  await vi.waitFor(() => expect(api.push).toHaveBeenCalledTimes(2));
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+  expect(render().some(n => n.props.children === "push.off")).toBe(true);
+  expect(render().filter(n => n.props.onCheckedChange).every(n => !n.props.checked)).toBe(true);
+  vi.spyOn(api, "savePush").mockResolvedValue({ ok: true, data: { device: { endpoint: "this-device", journal: true, reminders: false } } });
+  await render().find(n => n.props.id === "push-journal")!.props.onCheckedChange!(true);
+  expect(subscription.unsubscribe).toHaveBeenCalledOnce();
+  expect(registration.pushManager.subscribe).toHaveBeenCalledOnce();
 });

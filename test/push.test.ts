@@ -116,13 +116,13 @@ describe("partner journal pushes", () => {
     expect(await decrypt(send.sent[0]!.body, d)).toEqual({ title: "An vừa viết nhật ký", url: "/journal", tag: "journal" });
   });
 
-  it.each([201, 404, 410, 500])("R28, R29: handles service status %s without logging endpoints or keys", async (status) => {
+  it.each([201, 401, 403, 404, 410, 500])("R28, R29: handles service status %s without logging endpoints or keys", async (status) => {
     const { a, b } = await paired(); const d = await device("b"); await subscribe(b, d);
     const send = mockPush(status); const log = vi.spyOn(console, "log"); const error = vi.spyOn(console, "error");
     await call("POST", "/api/journal", { cookie: a.cookie, body: { date: "2023-02-12", text: "private", photoIds: [] } }); await waitForBackground();
     expect(send.sent).toHaveLength(1); await decrypt(send.sent[0]!.body, d);
     const row = await stored(d.body.endpoint);
-    if (status === 404 || status === 410) expect(row).toBeNull();
+    if ([401, 403, 404, 410].includes(status)) expect(row).toBeNull();
     else if (status === 201) expect(row).toMatchObject({ failures: 0, last_success_at: expect.any(Number) });
     else expect(row?.failures).toBe(1);
     const logs = JSON.stringify([log.mock.calls, error.mock.calls]);

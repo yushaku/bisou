@@ -17,6 +17,13 @@ function worker() {
   return { dispatch, showNotification, clients };
 }
 
+it("R5: opens a new window when existing client navigation rejects", async () => {
+  const sw = worker();
+  sw.clients.matchAll.mockResolvedValue([{ focus: vi.fn().mockResolvedValue(undefined), navigate: vi.fn().mockRejectedValue(new Error("closed")) }]);
+  await sw.dispatch("notificationclick", { notification: { close: vi.fn(), data: { url: "/events" } } });
+  expect(sw.clients.openWindow).toHaveBeenCalledWith("/events");
+});
+
 it("AC3, R19: shows the title and replacement tag with a journal destination", async () => {
   const sw = worker();
   await sw.dispatch("push", { data: { json: () => ({ title: "An vừa viết nhật ký", tag: "journal", url: "/journal" }) } });

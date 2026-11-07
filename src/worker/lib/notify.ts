@@ -28,7 +28,7 @@ export async function notifyJournal(env: Env, coupleId: string, authorId: string
       WHERE s.user_id = (SELECT user_id FROM couple_members WHERE couple_id = ? AND user_id <> ?) AND s.journal = 1`)
       .bind(authorId, coupleId, authorId).all<PushRow & { locale: string; name: string | null }>();
     for (const row of results) {
-      await sendPush(env, row, { title: translate(row.locale, "push.journal.one", { name: row.name ?? "" }), url: "/journal", tag: "journal" }, { ttl: pushTtl(now), topic: "journal" });
+      try { await sendPush(env, row, { title: translate(row.locale, "push.journal.one", { name: row.name ?? "" }), url: "/journal", tag: "journal" }, { ttl: pushTtl(now), topic: "journal" }); } catch { console.error("[bisou] push failed", "journal", 0); }
     }
   } catch { console.error("[bisou] journal push failed"); }
 }
@@ -46,17 +46,19 @@ export async function releaseNightJournal(env: Env, scheduledTime: number): Prom
   const slot = vnDay(scheduledTime);
   let sent = 0;
   for (const [authorId, author] of authors) {
-    const recipient = await env.DB.prepare(`SELECT u.id, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name
-      FROM couple_members m JOIN users u ON u.id = m.user_id WHERE m.couple_id = ? AND m.user_id <> ?`)
-      .bind(authorId, author.coupleId, authorId).first<{ id: string; locale: string; name: string | null }>();
-    if (!recipient) continue;
-    const devices = await env.DB.prepare(`UPDATE push_subscriptions SET journal_slot = ?
-      WHERE user_id = ? AND journal = 1 AND (journal_slot IS NULL OR journal_slot <> ?)
-      RETURNING id, endpoint, p256dh, auth`).bind(slot, recipient.id, slot).all<PushRow>();
-    const title = translate(recipient.locale, author.count === 1 ? "push.journal.one" : "push.journal.many", { name: recipient.name ?? "", n: author.count });
-    for (const row of devices.results) {
-      if (await sendPush(env, row, { title, url: "/journal", tag: "journal" }, { ttl: pushTtl(scheduledTime), topic: "journal" }) === "sent") sent++;
-    }
+    try {
+      const recipient = await env.DB.prepare(`SELECT u.id, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name
+        FROM couple_members m JOIN users u ON u.id = m.user_id WHERE m.couple_id = ? AND m.user_id <> ?`)
+        .bind(authorId, author.coupleId, authorId).first<{ id: string; locale: string; name: string | null }>();
+      if (!recipient) continue;
+      const devices = await env.DB.prepare(`UPDATE push_subscriptions SET journal_slot = ?
+        WHERE user_id = ? AND journal = 1 AND (journal_slot IS NULL OR journal_slot <> ?)
+        RETURNING id, endpoint, p256dh, auth`).bind(slot, recipient.id, slot).all<PushRow>();
+      const title = translate(recipient.locale, author.count === 1 ? "push.journal.one" : "push.journal.many", { name: recipient.name ?? "", n: author.count });
+      for (const row of devices.results) {
+        try { if (await sendPush(env, row, { title, url: "/journal", tag: "journal" }, { ttl: pushTtl(scheduledTime), topic: "journal" }) === "sent") sent++; } catch { console.error("[bisou] push failed", "journal", 0); }
+      }
+    } catch { console.error("[bisou] push failed", "journal", 0); }
   }
   console.log("[bisou] night journal pushes", sent);
 }
@@ -65,8 +67,10 @@ export function reminderMessage(titles: string[], locale: Locale, offset: 0 | 1)
   for (let count = Math.min(3, titles.length); count >= 0; count--) {
     const names = titles.slice(0, count);
     if (count < titles.length) names.push(translate(locale, "push.events.more", { n: titles.length - count }));
+    const conjunction = count < titles.length ? " " : locale === "vi" ? " và " : " and ";
+    const events = names.length < 2 ? names.join("") : names.slice(0, -1).join(", ") + conjunction + names.at(-1);
     const message = {
-      title: translate(locale, offset ? "push.events.tomorrow" : "push.events.today", { events: names.join(", ") }),
+      title: translate(locale, offset ? "push.events.tomorrow" : "push.events.today", { events }),
       url: "/events", tag: "events",
     };
     if (new TextEncoder().encode(JSON.stringify(message)).length <= MAX_PUSH_PLAINTEXT) return message;
@@ -86,26 +90,28 @@ export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 
   let sent = 0;
   // shortcut: sends share one invocation, move to Queues before about 40 devices per run.
   for (const [userId, rawLocale] of recipients) {
-    let couple = couples.get(userId);
-    if (couple === undefined) {
-      couple = await loadCouple(env.DB, userId, scheduledTime);
-      couples.set(userId, couple);
-      for (const member of couple?.members ?? []) couples.set(member.id, couple);
-    }
-    if (couple?.members.length !== 2) continue;
-    const locale = isLocale(rawLocale) ? rawLocale : "vi";
-    const t = (key: MessageKey, vars?: Record<string, string | number>) => translate(locale, key, vars);
-    const partner = couple.members.find((member) => member.id !== userId)!;
-    const titles = upcomingEvents(couple.startDate, [{ name: partner.displayName?.trim() || t("common.person"), birthDate: partner.birthDate }], today, couple.events)
-      .filter((event) => event.date === target).map((event) => eventTitle(event, t, locale));
-    if (!titles.length) continue;
-    const message = reminderMessage(titles, locale, offset);
-    const devices = await env.DB.prepare(`UPDATE push_subscriptions SET reminder_slot = ?
-      WHERE user_id = ? AND reminders = 1 AND (reminder_slot IS NULL OR reminder_slot <> ?)
-      RETURNING id, endpoint, p256dh, auth`).bind(slot, userId, slot).all<PushRow>();
-    for (const row of devices.results) {
-      if (await sendPush(env, row, message, { ttl: pushTtl(scheduledTime), topic: "events" }) === "sent") sent++;
-    }
+    try {
+      let couple = couples.get(userId);
+      if (couple === undefined) {
+        couple = await loadCouple(env.DB, userId, scheduledTime);
+        couples.set(userId, couple);
+        for (const member of couple?.members ?? []) couples.set(member.id, couple);
+      }
+      if (couple?.members.length !== 2) continue;
+      const locale = isLocale(rawLocale) ? rawLocale : "vi";
+      const t = (key: MessageKey, vars?: Record<string, string | number>) => translate(locale, key, vars);
+      const partner = couple.members.find((member) => member.id !== userId)!;
+      const titles = upcomingEvents(couple.startDate, [{ name: partner.displayName?.trim() || t("common.person"), birthDate: partner.birthDate }], today, couple.events)
+        .filter((event) => event.date === target).map((event) => eventTitle(event, t, locale));
+      if (!titles.length) continue;
+      const message = reminderMessage(titles, locale, offset);
+      const devices = await env.DB.prepare(`UPDATE push_subscriptions SET reminder_slot = ?
+        WHERE user_id = ? AND reminders = 1 AND (reminder_slot IS NULL OR reminder_slot <> ?)
+        RETURNING id, endpoint, p256dh, auth`).bind(slot, userId, slot).all<PushRow>();
+      for (const row of devices.results) {
+        try { if (await sendPush(env, row, message, { ttl: pushTtl(scheduledTime), topic: "events" }) === "sent") sent++; } catch { console.error("[bisou] push failed", "events", 0); }
+      }
+    } catch { console.error("[bisou] push failed", "events", 0); }
   }
   console.log("[bisou] event pushes", sent);
 }

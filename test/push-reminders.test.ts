@@ -46,7 +46,7 @@ it.each([false, true])("AC8, AC9, R11: both partners get the anniversary and sam
   expect(send.sent).toHaveLength(2);
   for (const sent of send.sent) {
     expect(await decrypt(sent.body, sent.endpoint === aDevice.body.endpoint ? aDevice : bDevice)).toEqual({
-      title: `Ngày mai: Kỷ niệm 4 năm${custom ? ", Xem phim" : ""}`, url: "/events", tag: "events",
+      title: `Ngày mai: Kỷ niệm 4 năm${custom ? " và Xem phim" : ""}`, url: "/events", tag: "events",
     });
   }
 });
@@ -64,7 +64,7 @@ it("AC9, R11: five same-day events show three names and the remaining count in b
   for (const sent of send.sent) {
     const own = sent.endpoint === aDevice.body.endpoint;
     expect(await decrypt(sent.body, own ? aDevice : bDevice)).toEqual({
-      title: `${own ? "Ngày mai" : "Tomorrow"}: Đi dạo, Xem phim, Ăn tối, ${own ? "và 2 sự kiện khác" : "and 2 more"}`,
+      title: `${own ? "Ngày mai" : "Tomorrow"}: Đi dạo, Xem phim, Ăn tối ${own ? "và 2 sự kiện khác" : "and 2 more"}`,
       url: "/events", tag: "events",
     });
   }
@@ -79,12 +79,12 @@ it("AC9, R11: long multibyte titles remain within the encrypted payload limit", 
   for (const sent of send.sent) {
     expect(sent.body.length).toBeLessThanOrEqual(4096);
     expect(await decrypt(sent.body, sent.endpoint === aDevice.body.endpoint ? aDevice : bDevice)).toEqual({
-      title: `Ngày mai: ${[title, title, title].join(", ")}, và 2 sự kiện khác`, url: "/events", tag: "events",
+      title: `Ngày mai: ${[title, title, title].join(", ")} và 2 sự kiện khác`, url: "/events", tag: "events",
     });
   }
   // The byte guard still holds if a future event kind supplies a larger title.
   const message = reminderMessage(["💖".repeat(800), "💖".repeat(800), "Third", "Fourth"], "en", 1);
-  expect(message.title).toBe(`Tomorrow: ${"💖".repeat(800)}, and 3 more`);
+  expect(message.title).toBe(`Tomorrow: ${"💖".repeat(800)} and 3 more`);
   expect(new TextEncoder().encode(JSON.stringify(message)).length).toBeLessThanOrEqual(3993);
   expect(reminderMessage(["💖".repeat(1000)], "vi", 0).title).toBe("Hôm nay: và 1 sự kiện khác");
 });
@@ -127,4 +127,13 @@ it("R4: an unpaired recipient is skipped and a couple is loaded only once", asyn
   send.sent.length = 0;
   await env.DB.prepare("DELETE FROM couple_members WHERE user_id = ?").bind(b.id).run();
   await runPushCron("2027-02-12T08:00:00+07:00"); expect(send.sent).toHaveLength(0);
+});
+
+it("R6: a recipient D1 failure does not stop the next recipient", async () => {
+  await example();
+  const batch = env.DB.batch.bind(env.DB);
+  vi.spyOn(env.DB, "batch").mockRejectedValueOnce(new Error("private")).mockImplementation(batch);
+  const send = mockPush();
+  await runPushCron("2027-02-11T20:00:00+07:00");
+  expect(send.sent).toHaveLength(1);
 });
