@@ -80,18 +80,60 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: a recap built from journal entries, events and received wishes.
 
 ## Phase 5: Daily connection
-- [ ] **Web Push**
+- [ ] **Web Push** (in progress, first)
   - Goal: the app reaches the partner without being opened.
-  - Outcome: event reminders, "your partner wrote in the journal" and a light tap. On iPhone it works only after Add to Home Screen; the Worker sends it, Cron Triggers are free. Build this first in this phase, then the daily question feeding the Garden; On this day (Phase 4) fits in between as a quick win.
-- [ ] **Daily question**
-  - Goal: a small ritual every day.
-  - Outcome: write separately, reveal once both answered. The hard part is about 365 good Vietnamese questions.
-- [ ] **Garden**
-  - Goal: a shared thing that grows with the couple.
-  - Outcome: a plant that grows from daily questions, journal entries and received wishes, without streak pressure.
+  - Outcome: opt-in notifications for event reminders, "your partner wrote in the journal" and a light tap; later the daily question and the garden use it. On iPhone it works only after Add to Home Screen; the Worker sends it, Cron Triggers are free.
+- [ ] **Questions and the Garden**
+  - Goal: a relationship built on understanding and respect, cared for a little every day.
+  - Outcome: a daily question both answer separately and see once both answered; question sets by love stage; weekly compliments; a shared garden that grows from that care and fades gently without it.
+- [ ] **Kind feedback**
+  - Goal: say what could be better without hurting, after the compliment habit exists.
+  - Outcome: feedback written in a guided form, opened only when the partner is ready to hear it, and counted as pruning in the garden.
 - [ ] **Date jar**
   - Goal: stop "what do we do tonight".
   - Outcome: spin for a date idea, reusing the wish jar spin.
+
+### Questions and Garden: idea one-pager (brainstorm, Nov 2026)
+How might the two of us understand each other more deeply through questions grounded in relationship psychology, and say what is good and what could be better without anyone feeling attacked?
+
+Grounding:
+- Gottman Love Maps (knowing each other's inner world), the 5 to 1 ratio of positive to negative interactions, the Four Horsemen (criticism, contempt, defensiveness, stonewalling) and the softened startup.
+- Aron's 36 questions: self-disclosure that deepens in layers.
+- Nonviolent Communication (Rosenberg) for feedback: what I saw, how I felt, what I need, one concrete request.
+- Love stages (Bader and Pearson, or Knapp) to pick the question set for where the couple is.
+
+The garden is the mirror of care:
+- Water: both answered the day's question and opened each other's answer (one answer only moistens the soil).
+- Sun: compliments.
+- Pruning: a guided feedback the partner marked as understood.
+- Flowers: correct guesses in the Love Map quiz (guess what the partner would answer).
+- Paths and benches: journal memories and milestones.
+- Beauty is balance between understanding, appreciation, respect and memories, not volume.
+- The garden's plants follow the love stage, so a 3 year garden looks different from a 3 month one.
+
+Fading without punishment:
+- Leaves turn after about 3 days without a shared action and droop after about 2 weeks; nothing ever dies or is lost.
+- One shared answer brings most of it back.
+- The garden shows only the shared state, never who neglected it (same principle as the wish jar's R10).
+- Either partner can pause the garden (travel, illness, exams).
+
+Suggested order: Web Push, then questions with compliments and the garden, then kind feedback; the Love Map quiz and a monthly talk later.
+
+Risks:
+- Feedback can turn the app into a list of grievances: a delay before sending, "ready to hear" on the receiving side, and compliments first.
+- Writing about 150 to 300 good Vietnamese questions is the main cost, not code.
+- Goodhart: no scores or numbers on screen; very short answers water less.
+- Garden art needs layered SVG states (growth, fading, bloom): a Designer task with a G-UI.
+- No AI rewriting of feedback (cost and privacy); tone hints come from simple rules.
+
+Decisions to confirm (recommended first):
+- Question source: a curated Vietnamese set reviewed by the PO; or the couple adds their own; or both.
+- Rhythm: one question a day; or pick a set and answer any time.
+- Feedback delivery: opened when the receiver taps "ready to hear"; or sent after a few hours' delay; or only gathered for a monthly talk.
+- Old answers: kept and browsable; whether they also go into the journal.
+- Fading: slow and never dies; or can wilt fully and be replanted; or no fading, only slower growth.
+- Garden shape: one shared garden with plants per dimension; or one single tree; or one bed each joined into a shared garden.
+- Success: for example both answer at least 4 days a week for a month.
 
 ## Market notes (Nov 2026)
 What similar couple apps charge for: a daily question with answers hidden until both reply (Paired about $80 a year per couple, Agapé, SumOne), home screen widgets with the partner's photo (Locket, I Choose You, Widgetable), a shared pet or plant (SumOne, Widgetable, Cozy Couples), Between Plus (love letters, themes, longer voice and video, no ads), date idea libraries and a monthly date goal (Lovewick, Cupla), a "thumb kiss" tap (Candle, Love8), AI coaching (Connected, Lasting). Most charge one plan for both partners.
