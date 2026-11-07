@@ -4,7 +4,7 @@ import type { EntryInput, JournalEntry, JournalPage } from "../src/shared/types"
 import { HOUR, PENDING_PHOTO_TTL } from "../src/worker/lib/time";
 import { photoKey } from "../src/worker/lib/photos";
 import { app } from "../src/worker/app";
-import { call, ORIGIN, paired, resetDb, upload, user, type TestUser } from "./helpers";
+import { call, ORIGIN, paired, resetDb, testContext, upload, user, type TestUser } from "./helpers";
 
 const NOW = Date.parse("2026-11-07T09:00:00Z");
 const input = (overrides: Partial<EntryInput> = {}): EntryInput => ({ date: "2026-11-05", text: "Our evening", photoIds: [], ...overrides });
@@ -177,7 +177,7 @@ describe("journal create and feed", () => {
             controller.enqueue(bytes.subarray(8192));
             controller.close();
           } }),
-        }, env);
+        }, env, testContext);
         if (extra) await error(res, 413, "body_too_large");
         else expect(res.status).toBe(method === "POST" ? 201 : 200);
         expect(res.headers.get("Cache-Control")).toBe("no-store");

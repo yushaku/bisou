@@ -6,6 +6,10 @@ import worker from "../src/worker/index";
 export const ORIGIN = "https://bisou.example";
 
 const background: Promise<unknown>[] = [];
+export const testContext = {
+  waitUntil: (promise: Promise<unknown>) => { background.push(promise); },
+  passThroughOnException: () => {}, props: {},
+} as unknown as ExecutionContext;
 export async function waitForBackground() {
   await Promise.all(background.splice(0));
 }
@@ -16,6 +20,7 @@ export async function explain(sql: string, ...binds: unknown[]): Promise<string[
 }
 
 export async function resetDb() {
+  await waitForBackground();
   await env.DB.batch([
     env.DB.prepare("DELETE FROM push_subscriptions"),
     env.DB.prepare("DELETE FROM photos"),
@@ -70,8 +75,7 @@ export async function call(
     headers,
     body: opts.form ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
   });
-  const ctx = { waitUntil: (promise: Promise<unknown>) => { background.push(promise); }, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
-  return worker.fetch(req as Request<unknown, IncomingRequestCfProperties>, env, ctx);
+  return worker.fetch(req as Request<unknown, IncomingRequestCfProperties>, env, testContext);
 }
 
 export function codeFromMail(mail: SentMail | undefined): string {

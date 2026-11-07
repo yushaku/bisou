@@ -1,4 +1,5 @@
 import { InstallCard } from "../components/bisou/InstallCard";
+import { NotificationCard } from "../components/bisou/NotificationCard";
 import { CalendarHeart } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useState } from "react";
 import { toast } from "sonner";
@@ -97,6 +98,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
       </section>
 
       <InstallCard />
+      {couple.members.length === 2 && <NotificationCard />}
 
       <UpcomingCard onOpen={(id) => setEditingEvent(couple.events.find((event) => event.id === id))} events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter((event) => !(event.kind === "custom" && event.later))} action={
         <Button asChild variant="ghost" size="sm">
