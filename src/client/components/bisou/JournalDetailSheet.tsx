@@ -11,6 +11,6 @@ export function JournalDetailSheet({ entry, onOpenPhoto }: { entry: Entry; onOpe
     {entry.source === "wish" && <Badge variant="secondary">{t("entry.fromWish")}</Badge>}
     <p className="whitespace-pre-line wrap-anywhere">{entry.body}</p>
     {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}
-    {entry.photos.map((photo, index) => <button key={index} type="button" onClick={() => onOpenPhoto(index)} className="focus-visible:ring-3 focus-visible:ring-ring"><img src={photo.src} srcSet={photo.srcSet} sizes="(max-width: 448px) 100vw, 448px" alt={photo.alt} className="w-full" /></button>)}
+    {entry.photos.map((photo, index) => <button key={index} type="button" onClick={() => onOpenPhoto(index)} className="overflow-hidden rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring"><img src={photo.src} srcSet={photo.srcSet} sizes="(max-width: 448px) 100vw, 448px" alt={photo.alt} className="w-full" /></button>)}
   </div>;
 }

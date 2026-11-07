@@ -64,7 +64,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut, d
             <DrawerHeader className="px-0 text-left">
               <DrawerTitle className="font-heading text-xl">{shown ? formatDay(shown.date, locale) : ""}</DrawerTitle>
             </DrawerHeader>
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
             {detail}
             {own && <>
             {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}

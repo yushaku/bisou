@@ -151,7 +151,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
             <DrawerTitle className="font-heading text-xl">{shownWish?.title}</DrawerTitle>
             {deleting && <p id="wish-delete-confirm" className="text-sm text-muted-foreground">{t("wish.deleteConfirm", { title: shownWish?.title ?? "" })}</p>}
           </DrawerHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto space-y-2">
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {detail && shownWish && !deleting && <WishDetailSheet wish={shownWish} />}
           <p role="alert" className="text-destructive empty:hidden">{error}</p>
           {!online && <p id="wish-action-offline" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
