@@ -86,6 +86,8 @@ How might two partners keep their shared story (daily moments, milestones, and t
 - [ ] **Questions and the Garden**
   - Goal: a relationship built on understanding and respect, cared for a little every day.
   - Outcome: a daily question card both answer privately and flip together; topic decks, each one a plant in one shared garden; stage cards with a shared closing line. Design and rules in the one-pager below.
+  - [x] v1: daily card, 6 decks of 10 cards as plants, swap, deck play, notification on flip ([docs/product/garden.md](docs/product/garden.md)).
+  - [ ] Next: stage cards with a shared closing line, returning cards, more cards.
 - [ ] **Kind feedback**
   - Goal: say what could be better without hurting, after the compliment habit exists.
   - Outcome: feedback written in a guided form, opened only when the partner is ready to hear it; how it touches the garden is still open.

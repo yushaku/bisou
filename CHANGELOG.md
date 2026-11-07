@@ -4,6 +4,18 @@
 
 ### Added
 
+- The Garden tab draws one question card a day for both of you, from 6 decks of 10 cards (Memories, Dreams, Money, When we disagree, Both families, Everyday us). Each of you answers privately, and both answers show side by side only once both of you have answered.
+- Whoever answers first sees the card face down with "waiting for your partner"; the app never says who is late.
+- Swap today's card while neither of you has answered it; once one of you has answered, the card stays.
+- Edit or delete your own answer at any time; an answer changed after the flip shows an "edited" mark to both of you.
+- Each deck is a plant in a shared garden. It grows one size on each day one of its cards is flipped and never shrinks. The garden turns dry after a few days without a daily card and wilts after about two weeks, but nothing dies. No numbers, streaks or scores.
+- Tap a plant to play more cards from its deck. A card left waiting when the day turns stays in its deck until the other answers it.
+- When both of you have answered today's card, both get a notification through the partner journal switch. Nothing is sent during quiet hours.
+
+## [2026-11-07]
+
+### Added
+
 - Opt in to notifications for each device in Settings > Notifications: get a partner's new journal entry and event reminders at 20:00 the day before and 08:00 on the event day, Vietnam time.
 - Quiet hours run from 22:00 to 07:00; journal entries from the night are combined into a notification at 07:00.
 - Home invites you to turn on notifications in the installed app.
