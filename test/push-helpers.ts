@@ -30,7 +30,9 @@ export async function subscribe(who: TestUser, d: Awaited<ReturnType<typeof devi
 export function mockPush(status = 201) {
   const sent: { endpoint: string; headers: Headers; body: Uint8Array<ArrayBuffer> }[] = [];
   const spy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
-    expect(init?.redirect).toBe("error");
+    expect(init?.redirect).toBe("manual");
+    // workerd rejects redirect "error" here, as the real fetch does at the edge.
+    new Request(String(input), { method: init?.method, redirect: init?.redirect });
     sent.push({ endpoint: String(input), headers: new Headers(init?.headers), body: new Uint8Array(await new Response(init?.body).arrayBuffer()) });
     return new Response(null, { status });
   });

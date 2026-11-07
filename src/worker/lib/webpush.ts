@@ -74,7 +74,7 @@ export async function sendPush(env: Env, row: PushRow, message: PushMessage, opt
     if (!isPushEndpoint(row.endpoint)) throw new Error("invalid push endpoint");
     const body = await encrypt(encoder.encode(JSON.stringify(message)), row.p256dh, row.auth);
     const response = await fetch(row.endpoint, {
-      method: "POST", redirect: "error", body,
+      method: "POST", redirect: "manual", body,
       headers: {
         "Content-Type": "application/octet-stream", "Content-Encoding": "aes128gcm",
         TTL: String(options.ttl), Urgency: "normal", Topic: options.topic,
@@ -83,7 +83,7 @@ export async function sendPush(env: Env, row: PushRow, message: PushMessage, opt
     });
     status = response.status;
     await response.body?.cancel();
-  } catch { /* Fetch errors can contain the endpoint. */ }
+  } catch { /* Fetch errors can contain the endpoint. A 3xx stays unfollowed and counts as a failure. */ }
   if (status >= 200 && status < 300) {
     await env.DB.prepare("UPDATE push_subscriptions SET last_success_at = ?, failures = 0 WHERE id = ?")
       .bind(Date.now(), row.id).run();
