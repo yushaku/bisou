@@ -5,7 +5,7 @@ import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
 import { useI18n } from "../i18n";
-import { pushSupport, turnOff, turnOn } from "../lib/push";
+import { permissionPromptHidden, pushSupport, turnOff, turnOn } from "../lib/push";
 import { useOnline } from "../lib/useOnline";
 
 export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
@@ -20,7 +20,7 @@ export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
   const changing = useRef(false);
   const revision = useRef(0);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<false | "error.generic" | "push.askHidden">(false);
   const [permission, setPermission] = useState(() => typeof Notification === "undefined" ? "default" : Notification.permission);
 
   useEffect(() => {
@@ -41,8 +41,8 @@ export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
           setDevice(res.data.devices.find((d) => d.endpoint === sub?.endpoint) ?? null);
           setError(false);
         } else if (res.status === 401) onSignedOut();
-        else setError(true);
-      } catch { if (active && version === revision.current) setError(true); }
+        else setError("error.generic");
+      } catch { if (active && version === revision.current) setError("error.generic"); }
       finally { if (active && version === revision.current) setLoaded(true); }
     }
     void load();
@@ -73,7 +73,7 @@ export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
         if (!res.ok) throw new Error("push save failed");
         setDevice(res.data.device);
       }
-    } catch { setError(true); }
+    } catch (e) { setError(permissionPromptHidden(e) ? "push.askHidden" : "error.generic"); }
     finally { changing.current = false; setPermission(Notification.permission); setBusy(false); }
   }
 
@@ -90,7 +90,7 @@ export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
         </Label>)}
       </div>
       <p className="text-sm text-muted-foreground">{t("push.deviceOnly")}</p>
-      {error && <p role="alert" className="text-sm text-destructive">{t("error.generic")}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{t(error)}</p>}
     </main>
   </div>;
 }

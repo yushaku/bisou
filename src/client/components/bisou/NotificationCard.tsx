@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
 import { isStandalone } from "@/lib/install";
-import { pushSupport, turnOn } from "@/lib/push";
+import { permissionPromptHidden, pushSupport, turnOn } from "@/lib/push";
 import { useOnline } from "@/lib/useOnline";
 
 const DISMISSED = "bisou.push.card";
@@ -48,8 +48,8 @@ export function NotificationCard() {
     setBusy(true);
     try {
       await turnOn(ready.registration, ready.publicKey, { journal: true, reminders: true });
-    } catch {
-      if (Notification.permission !== "denied") toast.error(t("error.generic"));
+    } catch (e) {
+      if (Notification.permission !== "denied") toast.error(t(permissionPromptHidden(e) ? "push.askHidden" : "error.generic"));
     } finally { dismiss(); setBusy(false); }
   }
 

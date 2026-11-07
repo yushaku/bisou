@@ -32,6 +32,11 @@ export async function turnOn(registration: ServiceWorkerRegistration, publicKey:
   return { subscription, device: res.data.device };
 }
 
+/* Chrome's quiet prompt (a bell in the address bar) rejects subscribe while the permission stays "default". */
+export function permissionPromptHidden(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "NotAllowedError" && typeof Notification !== "undefined" && Notification.permission !== "denied";
+}
+
 export async function turnOff() {
   const subscription = await currentSubscription();
   if (!subscription) return;

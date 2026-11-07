@@ -17,6 +17,7 @@ export const vi = {
   "push.blocked": "Thông báo bị chặn. Bạn hãy cho phép Bisou gửi thông báo trong cài đặt điện thoại hoặc trình duyệt.",
   "push.needsInstall": "Thêm Bisou vào màn hình chính rồi mở app để bật thông báo.",
   "push.unsupported": "Thông báo chưa dùng được trong trình duyệt này.",
+  "push.askHidden": "Trình duyệt chưa hỏi quyền. Bấm biểu tượng chuông hoặc ổ khoá trên thanh địa chỉ, chọn Cho phép thông báo, rồi bật lại.",
   "push.unavailable": "Thông báo chưa sẵn sàng. Bạn thử lại sau nhé.",
   "push.deviceOnly": "Lựa chọn này chỉ áp dụng cho thiết bị đang dùng.",
   "install.title": "Mang Bisou về màn hình chính",

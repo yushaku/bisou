@@ -18,6 +18,7 @@ export const en: Messages = {
   "push.blocked": "Notifications are blocked. Allow Bisou to send notifications in your phone or browser settings.",
   "push.needsInstall": "Add Bisou to your home screen, then open the app to turn on notifications.",
   "push.unsupported": "Notifications are not available in this browser.",
+  "push.askHidden": "Your browser did not show the permission prompt. Click the bell or lock icon in the address bar, allow notifications, then turn this on again.",
   "push.unavailable": "Notifications are not ready yet. Please try again later.",
   "push.deviceOnly": "These choices apply only to the device you are using.",
   "install.title": "Keep Bisou on your home screen",
