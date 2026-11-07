@@ -40,7 +40,7 @@ Today's card
 
 - R6. Each day the couple has one today's card, the same for both.
 - R7. At the start of a day, both partners get a new today's card; a card with one answer waiting stays on its deck to be answered later; an untouched card goes back to its place in its deck.
-- R8. A new card comes from a deck chosen at random, weighted so a smaller plant is 3 times more likely: a sprout or size-2 plant counts 3 times, a size-3 or 4 plant twice, a size-5+ plant once; it is that deck's card in play if it has one, otherwise its first unplayed card.
+- R8. A new card comes from a deck chosen at random, weighted so a smaller plant is much more likely than a larger one; it is that deck's card in play if it has one, otherwise its first unplayed card.
 - R9. The deck of the previous today's card is never chosen, unless it is the only deck with cards left; a deck with no card left is never chosen.
 - R10. Either partner may swap today's card ("Đổi thẻ khác" / "Another card") while neither has answered it; the new card is drawn as R8 and R9, never the swapped one, which goes to the back of its deck; both see the new card.
 - R10a. Once one partner has answered today's card, swap is locked for both; neither sees a "swap" button and no message says who answered.
@@ -59,8 +59,8 @@ Answering and flipping
 
 Extra play
 
-- R20. Tapping a plant ("Chạm một cây để chơi thêm" / "Tap a plant to play more") opens its deck: its name, a one-line purpose, its card in play, and its flipped cards, newest first, each opening both answers and the day it was flipped.
-- R21. A deck has at most one card in play: today's card if it comes from that deck, otherwise its first unplayed card; an extra card follows R10 (within its deck) and R12 to R19.
+- R20. Tapping a plant ("Chạm một cây để chơi thêm" / "Tap a plant to play more") opens its deck: its name, a one-line purpose, its card in play, and its flipped cards, newest first, each opening both answers and the day it was flipped. The flipped cards include daily cards answered at any time, even if unanswered by the other partner on their original day.
+- R21. A deck has at most one card in play: today's card if it comes from that deck, otherwise its first unplayed card; an extra card cannot be swapped and follows R12 to R19.
 - R22. Flipping an extra card sends no notification and does not change freshness.
 
 Growth and freshness
@@ -82,7 +82,7 @@ Notifications
 
 - R32. When both have answered today's card, every device of both partners with the partner journal kind on gets "Cả hai đã trả lời thẻ hôm nay. Lật thẻ thôi!" ("You both answered today's card. Time to flip!"); it never names the question, a deck, an answer or who answered last, and tapping it opens the garden (controlled by [notifications](notifications.md) R3 and quiet hours R16 to R18).
 - R33. Changing or deleting an answer, swapping, extra play and freshness send nothing; Bisou never sends a reminder to answer.
-- R34. A partner who has already flipped the card by the quiet hours window (22:00 to 07:00 Vietnam time) gets no held notification for that card.
+- R34. When a flip happens during the quiet hours window (22:00 to 07:00 Vietnam time), no notification is sent.
 
 Personal data
 
@@ -100,7 +100,7 @@ An and Bình, together since 12 February 2023. Their garden opens on 9 November 
 3. 21:40: Bình answers; both get "Cả hai đã trả lời thẻ hôm nay. Lật thẻ thôi!". Each flips and reads both answers. Tiền bạc grows to size 2.
 4. 22:15: An taps Tiền bạc and answers money-02 as extra play; Bình answers at 22:50; it flips, nothing is sent, Tiền bạc stays size 2.
 5. 10 November: today's card is memories-01; Bình swaps it before anyone answers and both get dreams-01. An answers it; Bình does not.
-6. 11 November: the day's new card is family-01; dreams-01 with An's answer stays in Ước mơ's deck. At 23:20 Bình opens Ước mơ and answers dreams-01; at 07:00 on 12 November An gets the notification (Bình flipped at 23:21 and gets none). Ước mơ grew on 11 November.
+6. 11 November: the day's new card is family-01; dreams-01 with An's answer stays in Ước mơ's deck. At 23:20 Bình opens Ước mơ and answers dreams-01; it flips during quiet hours and no notification is sent. Ước mơ grew on 11 November.
 7. Nobody plays from 12 November: the garden turns yellow on 14 November and droops on 25 November. On 26 November they flip today's card and the whole garden is fresh again; no plant lost a size.
 
 ## Main flows
@@ -112,7 +112,7 @@ Answer today's card, wait face down, flip and read; swap today's card; open a pl
 - AC1 (R1). Given An and Bình are a couple, then an outsider learns nothing of their garden and a person not yet paired has none.
 - AC2 (R2, R23, R26, R30). Given the garden opens on 9 November 2026, then both see six labelled sprouts, fresh, with no figure anywhere.
 - AC3 (R5, R6). Given An is in Tokyo, when it is 00:30 on 10 November there and 22:30 on 9 November in Vietnam, then An still sees money-01, the same card as Bình.
-- AC4 (R8, R9). Given money-01 was flipped on 9 November, then 10 November's card never comes from Tiền bạc; given Ký ức at size 5 and every other plant a sprout, then each other deck is 3 times as likely as Ký ức.
+- AC4 (R8, R9). Given money-01 was flipped on 9 November, then 10 November's card never comes from Tiền bạc; smaller plants are much more likely than larger ones.
 - AC5 (R10). Given nobody answered memories-01 on 10 November, when Bình taps "Đổi thẻ khác", then both see a new card that is not memories-01 nor from Tiền bạc, and memories-01 comes back only after the other Ký ức cards.
 - AC6 (R10, R10a, R18). Given An answered dreams-01, then neither can swap it; when An deletes that answer, the swap is offered again.
 - AC7 (R12). Given An saves an empty answer or one of 1001 characters, then it is refused; 1000 characters save.
@@ -121,7 +121,7 @@ Answer today's card, wait face down, flip and read; swap today's card; open a pl
 - AC10 (R16, R17). Given a flipped card, then neither can reply, react, rate or comment on an answer, and no card asks to guess the other's answer.
 - AC11 (R22, R24). Given step 4, then Tiền bạc stays size 2, nothing is sent and freshness is unchanged; when they flip money-03 on 10 November, Tiền bạc grows to size 3.
 - AC12 (R7). Given step 5 (An answered dreams-01, Bình did not), when 11 November starts, then a new daily card is drawn, and dreams-01 stays in Ước mơ's deck. When Bình opens Ước mơ and answers dreams-01, it flips.
-- AC13 (R32, R34, R24). Given step 6, then nothing shows during the night, An gets the message at 07:00 on 12 November, Bình gets none, and Ước mơ grew on 11 November.
+- AC13 (R32, R34, R24). Given step 6, when both have answered during quiet hours, no notification is sent to either; Ước mơ grew on 11 November.
 - AC14 (R26, R28, R29, R31). Given step 7, then both see the garden fresh on 12 and 13 November, yellow with its message from 14 November, drooping with its message from 25 November, never naming anyone.
 - AC15 (R25, R27). Given step 7 on 26 November, when they flip today's card, then the whole garden is fresh at once and shown watered, with every plant at least its earlier size.
 - AC16 (R18, R13). Given An answered money-01 and Bình has not, when An changes the answer, then Bình sees neither version until the flip.
