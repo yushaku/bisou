@@ -9,6 +9,8 @@
 - Home invites you to turn on notifications in the installed app.
 - Signing out stops notifications on that device.
 - Notifications never mention wishes, spins or claims, and never show journal text.
+- If the browser hides its permission prompt, Settings explains how to allow notifications from the address bar.
+- Tap a journal entry or a wish in My jar to read it in full in a sheet; a back-filled entry's "written on" line moved there from the card.
 
 ## [2026-11-06]
 
