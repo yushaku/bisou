@@ -40,7 +40,7 @@ Today's card
 
 - R6. Each day the couple has one today's card, the same for both.
 - R7. At the start of a day, both partners get a new today's card; a card with one answer waiting stays on its deck to be answered later; an untouched card goes back to its place in its deck.
-- R8. A new card comes from a deck chosen at random, weighted so a smaller plant is much more likely than a larger one (weight at most 3x the smallest); the draw skips any card that already holds a waiting answer unless the deck has no other card; it is that deck's card in play if it has one, otherwise its first unplayed card.
+- R8. A new card comes from a deck chosen at random, weighted so a small plant is drawn at most 3 times as often as a fully grown one; the draw skips any card that already holds a waiting answer unless the deck has no other card; it is that deck's card in play if it has one, otherwise its first unplayed card.
 - R9. The deck of the previous today's card is never chosen, unless it is the only deck with cards left; a deck with no card left is never chosen.
 - R10. Either partner may swap today's card ("Đổi thẻ khác" / "Another card") while neither has answered it; the new card is drawn as R8 and R9, skipping cards with a waiting answer as R8, never the swapped one, which goes to the back of its deck; both see the new card.
 - R10a. Once one partner has answered today's card, swap is locked for both; neither sees a "swap" button. The lock shows gently without naming who answered, as the accepted exception to R13 that lets each partner know the other has answered.
@@ -60,7 +60,7 @@ Answering and flipping
 Extra play
 
 - R20. Tapping a plant ("Chạm một cây để chơi thêm" / "Tap a plant to play more") opens its deck: its name, a one-line purpose, its card in play, and its flipped cards, newest first, each opening both answers and the day it was flipped. The flipped cards include daily cards answered at any time, even if unanswered by the other partner on their original day.
-- R21. A deck has at most one card in play: today's card if it comes from that deck, otherwise its first unplayed card; an extra card cannot be swapped and follows R12 to R19.
+- R21. A deck has at most one card in play: today's card if it comes from that deck, otherwise its first unplayed card; when the daily draw skips a deck's first unplayed card because it holds a waiting answer, that card becomes the deck's active card again once today's card from that deck is played; an extra card cannot be swapped and follows R12 to R19.
 - R22. Flipping an extra card sends no notification and does not change freshness.
 
 Growth and freshness
