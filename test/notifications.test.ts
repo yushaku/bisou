@@ -24,10 +24,10 @@ function elements(node: ReactNode): ReactElement<Props>[] {
   return [node, ...elements(node.props.children)];
 }
 function render() { hooks.index = 0; return elements(Notifications({ onSignedOut: vi.fn() })); }
-async function setup({ permission = "default", online = true, key = "public-key", registered = true } = {}) {
+async function setup({ permission = "default", online = true, key = "public-key", registered = true, userAgent = "Chrome" } = {}) {
   const subscription = { endpoint: "this-device", toJSON: () => ({ endpoint: "this-device", keys: { p256dh: "key", auth: "auth" } }), unsubscribe: vi.fn().mockResolvedValue(true) };
   const registration = { pushManager: { subscribe: vi.fn().mockResolvedValue(subscription), getSubscription: vi.fn().mockResolvedValue(null) } };
-  vi.stubGlobal("navigator", { userAgent: "Chrome", onLine: online, serviceWorker: { getRegistration: vi.fn().mockResolvedValue(registered ? registration : undefined) } });
+  vi.stubGlobal("navigator", { userAgent, maxTouchPoints: 5, onLine: online, serviceWorker: { getRegistration: vi.fn().mockResolvedValue(registered ? registration : undefined) } });
   vi.stubGlobal("Notification", { permission }); vi.stubGlobal("PushManager", {});
   vi.stubGlobal("matchMedia", () => ({ matches: false })); vi.stubGlobal("document", new EventTarget());
   vi.spyOn(api, "push").mockResolvedValue({ ok: true, data: { publicKey: key || null, devices: [] } });
@@ -39,7 +39,7 @@ async function setup({ permission = "default", online = true, key = "public-key"
 
 it.each([
   [{ permission: "denied" }, "push.blocked"], [{ online: false }, "offline.bar"],
-  [{ key: "" }, "push.unavailable"], [{ registered: false }, "push.unsupported"],
+  [{ key: "" }, "push.unavailable"], [{ registered: false }, "push.unsupported"], [{ userAgent: "iPhone" }, "push.needsInstall"],
 ])("AC20, R20, R22: explains %s and disables the switches", async (options, text) => {
   const { registration } = await setup(options);
   const nodes = render(); expect(nodes.some((n) => n.props.children === text)).toBe(true);
