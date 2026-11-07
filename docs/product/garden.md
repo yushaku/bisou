@@ -40,16 +40,16 @@ Today's card
 
 - R6. Each day the couple has one today's card, the same for both.
 - R7. At the start of a day, both partners get a new today's card; a card with one answer waiting stays on its deck to be answered later; an untouched card goes back to its place in its deck.
-- R8. A new card comes from a deck chosen at random, weighted so a smaller plant is much more likely than a larger one; it is that deck's card in play if it has one, otherwise its first unplayed card.
+- R8. A new card comes from a deck chosen at random, weighted so a smaller plant is much more likely than a larger one (weight at most 3x the smallest); the draw skips any card that already holds a waiting answer unless the deck has no other card; it is that deck's card in play if it has one, otherwise its first unplayed card.
 - R9. The deck of the previous today's card is never chosen, unless it is the only deck with cards left; a deck with no card left is never chosen.
-- R10. Either partner may swap today's card ("Đổi thẻ khác" / "Another card") while neither has answered it; the new card is drawn as R8 and R9, never the swapped one, which goes to the back of its deck; both see the new card.
-- R10a. Once one partner has answered today's card, swap is locked for both; neither sees a "swap" button and no message says who answered.
+- R10. Either partner may swap today's card ("Đổi thẻ khác" / "Another card") while neither has answered it; the new card is drawn as R8 and R9, skipping cards with a waiting answer as R8, never the swapped one, which goes to the back of its deck; both see the new card.
+- R10a. Once one partner has answered today's card, swap is locked for both; neither sees a "swap" button. The lock shows gently without naming who answered, as the accepted exception to R13 that lets each partner know the other has answered.
 - R11. When no deck has a card left, there is no today's card, the garden reads "Thẻ mới đang trên đường tới" ("New cards are on their way"), and freshness does not fade meanwhile.
 
 Answering and flipping
 
-- R12. Each partner answers on their own ("Viết câu trả lời" / "Write your answer") with text of 1 to 1000 characters, outer spaces ignored; no photos.
-- R13. Until both have answered, neither sees the other's answer, and the partner who has not answered sees no sign of whether the other has.
+- R12. Each partner answers on their own ("Viết câu trả lời" / "Write your answer") with text of 1 to 1000 characters, outer spaces ignored, line breaks accepted; no photos.
+- R13. Until both have answered, neither sees the other's answer; the partner who has not answered sees no sign of whether the other has, except once either has answered swap is locked for both (the lock shows gently without naming who answered, an accepted trade-off to know the other answered).
 - R14. A partner who has answered sees their own card face down and the partner's place reading "Đang chờ người ấy" ("Waiting for your partner"), with no name, time or duration.
 - R15. Once both have answered, the card is flipped; each partner taps "Lật thẻ" ("Flip") and sees both answers side by side, their own first, each with its author's name, with no time and no sign of who answered first.
 - R16. Answers get no reply, reaction, rating or comment; the couple talks about them in person.
