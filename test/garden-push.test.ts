@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { GardenState } from "../src/shared/garden";
+import type { GardenDeckState, GardenState } from "../src/shared/garden";
 import { call, paired, resetDb, waitForBackground, type TestUser } from "./helpers";
 import { decrypt, device, mockPush, runPushCron, subscribe } from "./push-helpers";
 
@@ -59,8 +59,9 @@ it("R22 R35 AC11 AC20: swap and extra play, including an old waiting daily card,
   const old = await today(a);
   const send = mockPush();
   await call("POST", "/api/garden/today/swap", { cookie: a.cookie, body: { cardId: old } });
-  await save(a, old);
-  await save(b, old);
+  const extra = (await (await call("GET", `/api/garden/decks/${old.split("-")[0]}`, { cookie: a.cookie })).json<GardenDeckState>()).active!.cardId;
+  await save(a, extra);
+  await save(b, extra);
   const waiting = await today(a);
   await save(a, waiting);
   vi.mocked(Date.now).mockReturnValue(DAY + 86400000);

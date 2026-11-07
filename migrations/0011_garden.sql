@@ -14,7 +14,7 @@ CREATE INDEX garden_days_flipped ON garden_days(couple_id, day) WHERE flipped = 
 CREATE TABLE garden_answers (
   couple_id TEXT NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
   card_id TEXT NOT NULL,
-  round INTEGER NOT NULL DEFAULT 1 CHECK (round = 1),
+  round INTEGER NOT NULL DEFAULT 1,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   body TEXT CHECK (body IS NULL OR length(body) BETWEEN 1 AND 1000),
   created_at INTEGER NOT NULL,

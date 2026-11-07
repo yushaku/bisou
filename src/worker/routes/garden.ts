@@ -56,7 +56,7 @@ garden.post("/today/swap", limitBody, async (c) => {
 
 const saveAnswer: Handler<GardenEnv> = async (c) => {
   const card = cardById(c.req.param("cardId") ?? "");
-  if (!card || card.retired) return c.json({ error: "not_found" }, 404);
+  if (!card || (c.req.method === "POST" && card.retired)) return c.json({ error: "not_found" }, 404);
   const raw = await c.req.json().catch(() => null);
   const parsed = answerText(raw?.text);
   if ("error" in parsed) return c.json(parsed, 400);
@@ -73,6 +73,12 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
       .bind(parsed.text, now, parsed.text, couple, card.id, user).run();
     if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
   } else {
+    const deck = await gardenDeck(db, couple, user, card.deckId, now);
+    const today = await loadToday(db, couple, now);
+    const waiting = await db.prepare(`SELECT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ?
+      AND card_id = ? AND round = 1 AND user_id <> ? AND flipped_day IS NULL) AS waiting`)
+      .bind(couple, card.id, user).first<number>("waiting");
+    if (today?.card_id !== card.id && deck.active?.cardId !== card.id && !waiting) return c.json({ error: "not_found" }, 404);
     // D1 batches run transactionally; concurrent saves can claim the daily flip only once.
     // https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
     const changes = await db.batch([
@@ -98,7 +104,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
 garden.post("/cards/:cardId/answer", limitBody, saveAnswer);
 garden.put("/cards/:cardId/answer", limitBody, saveAnswer);
 
-garden.delete("/cards/:cardId/answer", async (c) => {
+garden.delete("/cards/:cardId/answer", limitBody, async (c) => {
   const card = cardById(c.req.param("cardId"));
   if (!card) return c.json({ error: "not_found" }, 404);
   const db = c.env.DB;

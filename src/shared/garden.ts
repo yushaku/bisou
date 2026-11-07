@@ -30,8 +30,10 @@ export interface GardenState {
 export interface GardenDeckState { active: GardenCardState | null; history: GardenCardState[] }
 
 export function answerText(raw: unknown): { text: string } | { error: "invalid_answer" | "answer_too_long" } {
-  if (typeof raw !== "string" || CONTROL_CHARACTERS.test(raw)) return { error: "invalid_answer" };
-  const text = raw.trim();
+  if (typeof raw !== "string") return { error: "invalid_answer" };
+  const normalized = raw.replace(/\r\n/g, "\n");
+  if (CONTROL_CHARACTERS.test(normalized.replace(/\n/g, ""))) return { error: "invalid_answer" };
+  const text = normalized.trim();
   if (!text) return { error: "invalid_answer" };
   if ([...text].length > GARDEN_ANSWER_MAX) return { error: "answer_too_long" };
   return { text };
@@ -39,7 +41,7 @@ export function answerText(raw: unknown): { text: string } | { error: "invalid_a
 
 export function cardById(id: string): GardenCard | undefined { return CARDS.find((card) => card.id === id); }
 
-export interface DrawInput { played?: string[]; previousDeck?: string; excludedCard?: string; excludedDeck?: string; stages?: Record<string, number>; swapped?: string[] }
+export interface DrawInput { waiting?: string[]; played?: string[]; previousDeck?: string; excludedCard?: string; excludedDeck?: string; stages?: Record<string, number>; swapped?: string[] }
 export function drawCard(input: DrawInput, seed: number): GardenCard | null {
   const cards = CARDS.filter((card) => !card.retired && !input.played?.includes(card.id) && card.id !== input.excludedCard);
   let decks = DECKS.filter((deck) => cards.some((card) => card.deckId === deck.id));
@@ -51,7 +53,9 @@ export function drawCard(input: DrawInput, seed: number): GardenCard | null {
   const weight = (deckId: string) => 1 + Math.min(2, Math.max(0, 7 - (input.stages?.[deckId] ?? 0)));
   let bucket = (seed >>> 0) % decks.reduce((sum, deck) => sum + weight(deck.id), 0);
   const deck = decks.find((candidate) => { bucket -= weight(candidate.id); return bucket < 0; })!;
-  const inDeck = cards.filter((card) => card.deckId === deck.id);
+  const available = cards.filter((card) => card.deckId === deck.id);
+  const untouched = available.filter((card) => !input.waiting?.includes(card.id));
+  const inDeck = untouched.length ? untouched : available;
   return inDeck.find((card) => !input.swapped?.includes(card.id))
     ?? inDeck.sort((a, b) => input.swapped!.indexOf(a.id) - input.swapped!.indexOf(b.id))[0] ?? null;
 }

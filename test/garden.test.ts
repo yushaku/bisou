@@ -1,7 +1,8 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { call, explain, paired, resetDb, user, type TestUser } from "./helpers";
-import { CARDS, type GardenState, type GardenCardState, type GardenDeckState } from "../src/shared/garden";
+import { drawInput, drawSeed, loadToday } from "../src/worker/lib/garden";
+import { drawCard, CARDS, type GardenState, type GardenCardState, type GardenDeckState } from "../src/shared/garden";
 
 const NOW = Date.parse("2026-11-09T08:00:00+07:00");
 export async function garden(who: TestUser) {
@@ -250,10 +251,91 @@ describe("Garden daily cards", () => {
     expect((await answer(a, id, "revive")).status).toBe(409);
   });
 
+  it("R10a: daily draws and swaps avoid waiting answers when that deck has another card", async () => {
+    const { a, b, couple } = await paired();
+    const input = await drawInput(env.DB, couple.id, "2026-11-09");
+    const candidate = drawCard(input, await drawSeed(couple.id, "2026-11-09", 0))!;
+    const wait = (id: string) => env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, user_id, body, created_at, updated_at) VALUES (?, ?, ?, 'waiting', ?, ?)").bind(couple.id, id, b.id, NOW, NOW).run();
+    await wait(candidate.id);
+    const state = await garden(a);
+    expect(state.today!.cardId).not.toBe(candidate.id);
+    expect(state.swapLocked).toBe(false);
+    const current = CARDS.find((c) => c.id === state.today!.cardId)!;
+    const swapCandidate = drawCard({ ...await drawInput(env.DB, couple.id, state.day), excludedCard: current.id, excludedDeck: current.deckId }, await drawSeed(couple.id, state.day, 1))!;
+    await wait(swapCandidate.id);
+    const swapped = await (await call("POST", "/api/garden/today/swap", { cookie: a.cookie, body: { cardId: current.id } })).json<GardenState>();
+    expect(swapped.today!.cardId).not.toBe(swapCandidate.id);
+    expect(swapped.swapLocked).toBe(false);
+  });
+
+  it("R10a: waiting cards remain drawable when their deck has no alternative", () => {
+    expect(drawCard({ played: CARDS.filter((c) => c.id !== "money-01").map((c) => c.id), waiting: ["money-01"] }, 0)?.id).toBe("money-01");
+  });
+
+  it("R12: DELETE rejects oversized request bodies", async () => {
+    const { a } = await paired();
+    const id = (await garden(a)).today!.cardId;
+    await answer(a, id);
+    expect((await call("DELETE", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "x".repeat(17000) } })).status).toBe(413);
+    expect((await garden(a)).today?.mine).toBe("a private answer");
+  });
+
+  it("R6: drawing retries a lost insertion only once", async () => {
+    const { couple } = await paired();
+    const original = env.DB.batch.bind(env.DB);
+    const batch = vi.spyOn(env.DB, "batch");
+    let attempts = 0;
+    batch.mockImplementation(async (statements) => {
+      if (statements.length !== 2) return original(statements);
+      if (++attempts > 2) throw new Error("unbounded retry");
+      return original(statements.map(() => env.DB.prepare("SELECT 1 WHERE 0")));
+    });
+    expect(await loadToday(env.DB, couple.id, NOW)).toBeNull();
+    expect(attempts).toBe(2);
+  });
+
+  it("R37: storage permits future rounds without offering them in v1", async () => {
+    const { a, couple } = await paired();
+    await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, round, user_id, body, created_at, updated_at) VALUES (?, 'money-01', 2, ?, 'future', ?, ?)").bind(couple.id, a.id, NOW, NOW).run();
+    expect(await env.DB.prepare("SELECT round FROM garden_answers WHERE couple_id = ?").bind(couple.id).first("round")).toBe(2);
+  });
+
+  it("R12: line breaks save and CRLF is normalized, while NUL and bidi controls are rejected", async () => {
+    const { a } = await paired();
+    const id = (await garden(a)).today!.cardId;
+    for (const text of ["a\u0000b", "a\u202eb"]) expect((await answer(a, id, text)).status).toBe(400);
+    expect((await answer(a, id, "a\nb")).status).toBe(201);
+    expect((await call("PUT", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "a\r\nb" } })).status).toBe(200);
+    expect((await garden(a)).today?.mine).toBe("a\nb");
+  });
+
+  it("R3 R21 D8: only today's card, a deck's active card or a partner's waiting card accepts POST", async () => {
+    const { a, b, couple } = await paired();
+    await garden(a);
+    expect((await answer(a, "money-10")).status).toBe(404);
+    const deck = await (await call("GET", "/api/garden/decks/money", { cookie: a.cookie })).json<GardenDeckState>();
+    expect((await answer(a, deck.active!.cardId)).status).toBe(201);
+    await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, user_id, body, created_at, updated_at) VALUES (?, 'money-09', ?, 'waiting', ?, ?)").bind(couple.id, b.id, NOW, NOW).run();
+    expect((await answer(a, "money-09")).status).toBe(201);
+  });
+
+  it("R38: retired cards still allow authors to edit and delete existing answers", async () => {
+    const { a } = await paired();
+    const id = (await garden(a)).today!.cardId;
+    await answer(a, id);
+    const card = CARDS.find((card) => card.id === id)!;
+    card.retired = true;
+    try {
+      expect((await call("PUT", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "edited" } })).status).toBe(200);
+      expect((await call("DELETE", `/api/garden/cards/${id}/answer`, { cookie: a.cookie })).status).toBe(200);
+      expect((await answer(a, id)).status).toBe(404);
+    } finally { delete card.retired; }
+  });
+
   it("R12 AC7: validation trims, counts code points, rejects controls, bidi and oversized bodies", async () => {
     const { a } = await paired();
     const id = (await garden(a)).today!.cardId;
-    for (const text of ["", "   ", "bad\ntext", "bad\u202etext", "bad\u2066text", 3, null]) {
+    for (const text of ["", "   ", "bad\u202etext", "bad\u2066text", 3, null]) {
       expect((await call("POST", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text } })).status).toBe(400);
     }
     expect((await answer(a, id, "💚".repeat(1001))).status).toBe(400);

@@ -4,14 +4,15 @@ import { CARDS, DECKS, drawCard, freshness, plantStage, type GardenCardState, ty
 export interface GardenDay { day: string; card_id: string; deck_id: string; swaps: number; flipped: number }
 
 export async function drawInput(db: D1Database, coupleId: string, day: string) {
-  const [played, previous, growth, swapped] = await db.batch<{ card_id: string; deck_id: string; days: number }>([
+  const [played, previous, growth, swapped, waiting] = await db.batch<{ card_id: string; deck_id: string; days: number }>([
     db.prepare("SELECT card_id FROM garden_answers WHERE couple_id = ? AND round = 1 GROUP BY card_id HAVING COUNT(*) = 2").bind(coupleId),
     db.prepare("SELECT deck_id FROM garden_days WHERE couple_id = ? AND day < ? ORDER BY day DESC LIMIT 1").bind(coupleId, day),
     db.prepare("SELECT deck_id, COUNT(*) days FROM garden_growth WHERE couple_id = ? GROUP BY deck_id").bind(coupleId),
     db.prepare(`SELECT skipped.key AS card_id, MAX(skipped.value) AS position FROM garden_days d, json_each(d.swapped_cards) skipped
       WHERE d.couple_id = ? GROUP BY skipped.key ORDER BY position`).bind(coupleId),
+    db.prepare("SELECT card_id FROM garden_answers WHERE couple_id = ? AND round = 1 GROUP BY card_id HAVING COUNT(*) = 1").bind(coupleId),
   ]);
-  return { played: played!.results.map((r) => r.card_id), previousDeck: previous!.results[0]?.deck_id,
+  return { waiting: waiting!.results.map((r) => r.card_id), played: played!.results.map((r) => r.card_id), previousDeck: previous!.results[0]?.deck_id,
     stages: Object.fromEntries(growth!.results.map((r) => [r.deck_id, plantStage(r.days)])),
     swapped: swapped!.results.map((r) => r.card_id) };
 }
@@ -21,7 +22,7 @@ export async function drawSeed(coupleId: string, day: string, swaps: number): Pr
   return new DataView(digest).getUint32(0);
 }
 
-export async function loadToday(db: D1Database, coupleId: string, now: number): Promise<GardenDay | null> {
+export async function loadToday(db: D1Database, coupleId: string, now: number, retry = true): Promise<GardenDay | null> {
   const day = vnDay(now);
   const select = () => db.prepare("SELECT day, card_id, deck_id, swaps, flipped FROM garden_days WHERE couple_id = ? AND day = ?").bind(coupleId, day);
   const current = await select().first<GardenDay>();
@@ -34,7 +35,7 @@ export async function loadToday(db: D1Database, coupleId: string, now: number): 
       ON CONFLICT(couple_id, day) DO NOTHING`).bind(coupleId, day, card.deckId, card.id, now, coupleId, card.id),
     select(),
   ]);
-  return results[1]!.results[0] ?? loadToday(db, coupleId, now);
+  return results[1]!.results[0] ?? (retry ? loadToday(db, coupleId, now, false) : null);
 }
 
 export async function cardStates(db: D1Database, coupleId: string, userId: string, cardIds: string[]): Promise<GardenCardState[]> {
@@ -77,7 +78,7 @@ export async function gardenDeck(db: D1Database, coupleId: string, userId: strin
   const input = await drawInput(db, coupleId, vnDay(now));
   const states = await cardStates(db, coupleId, userId, CARDS.filter((card) => card.deckId === deckId).map((card) => card.id));
   const activeId = today?.deck_id === deckId && !input.played.includes(today.card_id) ? today.card_id
-    : drawCard({ ...input, previousDeck: undefined, played: [...input.played, ...CARDS.filter((c) => c.deckId !== deckId).map((c) => c.id)] }, 0)?.id;
+    : drawCard({ ...input, waiting: undefined, previousDeck: undefined, played: [...input.played, ...CARDS.filter((c) => c.deckId !== deckId).map((c) => c.id)] }, 0)?.id;
   const [drawn, answered] = await db.batch<{ card_id: string; stamp: number }>([
     db.prepare("SELECT card_id, MAX(created_at) stamp FROM garden_days WHERE couple_id = ? AND deck_id = ? GROUP BY card_id").bind(coupleId, deckId),
     db.prepare("SELECT card_id, MAX(created_at) stamp FROM garden_answers WHERE couple_id = ? AND round = 1 AND (user_id = ? OR flipped_day IS NOT NULL) GROUP BY card_id").bind(coupleId, userId),
