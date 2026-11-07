@@ -6,7 +6,7 @@ import type { TabId } from "../components/bisou/AppShell";
 import { readCreateRequest, tabMove, TAB_PATH, type CreateDestination } from "./navigation";
 import { TabMemory } from "./tabMemory";
 
-const LIVE_TABS = ["home", "journal", "wishes"] as const;
+const LIVE_TABS = ["home", "journal", "wishes", "garden"] as const;
 
 function switchTab(go: () => void, direction: 1 | -1) {
   const update = () => flushSync(go);
@@ -22,7 +22,7 @@ export function useTabNavigation(tab?: TabId) {
   const origin = state?.from ?? location;
   const current = LIVE_TABS.find((id) => TAB_PATH[id] === origin) ?? "home";
 
-  function go(next: Exclude<TabId, "garden">, create?: CreateDestination) {
+  function go(next: TabId, create?: CreateDestination) {
     if (tab) memory?.scroll.set(tab, window.scrollY);
     if (memory) memory.returnFocus = null;
     const path = TAB_PATH[next];
@@ -47,7 +47,7 @@ export function useTabNavigation(tab?: TabId) {
   }
 
   return {
-    onSelect: (next: TabId) => { if (next !== "garden") go(next); },
+    onSelect: (next: TabId) => go(next),
     onCreate: (destination: CreateDestination) => go(destination === "event" ? "home" : destination === "spin" ? "wishes" : destination, destination),
   };
 }

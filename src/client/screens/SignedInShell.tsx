@@ -17,7 +17,7 @@ export interface SessionProps {
  * `tab` shows the bottom tab bar with that tab active; onboarding and pairing leave it out.
  */
 // Each tab's name replaces the app name in the top bar.
-const TAB_TITLES: Partial<Record<TabId, MessageKey>> = { home: "home.ourCorner", journal: "journal.title", wishes: "nav.wishes" };
+const TAB_TITLES: Partial<Record<TabId, MessageKey>> = { home: "home.ourCorner", journal: "journal.title", wishes: "nav.wishes", garden: "garden.title" };
 
 export function SignedInShell({
   tab,

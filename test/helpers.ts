@@ -22,6 +22,9 @@ export async function explain(sql: string, ...binds: unknown[]): Promise<string[
 export async function resetDb() {
   await waitForBackground();
   await env.DB.batch([
+    env.DB.prepare("DELETE FROM garden_answers"),
+    env.DB.prepare("DELETE FROM garden_growth"),
+    env.DB.prepare("DELETE FROM garden_days"),
     env.DB.prepare("DELETE FROM push_subscriptions"),
     env.DB.prepare("DELETE FROM photos"),
     env.DB.prepare("DELETE FROM wish_spins"),

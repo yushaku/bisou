@@ -1,4 +1,4 @@
-export const TAB_PATH = { home: "/", journal: "/journal", wishes: "/wishes" } as const;
+export const TAB_PATH = { home: "/", journal: "/journal", wishes: "/wishes", garden: "/garden" } as const;
 export type CreateDestination = "journal" | "wishes" | "event" | "spin";
 
 export function readCreateRequest(state: unknown): CreateDestination | null {

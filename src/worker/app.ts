@@ -11,6 +11,7 @@ import { wishes } from "./routes/wishes";
 import { coupleEvents } from "./routes/events";
 import { journal } from "./routes/journal";
 import { push } from "./routes/push";
+import { garden } from "./routes/garden";
 
 // One route module per area.
 export const app = new Hono<AppEnv>().basePath("/api");
@@ -31,6 +32,7 @@ app.route("/journal", journal);
 app.route("/wishes", wishes);
 app.route("/events", coupleEvents);
 app.route("/push", push);
+app.route("/garden", garden);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));
 app.onError((err, c) => {

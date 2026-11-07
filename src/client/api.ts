@@ -19,6 +19,7 @@ import type {
   RequestCodeResponse,
   User,
 } from "../shared/types";
+import type { GardenState, GardenCardState, GardenDeckState } from "../shared/garden";
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: ApiError | null };
 
@@ -46,6 +47,11 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  garden: () => call<GardenState>("GET", "/api/garden"),
+  gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
+  answerGarden: (id: string, text: string) => call<{ card: GardenCardState }>("POST", `/api/garden/cards/${encodeURIComponent(id)}/answer`, { text }),
+  editGardenAnswer: (id: string, text: string) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/answer`, { text }),
+  deleteGardenAnswer: (id: string) => call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/answer`),
   setAvatar: (blob: Blob) => {
     const form = new FormData();
     form.set("photo", blob, blob.type === "image/webp" ? "avatar.webp" : "avatar.jpg");

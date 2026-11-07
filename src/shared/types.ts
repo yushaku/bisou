@@ -21,6 +21,10 @@ export interface User {
 
 /** Error codes returned by the API as { error: ApiErrorCode }. */
 export type ApiErrorCode =
+  | "invalid_answer"
+  | "answer_too_long"
+  | "already_answered"
+  | "swap_locked"
   | "invalid_subscription"
   | "push_unavailable"
   | "body_too_large"

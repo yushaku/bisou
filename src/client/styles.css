@@ -222,6 +222,10 @@
     transform: scale(.6);
   }
 }
+.garden-lined {
+  background-image: repeating-linear-gradient(transparent 0 calc(--spacing(8) - 1px), var(--border) calc(--spacing(8) - 1px) --spacing(8));
+  background-position: 0 --spacing(3);
+}
 .jar-wrap {
   color: color-mix(in oklab, var(--foreground) 80%, transparent);
 }

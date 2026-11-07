@@ -1,7 +1,6 @@
 import { useOnline } from "@/lib/useOnline";
 import { BookHeart, Gift, House, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import type { CreateDestination } from "@/lib/navigation";
@@ -92,7 +91,6 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
           {TABS.map((id, index) => {
             const { icon: Icon, label } = TAB_META[id];
             const selected = active === id;
-            const garden = id === "garden";
             return (
               <Fragment key={id}>
                 {index === 2 && <li className="flex items-center justify-center">
@@ -104,8 +102,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
                 </li>}
                 <li>
                   <button type="button" aria-current={selected ? "page" : undefined}
-                    aria-disabled={garden || undefined} tabIndex={garden ? -1 : undefined}
-                    onClick={() => garden ? toast.info(t("nav.gardenHint")) : onSelect(id)}
+                    onClick={() => onSelect(id)}
                     className={cn("press flex h-16 w-full items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset", selected ? "text-foreground" : "text-muted-foreground")}>
                     <span className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
                       {selected && <span aria-hidden="true" className="absolute inset-0 rounded-control bg-accent elevate-sm [view-transition-name:tab-pill]" />}
