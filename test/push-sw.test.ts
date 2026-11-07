@@ -22,17 +22,17 @@ it("AC3, R19: shows the title and replacement tag with a journal destination", a
   await sw.dispatch("push", { data: { json: () => ({ title: "An vừa viết nhật ký", tag: "journal", url: "/journal" }) } });
   expect(sw.showNotification).toHaveBeenCalledWith("An vừa viết nhật ký", { tag: "journal", renotify: true, icon: "/icons/icon-192.png", data: { url: "/journal" } });
 });
-it("R1: unreadable push always shows a Bisou fallback", async () => {
+it("an unreadable push still shows a Bisou notification", async () => {
   const sw = worker();
   await sw.dispatch("push", { data: { json: () => { throw new Error("bad payload"); } } });
   expect(sw.showNotification).toHaveBeenCalledWith("Bisou", expect.objectContaining({ data: { url: "/" } }));
 });
-it.each(["https://evil.test", "//evil.test", "/\\evil.test", "javascript:alert(1)", null])("AC3, AC16, R15: rejects unsafe click URL %s", async (url) => {
+it.each(["https://evil.test", "//evil.test", "/\\evil.test", "javascript:alert(1)", null])("AC3, R15: rejects unsafe click URL %s", async (url) => {
   const sw = worker(); const close = vi.fn();
   await sw.dispatch("notificationclick", { notification: { close, data: { url } } });
   expect(close).toHaveBeenCalledOnce(); expect(sw.clients.openWindow).toHaveBeenCalledWith("/");
 });
-it("AC3, AC16: focuses and navigates an existing window", async () => {
+it("AC3, R15: focuses and navigates an existing window", async () => {
   const sw = worker(); const window = { focus: vi.fn().mockResolvedValue(undefined), navigate: vi.fn().mockResolvedValue(undefined) };
   sw.clients.matchAll.mockResolvedValue([window]);
   await sw.dispatch("notificationclick", { notification: { close: vi.fn(), data: { url: "/events" } } });

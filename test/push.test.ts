@@ -8,7 +8,7 @@ beforeEach(async () => { await resetDb(); vi.spyOn(Date, "now").mockReturnValue(
 afterEach(async () => { await waitForBackground(); vi.restoreAllMocks(); });
 
 describe("push subscriptions", () => {
-  it("AC14, AC15, R2, R28, R30: lists only own devices, updates kinds and deletes when both are off", async () => {
+  it("AC15, AC20, R2, R28, R30: lists only own devices, updates kinds and deletes when both are off", async () => {
     const { a, b } = await paired();
     const d = await device("a");
     await subscribe(a, d);
@@ -23,7 +23,7 @@ describe("push subscriptions", () => {
     expect(await stored(d.body.endpoint)).toBeNull();
   });
 
-  it("AC14, R2: deletion and logout cannot remove another person's device", async () => {
+  it("R2, R30: deletion and logout cannot remove another person's device", async () => {
     const { a, b } = await paired();
     const d = await device("a"); await subscribe(a, d);
     await call("DELETE", "/api/push/subscription", { cookie: b.cookie, body: { endpoint: d.body.endpoint } });

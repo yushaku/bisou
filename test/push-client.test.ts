@@ -9,7 +9,7 @@ function setup() {
   vi.stubGlobal("Notification", { permission: "default" }); vi.stubGlobal("PushManager", {});
   vi.stubGlobal("matchMedia", () => ({ matches: false }));
 }
-it("AC20, R20: distinguishes iPhone and iPad browser installation from unsupported browsers", async () => {
+it("AC16, R20: distinguishes iPhone and iPad browser installation from unsupported browsers", async () => {
   setup(); expect(pushSupport()).toBe("ok"); expect(await currentSubscription()).toBeNull();
   for (const ua of ["iPhone", "iPad", "Macintosh"]) {
     vi.stubGlobal("navigator", { userAgent: ua, maxTouchPoints: 5 });
@@ -35,7 +35,7 @@ it("R28: an API failure undoes a new browser subscription", async () => {
   await expect(turnOn(registration, "public-key", { journal: true, reminders: true })).rejects.toThrow();
   expect(unsubscribe).toHaveBeenCalledOnce();
 });
-it("AC14, R28: turning both off deletes on the server before unsubscribing locally", async () => {
+it("AC20, R28: turning both off deletes on the server before unsubscribing locally", async () => {
   setup(); const unsubscribe = vi.fn().mockResolvedValue(true);
   vi.mocked(navigator.serviceWorker.getRegistration).mockResolvedValue({ pushManager: { getSubscription: vi.fn().mockResolvedValue({ endpoint: "endpoint", unsubscribe }) } } as unknown as ServiceWorkerRegistration);
   const remove = vi.spyOn(api, "deletePush").mockImplementation(async () => { expect(unsubscribe).not.toHaveBeenCalled(); return { ok: true, data: { ok: true } }; });

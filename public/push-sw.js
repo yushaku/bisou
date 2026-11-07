@@ -20,7 +20,7 @@ self.addEventListener("notificationclick", (event) => {
   if (typeof target === "string" && target.startsWith("/") && !target.startsWith("//")) {
     try {
       if (new URL(target, self.location.origin).origin === self.location.origin) url = target;
-    } catch { /* Keep the home destination. */ }
+    } catch { /* Open / instead. */ }
   }
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });

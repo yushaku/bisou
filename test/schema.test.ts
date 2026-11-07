@@ -18,7 +18,7 @@ describe("push query plans", () => {
     ["AC12, R18: night device claim", `UPDATE push_subscriptions SET journal_slot = ?
       WHERE user_id = ? AND journal = 1 AND (journal_slot IS NULL OR journal_slot <> ?)
       RETURNING id, endpoint, p256dh, auth`, ["2026-11-08", "user", "2026-11-08"], ["push_subscriptions_user"]],
-    ["AC14, R2: own devices", "SELECT endpoint, journal, reminders FROM push_subscriptions WHERE user_id = ?", ["user"], ["push_subscriptions_user"]],
+    ["R2, R30: own devices", "SELECT endpoint, journal, reminders FROM push_subscriptions WHERE user_id = ?", ["user"], ["push_subscriptions_user"]],
     ["R27: device cap", `DELETE FROM push_subscriptions WHERE id IN (
       SELECT id FROM push_subscriptions WHERE user_id = ? AND endpoint <> ? ORDER BY created_at DESC LIMIT -1 OFFSET 9
     )`, ["user", "endpoint"], ["push_subscriptions_user", "sqlite_autoindex_push_subscriptions_1"]],
@@ -29,7 +29,7 @@ describe("push query plans", () => {
     ["author", "couple", "author"], ["push_subscriptions_user", "sqlite_autoindex_users_1", "sqlite_autoindex_couple_members_"]],
     ["AC18, R26: logout removal", `DELETE FROM push_subscriptions WHERE endpoint = ?
       AND user_id = (SELECT user_id FROM sessions WHERE token_hash = ?)`, ["endpoint", "token"], ["sqlite_autoindex_push_subscriptions_2", "sqlite_autoindex_sessions_1"]],
-    ["AC14, R28: unsubscribe", "DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?", ["endpoint", "user"], ["sqlite_autoindex_push_subscriptions_2"]],
+    ["AC20, R28: unsubscribe", "DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?", ["endpoint", "user"], ["sqlite_autoindex_push_subscriptions_2"]],
     ["R28: expired endpoint", "DELETE FROM push_subscriptions WHERE id = ?", ["id"], ["sqlite_autoindex_push_subscriptions_1"]],
     ["R28: failure count", "UPDATE push_subscriptions SET failures = failures + 1 WHERE id = ?", ["id"], ["sqlite_autoindex_push_subscriptions_1"]],
     ["R28: successful delivery", "UPDATE push_subscriptions SET last_success_at = ?, failures = 0 WHERE id = ?", [100, "id"], ["sqlite_autoindex_push_subscriptions_1"]],

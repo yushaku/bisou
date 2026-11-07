@@ -48,7 +48,7 @@ it.each([
   await toggles[0]!.props.onCheckedChange!(true);
   expect(registration.pushManager.subscribe).not.toHaveBeenCalled();
 });
-it("AC14, AC15, R21: opt in saves only the selected kind after a tap", async () => {
+it("AC15, R21: opt in saves only the selected kind after a tap", async () => {
   const { registration } = await setup();
   const save = vi.spyOn(api, "savePush").mockResolvedValue({ ok: true, data: { device: { endpoint: "this-device", journal: true, reminders: false } } });
   expect(registration.pushManager.subscribe).not.toHaveBeenCalled();
