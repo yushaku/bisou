@@ -3,6 +3,9 @@ import type { Messages } from "./vi";
 export const en: Messages = {
   "push.journal.one": "{name} wrote in the journal",
   "push.journal.many": "{name} wrote {n} journal entries",
+  "push.events.today": "Today: {events}",
+  "push.events.tomorrow": "Tomorrow: {events}",
+  "push.events.more": "and {n} more",
   "push.title": "Notifications",
   "push.journal": "Your partner's journal",
   "push.reminders": "Special day reminders",

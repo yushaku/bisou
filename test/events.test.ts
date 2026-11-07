@@ -1,11 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { upcomingEvents } from "../src/shared/events";
+import { eventTitle, upcomingEvents, type UpcomingEvent } from "../src/shared/events";
+import { vi, type MessageKey } from "../src/client/i18n/vi";
+import { en } from "../src/client/i18n/en";
 
 const people = [
   { name: "An", birthDate: "1997-11-18" },
   { name: "Binh", birthDate: "1996-01-03" },
 ];
 const start = "2023-02-12";
+
+it("R10, R31: shared event titles preserve the on-screen names and number formatting", () => {
+  const timing = { date: "2027-02-12", daysLeft: 1 };
+  const events: UpcomingEvent[] = [
+    { ...timing, kind: "anniversary", years: 4 }, { ...timing, kind: "days", days: 1000 },
+    { ...timing, kind: "birthday", name: "An", age: 30 }, { ...timing, kind: "holiday", holiday: "valentine" },
+    { ...timing, kind: "custom", id: "custom", title: "Trip", icon: "plane", years: 1, createdAt: 0, later: false },
+  ];
+  const translate = (locale: "vi" | "en") => (key: MessageKey, vars: Record<string, string | number> = {}) =>
+    (locale === "vi" ? vi : en)[key].replace(/\{(\w+)\}/g, (_match, name: string) => String(vars[name]));
+  expect(events.map((event) => eventTitle(event, translate("vi"), "vi")))
+    .toEqual(["Kỷ niệm 4 năm", "Ngày thứ 1.000", "Sinh nhật An", "Lễ Tình nhân", "Trip (1 năm)"]);
+  expect(events.map((event) => eventTitle(event, translate("en"), "en")))
+    .toEqual(["4 year anniversary", "Day 1,000", "An’s birthday", "Valentine’s Day", "Trip (1 year)"]);
+});
 
 describe("upcoming events", () => {
   it("AC3 R12: returns the seven running-example events in date order", () => {

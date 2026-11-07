@@ -1,16 +1,19 @@
 import { en } from "../../client/i18n/en";
 import { vi, type MessageKey } from "../../client/i18n/vi";
 import { addDays, vnDay, vnHour } from "../../shared/days";
+import { eventTitle, upcomingEvents } from "../../shared/events";
+import { isLocale, type Couple, type Locale } from "../../shared/types";
 import type { Env } from "../env";
-import { sendPush, type PushRow } from "./webpush";
+import { MAX_PUSH_PLAINTEXT, sendPush, type PushMessage, type PushRow } from "./webpush";
 import { HOUR } from "./time";
+import { loadCouple } from "./couples";
 
-function translate(locale: string, key: MessageKey, vars: Record<string, string | number>): string {
+function translate(locale: string, key: MessageKey, vars: Record<string, string | number> = {}): string {
   const text = (locale === "en" ? en : vi)[key];
   return text.replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match));
 }
 
-function journalTtl(now: number): number {
+function pushTtl(now: number): number {
   const day = vnHour(now) >= 22 ? addDays(vnDay(now), 1) : vnDay(now);
   return Math.max(0, Math.floor((Date.parse(`${day}T22:00:00+07:00`) - now) / 1000));
 }
@@ -25,7 +28,7 @@ export async function notifyJournal(env: Env, coupleId: string, authorId: string
       WHERE s.user_id = (SELECT user_id FROM couple_members WHERE couple_id = ? AND user_id <> ?) AND s.journal = 1`)
       .bind(authorId, coupleId, authorId).all<PushRow & { locale: string; name: string | null }>();
     for (const row of results) {
-      await sendPush(env, row, { title: translate(row.locale, "push.journal.one", { name: row.name ?? "" }), url: "/journal", tag: "journal" }, { ttl: journalTtl(now), topic: "journal" });
+      await sendPush(env, row, { title: translate(row.locale, "push.journal.one", { name: row.name ?? "" }), url: "/journal", tag: "journal" }, { ttl: pushTtl(now), topic: "journal" });
     }
   } catch { console.error("[bisou] journal push failed"); }
 }
@@ -52,8 +55,57 @@ export async function releaseNightJournal(env: Env, scheduledTime: number): Prom
       RETURNING id, endpoint, p256dh, auth`).bind(slot, recipient.id, slot).all<PushRow>();
     const title = translate(recipient.locale, author.count === 1 ? "push.journal.one" : "push.journal.many", { name: recipient.name ?? "", n: author.count });
     for (const row of devices.results) {
-      if (await sendPush(env, row, { title, url: "/journal", tag: "journal" }, { ttl: journalTtl(scheduledTime), topic: "journal" }) === "sent") sent++;
+      if (await sendPush(env, row, { title, url: "/journal", tag: "journal" }, { ttl: pushTtl(scheduledTime), topic: "journal" }) === "sent") sent++;
     }
   }
   console.log("[bisou] night journal pushes", sent);
+}
+
+export function reminderMessage(titles: string[], locale: Locale, offset: 0 | 1): PushMessage {
+  for (let count = Math.min(3, titles.length); count >= 0; count--) {
+    const names = titles.slice(0, count);
+    if (count < titles.length) names.push(translate(locale, "push.events.more", { n: titles.length - count }));
+    const message = {
+      title: translate(locale, offset ? "push.events.tomorrow" : "push.events.today", { events: names.join(", ") }),
+      url: "/events", tag: "events",
+    };
+    if (new TextEncoder().encode(JSON.stringify(message)).length <= MAX_PUSH_PLAINTEXT) return message;
+  }
+  throw new Error("push summary too large");
+}
+
+export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 1): Promise<void> {
+  if (!env.VAPID_PRIVATE_KEY) { console.log("[bisou] push unavailable"); return; }
+  const { results } = await env.DB.prepare(`SELECT s.user_id, u.locale FROM push_subscriptions s
+    JOIN users u ON u.id = s.user_id WHERE s.reminders = 1`).all<{ user_id: string; locale: string }>();
+  const recipients = new Map(results.map((row) => [row.user_id, row.locale]));
+  const couples = new Map<string, Couple | null>();
+  const today = vnDay(scheduledTime);
+  const target = addDays(today, offset);
+  const slot = `${today}T${String(vnHour(scheduledTime)).padStart(2, "0")}`;
+  let sent = 0;
+  // shortcut: sends share one invocation, move to Queues before about 40 devices per run.
+  for (const [userId, rawLocale] of recipients) {
+    let couple = couples.get(userId);
+    if (couple === undefined) {
+      couple = await loadCouple(env.DB, userId, scheduledTime);
+      couples.set(userId, couple);
+      for (const member of couple?.members ?? []) couples.set(member.id, couple);
+    }
+    if (couple?.members.length !== 2) continue;
+    const locale = isLocale(rawLocale) ? rawLocale : "vi";
+    const t = (key: MessageKey, vars?: Record<string, string | number>) => translate(locale, key, vars);
+    const partner = couple.members.find((member) => member.id !== userId)!;
+    const titles = upcomingEvents(couple.startDate, [{ name: partner.displayName?.trim() || t("common.person"), birthDate: partner.birthDate }], today, couple.events)
+      .filter((event) => event.date === target).map((event) => eventTitle(event, t, locale));
+    if (!titles.length) continue;
+    const message = reminderMessage(titles, locale, offset);
+    const devices = await env.DB.prepare(`UPDATE push_subscriptions SET reminder_slot = ?
+      WHERE user_id = ? AND reminders = 1 AND (reminder_slot IS NULL OR reminder_slot <> ?)
+      RETURNING id, endpoint, p256dh, auth`).bind(slot, userId, slot).all<PushRow>();
+    for (const row of devices.results) {
+      if (await sendPush(env, row, message, { ttl: pushTtl(scheduledTime), topic: "events" }) === "sent") sent++;
+    }
+  }
+  console.log("[bisou] event pushes", sent);
 }

@@ -1,6 +1,6 @@
 import { Cake, Gift, Heart, Sparkles, Plane, Music, UtensilsCrossed, Users, Star } from "lucide-react";
 import type { ReactNode } from "react";
-import type { UpcomingEvent } from "../../../shared/events";
+import { eventTitle, type UpcomingEvent } from "../../../shared/events";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
@@ -13,11 +13,7 @@ const ICONS = { anniversary: Heart, days: Sparkles, birthday: Cake, holiday: Gif
 export function EventRow({ event, onOpen }: { event: UpcomingEvent; onOpen?: (id: string) => void }) {
   const { t, locale } = useI18n();
   const Icon = event.kind === "custom" ? EVENT_ICON_COMPONENTS[event.icon] : ICONS[event.kind];
-  const title = event.kind === "anniversary" ? t("events.anniversary", { years: formatNumber(event.years, locale) })
-    : event.kind === "days" ? t("events.days", { n: formatNumber(event.days, locale) })
-    : event.kind === "birthday" ? t("events.birthday", { name: event.name })
-    : event.kind === "custom" ? `${event.title}${event.years >= 1 ? ` ${t(event.years === 1 ? "events.countOne" : "events.count", { n: formatNumber(event.years, locale) })}` : ""}`
-    : t(`events.holiday.${event.holiday}`);
+  const title = eventTitle(event, t, locale);
   const content = <>
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
         <Icon className="size-5" aria-hidden="true" />

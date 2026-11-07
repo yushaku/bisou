@@ -55,7 +55,7 @@ it("R16: Vietnam helpers use UTC+7 across calendar boundaries", () => {
 it("R16: other hours return before touching D1 or fetch", async () => {
   const prepare = vi.spyOn(env.DB, "prepare"); const batch = vi.spyOn(env.DB, "batch"); const send = mockPush();
   for (let hour = 0; hour < 24; hour++) {
-    if (hour === 3 || hour === 7) continue;
+    if ([3, 7, 8, 20].includes(hour)) continue;
     await runPushCron(`2026-11-08T${String(hour).padStart(2, "0")}:00:00+07:00`);
   }
   expect(prepare).not.toHaveBeenCalled(); expect(batch).not.toHaveBeenCalled(); expect(send.sent).toHaveLength(0);

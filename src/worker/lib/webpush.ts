@@ -2,6 +2,7 @@ import type { Env } from "../env";
 import { fromBase64Url, toBase64Url } from "./crypto";
 
 const encoder = new TextEncoder();
+export const MAX_PUSH_PLAINTEXT = 3993;
 
 export function isPushEndpoint(value: string): boolean {
   if (value.length > 2048 || !/^https:\/\/[^/:@?#\\\s]+\//i.test(value)) return false;
@@ -27,7 +28,7 @@ async function hkdf(input: Uint8Array, salt: Uint8Array, info: Uint8Array, bits:
 export async function encrypt(plaintext: Uint8Array, p256dh: string, auth: string, options: {
   salt?: Uint8Array<ArrayBuffer>; serverKeys?: CryptoKeyPair;
 } = {}): Promise<Uint8Array<ArrayBuffer>> {
-  if (plaintext.length > 3993) throw new Error("push payload too large");
+  if (plaintext.length > MAX_PUSH_PLAINTEXT) throw new Error("push payload too large");
   const salt = options.salt ?? crypto.getRandomValues(new Uint8Array(16));
   const keys = options.serverKeys ?? await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]) as CryptoKeyPair;
   const serverPublic = new Uint8Array(await crypto.subtle.exportKey("raw", keys.publicKey) as ArrayBuffer);

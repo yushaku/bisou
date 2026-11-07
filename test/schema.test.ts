@@ -7,6 +7,11 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("push query plans", () => {
   it.each([
+    ["AC7, AC8, R10: reminder recipients", `SELECT s.user_id, u.locale FROM push_subscriptions s
+      JOIN users u ON u.id = s.user_id WHERE s.reminders = 1`, [], ["push_subscriptions_reminders", "sqlite_autoindex_users_1"]],
+    ["AC7, R10: reminder device claim", `UPDATE push_subscriptions SET reminder_slot = ?
+      WHERE user_id = ? AND reminders = 1 AND (reminder_slot IS NULL OR reminder_slot <> ?)
+      RETURNING id, endpoint, p256dh, auth`, ["2026-11-08T08", "user", "2026-11-08T08"], ["push_subscriptions_reminders"]],
     ["AC12, AC13, R18: night window", "SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ?", [100, 200], ["journal_entries_created"]],
     ["AC12, R17: night recipient", `SELECT u.id, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name
       FROM couple_members m JOIN users u ON u.id = m.user_id WHERE m.couple_id = ? AND m.user_id <> ?`, ["author", "couple", "author"], ["sqlite_autoindex_users_1", "sqlite_autoindex_couple_members_"]],

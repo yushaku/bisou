@@ -2,6 +2,9 @@
 export const vi = {
   "push.journal.one": "{name} vừa viết nhật ký",
   "push.journal.many": "{name} đã viết {n} bài nhật ký",
+  "push.events.today": "Hôm nay: {events}",
+  "push.events.tomorrow": "Ngày mai: {events}",
+  "push.events.more": "và {n} sự kiện khác",
   "push.title": "Thông báo",
   "push.journal": "Nhật ký của người ấy",
   "push.reminders": "Nhắc ngày đặc biệt",

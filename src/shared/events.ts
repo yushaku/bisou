@@ -1,7 +1,8 @@
 import { CONTROL_CHARACTERS } from "./text";
+import type { MessageKey } from "../client/i18n/vi";
 import { addDays, anniversaryDate, daysBetween, daysTogether, isValidDay } from "./days";
 
-import type { ApiError, CoupleEvent, CoupleEventInput } from "./types";
+import type { ApiError, CoupleEvent, CoupleEventInput, Locale } from "./types";
 
 export const EVENT_ICONS = ["heart", "plane", "music", "dinner", "gift", "cake", "family", "star"] as const;
 export type EventIcon = (typeof EVENT_ICONS)[number];
@@ -30,6 +31,15 @@ export type UpcomingEvent = { date: string; daysLeft: number } & (
 );
 
 const ORDER = { anniversary: 0, days: 1, birthday: 2, holiday: 3, custom: 4 };
+
+export function eventTitle(event: UpcomingEvent, t: (key: MessageKey, vars?: Record<string, string | number>) => string, locale: Locale): string {
+  const number = (n: number) => new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-GB").format(n);
+  return event.kind === "anniversary" ? t("events.anniversary", { years: number(event.years) })
+    : event.kind === "days" ? t("events.days", { n: number(event.days) })
+    : event.kind === "birthday" ? t("events.birthday", { name: event.name })
+    : event.kind === "custom" ? `${event.title}${event.years >= 1 ? ` ${t(event.years === 1 ? "events.countOne" : "events.count", { n: number(event.years) })}` : ""}`
+    : t(`events.holiday.${event.holiday}`);
+}
 
 /** Today included, the same calendar day next year excluded (March 1 for February 29); ties follow R7. */
 export function upcomingEvents(startDate: string | null, people: { name: string; birthDate: string | null }[], today: string, custom: CoupleEvent[] = []): UpcomingEvent[] {
