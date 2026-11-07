@@ -6,6 +6,7 @@ import { findMembership } from "../lib/couples";
 import { entriesWithPhotos, entryCursor, findEntry, readCursor, validateEntry, type EntryRow } from "../lib/journal";
 import { PENDING_PHOTO_TTL } from "../lib/time";
 import { purgePhotos } from "../lib/photos";
+import { notifyJournal } from "../lib/notify";
 
 export const journal = new Hono<AppEnv & { Variables: { journalCoupleId: string } }>();
 const limitEntryBody = bodyLimit({
@@ -69,6 +70,7 @@ journal.post("/", limitEntryBody, async (c) => {
   }
   const row = await findEntry(db, id, userId);
   const [entry] = await entriesWithPhotos(db, [row!]);
+  c.executionCtx.waitUntil(notifyJournal(c.env, coupleId, userId, now));
   return c.json({ entry }, 201);
 });
 

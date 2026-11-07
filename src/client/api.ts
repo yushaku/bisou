@@ -1,5 +1,8 @@
 import type {
   ApiError,
+  PushState,
+  PushDevice,
+  PushSubscriptionInput,
   Wish,
   SpinWish,
   Claim,
@@ -69,7 +72,10 @@ export const api = {
     call<RequestCodeResponse>("POST", "/api/auth/request", { email, lang }),
   verifyCode: (email: string, code: string, lang: Locale) =>
     call<{ user: User }>("POST", "/api/auth/verify", { email, code, lang }),
-  logout: () => call<{ ok: true }>("POST", "/api/auth/logout"),
+  logout: (endpoint?: string) => call<{ ok: true }>("POST", "/api/auth/logout", endpoint ? { endpoint } : undefined),
+  push: () => call<PushState>("GET", "/api/push"),
+  savePush: (body: PushSubscriptionInput) => call<{ device: PushDevice | null }>("PUT", "/api/push/subscription", body),
+  deletePush: (endpoint: string) => call<{ ok: true }>("DELETE", "/api/push/subscription", { endpoint }),
   couple: () => call<CoupleResponse>("GET", "/api/couple"),
   createCouple: () => call<CoupleResponse>("POST", "/api/couple"),
   newPairCode: () => call<CoupleResponse>("POST", "/api/couple/code"),

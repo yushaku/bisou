@@ -8,6 +8,7 @@ import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
 import { Appearance } from "./screens/Appearance";
+import { Notifications } from "./screens/Notifications";
 import { Events } from "./screens/Events";
 import { Home } from "./screens/Home";
 import { Wishes } from "./screens/Wishes";
@@ -104,7 +105,7 @@ function SignedIn({
   const paired = (couple?.members.length ?? 0) >= 2;
   const [location] = useLocation();
   const historyState = useHistoryState<{ from?: string } | null>();
-  const settingsOpen = location === "/settings" || location === "/settings/appearance";
+  const settingsOpen = location === "/settings" || location === "/settings/appearance" || location === "/settings/notifications";
 
   const refresh = useCallback(async () => {
     const res = await api.couple();
@@ -163,6 +164,7 @@ function SignedIn({
       <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
       {location === "/settings" && <Settings {...session} couple={couple} onCouple={onCouple} />}
       {location === "/settings/appearance" && <Appearance />}
+      {location === "/settings/notifications" && (paired ? <Notifications onSignedOut={onSignedOut} /> : <Settings {...session} couple={couple} onCouple={onCouple} />)}
     </TabMemory>
   );
 }

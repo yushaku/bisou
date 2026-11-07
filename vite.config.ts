@@ -50,6 +50,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        importScripts: ["/push-sw.js"],
         // A new deploy takes over open tabs at once; main.tsx reloads the page when it does.
         skipWaiting: true,
         clientsClaim: true,

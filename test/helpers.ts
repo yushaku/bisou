@@ -5,6 +5,11 @@ import worker from "../src/worker/index";
 
 export const ORIGIN = "https://bisou.example";
 
+const background: Promise<unknown>[] = [];
+export async function waitForBackground() {
+  await Promise.all(background.splice(0));
+}
+
 export async function explain(sql: string, ...binds: unknown[]): Promise<string[]> {
   const { results } = await env.DB.prepare(`EXPLAIN QUERY PLAN ${sql}`).bind(...binds).all<{ detail: string }>();
   return results.map((row) => row.detail);
@@ -12,6 +17,7 @@ export async function explain(sql: string, ...binds: unknown[]): Promise<string[
 
 export async function resetDb() {
   await env.DB.batch([
+    env.DB.prepare("DELETE FROM push_subscriptions"),
     env.DB.prepare("DELETE FROM photos"),
     env.DB.prepare("DELETE FROM wish_spins"),
     env.DB.prepare("DELETE FROM wish_claims"),
@@ -64,7 +70,7 @@ export async function call(
     headers,
     body: opts.form ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
   });
-  const ctx = { waitUntil: () => {}, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
+  const ctx = { waitUntil: (promise: Promise<unknown>) => { background.push(promise); }, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
   return worker.fetch(req as Request<unknown, IncomingRequestCfProperties>, env, ctx);
 }
 

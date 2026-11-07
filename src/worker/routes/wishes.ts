@@ -1,4 +1,5 @@
 import { Hono, type Handler } from "hono";
+import { notifyJournal } from "../lib/notify";
 import { bodyLimit } from "hono/body-limit";
 import { receivedText } from "../../shared/wishes";
 import { isLocale } from "../../shared/types";
@@ -203,5 +204,6 @@ wishes.post("/:id/received", limitBody, async (c) => {
   const wish = await findWish(db, id, owner, couple);
   if (!row || !wish) return c.json({ error: "not_found" }, 404);
   const [entry] = await entriesWithPhotos(db, [row]);
+  c.executionCtx.waitUntil(notifyJournal(c.env, couple, owner, now));
   return c.json({ wish: toWish(wish), entry }, 201);
 });

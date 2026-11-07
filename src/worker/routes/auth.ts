@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { isLocale, type Locale, type RequestCodeResponse } from "../../shared/types";
 import type { AppEnv } from "../env";
-import { generateOtpCode, hashOtp, verifyOtp } from "../lib/crypto";
+import { generateOtpCode, hashOtp, sha256Hex, verifyOtp } from "../lib/crypto";
 import { normalizeEmail } from "../lib/email";
 import { sendOtpMail } from "../lib/mail";
-import { clearSessionCookie, createSession, deleteSession, readSessionToken, setSessionCookie } from "../lib/session";
+import { clearSessionCookie, createSession, readSessionToken, setSessionCookie } from "../lib/session";
 import { HOUR, OTP_MAX_ATTEMPTS, OTP_MAX_PER_HOUR, OTP_MIN_INTERVAL, OTP_TTL } from "../lib/time";
 import { findOrCreateUser } from "../lib/users";
 
@@ -130,7 +130,17 @@ auth.post("/verify", async (c) => {
 
 auth.post("/logout", async (c) => {
   const token = readSessionToken(c);
-  if (token) await deleteSession(c.env, token);
+  if (token) {
+    const body = await readJson(c.req.raw);
+    const tokenHash = await sha256Hex(token);
+    const endpoint = typeof body?.endpoint === "string" && body.endpoint.length <= 2048 ? body.endpoint : null;
+    await c.env.DB.batch([
+      ...(endpoint ? [c.env.DB.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?
+        AND user_id = (SELECT user_id FROM sessions WHERE token_hash = ?)`)
+        .bind(endpoint, tokenHash)] : []),
+      c.env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash),
+    ]);
+  }
   clearSessionCookie(c);
   return c.json({ ok: true });
 });

@@ -70,6 +70,14 @@ export function dayNumber(day: string): number {
   return Math.round(Date.UTC(p[0], p[1] - 1, p[2]) / DAY_MS);
 }
 
+export function vnHour(ms: number): number {
+  return new Date(ms + 7 * 60 * 60 * 1000).getUTCHours();
+}
+
+export function vnDay(ms: number): string {
+  return utcDayString(ms + 7 * 60 * 60 * 1000);
+}
+
 export function addDays(day: string, n: number): string {
   return utcDayString((dayNumber(day) + n) * DAY_MS);
 }

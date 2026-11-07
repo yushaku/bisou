@@ -5,6 +5,42 @@ import { call, explain, jpeg, paired, photoForm, resetDb, webp } from "./helpers
 
 afterEach(() => vi.restoreAllMocks());
 
+describe("push query plans", () => {
+  it.each([
+    ["AC14, R2: own devices", "SELECT endpoint, journal, reminders FROM push_subscriptions WHERE user_id = ?", ["user"], ["push_subscriptions_user"]],
+    ["R27: device cap", `DELETE FROM push_subscriptions WHERE id IN (
+      SELECT id FROM push_subscriptions WHERE user_id = ? AND endpoint <> ? ORDER BY created_at DESC LIMIT -1 OFFSET 9
+    )`, ["user", "endpoint"], ["push_subscriptions_user", "sqlite_autoindex_push_subscriptions_1"]],
+    ["AC3, AC5, R7: partner devices and localized name", `SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale,
+      (SELECT display_name FROM users WHERE id = ?) AS name
+      FROM push_subscriptions s JOIN users u ON u.id = s.user_id
+      WHERE s.user_id = (SELECT user_id FROM couple_members WHERE couple_id = ? AND user_id <> ?) AND s.journal = 1`,
+    ["author", "couple", "author"], ["push_subscriptions_user", "sqlite_autoindex_users_1", "sqlite_autoindex_couple_members_"]],
+    ["AC18, R26: logout removal", `DELETE FROM push_subscriptions WHERE endpoint = ?
+      AND user_id = (SELECT user_id FROM sessions WHERE token_hash = ?)`, ["endpoint", "token"], ["sqlite_autoindex_push_subscriptions_2", "sqlite_autoindex_sessions_1"]],
+    ["AC14, R28: unsubscribe", "DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?", ["endpoint", "user"], ["sqlite_autoindex_push_subscriptions_2"]],
+    ["R28: expired endpoint", "DELETE FROM push_subscriptions WHERE id = ?", ["id"], ["sqlite_autoindex_push_subscriptions_1"]],
+    ["R28: failure count", "UPDATE push_subscriptions SET failures = failures + 1 WHERE id = ?", ["id"], ["sqlite_autoindex_push_subscriptions_1"]],
+    ["R28: successful delivery", "UPDATE push_subscriptions SET last_success_at = ?, failures = 0 WHERE id = ?", [100, "id"], ["sqlite_autoindex_push_subscriptions_1"]],
+  ] as const)("%s uses indexed searches without sorting", async (_name, sql, binds, indexes) => {
+    const plan = (await explain(sql, ...binds)).join("\n");
+    expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+    for (const index of indexes) expect(plan).toContain(index);
+  });
+  it("R2, R27: upsert resolves endpoints through the unique autoindex", async () => {
+    const plan = await explain(`INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, journal, reminders, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(endpoint) DO UPDATE SET
+      id = excluded.id, user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
+      journal = excluded.journal, reminders = excluded.reminders,
+      journal_slot = CASE WHEN user_id = excluded.user_id THEN journal_slot ELSE NULL END,
+      reminder_slot = CASE WHEN user_id = excluded.user_id THEN reminder_slot ELSE NULL END,
+      created_at = excluded.created_at, failures = 0, last_success_at = NULL`, "id", "user", "endpoint", "p256dh", "auth", 1, 1, 100);
+    expect(plan.join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+    const index = await env.DB.prepare("PRAGMA index_info(sqlite_autoindex_push_subscriptions_2)").all<{ name: string }>();
+    expect(index.results.map((r) => r.name)).toEqual(["endpoint"]);
+  });
+});
+
 describe("journal query plans", () => {
   it.each([
     {

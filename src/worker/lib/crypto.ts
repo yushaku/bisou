@@ -22,6 +22,11 @@ export function toBase64Url(bytes: Uint8Array): string {
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+export function fromBase64Url(value: string): Uint8Array<ArrayBuffer> {
+  if (!/^[A-Za-z0-9_-]+$/.test(value) || value.length % 4 === 1) throw new Error("invalid base64url");
+  return Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+}
+
 /** Uniform 6 digit code (rejection sampling avoids modulo bias). */
 export function generateOtpCode(): string {
   const limit = Math.floor(0x100000000 / 1_000_000) * 1_000_000;

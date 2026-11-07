@@ -1,5 +1,6 @@
 import { useOnline } from "../lib/useOnline";
-import { Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
+import { Bell, Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
+import { currentSubscription } from "../lib/push";
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -152,12 +153,16 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
     if (!online) return;
     setLoggingOut(true);
     setLogoutError(false);
-    const res = await api.logout();
-    setLoggingOut(false);
-    if (res.ok) {
-      navigate("/", { replace: true });
-      onSignedOut();
-    } else setLogoutError(true);
+    try {
+      const subscription = await currentSubscription();
+      const res = await api.logout(subscription?.endpoint);
+      if (res.ok) {
+        await subscription?.unsubscribe().catch(() => {});
+        navigate("/", { replace: true });
+        onSignedOut();
+      } else setLogoutError(true);
+    } catch { setLogoutError(true); }
+    finally { setLoggingOut(false); }
   }
 
   return (
@@ -198,6 +203,12 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
             history.replaceState({ ...history.state, focus: "appearance-row" }, "");
             navigate("/settings/appearance", { state: { from: "/settings" } });
           }} />
+          {paired && <div className="overflow-hidden rounded-xl edge bg-card">
+            <SettingsRow id="notifications-row" icon={Bell} label={t("push.title")} onClick={() => {
+              history.replaceState({ ...history.state, focus: "notifications-row" }, "");
+              navigate("/settings/notifications", { state: { from: "/settings" } });
+            }} />
+          </div>}
           <div className="overflow-hidden rounded-xl edge bg-card">
             <DrawerTrigger asChild>
               <SettingsRow icon={LogOut} label={t("home.logout")} className="text-destructive" onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("logout"); setLogoutError(false); }} />

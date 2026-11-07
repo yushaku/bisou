@@ -11,6 +11,8 @@ export interface Env {
   OTP_PEPPER?: string;
   /** Secret: Resend API key. Missing locally, then codes are logged. */
   RESEND_API_KEY?: string;
+  /** Secret: P-256 VAPID private JWK JSON. */
+  VAPID_PRIVATE_KEY?: string;
 }
 
 export interface SessionInfo {

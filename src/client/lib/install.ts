@@ -1,5 +1,8 @@
 import { useSyncExternalStore } from "react";
 
+export const isStandalone = () => (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches)
+  || (typeof navigator !== "undefined" && (navigator as Navigator & { standalone?: boolean }).standalone === true);
+
 export interface InstallPrompt extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;

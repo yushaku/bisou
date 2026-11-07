@@ -1,5 +1,16 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "push.journal.one": "{name} vừa viết nhật ký",
+  "push.title": "Thông báo",
+  "push.journal": "Nhật ký của người ấy",
+  "push.reminders": "Nhắc ngày đặc biệt",
+  "push.on": "Thông báo đang bật trên thiết bị này.",
+  "push.off": "Thông báo đang tắt trên thiết bị này.",
+  "push.blocked": "Thông báo bị chặn. Bạn hãy cho phép Bisou gửi thông báo trong cài đặt điện thoại hoặc trình duyệt.",
+  "push.needsInstall": "Thêm Bisou vào màn hình chính rồi mở app để bật thông báo.",
+  "push.unsupported": "Thông báo chưa dùng được trong trình duyệt này.",
+  "push.unavailable": "Thông báo chưa sẵn sàng. Bạn thử lại sau nhé.",
+  "push.deviceOnly": "Lựa chọn này chỉ áp dụng cho thiết bị đang dùng.",
   "install.title": "Mang Bisou về màn hình chính",
   "install.share": "Chạm vào nút Chia sẻ",
   "install.addToHome": "Chọn Thêm vào màn hình chính",

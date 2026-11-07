@@ -21,6 +21,9 @@ export interface User {
 
 /** Error codes returned by the API as { error: ApiErrorCode }. */
 export type ApiErrorCode =
+  | "invalid_subscription"
+  | "push_unavailable"
+  | "body_too_large"
   | "event_title_invalid"
   | "event_date_invalid"
   | "too_many_events"
@@ -188,4 +191,19 @@ export interface ReceiveWishInput {
   date: string;
   note: string;
   photoIds: string[];
+}
+
+export interface PushDevice {
+  endpoint: string;
+  journal: boolean;
+  reminders: boolean;
+}
+
+export interface PushState {
+  publicKey: string | null;
+  devices: PushDevice[];
+}
+
+export interface PushSubscriptionInput extends PushDevice {
+  keys: { p256dh: string; auth: string };
 }

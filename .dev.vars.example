@@ -5,3 +5,5 @@ DEV_LOGIN_CODE=111111
 OTP_PEPPER=dev-pepper-change-me
 # Leave RESEND_API_KEY unset locally: the OTP code is then printed to the dev log.
 # RESEND_API_KEY=re_placeholder
+# VAPID dev only. Generate a separate production key with node scripts/vapid-key.mjs.
+VAPID_PRIVATE_KEY='{"kty":"EC","crv":"P-256","x":"4dmx42_tULjKS9Q0m3NDUZzG1V1Zf6LiSjO7UqbTGDg","y":"ShcAyxPRrSN0Qt7PIl9zqXqcZ39a_fM_F_WKbuKb1uw","d":"0E-37wYFvq_pXtvbW9IIdVaCEjJNgiiAmtUk0C5A4PQ"}'

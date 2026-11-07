@@ -14,5 +14,5 @@
     "skipLibCheck": true,
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src/worker", "src/shared"]
+  "include": ["src/worker", "src/shared", "src/client/i18n/vi.ts", "src/client/i18n/en.ts"]
 }

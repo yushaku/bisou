@@ -3,16 +3,14 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
-import { clearInstallPrompt, useInstallPrompt } from "@/lib/install";
+import { clearInstallPrompt, isStandalone, useInstallPrompt } from "@/lib/install";
 
 const DISMISSED = "bisou.install.dismissed";
-const standalone = () => (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches)
-  || (typeof navigator !== "undefined" && (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
 export function InstallCard() {
   const { t } = useI18n();
   const prompt = useInstallPrompt();
-  const [installed, setInstalled] = useState(standalone);
+  const [installed, setInstalled] = useState(isStandalone);
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem(DISMISSED) === "1"; } catch { return false; }
   });
@@ -22,7 +20,7 @@ export function InstallCard() {
 
   useEffect(() => {
     const query = matchMedia("(display-mode: standalone)");
-    const changed = () => setInstalled(standalone());
+    const changed = () => setInstalled(isStandalone());
     const installed = () => setInstalled(true);
     query.addEventListener("change", changed);
     window.addEventListener("appinstalled", installed);

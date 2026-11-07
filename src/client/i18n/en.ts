@@ -1,6 +1,17 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "push.journal.one": "{name} wrote in the journal",
+  "push.title": "Notifications",
+  "push.journal": "Your partner's journal",
+  "push.reminders": "Special day reminders",
+  "push.on": "Notifications are on for this device.",
+  "push.off": "Notifications are off for this device.",
+  "push.blocked": "Notifications are blocked. Allow Bisou to send notifications in your phone or browser settings.",
+  "push.needsInstall": "Add Bisou to your home screen, then open the app to turn on notifications.",
+  "push.unsupported": "Notifications are not available in this browser.",
+  "push.unavailable": "Notifications are not ready yet. Please try again later.",
+  "push.deviceOnly": "These choices apply only to the device you are using.",
   "install.title": "Keep Bisou on your home screen",
   "install.share": "Tap the Share button",
   "install.addToHome": "Choose Add to Home Screen",
