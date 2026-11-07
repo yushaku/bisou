@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { call, explain, paired, resetDb, user, type TestUser } from "./helpers";
-import type { GardenState, GardenCardState, GardenDeckState } from "../src/shared/garden";
+import { CARDS, type GardenState, type GardenCardState, type GardenDeckState } from "../src/shared/garden";
 
 const NOW = Date.parse("2026-11-09T08:00:00+07:00");
 export async function garden(who: TestUser) {
@@ -18,6 +18,23 @@ beforeEach(async () => { await resetDb(); vi.spyOn(Date, "now").mockReturnValue(
 afterEach(() => vi.restoreAllMocks());
 
 describe("Garden daily cards", () => {
+  it("R11 AC19: an exhausted garden has no new daily card and its freshness stays fresh", async () => {
+    const { a, b, couple } = await paired();
+    await env.DB.batch(CARDS.flatMap((card) => [a, b].map((who) => env.DB.prepare(`INSERT INTO garden_answers
+      (couple_id, card_id, user_id, body, created_at, updated_at, flipped_day) VALUES (?, ?, ?, 'played', ?, ?, '2026-10-01')`)
+      .bind(couple.id, card.id, who.id, NOW, NOW))));
+    const state = await garden(a);
+    expect(state.today).toBeNull();
+    expect(state.freshness).toBe("fresh");
+  });
+  it("R5 R6 AC3: a phone already in tomorrow still shares the Vietnam daily card", async () => {
+    const { a, b } = await paired();
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-10T00:30:00+09:00"));
+    expect((await garden(a)).day).toBe("2026-11-09");
+    expect((await garden(a)).today!.cardId).toBe((await garden(b)).today!.cardId);
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-10T00:00:00+07:00"));
+    expect((await garden(b)).day).toBe("2026-11-10");
+  });
   it("R10 AC5: concurrent swaps advance once, share the new card and put the old one at the back", async () => {
     const { a, b, couple } = await paired();
     const old = (await garden(a)).today!.cardId;
@@ -267,6 +284,8 @@ describe("Garden daily cards", () => {
     const code = (await created.json<{ couple: { pendingCode: { code: string } } }>()).couple.pendingCode.code;
     await call("POST", "/api/couple/join", { cookie: y.cookie, body: { code } });
     expect(JSON.stringify(await garden(x))).not.toContain("OUR SECRET");
+    expect(await (await call("GET", "/api/garden/decks/money", { cookie: x.cookie })).text()).not.toContain("OUR SECRET");
+    expect((await call("DELETE", "/api/garden/cards/money-01/answer", { cookie: x.cookie })).status).toBe(404);
     expect((await call("PUT", "/api/garden/cards/money-01/answer", { cookie: x.cookie, body: { text: "stolen", coupleId: couple.id, userId: a.id } })).status).toBe(404);
     expect((await answer(x, "money-01", "their own" )).status).toBe(201);
     expect(await env.DB.prepare("SELECT body FROM garden_answers WHERE couple_id = ? AND user_id = ?").bind(couple.id, a.id).first("body")).toBe("OUR SECRET");
@@ -276,10 +295,12 @@ describe("Garden daily cards", () => {
     const { a, couple } = await paired();
     await garden(a);
     await answer(a, "money-01");
+    await env.DB.prepare("INSERT INTO garden_growth(couple_id, deck_id, day) VALUES (?, 'money', '2026-11-09')").bind(couple.id).run();
     await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(a.id).run();
     expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
     await env.DB.prepare("DELETE FROM couples WHERE id = ?").bind(couple.id).run();
     expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_days WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
+    expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_growth WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
   });
 
   it("R1 R37: couple-scoped day, answer and growth lookups use indexes", async () => {

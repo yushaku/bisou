@@ -34,6 +34,13 @@ it("an unreadable push still shows a Bisou notification", async () => {
   await sw.dispatch("push", { data: { json: () => { throw new Error("bad payload"); } } });
   expect(sw.showNotification).toHaveBeenCalledWith("Bisou", expect.objectContaining({ data: { url: "/" } }));
 });
+it("garden R32 AC9: shows a private garden notification and opens its route", async () => {
+  const sw = worker();
+  await sw.dispatch("push", { data: { json: () => ({ title: "Both answered", tag: "garden", url: "/garden" }) } });
+  expect(sw.showNotification).toHaveBeenCalledWith("Both answered", expect.objectContaining({ tag: "garden", data: { url: "/garden" } }));
+  await sw.dispatch("notificationclick", { notification: { close: vi.fn(), data: { url: "/garden" } } });
+  expect(sw.clients.openWindow).toHaveBeenCalledWith("/garden");
+});
 it.each(["https://evil.test", "//evil.test", "/\\evil.test", "javascript:alert(1)", null])("AC3, R15: rejects unsafe click URL %s", async (url) => {
   const sw = worker(); const close = vi.fn();
   await sw.dispatch("notificationclick", { notification: { close, data: { url } } });

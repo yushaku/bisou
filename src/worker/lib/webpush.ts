@@ -66,7 +66,7 @@ export interface PushRow {
 export interface PushMessage { title: string; url: string; tag: string }
 
 export async function sendPush(env: Env, row: PushRow, message: PushMessage, options: {
-  ttl: number; topic: "journal" | "events";
+  ttl: number; topic: "journal" | "events" | "garden";
 }): Promise<"sent" | "gone" | "failed"> {
   if (!env.VAPID_PRIVATE_KEY) return "failed";
   let status = 0;

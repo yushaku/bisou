@@ -33,6 +33,21 @@ export async function notifyJournal(env: Env, coupleId: string, authorId: string
   } catch { console.error("[bisou] journal push failed"); }
 }
 
+export async function notifyGarden(env: Env, coupleId: string, now: number): Promise<void> {
+  if (vnHour(now) >= 22 || vnHour(now) < 7) return;
+  if (!env.VAPID_PRIVATE_KEY) { console.log("[bisou] push unavailable"); return; }
+  try {
+    const { results } = await env.DB.prepare(`SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale
+      FROM push_subscriptions s JOIN users u ON u.id = s.user_id
+      JOIN couple_members m ON m.user_id = s.user_id WHERE m.couple_id = ? AND s.journal = 1`)
+      .bind(coupleId).all<PushRow & { locale: string }>();
+    for (const row of results) {
+      try { await sendPush(env, row, { title: translate(row.locale, "push.garden"), url: "/garden", tag: "garden" }, { ttl: pushTtl(now), topic: "garden" }); }
+      catch { console.error("[bisou] push failed", "garden", 0); }
+    }
+  } catch { console.error("[bisou] garden push failed"); }
+}
+
 export async function releaseNightJournal(env: Env, scheduledTime: number): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) { console.log("[bisou] push unavailable"); return; }
   const { results } = await env.DB.prepare("SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ?")

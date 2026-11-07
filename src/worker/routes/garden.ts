@@ -4,6 +4,7 @@ import { vnDay } from "../../shared/days";
 import { answerText, cardById, DECKS, drawCard } from "../../shared/garden";
 import type { AppEnv } from "../env";
 import { cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday } from "../lib/garden";
+import { notifyGarden } from "../lib/notify";
 
 type GardenEnv = AppEnv & { Variables: { gardenCoupleId: string } };
 export const garden = new Hono<GardenEnv>();
@@ -89,6 +90,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
         .bind(couple, card.deckId, day, couple, card.id, day),
     ]);
     if (!changes[0]!.meta.changes) return c.json({ error: "already_answered" }, 409);
+    if (changes[2]!.results.length) c.executionCtx.waitUntil(notifyGarden(c.env, couple, now));
   }
   const [state] = await cardStates(db, couple, user, [card.id]);
   return c.json({ card: state }, updating ? 200 : 201);

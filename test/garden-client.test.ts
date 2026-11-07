@@ -8,6 +8,7 @@ import type { GardenCardState } from "../src/shared/garden";
 import { Plant } from "../src/client/components/bisou/Plant";
 import { Planter } from "../src/client/components/bisou/Planter";
 import { DECKS } from "../src/shared/garden";
+import { readFileSync } from "node:fs";
 
 const card: GardenCardState = { cardId: "money-01", mine: "my words", partner: null, mineEdited: false, partnerEdited: false, mineDeleted: false, partnerDeleted: false, flippedDay: null };
 afterEach(() => vi.unstubAllGlobals());
@@ -49,4 +50,10 @@ it("R2 R23 R28 R30 AC2 AC14: plants have eight layered sizes, unique SVG ids, de
   expect(html).toContain('aria-label="Tiền bạc"');
   expect(html).toContain("Không cây nào mất đi đâu");
   expect(html).not.toMatch(/(?:level|stage|size|cỡ cây) \d/i);
+});
+
+it("R1 R13 R36: PWA caching excludes API navigations and has no runtime data cache", () => {
+  const config = readFileSync(new URL("../vite.config.ts", import.meta.url), "utf8");
+  expect(config).toContain("navigateFallbackDenylist: [/^\\/api\\//]");
+  expect(config).toContain("runtimeCaching: []");
 });

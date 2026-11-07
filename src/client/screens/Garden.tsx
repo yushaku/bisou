@@ -61,7 +61,7 @@ export function Garden({ couple, ...session }: SessionProps & { couple: Couple }
         <p className="text-sm font-semibold text-muted-foreground">{t("garden.today")}</p>
         <GardenCard key={state.today.cardId} card={state.today} myName={user.displayName ?? t("garden.me")} partnerName={partner?.displayName ?? t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} onFlip={() => { if (state.today?.flippedDay === state.day) setScene(true); }} />
         {!state.today.flippedDay && <div className="text-center">
-          <Button variant="ghost" loading={swapping} disabled={!online || state.swapLocked} onClick={() => void swap()}>{t("garden.swap")}</Button>
+          {!state.swapLocked && <Button variant="ghost" loading={swapping} disabled={!online} onClick={() => void swap()}>{t("garden.swap")}</Button>}
           {state.swapLocked && <p className="mt-1 text-sm text-muted-foreground">{t("garden.swapLocked")}</p>}
           {swapError && <p role="alert" className="mt-1 text-sm text-destructive">{swapError}</p>}
         </div>}
