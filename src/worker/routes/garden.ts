@@ -51,6 +51,9 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
       db.prepare(`UPDATE garden_days SET flipped = 1 WHERE couple_id = ? AND day = ? AND card_id = ? AND flipped = 0
         AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) = 2 RETURNING day`)
         .bind(couple, day, card.id, couple, card.id),
+      db.prepare(`INSERT OR IGNORE INTO garden_growth(couple_id, deck_id, day)
+        SELECT ?, ?, ? WHERE (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1 AND flipped_day = ?) = 2`)
+        .bind(couple, card.deckId, day, couple, card.id, day),
     ]);
     if (!changes[0]!.meta.changes) return c.json({ error: "already_answered" }, 409);
   }

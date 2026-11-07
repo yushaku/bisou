@@ -1,8 +1,14 @@
 import { CONTROL_CHARACTERS } from "./text";
 import type { Locale } from "./types";
+import { daysBetween } from "./days";
 
 export const GARDEN_ANSWER_MAX = 1000;
 export type Freshness = "fresh" | "dry" | "wilted";
+export function plantStage(growthDays: number): number { return Math.min(7, Math.max(0, growthDays)); }
+export function freshness(lastFlipDay: string, today: string): Freshness {
+  const days = daysBetween(lastFlipDay, today);
+  return days >= 14 ? "wilted" : days >= 3 ? "dry" : "fresh";
+}
 export interface GardenCardState {
   cardId: string;
   mine: string | null;
@@ -42,7 +48,9 @@ export function drawCard(input: DrawInput, seed: number): GardenCard | null {
     if (alternatives.length) decks = alternatives;
   }
   if (!decks.length) return null;
-  const deck = decks[(seed >>> 0) % decks.length]!;
+  const weight = (deckId: string) => 1 + Math.min(2, Math.max(0, 7 - (input.stages?.[deckId] ?? 0)));
+  let bucket = (seed >>> 0) % decks.reduce((sum, deck) => sum + weight(deck.id), 0);
+  const deck = decks.find((candidate) => { bucket -= weight(candidate.id); return bucket < 0; })!;
   return cards.find((card) => card.deckId === deck.id) ?? null;
 }
 

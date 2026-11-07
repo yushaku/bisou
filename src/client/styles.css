@@ -226,6 +226,46 @@
   background-image: repeating-linear-gradient(transparent 0 calc(--spacing(8) - 1px), var(--border) calc(--spacing(8) - 1px) --spacing(8));
   background-position: 0 --spacing(3);
 }
+.garden-plant { overflow: visible; }
+.plant-ink, .plant-pot, .plant-leaf, .plant-flower {
+  stroke: color-mix(in oklab, var(--foreground) 65%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.plant-ink { fill: none; }
+.plant-stem { stroke: var(--chart-4); stroke-width: 3; }
+.plant-leaf { fill: color-mix(in oklab, var(--chart-4) 78%, var(--card)); }
+.plant-pot { fill: color-mix(in oklab, var(--chart-2) 40%, var(--card)); }
+.plant-pot-stitch { stroke-width: .8; stroke-dasharray: 2 3; }
+.plant-flower { fill: var(--chart-1); }
+.garden-plant[data-species="dreams"] .plant-flower { fill: var(--chart-5); }
+.garden-plant[data-species="money"] .plant-flower { fill: var(--chart-3); }
+.garden-plant[data-species="disagree"] .plant-flower { fill: var(--chart-2); }
+.plant-seed { fill: var(--chart-3); }
+.plant-shadow { fill: var(--foreground); opacity: .08; }
+.dark .plant-shadow { opacity: .2; }
+.dark .plant-leaf { fill: color-mix(in oklab, var(--chart-4) 85%, var(--card)); }
+.plant-layer { display: none; }
+.plant-s0,
+.garden-plant[data-stage="1"] .plant-s1,
+.garden-plant[data-stage="2"] :is(.plant-s1, .plant-s2),
+.garden-plant[data-stage="3"] :is(.plant-s1, .plant-s2, .plant-s3),
+.garden-plant[data-stage="4"] :is(.plant-s1, .plant-s2, .plant-s3, .plant-s4),
+.garden-plant[data-stage="5"] :is(.plant-s1, .plant-s2, .plant-s3, .plant-s4, .plant-s5),
+.garden-plant[data-stage="6"] :is(.plant-s1, .plant-s2, .plant-s3, .plant-s4, .plant-s5, .plant-s6),
+.garden-plant[data-stage="7"] .plant-layer { display: inline; }
+[data-fresh="dry"] .plant-leaf,
+[data-fresh="wilted"] .plant-leaf { fill: color-mix(in oklab, var(--chart-3) 70%, var(--card)); }
+[data-fresh="wilted"] .plant-foliage { transform: skewX(9deg) scaleY(.88); transform-origin: 60px 145px; }
+@media (prefers-reduced-motion: no-preference) {
+  .garden-watering { animation: garden-water 1.8s var(--ease) both; }
+}
+@keyframes garden-water {
+  from { opacity: 0; transform: translateY(-1rem) rotate(-15deg); }
+  50% { opacity: 1; }
+  to { opacity: 0; transform: translateY(3rem); }
+}
 .jar-wrap {
   color: color-mix(in oklab, var(--foreground) 80%, transparent);
 }

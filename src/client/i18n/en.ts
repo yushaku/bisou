@@ -1,6 +1,10 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "garden.dry": "The garden is a little thirsty, its leaves are turning yellow. One card today and it perks up.",
+  "garden.wilted": "It's been a while. No plant is lost, they are waiting for you both.",
+  "garden.watered": "The {deck} plant just got watered.",
+  "garden.tomorrow": "A new card tomorrow.",
   "garden.title": "Our garden",
   "garden.today": "Today's card",
   "garden.me": "Me",

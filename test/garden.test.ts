@@ -18,6 +18,40 @@ beforeEach(async () => { await resetDb(); vi.spyOn(Date, "now").mockReturnValue(
 afterEach(() => vi.restoreAllMocks());
 
 describe("Garden daily cards", () => {
+  it("R22 R24 R25 AC11: flips grow a plant once per day, edits and deletions never shrink or regrow it", async () => {
+    const { a, b } = await paired();
+    const id = (await garden(a)).today!.cardId;
+    const deck = id.split("-")[0]!;
+    await answer(a, id);
+    await answer(b, id);
+    const second = `${deck}-02`;
+    await answer(a, second);
+    await answer(b, second);
+    expect((await garden(a)).plants.find((p) => p.deckId === deck)?.stage).toBe(1);
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-10T08:00:00+07:00"));
+    await call("PUT", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "edit another day" } });
+    await call("DELETE", `/api/garden/cards/${id}/answer`, { cookie: b.cookie });
+    expect((await garden(a)).plants.find((p) => p.deckId === deck)?.stage).toBe(1);
+    await answer(a, `${deck}-03`);
+    await answer(b, `${deck}-03`);
+    expect((await garden(a)).plants.find((p) => p.deckId === deck)?.stage).toBe(2);
+  });
+
+  it("R22 R26 R27 R29 AC14 AC15: only a current daily flip refreshes the shared garden", async () => {
+    const { a, b } = await paired();
+    const old = (await garden(a)).today!.cardId;
+    await answer(a, old);
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-12T08:00:00+07:00"));
+    expect((await garden(a)).freshness).toBe("dry");
+    await answer(b, old);
+    expect((await garden(a)).freshness).toBe("dry");
+    const today = (await garden(a)).today!.cardId;
+    await answer(a, today);
+    expect((await garden(b)).freshness).toBe("dry");
+    await answer(b, today);
+    expect((await garden(a)).freshness).toBe("fresh");
+    expect((await garden(a)).plants).toEqual((await garden(b)).plants);
+  });
   it("R5 R6 AC3: concurrent first opens store the same Vietnam-day card for both", async () => {
     const { a, b, couple } = await paired();
     const [first, second] = await Promise.all([garden(a), garden(b)]);

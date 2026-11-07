@@ -1,5 +1,9 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "garden.dry": "Mấy hôm nay vườn hơi khát, lá đang ngả vàng. Một thẻ hôm nay là cây tươi lại.",
+  "garden.wilted": "Lâu rồi hai đứa chưa ghé. Không cây nào mất đi đâu, cây vẫn đợi.",
+  "garden.watered": "Cây {deck} vừa được tưới.",
+  "garden.tomorrow": "Hẹn mai một thẻ mới.",
   "garden.title": "Vườn của hai đứa",
   "garden.today": "Thẻ hôm nay",
   "garden.me": "Mình",

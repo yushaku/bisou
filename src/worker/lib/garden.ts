@@ -1,14 +1,16 @@
 import { vnDay } from "../../shared/days";
-import { DECKS, drawCard, type GardenCardState, type GardenState } from "../../shared/garden";
+import { DECKS, drawCard, freshness, plantStage, type GardenCardState, type GardenState } from "../../shared/garden";
 
 export interface GardenDay { day: string; card_id: string; deck_id: string; swaps: number; flipped: number }
 
 export async function drawInput(db: D1Database, coupleId: string, day: string) {
-  const [played, previous] = await db.batch<{ card_id: string; deck_id: string }>([
+  const [played, previous, growth] = await db.batch<{ card_id: string; deck_id: string; days: number }>([
     db.prepare("SELECT card_id FROM garden_answers WHERE couple_id = ? AND round = 1 GROUP BY card_id HAVING COUNT(*) = 2").bind(coupleId),
     db.prepare("SELECT deck_id FROM garden_days WHERE couple_id = ? AND day < ? ORDER BY day DESC LIMIT 1").bind(coupleId, day),
+    db.prepare("SELECT deck_id, COUNT(*) days FROM garden_growth WHERE couple_id = ? GROUP BY deck_id").bind(coupleId),
   ]);
-  return { played: played!.results.map((r) => r.card_id), previousDeck: previous!.results[0]?.deck_id };
+  return { played: played!.results.map((r) => r.card_id), previousDeck: previous!.results[0]?.deck_id,
+    stages: Object.fromEntries(growth!.results.map((r) => [r.deck_id, plantStage(r.days)])) };
 }
 
 export async function drawSeed(coupleId: string, day: string, swaps: number): Promise<number> {
@@ -56,7 +58,13 @@ export async function gardenState(db: D1Database, coupleId: string, userId: stri
   const today = await loadToday(db, coupleId, now);
   const state = today ? (await cardStates(db, coupleId, userId, [today.card_id]))[0]! : null;
   const locked = today ? await db.prepare("SELECT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) AS locked").bind(coupleId, today.card_id).first<number>("locked") : false;
+  const [growth, last] = await db.batch<{ deck_id: string; days: number; day: string | null }>([
+    db.prepare("SELECT deck_id, COUNT(*) days FROM garden_growth WHERE couple_id = ? GROUP BY deck_id").bind(coupleId),
+    db.prepare(`SELECT COALESCE((SELECT MAX(day) FROM garden_days WHERE couple_id = ? AND flipped = 1),
+      (SELECT MIN(day) FROM garden_days WHERE couple_id = ?)) AS day`).bind(coupleId, coupleId),
+  ]);
   return { day: vnDay(now), today: state, swapLocked: !!locked,
-    plants: DECKS.map((deck) => ({ deckId: deck.id, stage: 0 })), freshness: "fresh" };
+    plants: DECKS.map((deck) => ({ deckId: deck.id, stage: plantStage(growth!.results.find((r) => r.deck_id === deck.id)?.days ?? 0) })),
+    freshness: today ? freshness(last!.results[0]?.day ?? vnDay(now), vnDay(now)) : "fresh" };
 }
 

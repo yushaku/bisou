@@ -19,4 +19,13 @@ describe("Garden draw", () => {
     for (let seed = 0; seed < 60; seed++) expect(drawCard({ previousDeck: deck }, seed)?.deckId).not.toBe(deck);
     expect(drawCard({ previousDeck: deck, played: CARDS.filter((c) => c.deckId !== deck).map((c) => c.id) }, 0)?.deckId).toBe(deck);
   });
+  it("R8 AC4: smaller plants are weighted up to three times, with a full tree counting once", () => {
+    const [small, big] = DECKS;
+    const counts = { [small!.id]: 0, [big!.id]: 0 };
+    for (let seed = 0; seed < 400; seed++) {
+      const card = drawCard({ played: CARDS.filter((c) => c.deckId !== small!.id && c.deckId !== big!.id).map((c) => c.id), stages: { [small!.id]: 0, [big!.id]: 7 } }, seed)!;
+      counts[card.deckId]!++;
+    }
+    expect(counts).toEqual({ [small!.id]: 300, [big!.id]: 100 });
+  });
 });
