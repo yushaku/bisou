@@ -8,6 +8,8 @@ Each partner keeps a private wish jar with optional prices, links and one photo 
 
 Home shows the next 3 upcoming events; See all lists the next 12 months: yearly anniversaries, every 1,000th day, both partners' birthdays, four holidays and the couple's own events, with own events further out under Later. Each person sets only their own birthday in Settings. Either partner can add, change or delete a custom event (one-off or yearly, up to 100 upcoming per couple); the + in the tab bar adds an event on Home, an entry on Journal and a wish on Wishes.
 
+The Garden keeps the original 60 cards and adds 35 bilingual questions across five relationship statuses: Getting acquainted, In love, Living together, Married and With children. Both partners choose the same starting status to open its content and earlier questions. Decision questions accept text, a neutral choice or a deferred/not-applicable choice; each counts equally and reveals both responses once both submit. Completing the furthest opened status's decision questions opens the later status both have chosen, including a target that skips statuses. Either partner can leave the next status unset. Opened content and completed progress remain after an author's post-reveal deletion; status choices do not record real-life milestones or agreement. Rules: [Garden](docs/product/garden.md).
+
 Switching tabs restores their scroll positions and keeps loaded journal pages for the current session. Journal text appears before its photos, and the photo viewer supports horizontal swipes as well as its buttons and arrow keys.
 
 To install, open Bisou in Safari on iPhone and choose Share, Add to Home Screen, Add; on Android, use the install button on the Home card or the browser menu.
@@ -56,6 +58,8 @@ Open http://localhost:5173/design for the development-only component gallery and
 ## Deploy
 
 Pushing `main` releases production through GitHub Actions after typecheck, tests, build and a safety check of pending migrations. Additive D1 migrations run before the Worker deploys; destructive migrations need the Product Owner's approval.
+
+For Garden statuses, apply the additive `migrations/0012_garden_levels.sql` before deploying the matching Worker and client. Reverting application code does not undo saved responses or opened-status records; retain the additive schema when rolling back.
 
 The GitHub `production` environment needs the `CLOUDFLARE_API_TOKEN` secret and `CLOUDFLARE_ACCOUNT_ID` variable. In addition to Worker deployment and D1 permissions, the CI token needs **Workers R2 Storage: Read** so Wrangler can validate the `PHOTOS` bucket binding.
 

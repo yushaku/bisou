@@ -1,5 +1,7 @@
 # Questions and the garden
 
+The approved v1 rules below are preserved for reference; the stage-level extension at the end records the confirmed PO decisions, coordinator defaults used under the user's direction to proceed, and explicit replacements of v1 rules.
+
 ## Decided at Gate 1
 
 - PO: v1 is the daily card and the garden; each deck is one plant; each partner answers privately, the card flips when both have answered, either partner can swap today's card, tapping a plant opens its deck for extra play, and both get a notification when both have answered today's card (R6, R10, R12 to R15, R20, R33).
@@ -152,3 +154,108 @@ Answer today's card, wait face down, flip and read; swap today's card; open a pl
 - Reminders to answer, notifications for extra play.
 - The garden on Home; showing the garden to anyone else.
 
+## Relationship-stage levels
+
+### Purpose and actors
+
+Partners work through questions about their relationship's current situation and decisions ahead, including preparing to share a home. Garden levels represent relationship statuses, and each question belongs to a level and an existing category. Unlocking content does not establish that a move, marriage, pregnancy or birth happened, or that the couple is ready for it. The existing Partner, Author and Outsider roles apply.
+
+### Confirmed PO decisions
+
+- A decision question completes when both partners have submitted a response, without a discussion confirmation, matching answers or shared agreement text.
+- Neutral or deferred responses are allowed and count as responses, with the same explicit reveal boundary as written answers.
+- Levels themselves correspond to relationship statuses such as getting acquainted, in love, living together, married and having children; a separate abstract depth ladder and life-stage labels are superseded.
+- Every question has a level and an existing category, and designated decision questions unlock the next stage.
+
+### Scope and decision provenance
+
+The PO directed the team to proceed with coding without a Designer. Under that direction, the coordinator selected the following implementation defaults, which are not separate verbatim PO approvals:
+
+1. One starting status chosen by both partners opens that status and earlier content without replaying earlier gates, so an already-married couple can start at Married.
+2. Both choose the next applicable later status, skipping irrelevant statuses after completing the furthest opened status's decision questions, without answering skipped statuses' gates or having to marry or have children.
+
+The initial scope uses five statuses based on the PO's examples: Getting acquainted, In love, Living together, Married, and With children, with 35 new bilingual questions and their existing catalog roles. This is the content selected for the authorized build, not a required lifetime sequence or a fixed question quota. Preparing-to-cohabit decisions belong in In love, before Living together unlocks. Living together includes marriage-preparation questions, and Married includes questions about whether and how children fit their plans; not wanting children is a valid response. With children has ordinary reflection questions and no next level in this scope.
+
+Catalog wording remains editorially reviewable during delivery without adding a separate approval prerequisite to the authorized build.
+
+### Business rules
+
+- R40. The couple shares a selected garden level named for a relationship status, using the initial five-status catalog above, with no claim that later statuses describe better relationships.
+- R41. Each question belongs to exactly one status level and one of the existing six categories and is explicitly designated ordinary or decision, without deriving its level from plant size or text depth.
+- R42. A decision question is complete as soon as both partners submit a response, with no further discussion confirmation, agreement requirement, correctness assessment or shared decision text.
+- R43. Each partner may respond to a decision question with text, a neutral no-details choice or a deferred/not-applicable choice without explanation, and each choice counts equally toward completion.
+- R44. Before submission, each author is told that their response becomes readable once the other partner submits text or an alternative choice, while leaving a question without submitting never reveals the other's answer.
+- R45. Starting placement requires both partners to choose the same status once, opens ordinary content through that status and its decision questions, and records earlier gates as bypassed by starting placement rather than answered.
+- R46. Until starting placement is agreed, the existing daily garden continues unchanged and no new stage-question answers or stage advances are accepted.
+- R47. Next-stage selection requires both partners to choose the same applicable status beyond the furthest one opened, allows either to decline or replace their own pending choice before acceptance, and changes nothing while the partners disagree.
+- R48. The selected target opens and becomes the couple's selected status as soon as all designated decision questions of the furthest opened status are complete and both have chosen that target, without an ordinary-question quota, plant threshold or waiting period.
+- R49. Skipping a status requires no answers to its decision questions, opens earlier skipped content for optional use without marking it answered, and never records a move, marriage, pregnancy, birth or agreement to any of them.
+- R50. Either partner may decline to choose a next status indefinitely, while both can continue ordinary play, read their history and manage their own answers without reminders or loss of access.
+- R51. Already opened content stays open, both may choose an earlier opened status to revisit without losing answers or progress, and opening a still-locked status requires the decision set of the furthest status opened so revisiting earlier gates cannot bypass it.
+- R52. Existing cards remain ordinary questions assigned to Getting acquainted for continued access, with all existing answers, waiting cards, plants and history preserved and no retroactive decision credit.
+- R53. Ordinary daily draws, swaps and extra play use unplayed ordinary cards from all opened levels under the existing rotation rules, and an already drawn daily card is unchanged by a stage advance.
+- R54. All decision questions of the furthest opened status are available alongside each category's ordinary card in play, while earlier bypassed decision questions can be answered optionally without granting further advancement.
+- R55. Decision questions stay out of the automatic daily draw, and completing them or changing status adds no plant growth, watering or notification, while ordinary cards keep the existing category-growth and daily-freshness rules.
+- R56. Questions in locked statuses may be previewed but not answered, and when no opened ordinary questions remain the existing no-card and no-fading behavior applies until more ordinary content opens.
+- R57. Saved responses follow R4 and R12 to R19, with fixed neutral/deferred choices as the only exception to required free text, and the author alone may edit or delete their text or choice.
+- R58. Deletion before paired reveal removes that person's submission and leaves the decision question incomplete, while deletion after paired reveal leaves the existing deletion notice and preserves completed-question and opened-status records without restoring deleted content.
+- R59. A failed save changes nothing, repeat submissions cannot advance more than once, and each new transition requires a fresh mutual target choice so finishing one transition cannot cascade through later statuses.
+- R60. Both see the same selected status and shared question-completion states without timestamps or naming who is holding up progress, with the unavoidable inference from one's own submitted answer accepted as the existing reveal-pattern trade-off.
+- R61. Status names, question levels and shared decision-completion states may be shown, while unrelated points, streaks, rankings, percentages, compatibility scores and numeric plant levels remain excluded.
+- R62. Questions use respectful adult language without requiring private financial or intimate details, and no response, deferral or unlocked status implies consent to intimacy, agreement about having children, medical advice, diagnosis or research-validated readiness.
+- R63. Bisou keeps submitted text or response choices with their author, question and existing answer dates for paired reveal and later reading until author deletion, keeps selected/target status choices until replaced and opened-status/completion records while the couple exists to operate progression, and preserves those shared records after personal-answer deletion without retaining deleted text.
+- R64. Before the first decision response, users are told about reveal, indefinite retention until author deletion, surviving shared progress and unavailable unpairing/account deletion/downloadable export, with manual copying of their own visible text available and no new export capability promised.
+
+### Main flows and exceptions
+
+An and Bình choose In love as their starting status and Living together as the next status they want to explore. They answer In love's designated decision questions about rent, financial obligations, housework, personal space, conflict, guests, consent, expectations and ending shared living. Each question completes on the second response, including a neutral or deferred response. The last missing response opens Living together and its questions; they may still be planning their move. Ordinary daily questions and plants continue independently.
+
+A couple already married can choose Married together at first placement and keep all existing answers without answering earlier gates. A couple who does not plan to marry can choose With children as its later target from Living together and complete the Living together decision set, using not-applicable responses where appropriate; it need not complete the Married decision set. A couple who does not plan to have children can remain at any opened status indefinitely. Changing one's mind about a proposed target before it opens changes the target only by mutual choice and does not discard saved answers.
+
+If partners propose different statuses, the first pending proposal remains until accepted, declined or withdrawn, and an outdated acceptance changes nothing. Neither person can place or advance the couple alone. Previously completed decision questions stay complete after edits or post-reveal deletion, and a later target change does not require rewriting them. Viewing old or skipped questions never changes the selected status or opens another one. No subsequent status is included after With children.
+
+### Explicit changes to approved v1
+
+- R30 and its Gate 1 no-level/no-progress wording are narrowed to allow status levels and shared decision-completion states under R61; score, streak, ranking and percentage bans remain.
+- R3 gains level eligibility and a decision designation, while both ordinary played-state and decision completion still follow paired submission/reveal rather than a separate confirmation.
+- R8 to R11 and R21 select ordinary cards only from opened levels, with exhaustion meaning no opened ordinary content even if locked content exists.
+- R20/R21 allow decision questions alongside the single ordinary active card per category and keep earlier decision answers accessible.
+- R12 to R15 allow fixed neutral/deferred choices on decisions and explicitly disclose that these choices also enable paired reveal; written-answer validation and hiding before paired submission remain.
+- R24 applies plant growth to ordinary cards only, preserving R23's eight sizes and R25 to R28's daily freshness rules; status level and plant size have different meanings.
+- R31 permits shared decision-completion states and each person's own response state with the inference described in R60, without blame or timestamps.
+- R36 to R38 cover response choices, selected/target statuses and shared progression records without adding export, with future couple/account deletion still governed by R39.
+- The v1 exclusion of stage cards and cards beyond the first 60 is narrowed to the initial level catalog; shared closing lines and returning-answer rounds remain deferred, and R16 still forbids replies/reactions with no new discussion-confirmation exception.
+
+### Acceptance criteria
+
+- AC24 (R40 to R42). Given a question about preparing to live together, when partners inspect it, then it belongs to In love and an existing category, and both responses alone complete it regardless of agreement.
+- AC25 (R42 to R44). Given An has written an answer, when Bình submits a neutral or deferred choice, then the question completes and both may reveal under the boundary explained before submission, without any discussion-confirmation step.
+- AC26 (R45, R46, R52). Given a couple already married with saved garden answers, when both choose Married initially, then content through Married opens, earlier gates are bypassed rather than answered, and existing history, waiting cards and plants stay intact.
+- AC27 (R47, R48, R50). Given In love and an agreed Living together target, when one current decision question still lacks a partner response, then the target stays locked while ordinary play remains available; when the last response saves, then Living together opens once.
+- AC28 (R47 to R49). Given a couple at Living together that does not want marriage, when both choose With children and complete the current decision set, then that target opens without answering Married's gate set or recording a marriage or pregnancy.
+- AC29 (R50, R62). Given partners do not want children or a next status, when they leave the next target unset, then their existing play and history continue without penalty, reminders or a claim of incomplete relationship development.
+- AC30 (R51, R54, R56). Given Married is the furthest opened status, when partners revisit In love or an earlier bypassed decision, then its answers remain usable but cannot open With children without the Married decision set and an agreed target.
+- AC31 (R52, R53, R55). Given an existing daily card and plant state, when a decision response opens a status, then today's card, plant size and freshness remain unchanged and later ordinary draws may use the newly opened ordinary content.
+- AC32 (R57, R58). Given only one response, when its author deletes it, then the question is incomplete and the partner cannot see its text; given a paired reveal, when an author edits or deletes, then the existing edited/deleted markers apply and completed questions and opened statuses remain.
+- AC33 (R47, R59). Given a declined or replaced target proposal, when an outdated acceptance or repeated answer save arrives, then it cannot open that target, open twice or cascade to a further status.
+- AC34 (R60 to R62). Given partners view progression, when they see a status or completed question, then it conveys only content access/response completion without scores, blame or a claim of consent or real-world relationship events.
+- AC35 (R63, R64). Given a first decision response, when an author saves, then the notice explains paired reveal, retention, own editing/deletion, surviving shared progress and absent account/export controls, without promising a download.
+- AC36 (R53, R56). Given all opened ordinary questions are played while later content is locked, when the couple opens today's card, then no locked question is drawn and freshness does not fade.
+
+### Glossary
+
+- Level/status (cấp/giai đoạn): a named relationship context selected by the couple for Bisou questions.
+- Getting acquainted (Làm quen), In love (Yêu nhau), Living together (Sống chung), Married (Cưới), With children (Có con): the initial status names based on the PO's examples.
+- Opened status (giai đoạn đã mở): content the couple can use, without asserting a real-world event.
+- Target status (giai đoạn muốn mở tiếp): the later applicable context both choose to unlock.
+- Category (chủ đề): an existing topic deck represented by a plant, separate from status level.
+- Decision question (câu hỏi quyết định): a designated current-level question whose paired responses contribute to opening the target.
+- Neutral/deferred response (không ghi chi tiết/để sau hoặc không phù hợp): an explicit response that counts without private disclosure or a claim of agreement.
+
+### Out of scope
+
+Discussion confirmations, shared agreement text, abstract depth levels separate from statuses, extra categories, point systems, streaks, competition, mandatory life milestones, readiness diagnoses, repeated-answer rounds, export, account deletion/unpairing, AI runtime, paid services and a new registration flow.
+
+### Open questions
+
+None blocking the authorized build; the core decisions are confirmed by the PO and the defaults above were selected by the coordinator under the user's direction to proceed.

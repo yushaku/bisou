@@ -85,9 +85,10 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: device opt-in notifications for partner journal entries and event reminders, quiet hours with batched night entries, and an installed-app invitation on Home. On iPhone it works only after Add to Home Screen; the Worker sends it, Cron Triggers are free.
 - [ ] **Questions and the Garden**
   - Goal: a relationship built on understanding and respect, cared for a little every day.
-  - Outcome: a daily question card both answer privately and flip together; topic decks, each one a plant in one shared garden; stage cards with a shared closing line. Design and rules in the one-pager below.
+  - Outcome: a daily question card both answer privately and flip together; topic decks, each one a plant in one shared garden; relationship-status questions and mutually chosen progression. Rules: [Garden](docs/product/garden.md); the brainstorm below is historical.
   - [x] v1: daily card, 6 decks of 10 cards as plants, swap, deck play, notification on flip ([docs/product/garden.md](docs/product/garden.md)).
-  - [ ] Next: stage cards with a shared closing line, returning cards, more cards.
+  - [x] Relationship statuses: mutual starting placement, 35 bilingual questions, private decision responses with neutral/deferred choices, and mutual target unlocks.
+  - [ ] Later: shared closing lines, returning cards, further catalog additions.
 - [ ] **Kind feedback**
   - Goal: say what could be better without hurting, after the compliment habit exists.
   - Outcome: feedback written in a guided form, opened only when the partner is ready to hear it; how it touches the garden is still open.

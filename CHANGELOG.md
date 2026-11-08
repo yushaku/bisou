@@ -4,6 +4,9 @@
 
 ### Added
 
+- Choose a Garden starting status together, opening questions through that status: five relationship statuses and 35 new Vietnamese/English questions alongside the original 60 cards.
+- Answer decision questions with text, a neutral choice or a deferred/not-applicable choice; both responses reveal only after both submit, with editing and deletion controlled by each author.
+- Open a mutually chosen later status when both have answered all current decision questions; skip irrelevant statuses or stay where you are, keeping ordinary daily play and plants independent of progression.
 - The Garden tab draws one question card a day for both of you, from 6 decks of 10 cards (Memories, Dreams, Money, When we disagree, Both families, Everyday us). Each of you answers privately, and both answers show side by side only once both of you have answered.
 - Whoever answers first sees the card face down with "waiting for your partner"; the app never says who is late.
 - Swap today's card while neither of you has answered it; once one of you has answered, the card stays.
