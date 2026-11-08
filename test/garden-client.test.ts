@@ -1,6 +1,7 @@
 import { createElement as h } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
+import { GardenCard } from "../src/client/components/bisou/GardenCard";
 import { AnswerSlots } from "../src/client/components/bisou/AnswerSlots";
 import { I18nProvider } from "../src/client/i18n";
 import { cardPhase, gardenQuestion } from "../src/client/lib/garden";
@@ -10,7 +11,7 @@ import { Planter } from "../src/client/components/bisou/Planter";
 import { DECKS } from "../src/shared/garden";
 import { readFileSync } from "node:fs";
 
-const card: GardenCardState = { cardId: "money-01", mine: "my words", partner: null, mineEdited: false, partnerEdited: false, mineDeleted: false, partnerDeleted: false, flippedDay: null };
+const card: GardenCardState = { cardId: "money-01", mine: "my words", partner: null, mineChoice: null, partnerChoice: null, mineEdited: false, partnerEdited: false, mineDeleted: false, partnerDeleted: false, flippedDay: null };
 afterEach(() => vi.unstubAllGlobals());
 
 it("R13 R14 R30 R31 AC8: face-down slots contain no answers, partner names, times or scores", () => {
@@ -56,4 +57,18 @@ it("R1 R13 R36: PWA caching excludes API navigations and has no runtime data cac
   const config = readFileSync(new URL("../vite.config.ts", import.meta.url), "utf8");
   expect(config).toContain("navigateFallbackDenylist: [/^\\/api\\//]");
   expect(config).toContain("runtimeCaching: []");
+});
+
+it.each(["vi", "en"])("R44 R64 AC25 AC35: %s decision notice explains reveal, retention and unavailable controls before submission", (locale) => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const html = renderToString(h(I18nProvider, null, h(GardenCard, { card: { ...card, cardId: "L2-01", mine: null }, myName: "An", partnerName: "Binh", onChanged: () => {}, onSignedOut: () => {} })));
+  for (const phrase of locale === "vi" ? ["Khi cả hai gửi", "đến khi bạn xoá", "rời đôi", "tải dữ liệu", "tự sao chép"] : ["Once both submit", "until you delete", "unpairing", "data downloads", "manually copy"]) expect(html).toContain(phrase);
+});
+it("R43 AC25: choice-aware slots localize own-first choices only after explicit flip", () => {
+  vi.stubGlobal("localStorage", { getItem: () => "en" });
+  const chosen = { ...card, mine: null, mineChoice: "no_details" as const, partnerChoice: "later_not_applicable" as const };
+  expect(cardPhase(chosen)).toBe("waiting");
+  const render = (revealed: boolean) => renderToString(h(I18nProvider, null, h(AnswerSlots, { card: chosen, revealed, myName: "An", partnerName: "Binh" })));
+  expect(render(false)).not.toContain("No details");
+  expect(render(true).indexOf("No details")).toBeLessThan(render(true).indexOf("Later / not applicable"));
 });

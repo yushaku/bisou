@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { useState } from "react";
 import { CARDS, LEVEL_IDS, levelRank, type GardenLevels as Levels, type LevelAction } from "../../../shared/garden";
 import { api } from "../../api";
@@ -47,7 +48,7 @@ export function GardenLevels({ levels, onChanged, onSignedOut }: { levels: Level
         {(!levels.placementComplete || rank <= furthest) && levelId !== levels.selectedLevelId && <Button variant="outline" disabled={!online || busy || !!levels.proposal && !levels.proposal.proposedByMe}
           onClick={() => void act({ action: "propose", kind: levels.placementComplete ? "revisit" : "placement", levelId, revision: levels.revision })}>{t(levels.placementComplete ? "garden.revisit" : "garden.propose")}</Button>}
         {CARDS.filter((card) => card.kind === "decision" && card.levelId === levelId).map((card) => <div key={card.id} className="text-sm">
-          <p>{card.text[locale]}</p><p className="mt-1 text-muted-foreground">{t(rank > furthest ? "garden.locked" : levels.decisions.find((d) => d.cardId === card.id)?.complete ? "garden.complete" : "garden.incomplete")}</p>
+          {rank <= furthest ? <Link className="underline underline-offset-4" href={`/garden/${card.deckId}#decisions`}>{card.text[locale]}</Link> : <p>{card.text[locale]}</p>}<p className="mt-1 text-muted-foreground">{t(rank > furthest ? "garden.locked" : levels.decisions.find((d) => d.cardId === card.id)?.complete ? "garden.complete" : "garden.incomplete")}</p>
         </div>)}
       </section>)}
     </div></DrawerContent>

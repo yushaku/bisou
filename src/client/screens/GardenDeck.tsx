@@ -46,6 +46,9 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
         <GardenCard key={state.active.cardId} card={state.active} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />
       </section>}
       {state && !state.active && <p className="text-center text-muted-foreground">{t("garden.allPlayed")}</p>}
+      {!!state?.decisions.length && <section id="decisions" className="flex flex-col gap-6"><h2 className="font-heading text-xl">{t("garden.decisions")}</h2>
+        {state.decisions.map((card) => <GardenCard key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
+      </section>}
       {!!state?.locked.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("garden.locked")}</h2>{state.locked.map((id) => <p key={id} className="text-sm text-muted-foreground">{cardById(id)?.text[locale]}</p>)}</section>}
       {!!state?.history.length && <section className="flex flex-col gap-6"><h2 className="font-heading text-xl">{t("garden.history")}</h2>
         {state.history.map((card) => <GardenCard key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}

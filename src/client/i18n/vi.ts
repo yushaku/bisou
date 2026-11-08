@@ -1,5 +1,11 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "garden.no_details": "Không ghi chi tiết",
+  "garden.later_not_applicable": "Để sau / không phù hợp",
+  "garden.textResponse": "Viết câu trả lời",
+  "garden.responseType": "Cách trả lời",
+  "garden.decisionNotice": "Khi cả hai gửi chữ hoặc lựa chọn, mỗi người có thể đọc câu trả lời của người kia, kể cả khi chọn không ghi chi tiết hay để sau. Rời câu hỏi không tính là gửi. Nội dung được lưu đến khi bạn xoá; bạn có thể sửa, xoá hoặc tự sao chép phần chữ đang thấy của mình. Câu hỏi đã hoàn thành và giai đoạn đã mở vẫn được giữ sau khi xoá. Bisou chưa có rời đôi, xoá tài khoản hay tải dữ liệu. Câu trả lời không xác nhận sự đồng thuận, sự sẵn sàng hay sự kiện ngoài đời.",
+
   "level.acquainted": "Làm quen",
   "level.in_love": "Yêu nhau",
   "level.living_together": "Sống chung",

@@ -24,10 +24,14 @@ export function freshness(lastFlipDay: string, today: string): Freshness {
   const days = daysBetween(lastFlipDay, today);
   return days >= 14 ? "wilted" : days >= 3 ? "dry" : "fresh";
 }
+export type ResponseChoice = "no_details" | "later_not_applicable";
+export type GardenAnswerInput = { text: string; choice?: never } | { choice: ResponseChoice; text?: never };
 export interface GardenCardState {
   cardId: string;
   mine: string | null;
+  mineChoice: ResponseChoice | null;
   partner: string | null;
+  partnerChoice: ResponseChoice | null;
   mineEdited: boolean;
   partnerEdited: boolean;
   mineDeleted: boolean;

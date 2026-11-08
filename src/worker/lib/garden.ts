@@ -1,8 +1,12 @@
 import { vnDay } from "../../shared/days";
-import { CARDS, DECKS, cardById, LEVEL_IDS, gateIds, levelRank, type GardenLevels, type LevelAction, drawCard, freshness, plantStage, type GardenCardState, type GardenState, type GardenDeckState } from "../../shared/garden";
+import { CARDS, DECKS, cardById, LEVEL_IDS, gateIds, levelRank, type GardenLevels, type LevelAction, type ResponseChoice, drawCard, freshness, plantStage, type GardenCardState, type GardenState, type GardenDeckState } from "../../shared/garden";
 
 export const memberGuard = `EXISTS(SELECT 1 FROM couple_members WHERE couple_id = ? AND user_id = ?)
   AND (SELECT COUNT(*) FROM couple_members WHERE couple_id = ?) = 2`;
+export function cardAccess(card: { id: string; levelId: typeof LEVEL_IDS[number]; kind: string }) {
+  return card.kind === "ordinary" && !card.id.startsWith("L") ? "1" :
+    `EXISTS(SELECT 1 FROM garden_levels WHERE couple_id = ? AND furthest_level >= ${levelRank(card.levelId)})`;
+}
 interface LevelRow {
   initial_level: number | null; selected_level: number | null; furthest_level: number | null; revision: number;
   proposal_kind: "placement" | "target" | "revisit" | null; proposal_level: number | null;
@@ -103,19 +107,20 @@ export async function loadToday(db: D1Database, coupleId: string, now: number, r
 export async function cardStates(db: D1Database, coupleId: string, userId: string, cardIds: string[]): Promise<GardenCardState[]> {
   if (!cardIds.length) return [];
   // The join prevents partner bodies and metadata from leaving SQL before the caller has answered.
-  const rows = await db.prepare(`SELECT mine.card_id, mine.body AS mine, other.body AS partner,
+  const rows = await db.prepare(`SELECT mine.card_id, mine.body AS mine, other.body AS partner, mine.response_choice AS mine_choice, other.response_choice AS partner_choice,
     mine.edited_after_flip AS mine_edited, COALESCE(other.edited_after_flip, 0) AS partner_edited,
-    (mine.body IS NULL AND mine.flipped_day IS NOT NULL) AS mine_deleted,
-    (other.body IS NULL AND other.flipped_day IS NOT NULL) AS partner_deleted,
+    (mine.body IS NULL AND mine.response_choice IS NULL AND mine.flipped_day IS NOT NULL) AS mine_deleted,
+    (other.body IS NULL AND other.response_choice IS NULL AND other.flipped_day IS NOT NULL) AS partner_deleted,
     CASE WHEN other.user_id IS NOT NULL THEN mine.flipped_day ELSE NULL END AS flipped_day
     FROM garden_answers mine LEFT JOIN garden_answers other
       ON other.couple_id = mine.couple_id AND other.card_id = mine.card_id AND other.round = mine.round
-      AND other.user_id <> mine.user_id AND mine.flipped_day IS NOT NULL
-    WHERE mine.couple_id = ? AND mine.user_id = ? AND mine.round = 1 AND mine.card_id IN (${cardIds.map(() => "?").join(",")})`)
-    .bind(coupleId, userId, ...cardIds).all<{ card_id: string; mine: string | null; partner: string | null; mine_edited: number; partner_edited: number; mine_deleted: number; partner_deleted: number; flipped_day: string | null }>();
+      AND other.user_id <> mine.user_id AND mine.flipped_day IS NOT NULL AND other.flipped_day IS NOT NULL
+      AND other.user_id IN (SELECT user_id FROM couple_members WHERE couple_id = mine.couple_id)
+    WHERE mine.couple_id = ? AND mine.user_id = ? AND mine.round = 1 AND mine.card_id IN (${cardIds.map(() => "?").join(",")}) AND ${memberGuard}`)
+    .bind(coupleId, userId, ...cardIds, coupleId, userId, coupleId).all<{ card_id: string; mine: string | null; partner: string | null; mine_choice: ResponseChoice | null; partner_choice: ResponseChoice | null; mine_edited: number; partner_edited: number; mine_deleted: number; partner_deleted: number; flipped_day: string | null }>();
   return cardIds.map((cardId) => {
     const row = rows.results.find((r) => r.card_id === cardId);
-    return { cardId, mine: row?.mine ?? null, partner: row?.partner ?? null, mineEdited: !!row?.mine_edited,
+    return { cardId, mine: row?.mine ?? null, partner: row?.partner ?? null, mineChoice: row?.mine_choice ?? null, partnerChoice: row?.partner_choice ?? null, mineEdited: !!row?.mine_edited,
       partnerEdited: !!row?.partner_edited, mineDeleted: !!row?.mine_deleted, partnerDeleted: !!row?.partner_deleted,
       flippedDay: row?.flipped_day ?? null };
   });
@@ -147,7 +152,7 @@ export async function gardenDeck(db: D1Database, coupleId: string, userId: strin
   ]);
   const stamp = (cardId: string) => answered!.results.find((row) => row.card_id === cardId)?.stamp ?? drawn!.results.find((row) => row.card_id === cardId)?.stamp ?? 0;
   // Past daily cards stay accessible to both even when untouched, so their presence cannot expose a waiting answer.
-  const history = states.filter((card) => cardById(card.cardId)?.kind === "ordinary" && card.cardId !== activeId && (card.mine !== null || card.mineDeleted || card.flippedDay || drawn!.results.some((row) => row.card_id === card.cardId)))
+  const history = states.filter((card) => cardById(card.cardId)?.kind === "ordinary" && card.cardId !== activeId && (card.mine !== null || card.mineChoice !== null || card.mineDeleted || card.flippedDay || drawn!.results.some((row) => row.card_id === card.cardId)))
     .sort((a, b) => stamp(b.cardId) - stamp(a.cardId) || b.cardId.localeCompare(a.cardId));
   return { active: states.find((card) => card.cardId === activeId) ?? null, history,
     decisions: states.filter((state) => { const card = cardById(state.cardId)!; return card.kind === "decision" && input.furthestLevel !== null && levelRank(card.levelId) <= input.furthestLevel; }),

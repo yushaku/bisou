@@ -459,3 +459,53 @@ it("R1 R46 AC33: only current paired members mutate levels; pending proposals re
   await env.DB.prepare("DELETE FROM couple_members WHERE couple_id = ? AND user_id = ?").bind(couple.id, a.id).run();
   expect((await act(b, { action: "accept", revision: 3 })).status).toBe(404);
 });
+
+async function place(a: TestUser, b: TestUser, levelId = "in_love") {
+  expect((await call("POST", "/api/garden/levels", { cookie: a.cookie, body: { action: "propose", kind: "placement", levelId, revision: 0 } })).status).toBe(200);
+  expect((await call("POST", "/api/garden/levels", { cookie: b.cookie, body: { action: "accept", revision: 1 } })).status).toBe(200);
+}
+it.each(["no_details", "later_not_applicable"])("R42 R43 R44 AC24 AC25 AC32: %s reveals text only on paired submission and retains completion on deletion", async (choice) => {
+  const { a, b, couple } = await paired(); await place(a, b);
+  expect((await answer(a, "L2-01", "PRIVATE RENT TEXT")).status).toBe(201);
+  let res = await call("GET", "/api/garden/decks/money", { cookie: b.cookie });
+  let raw = await res.text(); expect(raw).not.toContain("PRIVATE RENT TEXT"); expect(raw).not.toContain('"partnerChoice":"');
+  expect((await call("POST", "/api/garden/cards/L2-01/answer", { cookie: b.cookie, body: { choice } })).status).toBe(201);
+  res = await call("GET", "/api/garden/decks/money", { cookie: a.cookie });
+  let state = await res.json<GardenDeckState>();
+  expect(state.decisions.find((d) => d.cardId === "L2-01")).toMatchObject({ mine: "PRIVATE RENT TEXT", partner: null, partnerChoice: choice, partnerDeleted: false, flippedDay: "2026-11-09" });
+  expect((await call("DELETE", "/api/garden/cards/L2-01/answer", { cookie: b.cookie })).status).toBe(200);
+  state = await (await call("GET", "/api/garden/decks/money", { cookie: a.cookie })).json<GardenDeckState>();
+  expect(state.decisions.find((d) => d.cardId === "L2-01")).toMatchObject({ partnerChoice: null, partnerDeleted: true, flippedDay: "2026-11-09" });
+  expect((await garden(a)).levels.decisions.find((d) => d.cardId === "L2-01")!.complete).toBe(true);
+  expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_growth WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
+});
+
+it("R43 R57 AC25 AC32: invalid alternatives reject; edits switch response type and pre-reveal deletion clears submission", async () => {
+  const { a, b } = await paired(); await place(a, b);
+  const post = (id: string, body: unknown) => call("POST", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body });
+  for (const body of [{}, { text: "x", choice: "no_details" }, { choice: "unknown" }, { choice: null }, { text: "x", userId: b.id }]) expect((await post("L2-01", body)).status).toBe(400);
+  const ordinary = (await garden(a)).today!.cardId;
+  expect((await post(ordinary, { choice: "no_details" })).status).toBe(400);
+  expect((await post("L4-01", { choice: "no_details" })).status).toBe(404);
+  expect((await post("L2-01", { text: "private before" })).status).toBe(201);
+  expect((await call("PUT", "/api/garden/cards/L2-01/answer", { cookie: a.cookie, body: { choice: "no_details" } })).status).toBe(200);
+  let state = await (await call("GET", "/api/garden/decks/money", { cookie: b.cookie })).text();
+  expect(state).not.toContain("private before"); expect(state).not.toContain('"partnerChoice":"no_details"');
+  expect((await call("DELETE", "/api/garden/cards/L2-01/answer", { cookie: a.cookie })).status).toBe(200);
+  expect((await answer(b, "L2-01", "partner words")).status).toBe(201);
+  expect((await garden(a)).levels.decisions.find((d) => d.cardId === "L2-01")!.complete).toBe(false);
+  expect((await post("L2-01", { choice: "later_not_applicable" })).status).toBe(201);
+  const edited = await call("PUT", "/api/garden/cards/L2-01/answer", { cookie: a.cookie, body: { text: "changed after" } });
+  expect((await edited.json<{card: GardenCardState}>()).card).toMatchObject({ mine: "changed after", mineChoice: null, mineEdited: true, partner: "partner words" });
+});
+it("R42 R58 AC24 AC32: different texts and paired choices complete equally; delete racing reveal never leaks an orphan", async () => {
+  const { a, b } = await paired(); await place(a, b);
+  await answer(a, "L2-01", "yes"); expect((await answer(b, "L2-01", "no")).status).toBe(201);
+  for (const who of [a, b]) expect((await call("POST", "/api/garden/cards/L2-03/answer", { cookie: who.cookie, body: { choice: "no_details" } })).status).toBe(201);
+  await answer(a, "L2-05", "ORPHAN SECRET");
+  await Promise.all([call("DELETE", "/api/garden/cards/L2-05/answer", { cookie: a.cookie }), answer(b, "L2-05")]);
+  const state = await (await call("GET", "/api/garden/decks/everyday", { cookie: b.cookie })).json<GardenDeckState>();
+  const card = state.decisions.find((d) => d.cardId === "L2-05")!;
+  expect(card.partner).toBeNull();
+  expect(card.flippedDay === null || card.partnerDeleted).toBe(true);
+});

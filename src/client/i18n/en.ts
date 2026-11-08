@@ -1,6 +1,12 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "garden.no_details": "No details",
+  "garden.later_not_applicable": "Later / not applicable",
+  "garden.textResponse": "Write a response",
+  "garden.responseType": "How to respond",
+  "garden.decisionNotice": "Once both submit text or a choice, each can read the other’s response, including when choosing no details or later. Leaving does not submit. Responses stay saved until you delete them; you can edit, delete or manually copy your own visible text. Completed questions and opened contexts remain after deletion. Bisou does not yet offer unpairing, account deletion or data downloads. Responses do not establish consent, readiness or real-world events.",
+
   "level.acquainted": "Getting acquainted",
   "level.in_love": "In love",
   "level.living_together": "Living together",

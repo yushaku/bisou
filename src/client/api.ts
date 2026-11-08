@@ -19,7 +19,7 @@ import type {
   RequestCodeResponse,
   User,
 } from "../shared/types";
-import type { GardenState, GardenCardState, GardenDeckState, GardenLevels, LevelAction } from "../shared/garden";
+import type { GardenState, GardenCardState, GardenDeckState, GardenLevels, LevelAction, GardenAnswerInput } from "../shared/garden";
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: ApiError | null };
 
@@ -51,8 +51,8 @@ export const api = {
   garden: () => call<GardenState>("GET", "/api/garden"),
   gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
   swapGarden: (cardId: string) => call<GardenState>("POST", "/api/garden/today/swap", { cardId }),
-  answerGarden: (id: string, text: string) => call<{ card: GardenCardState }>("POST", `/api/garden/cards/${encodeURIComponent(id)}/answer`, { text }),
-  editGardenAnswer: (id: string, text: string) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/answer`, { text }),
+  answerGarden: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("POST", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),
+  editGardenAnswer: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),
   deleteGardenAnswer: (id: string) => call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/answer`),
   setAvatar: (blob: Blob) => {
     const form = new FormData();
