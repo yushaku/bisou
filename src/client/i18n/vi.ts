@@ -1,5 +1,9 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "garden.target": "Cùng chọn làm bước tiếp",
+  "garden.targetAgreed": "Đã cùng chọn, chờ các câu hỏi của giai đoạn xa nhất đã mở",
+  "garden.targetHint": "Chọn bước phù hợp tiếp theo, có thể bỏ qua giai đoạn không phù hợp. Các câu hỏi quyết định của giai đoạn xa nhất đã mở cần hai câu trả lời. Hai đứa có thể ở lại bao lâu cũng được; mỗi bước mở cần lựa chọn chung mới.",
+
   "garden.no_details": "Không ghi chi tiết",
   "garden.later_not_applicable": "Để sau / không phù hợp",
   "garden.textResponse": "Viết câu trả lời",

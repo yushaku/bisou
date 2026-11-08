@@ -23,5 +23,5 @@ CREATE TABLE garden_levels (
       AND initial_level <= furthest_level AND selected_level <= furthest_level)),
   CHECK((proposal_kind IS NULL AND proposal_level IS NULL AND proposer_id IS NULL)
     OR (proposal_kind IS NOT NULL AND proposal_level IS NOT NULL AND proposer_id IS NOT NULL)),
-  CHECK(target_agreed = 0 OR proposal_kind = 'target')
+  CHECK(target_agreed = 0 OR (proposal_kind IS NOT NULL AND proposal_kind = 'target'))
 );

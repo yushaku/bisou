@@ -3,7 +3,7 @@ import { bodyLimit } from "hono/body-limit";
 import { vnDay } from "../../shared/days";
 import { answerText, cardById, DECKS, drawCard, LEVEL_IDS, type LevelAction, type ResponseChoice } from "../../shared/garden";
 import type { AppEnv } from "../env";
-import { changeLevels, levelsState, memberGuard, cardAccess, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday } from "../lib/garden";
+import { advanceLevels, changeLevels, levelsState, memberGuard, cardAccess, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday } from "../lib/garden";
 import { notifyGarden } from "../lib/notify";
 
 type GardenEnv = AppEnv & { Variables: { gardenCoupleId: string } };
@@ -49,21 +49,22 @@ garden.post("/today/swap", limitBody, async (c) => {
   const couple = c.get("gardenCoupleId");
   const user = c.get("user").id;
   const now = Date.now();
-  const today = await loadToday(db, couple, now);
+  const today = await loadToday(db, couple, now, user);
   const state = () => gardenState(db, couple, user, now);
   if (!today || today.card_id !== requested.id) return c.json(await state());
   const locked = () => db.prepare("SELECT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) AS locked").bind(couple, today.card_id).first<number>("locked");
   if (await locked()) return c.json({ error: "swap_locked" }, 409);
   const card = drawCard({ ...await drawInput(db, couple, today.day), excludedCard: today.card_id, excludedDeck: today.deck_id }, await drawSeed(couple, today.day, today.swaps + 1));
   if (!card) return c.json({ error: "no_other_card" }, 409);
+  const access = cardAccess(card);
   const updated = await db.prepare(`UPDATE garden_days SET card_id = ?, deck_id = ?, swaps = swaps + 1,
     swapped_cards = json_set(swapped_cards, ?, ?) WHERE couple_id = ? AND day = ? AND card_id = ?
-    AND ${memberGuard}
+    AND ${access} AND ${memberGuard}
     AND NOT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1)
     AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) < 2`)
-    .bind(card.id, card.deckId, `$."${today.card_id}"`, `${today.day}:${String(today.swaps + 1).padStart(12, "0")}`, couple, today.day, today.card_id, couple, user, couple, couple, today.card_id, couple, card.id).run();
+    .bind(card.id, card.deckId, `$."${today.card_id}"`, `${today.day}:${String(today.swaps + 1).padStart(12, "0")}`, couple, today.day, today.card_id, ...(access === "1" ? [] : [couple]), couple, user, couple, couple, today.card_id, couple, card.id).run();
   if (!updated.meta.changes) {
-    const current = await loadToday(db, couple, now);
+    const current = await loadToday(db, couple, now, user);
     if (current?.card_id === today.card_id && await locked()) return c.json({ error: "swap_locked" }, 409);
   }
   return c.json(await state());
@@ -98,7 +99,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
   } else {
     if (card.kind === "ordinary") {
       const deck = await gardenDeck(db, couple, user, card.deckId, now);
-      const today = await loadToday(db, couple, now);
+      const today = await loadToday(db, couple, now, user);
       if (today?.card_id !== card.id && deck.active?.cardId !== card.id) return c.json({ error: "not_found" }, 404);
     }
     // D1 batches run transactionally; concurrent saves can claim the daily flip only once.
@@ -112,20 +113,20 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
           SELECT ?, ?, ?, ?, ?, ?, ? WHERE ${access} AND ${memberGuard}`)
           .bind(couple, card.id, user, parsed.text, choice, now, now, ...accessValues, couple, user, couple),
         db.prepare(`UPDATE garden_answers SET flipped_day = ? WHERE couple_id = ? AND card_id = ? AND round = 1
-          AND flipped_day IS NULL AND ${ownSubmission} AND ${memberGuard}
+          AND flipped_day IS NULL AND ${ownSubmission} AND ${access} AND ${memberGuard}
           AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1
             AND user_id IN (SELECT user_id FROM couple_members WHERE couple_id = ?)) = 2`)
-          .bind(day, couple, card.id, ...submissionValues, couple, user, couple, couple, card.id, couple),
+          .bind(day, couple, card.id, ...submissionValues, ...accessValues, couple, user, couple, couple, card.id, couple),
         ...(card.kind === "ordinary" ? [
           db.prepare(`UPDATE garden_days SET flipped = 1 WHERE couple_id = ? AND day = ? AND card_id = ? AND flipped = 0
-            AND ${ownSubmission} AND ${memberGuard}
+            AND ${ownSubmission} AND ${access} AND ${memberGuard}
             AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1 AND flipped_day IS NOT NULL) = 2 RETURNING day`)
-            .bind(couple, day, card.id, ...submissionValues, couple, user, couple, couple, card.id),
+            .bind(couple, day, card.id, ...submissionValues, ...accessValues, couple, user, couple, couple, card.id),
           db.prepare(`INSERT OR IGNORE INTO garden_growth(couple_id, deck_id, day)
             SELECT ?, ?, ? WHERE ${ownSubmission} AND ${memberGuard}
             AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1 AND flipped_day = ?) = 2`)
-            .bind(couple, card.deckId, day, ...submissionValues, couple, user, couple, couple, card.id, day),
-        ] : []),
+            .bind(couple, card.deckId, day, ...submissionValues, ...accessValues, couple, user, couple, couple, card.id, day),
+        ] : [advanceLevels(db, couple, user, card.id)]),
       ]);
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE constraint failed: garden_answers.couple_id, garden_answers.card_id, garden_answers.round, garden_answers.user_id")) return c.json({ error: "already_answered" }, 409);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { GardenDeckState, GardenState } from "../src/shared/garden";
+import { gateIds, type GardenDeckState, type GardenState } from "../src/shared/garden";
 import { call, paired, resetDb, waitForBackground, type TestUser } from "./helpers";
 import { decrypt, device, mockPush, runPushCron, subscribe } from "./push-helpers";
 
@@ -109,4 +109,19 @@ it("R13 R36 R37: request and failed-push logs never include questions, answers o
   expect(output).not.toContain(a.id);
   expect(output).not.toContain(b.id);
   expect(output).not.toContain(id);
+});
+
+it("R55 AC31: placement, targets, decision reveals and opening a stage never notify or water", async () => {
+  const { a, b } = await paired();
+  await subscribe(a, await device("stage-a")); await subscribe(b, await device("stage-b"));
+  const send = mockPush();
+  const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
+  await act(a, { action: "propose", kind: "placement", levelId: "acquainted", revision: 0 });
+  await act(b, { action: "accept", revision: 1 });
+  await act(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
+  await act(b, { action: "accept", revision: 3 });
+  for (const id of gateIds(0)) { await save(a, id); await save(b, id); }
+  await waitForBackground(); expect(send.sent).toHaveLength(0);
+  const state = await (await call("GET", "/api/garden", { cookie: a.cookie })).json<GardenState>();
+  expect(state.levels.furthestLevelId).toBe("in_love"); expect(state.plants.every((p) => p.stage === 0)).toBe(true);
 });

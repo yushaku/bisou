@@ -31,3 +31,9 @@ it("R41 R52 AC24: new catalog has unique bilingual stage/category/role metadata"
     expect(card.text.vi).toBeTruthy(); expect(card.text.en).toBeTruthy();
   }
 });
+
+it("R52 AC26: all 60 original IDs, texts, categories, depths and ordering remain byte-for-byte compatible", async () => {
+  const legacy = CARDS.filter((card) => !card.id.startsWith("L")).map(({id, deckId, depth, text}) => ({id, deckId, depth, text}));
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(legacy)));
+  expect(Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")).toBe("5d160a5f8e43fd0e9e3ca1e6ab6e293a684241c96ea2328bf230f48639315c57");
+});

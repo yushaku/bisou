@@ -5,7 +5,7 @@ import { api } from "../../api";
 import { useI18n } from "../../i18n";
 import { useOnline } from "../../lib/useOnline";
 import { Button } from "../ui/button";
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "../ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 
 export function GardenLevels({ levels, onChanged, onSignedOut }: { levels: Levels; onChanged: () => void; onSignedOut: () => void }) {
   const { t, locale } = useI18n();
@@ -33,9 +33,9 @@ export function GardenLevels({ levels, onChanged, onSignedOut }: { levels: Level
       {!levels.placementComplete && <p className="text-sm text-muted-foreground">{t("garden.placementHint")}</p>}
       {levels.furthestLevelId && <div className="text-sm"><p>{t("garden.openedThrough")}: {t(`level.${levels.furthestLevelId}`)}</p><p>{t("garden.initialStatus")}: {t(`level.${levels.initialLevelId!}`)}</p></div>}
       {levels.proposal && <section className="flex flex-col gap-3 rounded-xl edge bg-card p-4">
-        <p>{t("garden.pending")}: {t(`level.${levels.proposal.levelId}`)}</p>
+        <p>{t(levels.proposal.agreed ? "garden.targetAgreed" : "garden.pending")}: {t(`level.${levels.proposal.levelId}`)}</p>
         <div className="flex flex-wrap gap-2">
-          {levels.proposal.proposedByMe ? <Button variant="outline" disabled={!online || busy} onClick={() => void act({ action: "withdraw", revision: levels.revision })}>{t("garden.withdraw")}</Button> : <>
+          {levels.proposal.agreed ? <Button variant="outline" disabled={!online || busy} onClick={() => void act({ action: "decline", revision: levels.revision })}>{t("garden.decline")}</Button> : levels.proposal.proposedByMe ? <Button variant="outline" disabled={!online || busy} onClick={() => void act({ action: "withdraw", revision: levels.revision })}>{t("garden.withdraw")}</Button> : <>
             <Button disabled={!online || busy} onClick={() => void act({ action: "accept", revision: levels.revision })}>{t("garden.accept")}</Button>
             <Button variant="outline" disabled={!online || busy} onClick={() => void act({ action: "decline", revision: levels.revision })}>{t("garden.decline")}</Button>
           </>}
@@ -43,10 +43,13 @@ export function GardenLevels({ levels, onChanged, onSignedOut }: { levels: Level
       </section>}
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+      {levels.placementComplete && <p className="text-sm text-muted-foreground">{t("garden.targetHint")}</p>}
+      <DrawerClose asChild><Button variant="outline">{t("common.close")}</Button></DrawerClose>
       {LEVEL_IDS.map((levelId, rank) => <section key={levelId} className="flex flex-col gap-3 rounded-xl edge bg-card p-4">
         <h2 className="font-heading text-xl">{t(`level.${levelId}`)}</h2>
-        {(!levels.placementComplete || rank <= furthest) && levelId !== levels.selectedLevelId && <Button variant="outline" disabled={!online || busy || !!levels.proposal && !levels.proposal.proposedByMe}
-          onClick={() => void act({ action: "propose", kind: levels.placementComplete ? "revisit" : "placement", levelId, revision: levels.revision })}>{t(levels.placementComplete ? "garden.revisit" : "garden.propose")}</Button>}
+        {levelId !== levels.selectedLevelId && <Button variant="outline" className="h-auto min-h-11 whitespace-normal py-2" disabled={!online || busy || !!levels.proposal && !levels.proposal.proposedByMe}
+          onClick={() => void act({ action: "propose", kind: !levels.placementComplete ? "placement" : rank <= furthest ? "revisit" : "target", levelId, revision: levels.revision })}>{t(!levels.placementComplete ? "garden.propose" : rank <= furthest ? "garden.revisit" : "garden.target")}</Button>}
+        {rank === LEVEL_IDS.length - 1 && <p className="text-sm text-muted-foreground">{t("garden.noDecisions")}</p>}
         {CARDS.filter((card) => card.kind === "decision" && card.levelId === levelId).map((card) => <div key={card.id} className="text-sm">
           {rank <= furthest ? <Link className="underline underline-offset-4" href={`/garden/${card.deckId}#decisions`}>{card.text[locale]}</Link> : <p>{card.text[locale]}</p>}<p className="mt-1 text-muted-foreground">{t(rank > furthest ? "garden.locked" : levels.decisions.find((d) => d.cardId === card.id)?.complete ? "garden.complete" : "garden.incomplete")}</p>
         </div>)}

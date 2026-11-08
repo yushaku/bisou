@@ -1,6 +1,10 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "garden.target": "Suggest as our next context",
+  "garden.targetAgreed": "Chosen together, waiting for the furthest context’s questions",
+  "garden.targetHint": "Choose the next context that fits; you may skip contexts. The furthest opened context’s decision questions need both responses. You can stay as long as you like; each new opening needs a fresh shared choice.",
+
   "garden.no_details": "No details",
   "garden.later_not_applicable": "Later / not applicable",
   "garden.textResponse": "Write a response",

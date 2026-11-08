@@ -2,7 +2,7 @@ import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { call, explain, paired, resetDb, user, type TestUser } from "./helpers";
 import { drawInput, drawSeed, loadToday } from "../src/worker/lib/garden";
-import { drawCard, CARDS, type GardenState, type GardenCardState, type GardenDeckState } from "../src/shared/garden";
+import { drawCard, CARDS, gateIds, type GardenState, type GardenCardState, type GardenDeckState } from "../src/shared/garden";
 
 const NOW = Date.parse("2026-11-09T08:00:00+07:00");
 export async function garden(who: TestUser) {
@@ -281,7 +281,7 @@ describe("Garden daily cards", () => {
   });
 
   it("R6: drawing retries a lost insertion only once", async () => {
-    const { couple } = await paired();
+    const { a, couple } = await paired();
     const original = env.DB.batch.bind(env.DB);
     const batch = vi.spyOn(env.DB, "batch");
     let attempts = 0;
@@ -290,7 +290,7 @@ describe("Garden daily cards", () => {
       if (++attempts > 2) throw new Error("unbounded retry");
       return original(statements.map(() => env.DB.prepare("SELECT 1 WHERE 0")));
     });
-    expect(await loadToday(env.DB, couple.id, NOW)).toBeNull();
+    expect(await loadToday(env.DB, couple.id, NOW, a.id)).toBeNull();
     expect(attempts).toBe(2);
   });
 
@@ -508,4 +508,150 @@ it("R42 R58 AC24 AC32: different texts and paired choices complete equally; dele
   const card = state.decisions.find((d) => d.cardId === "L2-05")!;
   expect(card.partner).toBeNull();
   expect(card.flippedDay === null || card.partnerDeleted).toBe(true);
+});
+
+const levelAction = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
+it("R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: final paired decision opens one mutual skipped target, without cascade or growth", async () => {
+  const { a, b, couple } = await paired(); await place(a, b, "living_together");
+  const before = await garden(a);
+  expect((await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 2 })).status).toBe(200);
+  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(200);
+  const gates = gateIds(2);
+  for (const id of gates) {
+    expect((await answer(a, id, "my view")).status).toBe(201);
+    if (id !== gates.at(-1)) expect((await answer(b, id, "a different view")).status).toBe(201);
+  }
+  expect((await garden(a)).levels.furthestLevelId).toBe("living_together");
+  const last = gates.at(-1)!;
+  const saved = await call("POST", `/api/garden/cards/${last}/answer`, { cookie: b.cookie, body: { choice: "later_not_applicable" } });
+  expect(saved.status).toBe(201);
+  const after = await garden(a);
+  expect(after.levels).toMatchObject({ selectedLevelId: "with_children", furthestLevelId: "with_children", proposal: null });
+  expect(after.today).toEqual(before.today); expect(after.plants).toEqual(before.plants); expect(after.freshness).toBe(before.freshness);
+  expect((await answer(b, last)).status).toBe(409);
+  expect((await garden(a)).levels.revision).toBe(after.levels.revision);
+  expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ? AND card_id LIKE 'L4-%'").bind(couple.id).first("n")).toBe(0);
+});
+
+it("R48 R58 R59 AC27 AC32 AC33: answers before target and post-reveal deletions still open only once on later acceptance", async () => {
+  const { a, b } = await paired(); await place(a, b, "acquainted");
+  for (const id of gateIds(0)) { await answer(a, id); await answer(b, id, "different"); }
+  await call("DELETE", `/api/garden/cards/${gateIds(0)[0]}/answer`, { cookie: a.cookie });
+  expect((await garden(a)).levels.furthestLevelId).toBe("acquainted");
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
+  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(200);
+  const state = await garden(a);
+  expect(state.levels).toMatchObject({ revision: 4, selectedLevelId: "in_love", proposal: null });
+  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(409);
+  await call("DELETE", `/api/garden/cards/${gateIds(0)[1]}/answer`, { cookie: b.cookie });
+  expect((await garden(b)).levels.furthestLevelId).toBe("in_love");
+});
+it("R47 R59 AC33: stale acceptance after target replacement/decline saves nothing and agreement can be withdrawn by either member", async () => {
+  const { a, b } = await paired(); await place(a, b);
+  await levelAction(a, { action: "propose", kind: "target", levelId: "living_together", revision: 2 });
+  await levelAction(a, { action: "propose", kind: "target", levelId: "married", revision: 3 });
+  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(409);
+  await levelAction(b, { action: "decline", revision: 4 });
+  expect((await levelAction(b, { action: "accept", revision: 4 })).status).toBe(409);
+  await levelAction(b, { action: "propose", kind: "target", levelId: "living_together", revision: 5 });
+  await levelAction(a, { action: "accept", revision: 6 });
+  expect((await garden(a)).levels.proposal!.agreed).toBe(true);
+  expect((await levelAction(b, { action: "decline", revision: 7 })).status).toBe(200);
+  expect((await garden(a)).levels).toMatchObject({ revision: 8, furthestLevelId: "in_love", proposal: null });
+});
+it("R48 R59 AC27 AC33: concurrent final responses serialize to one opening and a duplicate batch cannot mutate progress", async () => {
+  const { a, b, couple } = await paired(); await place(a, b, "acquainted");
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
+  await levelAction(b, { action: "accept", revision: 3 });
+  const ids = gateIds(0); for (const id of ids) await answer(a, id);
+  for (const id of ids.slice(0, -2)) await answer(b, id);
+  expect((await Promise.all(ids.slice(-2).map((id) => answer(b, id)))).map((r) => r.status)).toEqual([201, 201]);
+  expect((await garden(a)).levels).toMatchObject({ revision: 5, selectedLevelId: "in_love", proposal: null });
+  expect((await Promise.all([answer(b, ids.at(-1)!), answer(b, ids.at(-1)!)])).map((r) => r.status)).toEqual([409, 409]);
+  expect(await env.DB.prepare("SELECT revision FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("revision")).toBe(5);
+  expect((await garden(b)).levels).toEqual((await garden(a)).levels);
+});
+it("R50 R51 R54 AC29 AC30: revisiting earlier decisions cannot bypass the furthest snapshot; ordinary play needs no target", async () => {
+  const { a, b } = await paired(); await place(a, b, "married");
+  await levelAction(a, { action: "propose", kind: "revisit", levelId: "acquainted", revision: 2 });
+  await levelAction(b, { action: "accept", revision: 3 });
+  for (const id of gateIds(0)) { await answer(a, id); await answer(b, id); }
+  const state = await garden(a); expect(state.levels.selectedLevelId).toBe("acquainted");
+  expect((await answer(a, state.today!.cardId)).status).toBe(201);
+  expect((await answer(b, state.today!.cardId)).status).toBe(201);
+  await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 4 });
+  await levelAction(b, { action: "accept", revision: 5 });
+  expect((await garden(a)).levels.furthestLevelId).toBe("married");
+  for (const id of gateIds(3)) { await answer(a, id); await answer(b, id); }
+  expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
+});
+it("R1 R57 AC32: cross-couple and unpaired callers cannot read or mutate decision responses", async () => {
+  const { a, b, couple } = await paired(); await place(a, b);
+  await answer(a, "L2-01", "OUR SECRET");
+  const x = await user("OtherA"), y = await user("OtherB");
+  const created = await (await call("POST", "/api/couple", { cookie: x.cookie })).json<{couple: {pendingCode: {code: string}}}>();
+  await call("POST", "/api/couple/join", { cookie: y.cookie, body: { code: created.couple.pendingCode.code } });
+  await place(x, y);
+  expect(await (await call("GET", "/api/garden/decks/money", { cookie: x.cookie })).text()).not.toContain("OUR SECRET");
+  for (const method of ["PUT", "DELETE"]) expect((await call(method, "/api/garden/cards/L2-01/answer", { cookie: x.cookie, ...(method === "PUT" ? { body: { text: "changed" } } : {}) })).status).toBe(404);
+  expect((await answer(x, "L2-01", "their own")).status).toBe(201);
+  expect(await env.DB.prepare("SELECT body FROM garden_answers WHERE couple_id = ? AND user_id = ? AND card_id = 'L2-01'").bind(couple.id, a.id).first("body")).toBe("OUR SECRET");
+  const lone = await user("Alone"); expect((await answer(lone, "L2-01")).status).toBe(404);
+});
+it("R1 R59 AC33: removal between middleware and decision batch prevents insertion, completion and advancement", async () => {
+  const { a, b, couple } = await paired(); await place(a, b, "acquainted");
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
+  await levelAction(b, { action: "accept", revision: 3 });
+  for (const id of gateIds(0)) { await answer(a, id); if (id !== gateIds(0).at(-1)) await answer(b, id); }
+  const original = env.DB.batch.bind(env.DB);
+  const spy = vi.spyOn(env.DB, "batch").mockImplementationOnce(async (statements) => {
+    await env.DB.prepare("DELETE FROM couple_members WHERE couple_id = ? AND user_id = ?").bind(couple.id, b.id).run();
+    return original(statements);
+  });
+  expect((await answer(b, gateIds(0).at(-1)!)).status).toBe(404);
+  spy.mockRestore();
+  expect(await env.DB.prepare("SELECT furthest_level FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("furthest_level")).toBe(0);
+  expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ?").bind(couple.id, gateIds(0).at(-1)!, b.id).first("n")).toBe(0);
+});
+
+it("R52 AC26 AC31: additive 0012 preserves populated legacy waiting/flipped/edited/deleted/swapped records", async () => {
+  const { a, b, couple } = await paired();
+  const old = env.TEST_MIGRATIONS.find((m) => m.name.startsWith("0011"))!;
+  const added = env.TEST_MIGRATIONS.find((m) => m.name.startsWith("0012"))!;
+  const renamed = (sql: string) => sql.replaceAll("garden_", "legacy_garden_");
+  for (const query of old.queries) await env.DB.prepare(renamed(query)).run();
+  for (const [index, body, flipped, edited] of [[0, "waiting", null, 0], [1, "revealed", "2026-11-08", 0], [2, "edited", "2026-11-08", 1], [3, null, "2026-11-08", 0]] as const) {
+    await env.DB.prepare(`INSERT INTO legacy_garden_answers(couple_id, card_id, user_id, body, created_at, updated_at, flipped_day, edited_after_flip)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).bind(couple.id, `money-0${index + 1}`, index % 2 ? a.id : b.id, body, NOW, NOW, flipped, edited).run();
+  }
+  await env.DB.prepare(`INSERT INTO legacy_garden_days(couple_id, day, deck_id, card_id, swaps, swapped_cards, flipped, created_at)
+    VALUES (?, '2026-11-08', 'money', 'money-02', 1, '{"money-01":"2026-11-08:1"}', 1, ?)`).bind(couple.id, NOW).run();
+  await env.DB.prepare("INSERT INTO legacy_garden_growth VALUES (?, 'money', '2026-11-08')").bind(couple.id).run();
+  const before = await env.DB.prepare("SELECT * FROM legacy_garden_answers ORDER BY card_id").all();
+  const day = await env.DB.prepare("SELECT * FROM legacy_garden_days").all();
+  for (const query of added.queries) await env.DB.prepare(renamed(query)).run();
+  const after = await env.DB.prepare("SELECT * FROM legacy_garden_answers ORDER BY card_id").all();
+  expect(after.results.map(({response_choice, ...row}) => { expect(response_choice).toBeNull(); return row; })).toEqual(before.results);
+  expect((await env.DB.prepare("SELECT * FROM legacy_garden_days").all()).results).toEqual(day.results);
+  expect(await env.DB.prepare("SELECT COUNT(*) n FROM legacy_garden_growth").first("n")).toBe(1);
+  expect(await env.DB.prepare("SELECT COUNT(*) n FROM legacy_garden_levels").first("n")).toBe(0);
+  await env.DB.batch(["levels", "answers", "growth", "days"].map((name) => env.DB.prepare(`DROP TABLE legacy_garden_${name}`)));
+});
+it("R56 AC36: opened ordinary exhaustion remains fresh with locked and decision cards still unanswered", async () => {
+  const { a, b, couple } = await paired(); await place(a, b, "acquainted");
+  const ordinary = CARDS.filter((card) => card.kind === "ordinary" && card.levelId === "acquainted");
+  await env.DB.batch(ordinary.flatMap((card) => [a,b].map((who) => env.DB.prepare(`INSERT INTO garden_answers
+    (couple_id, card_id, user_id, body, created_at, updated_at, flipped_day) VALUES (?, ?, ?, 'played', ?, ?, '2026-10-01')`).bind(couple.id, card.id, who.id, NOW, NOW))));
+  const state = await garden(a); expect(state.today).toBeNull(); expect(state.freshness).toBe("fresh");
+  expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
+});
+
+it("R48 R59 AC27 AC33: target acceptance racing both final answers has one serial outcome", async () => {
+  const { a, b } = await paired(); await place(a, b, "acquainted");
+  const ids = gateIds(0); for (const id of ids.slice(0, -1)) { await answer(a, id); await answer(b, id); }
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
+  const result = await Promise.all([levelAction(b, { action: "accept", revision: 3 }), answer(a, ids.at(-1)!), answer(b, ids.at(-1)!)]);
+  expect(result.map((r) => r.status)).toEqual([200, 201, 201]);
+  const state = await garden(a); expect(state.levels.furthestLevelId).toBe("in_love"); expect(state.levels.proposal).toBeNull();
+  expect([4, 5]).toContain(state.levels.revision);
 });

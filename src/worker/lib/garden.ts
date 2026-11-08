@@ -32,6 +32,24 @@ export async function levelsState(db: D1Database, couple: string, user: string):
       agreed: !!row.target_agreed, proposedByMe: row.proposer_id === user },
     decisions: ids.map((cardId) => ({ cardId, complete: completed.results.some((r) => r.card_id === cardId) })) };
 }
+// Paired flip markers survive personal-response deletion; only current members count.
+const gatesComplete = `json_array_length(gate_ids) > 0 AND NOT EXISTS(
+  SELECT 1 FROM json_each(gate_ids) gate WHERE
+    (SELECT COUNT(*) FROM garden_answers a WHERE a.couple_id = garden_levels.couple_id
+      AND a.card_id = gate.value AND a.round = 1 AND a.flipped_day IS NOT NULL
+      AND a.user_id IN (SELECT user_id FROM couple_members WHERE couple_id = garden_levels.couple_id)) <> 2)`;
+const gateCatalog = JSON.stringify(LEVEL_IDS.map((_, i) => gateIds(i)));
+export function advanceLevels(db: D1Database, couple: string, user: string, cardId: string) {
+  return db.prepare(`UPDATE garden_levels SET selected_level = proposal_level, furthest_level = proposal_level,
+    gate_ids = json_extract(?, '$[' || proposal_level || ']'), proposal_kind = NULL, proposal_level = NULL,
+    proposer_id = NULL, target_agreed = 0, revision = revision + 1
+    WHERE couple_id = ? AND proposal_kind = 'target' AND target_agreed = 1 AND proposal_level > furthest_level
+    AND EXISTS(SELECT 1 FROM json_each(gate_ids) WHERE value = ?)
+    AND EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ? AND round = 1)
+    AND ${gatesComplete} AND ${memberGuard}`)
+    .bind(gateCatalog, couple, cardId, couple, cardId, user, couple, user, couple);
+}
+
 export async function changeLevels(db: D1Database, couple: string, user: string, action: LevelAction) {
   await ensureLevels(db, couple, user);
   let sql: string;
@@ -39,23 +57,28 @@ export async function changeLevels(db: D1Database, couple: string, user: string,
   if (action.action === "propose") {
     const rank = levelRank(action.levelId);
     const eligible = action.kind === "placement" ? "initial_level IS NULL" : action.kind === "revisit"
-      ? "furthest_level IS NOT NULL AND ? <= furthest_level" : "0";
+      ? "furthest_level IS NOT NULL AND ? <= furthest_level" : "furthest_level < 4 AND ? > furthest_level AND json_array_length(gate_ids) > 0";
     sql = `UPDATE garden_levels SET proposal_kind = ?, proposal_level = ?, proposer_id = ?, target_agreed = 0, revision = revision + 1
       WHERE couple_id = ? AND revision = ? AND (proposal_kind IS NULL OR proposer_id = ?) AND ${eligible} AND ${memberGuard}`;
-    values = [action.kind, rank, user, couple, action.revision, user, ...(action.kind === "revisit" ? [rank] : []), couple, user, couple];
+    values = [action.kind, rank, user, couple, action.revision, user, ...(action.kind !== "placement" ? [rank] : []), couple, user, couple];
   } else if (action.action === "accept") {
-    sql = `UPDATE garden_levels SET
-      initial_level = CASE WHEN proposal_kind = 'placement' THEN proposal_level ELSE initial_level END,
-      furthest_level = CASE WHEN proposal_kind = 'placement' THEN proposal_level ELSE furthest_level END,
-      selected_level = proposal_level,
-      gate_ids = CASE WHEN proposal_kind = 'placement' THEN ? ELSE gate_ids END,
-      proposal_kind = NULL, proposal_level = NULL, proposer_id = NULL, target_agreed = 0, revision = revision + 1
-      WHERE couple_id = ? AND revision = ? AND proposer_id <> ?
-      AND ((proposal_kind = 'placement' AND initial_level IS NULL) OR (proposal_kind = 'revisit' AND proposal_level <= furthest_level))
-      AND ${memberGuard}`;
-    // Select the snapshot inside SQL from the proposal being accepted, never from a prior read.
-    sql = sql.replace("THEN ? ELSE gate_ids", "THEN json_extract(?, '$[' || proposal_level || ']') ELSE gate_ids");
-    values = [JSON.stringify(LEVEL_IDS.map((_, i) => gateIds(i))), couple, action.revision, user, couple, user, couple];
+    sql = `WITH choice AS (SELECT *, (proposal_kind = 'placement' OR (proposal_kind = 'target' AND ${gatesComplete})) AS opens
+      FROM garden_levels WHERE couple_id = ? AND revision = ? AND proposer_id <> ?
+      AND ((proposal_kind = 'placement' AND initial_level IS NULL) OR (proposal_kind = 'revisit' AND proposal_level <= furthest_level)
+        OR (proposal_kind = 'target' AND proposal_level > furthest_level AND furthest_level < 4 AND json_array_length(gate_ids) > 0))
+      AND ${memberGuard})
+      UPDATE garden_levels SET
+        initial_level = CASE WHEN choice.proposal_kind = 'placement' THEN choice.proposal_level ELSE choice.initial_level END,
+        furthest_level = CASE WHEN choice.opens THEN choice.proposal_level ELSE choice.furthest_level END,
+        selected_level = CASE WHEN choice.opens OR choice.proposal_kind = 'revisit' THEN choice.proposal_level ELSE choice.selected_level END,
+        gate_ids = CASE WHEN choice.opens THEN json_extract(?, '$[' || choice.proposal_level || ']') ELSE choice.gate_ids END,
+        proposal_kind = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN 'target' ELSE NULL END,
+        proposal_level = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN choice.proposal_level ELSE NULL END,
+        proposer_id = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN choice.proposer_id ELSE NULL END,
+        target_agreed = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN 1 ELSE 0 END,
+        revision = garden_levels.revision + 1
+      FROM choice WHERE garden_levels.couple_id = choice.couple_id`;
+    values = [couple, action.revision, user, couple, user, couple, gateCatalog];
   } else {
     sql = `UPDATE garden_levels SET proposal_kind = NULL, proposal_level = NULL, proposer_id = NULL,
       target_agreed = 0, revision = revision + 1 WHERE couple_id = ? AND revision = ? AND proposal_kind IS NOT NULL
@@ -87,7 +110,7 @@ export async function drawSeed(coupleId: string, day: string, swaps: number): Pr
   return new DataView(digest).getUint32(0);
 }
 
-export async function loadToday(db: D1Database, coupleId: string, now: number, retry = true): Promise<GardenDay | null> {
+export async function loadToday(db: D1Database, coupleId: string, now: number, userId: string, retry = true): Promise<GardenDay | null> {
   const day = vnDay(now);
   const select = () => db.prepare("SELECT day, card_id, deck_id, swaps, flipped FROM garden_days WHERE couple_id = ? AND day = ?").bind(coupleId, day);
   const current = await select().first<GardenDay>();
@@ -96,12 +119,12 @@ export async function loadToday(db: D1Database, coupleId: string, now: number, r
   if (!card) return null;
   const results = await db.batch<GardenDay>([
     db.prepare(`INSERT INTO garden_days(couple_id, day, deck_id, card_id, created_at) SELECT ?, ?, ?, ?, ?
-      WHERE (SELECT COUNT(*) FROM couple_members WHERE couple_id = ?) = 2
+      WHERE ${cardAccess(card)} AND ${memberGuard}
       AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) < 2
-      ON CONFLICT(couple_id, day) DO NOTHING`).bind(coupleId, day, card.deckId, card.id, now, coupleId, coupleId, card.id),
+      ON CONFLICT(couple_id, day) DO NOTHING`).bind(coupleId, day, card.deckId, card.id, now, ...(cardAccess(card) === "1" ? [] : [coupleId]), coupleId, userId, coupleId, coupleId, card.id),
     select(),
   ]);
-  return results[1]!.results[0] ?? (retry ? loadToday(db, coupleId, now, false) : null);
+  return results[1]!.results[0] ?? (retry ? loadToday(db, coupleId, now, userId, false) : null);
 }
 
 export async function cardStates(db: D1Database, coupleId: string, userId: string, cardIds: string[]): Promise<GardenCardState[]> {
@@ -127,7 +150,7 @@ export async function cardStates(db: D1Database, coupleId: string, userId: strin
 }
 
 export async function gardenState(db: D1Database, coupleId: string, userId: string, now: number): Promise<GardenState> {
-  const today = await loadToday(db, coupleId, now);
+  const today = await loadToday(db, coupleId, now, userId);
   const state = today ? (await cardStates(db, coupleId, userId, [today.card_id]))[0]! : null;
   const locked = today ? await db.prepare("SELECT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) AS locked").bind(coupleId, today.card_id).first<number>("locked") : false;
   const [growth, last] = await db.batch<{ deck_id: string; days: number; day: string | null }>([
@@ -141,7 +164,7 @@ export async function gardenState(db: D1Database, coupleId: string, userId: stri
 }
 
 export async function gardenDeck(db: D1Database, coupleId: string, userId: string, deckId: string, now: number): Promise<GardenDeckState> {
-  const today = await loadToday(db, coupleId, now);
+  const today = await loadToday(db, coupleId, now, userId);
   const input = await drawInput(db, coupleId, vnDay(now));
   const states = await cardStates(db, coupleId, userId, CARDS.filter((card) => card.deckId === deckId).map((card) => card.id));
   const activeId = today?.deck_id === deckId && !input.played.includes(today.card_id) ? today.card_id
