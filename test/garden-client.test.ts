@@ -63,6 +63,8 @@ it.each(["vi", "en"])("R44 R64 AC25 AC35: %s decision notice explains reveal, re
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const html = renderToString(h(I18nProvider, null, h(GardenCard, { card: { ...card, cardId: "L2-01", mine: null }, myName: "An", partnerName: "Binh", onChanged: () => {}, onSignedOut: () => {} })));
   for (const phrase of locale === "vi" ? ["Khi cả hai gửi", "đến khi bạn xoá", "rời đôi", "tải dữ liệu", "tự sao chép"] : ["Once both submit", "until you delete", "unpairing", "data downloads", "manually copy"]) expect(html).toContain(phrase);
+  expect(html.indexOf("<h2")).toBeLessThan(html.indexOf(locale === "vi" ? "Khi cả hai gửi" : "Once both submit"));
+  expect(html.indexOf(locale === "vi" ? "Khi cả hai gửi" : "Once both submit")).toBeLessThan(html.indexOf("<button"));
 });
 it("R43 AC25: choice-aware slots localize own-first choices only after explicit flip", () => {
   vi.stubGlobal("localStorage", { getItem: () => "en" });
@@ -71,4 +73,11 @@ it("R43 AC25: choice-aware slots localize own-first choices only after explicit 
   const render = (revealed: boolean) => renderToString(h(I18nProvider, null, h(AnswerSlots, { card: chosen, revealed, myName: "An", partnerName: "Binh" })));
   expect(render(false)).not.toContain("No details");
   expect(render(true).indexOf("No details")).toBeLessThan(render(true).indexOf("Later / not applicable"));
+});
+
+it.each(["vi", "en"])("decision waiting copy includes text and neutral choices in %s", (locale) => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const html = renderToString(h(I18nProvider, null, h(GardenCard, { card: { ...card, cardId: "L2-01" }, myName: "An", partnerName: "Binh", onChanged: () => {}, onSignedOut: () => {} })));
+  expect(html).toContain(locale === "vi" ? "Hai đứa có thể lật thẻ khi cả hai đã gửi chữ hoặc một lựa chọn." : "You can flip the card once you have both submitted text or a choice.");
+  expect(html).not.toContain(locale === "vi" ? "Hai thẻ sẽ cùng lật khi cả hai đã viết xong." : "The cards will flip when you have both finished writing.");
 });

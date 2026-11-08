@@ -50,10 +50,10 @@ export function GardenCard({ card, myName, partnerName, onChanged, onSignedOut, 
 
   return <article aria-labelledby={`${id}-question`} className="flex flex-col gap-3">
     <p className="flex items-center gap-2 text-sm font-semibold text-muted-foreground"><Heart className="size-4 text-primary" aria-hidden="true" />{deck?.name[locale] ?? t("garden.title")}{definition && <span>· {t(`level.${definition.levelId}`)}</span>}</p>
-    {definition?.kind === "decision" && <p className="text-sm text-muted-foreground">{t("garden.decisionNotice")}</p>}
     <Card className="gap-0 p-2">
       <div className="rounded-lg border border-dashed border-primary/40 p-4">
         <h2 id={`${id}-question`} className={`${phase === "open" && !writing ? "py-8 text-center text-2xl" : "mb-4 text-xl"} font-heading`}>{gardenQuestion(card.cardId, locale, t)}</h2>
+        {definition?.kind === "decision" && <p className="mb-4 text-sm text-muted-foreground">{t("garden.decisionNotice")}</p>}
         {writing ? <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void save(); }}>
           {definition?.kind === "decision" && <>
             <fieldset className="flex flex-col gap-2"><legend className="mb-2 text-sm font-semibold">{t("garden.responseType")}</legend>
@@ -64,14 +64,14 @@ export function GardenCard({ card, myName, partnerName, onChanged, onSignedOut, 
           </>}
           <label htmlFor={`${id}-answer`} className="text-sm font-semibold">{t("garden.myAnswer")}</label>
           <Textarea id={`${id}-answer`} autoFocus value={text} onChange={(e) => { setText(e.target.value); setChoice(null); }} disabled={busy || choice !== null} className="garden-lined min-h-48 text-base leading-8" />
-          <p className="flex gap-2 text-sm text-muted-foreground"><LockKeyhole className="size-4 shrink-0" aria-hidden="true" />{t(phase === "flipped" ? "garden.editHint" : "garden.privateHint")}</p>
+          <p className="flex gap-2 text-sm text-muted-foreground"><LockKeyhole className="size-4 shrink-0" aria-hidden="true" />{t(phase === "flipped" ? "garden.editHint" : definition?.kind === "decision" ? "garden.decisionPrivateHint" : "garden.privateHint")}</p>
           <Button type="submit" loading={busy} disabled={!online || (choice === null && !text.trim())}>{t(!hasMine ? "garden.placeDown" : "garden.save")}</Button>
-          <Button variant="ghost" type="button" disabled={busy} onClick={() => setWriting(false)}>{t("garden.cancel")}</Button>
+          <Button variant="ghost" type="button" disabled={busy} onClick={() => setWriting(false)}>{t(definition?.kind === "decision" ? "entry.cancel" : "garden.cancel")}</Button>
         </form> : phase === "open" ? <Button className="w-full" onClick={write}><PencilLine aria-hidden="true" />{t("garden.write")}</Button> : <>
           <AnswerSlots card={card} revealed={revealed && phase === "flipped"} myName={myName} partnerName={partnerName} />
           {phase === "flipped" && !revealed && <Button className="mt-4 w-full" onClick={() => { setRevealed(true); onFlip?.(); }}>{t("garden.flip")}</Button>}
           {revealed && card.flippedDay && <p className="mt-3 text-center text-sm text-muted-foreground"><time dateTime={card.flippedDay}>{formatDay(card.flippedDay, locale)}</time></p>}
-          {phase === "waiting" && <p role="status" className="mt-3 text-center text-sm text-muted-foreground">{t("garden.waitingHint")}</p>}
+          {phase === "waiting" && <p role="status" className="mt-3 text-center text-sm text-muted-foreground">{t(definition?.kind === "decision" ? "garden.decisionWaitingHint" : "garden.waitingHint")}</p>}
         </>}
       </div>
     </Card>
