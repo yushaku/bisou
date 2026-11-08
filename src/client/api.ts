@@ -19,7 +19,7 @@ import type {
   RequestCodeResponse,
   User,
 } from "../shared/types";
-import type { GardenState, GardenCardState, GardenDeckState } from "../shared/garden";
+import type { GardenState, GardenCardState, GardenDeckState, GardenLevels, LevelAction } from "../shared/garden";
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: ApiError | null };
 
@@ -47,6 +47,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  gardenLevels: (body: LevelAction) => call<{ levels: GardenLevels }>("POST", "/api/garden/levels", body),
   garden: () => call<GardenState>("GET", "/api/garden"),
   gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
   swapGarden: (cardId: string) => call<GardenState>("POST", "/api/garden/today/swap", { cardId }),

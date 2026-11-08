@@ -35,3 +35,15 @@ describe("Garden draw", () => {
     expect(drawCard({ played: CARDS.filter((c) => c.id !== `${deck}-01` && c.id !== `${deck}-02`).map((c) => c.id), swapped: [`${deck}-02`, `${deck}-01`] }, 0)?.id).toBe(`${deck}-02`);
   });
 });
+
+it("R53 R56 AC31 AC36: only opened ordinary cards enter draws; locked cards do not prevent exhaustion", () => {
+  const legacy = CARDS.filter((c) => !c.id.startsWith("L")).map((c) => c.id);
+  expect(drawCard({ played: legacy }, 0)).toBeNull();
+  const next = drawCard({ played: legacy, furthestLevel: 1 }, 0)!;
+  expect(next.kind).toBe("ordinary"); expect(next.levelId).toBe("in_love");
+  expect(drawCard({ played: CARDS.filter((c) => c.kind === "ordinary" && ["acquainted", "in_love"].includes(c.levelId)).map((c) => c.id), furthestLevel: 1 }, 0)).toBeNull();
+  const candidates = CARDS.filter((c) => c.deckId === "money" && !c.id.startsWith("L"));
+  const played = CARDS.filter((c) => c.deckId !== "money" || !candidates.slice(0, 2).includes(c)).map((c) => c.id);
+  expect(drawCard({ played, waiting: ["money-01"] }, 0)?.id).toBe("money-02");
+  expect(drawCard({ played: [...played, "money-02"], waiting: ["money-01"] }, 0)?.id).toBe("money-01");
+});

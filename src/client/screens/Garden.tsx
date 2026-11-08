@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Couple } from "../../shared/types";
 import { cardById, DECKS, type GardenState } from "../../shared/garden";
 import { api } from "../api";
+import { GardenLevels } from "../components/bisou/GardenLevels";
 import { GardenCard } from "../components/bisou/GardenCard";
 import { Planter } from "../components/bisou/Planter";
 import { GardenScene } from "../components/bisou/GardenScene";
@@ -57,6 +58,7 @@ export function Garden({ couple, ...session }: SessionProps & { couple: Couple }
     <div className="flex flex-col gap-5 py-3">
       {failed && <div role="alert"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
       {!state && !failed && <Skeleton className="h-80 w-full" aria-label={t("loading")} />}
+      {state && <GardenLevels levels={state.levels} onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
       {state?.today ? <>
         <p className="text-sm font-semibold text-muted-foreground">{t("garden.today")}</p>
         <GardenCard key={state.today.cardId} card={state.today} myName={user.displayName ?? t("garden.me")} partnerName={partner?.displayName ?? t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} onFlip={() => { if (state.today?.flippedDay === state.day) setScene(true); }} />

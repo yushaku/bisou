@@ -406,3 +406,56 @@ describe("Garden daily cards", () => {
     }
   });
 });
+
+
+describe("Relationship placement", () => {
+  it("R45 R46 AC26 AC33: placement is mutual, stale acceptance cannot consume a replacement", async () => {
+    const { a, b, couple } = await paired();
+    const initial = await garden(a);
+    const action = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
+    expect((await action(a, { action: "propose", kind: "placement", levelId: "married", revision: 0 })).status).toBe(200);
+    expect((await action(a, { action: "accept", revision: 1 })).status).toBe(409);
+    expect((await action(a, { action: "propose", kind: "placement", levelId: "in_love", revision: 1 })).status).toBe(200);
+    expect((await action(b, { action: "accept", revision: 1 })).status).toBe(409);
+    expect((await action(b, { action: "accept", revision: 2 })).status).toBe(200);
+    const state = await garden(a);
+    expect(state).toMatchObject({ levels: { initialLevelId: "in_love", selectedLevelId: "in_love", furthestLevelId: "in_love" } });
+    expect(state.today).toEqual(initial.today);
+    expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
+    expect((await action(a, { action: "propose", kind: "placement", levelId: "married", revision: 3 })).status).toBe(409);
+  });
+  it("R46 R56 AC36: unplaced couples keep legacy play and cannot forge a locked ordinary answer", async () => {
+    const { a } = await paired();
+    expect((await answer(a, "L2-02")).status).toBe(404);
+    expect((await garden(a)).today?.cardId).not.toMatch(/^L/);
+  });
+});
+
+it("R45 R51 R52 AC26 AC30 AC31: Married starting placement preserves waiting cards and growth; mutual revisit keeps access", async () => {
+  const { a, b, couple } = await paired();
+  const before = await garden(a);
+  await answer(a, before.today!.cardId);
+  await env.DB.prepare("INSERT INTO garden_growth VALUES (?, 'money', '2026-11-08')").bind(couple.id).run();
+  const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
+  expect((await act(a, { action: "propose", kind: "placement", levelId: "married", revision: 0 })).status).toBe(200);
+  expect((await act(b, { action: "accept", revision: 1 })).status).toBe(200);
+  const state = await garden(b);
+  expect(state.today!.cardId).toBe(before.today!.cardId);
+  expect(state.plants.find((p) => p.deckId === "money")!.stage).toBe(1);
+  expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
+  expect((await act(a, { action: "propose", kind: "revisit", levelId: "in_love", revision: 2 })).status).toBe(200);
+  expect((await act(b, { action: "accept", revision: 3 })).status).toBe(200);
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "in_love", furthestLevelId: "married", initialLevelId: "married" });
+  expect((await answer(b, before.today!.cardId)).status).toBe(201);
+});
+it("R1 R46 AC33: only current paired members mutate levels; pending proposals require decline before counterproposal", async () => {
+  const { a, b, couple } = await paired(); const outsider = await user("Outside");
+  const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
+  expect((await act(outsider, { action: "accept", revision: 1 })).status).toBe(404);
+  await act(a, { action: "propose", kind: "placement", levelId: "married", revision: 0 });
+  expect((await act(b, { action: "propose", kind: "placement", levelId: "in_love", revision: 1 })).status).toBe(409);
+  expect((await act(b, { action: "decline", revision: 1 })).status).toBe(200);
+  expect((await act(b, { action: "propose", kind: "placement", levelId: "in_love", revision: 2 })).status).toBe(200);
+  await env.DB.prepare("DELETE FROM couple_members WHERE couple_id = ? AND user_id = ?").bind(couple.id, a.id).run();
+  expect((await act(b, { action: "accept", revision: 3 })).status).toBe(404);
+});

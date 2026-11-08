@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DECKS, type GardenDeckState } from "../../shared/garden";
+import { DECKS, cardById, type GardenDeckState } from "../../shared/garden";
 import type { Couple } from "../../shared/types";
 import { api } from "../api";
 import { GardenCard } from "../components/bisou/GardenCard";
@@ -46,6 +46,7 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
         <GardenCard key={state.active.cardId} card={state.active} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />
       </section>}
       {state && !state.active && <p className="text-center text-muted-foreground">{t("garden.allPlayed")}</p>}
+      {!!state?.locked.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("garden.locked")}</h2>{state.locked.map((id) => <p key={id} className="text-sm text-muted-foreground">{cardById(id)?.text[locale]}</p>)}</section>}
       {!!state?.history.length && <section className="flex flex-col gap-6"><h2 className="font-heading text-xl">{t("garden.history")}</h2>
         {state.history.map((card) => <GardenCard key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
       </section>}

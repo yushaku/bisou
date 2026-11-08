@@ -1,9 +1,9 @@
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { vnDay } from "../../shared/days";
-import { answerText, cardById, DECKS, drawCard } from "../../shared/garden";
+import { answerText, cardById, DECKS, drawCard, LEVEL_IDS, type LevelAction } from "../../shared/garden";
 import type { AppEnv } from "../env";
-import { cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday } from "../lib/garden";
+import { changeLevels, levelsState, memberGuard, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday } from "../lib/garden";
 import { notifyGarden } from "../lib/notify";
 
 type GardenEnv = AppEnv & { Variables: { gardenCoupleId: string } };
@@ -17,9 +17,23 @@ garden.use("*", async (c, next) => {
   if (!membership) return c.json({ error: "not_in_couple" }, 404);
   c.set("gardenCoupleId", membership.couple_id);
   await next();
+  const current = await c.env.DB.prepare(`SELECT 1 FROM couple_members WHERE couple_id = ? AND user_id = ?
+    AND (SELECT COUNT(*) FROM couple_members WHERE couple_id = ?) = 2`).bind(membership.couple_id, c.get("user").id, membership.couple_id).first();
+  if (!current) return c.json({ error: "not_in_couple" }, 404);
 });
 
 garden.get("/", async (c) => c.json(await gardenState(c.env.DB, c.get("gardenCoupleId"), c.get("user").id, Date.now())));
+
+garden.post("/levels", limitBody, async (c) => {
+  const body = await c.req.json().catch(() => null);
+  if (!body || !Number.isSafeInteger(body.revision) || body.revision < 0
+    || !["propose", "accept", "decline", "withdraw"].includes(body.action)
+    || (body.action === "propose" && (!["placement", "revisit", "target"].includes(body.kind) || !LEVEL_IDS.includes(body.levelId)))
+    || Object.keys(body).some((key) => !(body.action === "propose" ? ["action", "kind", "levelId", "revision"] : ["action", "revision"]).includes(key))) return c.json({ error: "invalid_body" }, 400);
+  const couple = c.get("gardenCoupleId"), user = c.get("user").id;
+  if (!await changeLevels(c.env.DB, couple, user, body as LevelAction)) return c.json({ error: "stale_levels" }, 409);
+  return c.json({ levels: await levelsState(c.env.DB, couple, user) });
+});
 
 garden.get("/decks/:deckId", async (c) => {
   const deck = DECKS.find((d) => d.id === c.req.param("deckId"));
@@ -44,9 +58,10 @@ garden.post("/today/swap", limitBody, async (c) => {
   if (!card) return c.json({ error: "no_other_card" }, 409);
   const updated = await db.prepare(`UPDATE garden_days SET card_id = ?, deck_id = ?, swaps = swaps + 1,
     swapped_cards = json_set(swapped_cards, ?, ?) WHERE couple_id = ? AND day = ? AND card_id = ?
+    AND ${memberGuard}
     AND NOT EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1)
     AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1) < 2`)
-    .bind(card.id, card.deckId, `$."${today.card_id}"`, `${today.day}:${String(today.swaps + 1).padStart(12, "0")}`, couple, today.day, today.card_id, couple, today.card_id, couple, card.id).run();
+    .bind(card.id, card.deckId, `$."${today.card_id}"`, `${today.day}:${String(today.swaps + 1).padStart(12, "0")}`, couple, today.day, today.card_id, couple, user, couple, couple, today.card_id, couple, card.id).run();
   if (!updated.meta.changes) {
     const current = await loadToday(db, couple, now);
     if (current?.card_id === today.card_id && await locked()) return c.json({ error: "swap_locked" }, 409);
