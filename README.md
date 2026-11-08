@@ -31,28 +31,47 @@ Use Node.js 24 or newer (the design checks run TypeScript directly).
 
 ```sh
 pnpm install
-cp .dev.vars.example .dev.vars
-pnpm db:migrate:local
 pnpm dev
 ```
 
-Open http://localhost:5173. Without `RESEND_API_KEY` in `.dev.vars` no mail is sent: the code is printed in the `pnpm dev` log. D1 and R2 are emulated locally in `.wrangler/state`; local photo uploads need no remote bucket or R2 credentials.
+Open http://127.0.0.1:5191. `pnpm dev` waits for missing local migrations, seeds absent synthetic Garden couples, checks the seed, then starts Vite and the Worker against the same isolated D1/R2 persistence in `.wrangler/stage-seed-v1/state`. Existing data in `.wrangler/state` stays untouched; the default dev instance uses the dedicated seed database instead. No remote credentials or `.dev.vars` setup is needed.
 
-With `ENVIRONMENT=development` and `DEV_LOGIN_CODE=111111` in `.dev.vars`, request a code first, then sign in with `111111` or the normal OTP; production ignores `DEV_LOGIN_CODE`.
+The generated local-only config enables the existing development login code: request a code first, then sign in with `111111`. No mail is sent; normal local OTP logging remains. The runner does not read or change project `.dev.vars`, and production ignores `DEV_LOGIN_CODE`.
 
-Open http://localhost:5173/design for the development-only component gallery and three sample screens. Read [DESIGN.md](DESIGN.md) before changing UI; it records the approved visual direction and design constraints.
+Open http://127.0.0.1:5191/design for the development-only component gallery and three sample screens. Read [DESIGN.md](DESIGN.md) before changing UI; it records the approved visual direction and design constraints.
+
+### Garden seed testing (isolated local instance)
+
+```sh
+pnpm dev
+```
+
+Open **http://127.0.0.1:5191/garden**. The runner applies migrations only to its dedicated local database, creates missing synthetic couples, checks the seed and starts Vite with the local Worker on loopback. It leaves other dev servers and the regular `.wrangler/state` database alone. Stop this instance with Ctrl+C in its terminal.
+
+Use a normal browser profile for partner A and a private window or another profile for B. Request a login code for the account first, then enter **111111**; this existing development-only login path sends no email here. Each scenario has two accounts: `seed-stage-<scenario>-a@example.com` and `seed-stage-<scenario>-b@example.com`. A starts in Vietnamese and B in English; switch language in the app as needed. Local OTP rate limits still apply.
+
+| Scenario | Starting state | Try |
+| --- | --- | --- |
+| `placement` | Starting placement pending: A proposed Married; not yet placed | Accept as B, or decline and propose another context; daily play still works before acceptance |
+| `reveal` | In love, no target; A has private text on `L2-01` | Open Money as B: the text stays hidden until B submits; `L2-03` has paired no-details/later choices and `L2-05` pairs text with later |
+| `unlock` | In love, Living together mutually chosen; only B's final decision response is missing | Submit as B on `L2-19` in When we disagree to open Living together once; today's ordinary card and plants stay intact |
+| `skip` | Living together, With children mutually chosen; only B's final decision response is missing | Submit as B on `L3-04` in Dreams; open With children without answering Married's decisions |
+
+Each couple also has an untouched ordinary daily card, a private waiting ordinary answer, revealed/edited/deleted Money history, a swapped-card record and sample plants. Fixtures use the Vietnam date when first created; daily cards follow the real date afterward.
+
+Data, generated local config and logs live under `.wrangler/stage-seed-v1/` (ignored); D1 persistence is `.wrangler/stage-seed-v1/state`. Rerunning **preserves existing couples and all manual changes**, including deleted answers and opened stages; it only creates missing scenario couples. To prepare/check without starting a server, run `node scripts/dev-seed-garden.mjs --prepare-only`. This runner has no remote mode, reads no project `.dev.vars`, and provides no reset command. Vite hot reload remains available for frontend edits. No tunnel or phone publication is started.
 
 ## Scripts
 
 | Script | What it does |
 | --- | --- |
-| `pnpm dev` | Vite and the Worker together (local D1 and R2 in `.wrangler/state`) |
-| `pnpm dev:phone [port]` | Same dev server on port 5180 (or the given port) plus a cloudflared quick tunnel; prints an https URL to open on a phone |
+| `pnpm dev` | Apply missing local migrations, seed missing synthetic couples, then Vite and Worker on port 5191 (isolated local D1/R2) |
+| `pnpm dev:phone [port]` | Same migration/seed/dev flow on port 5180 (or the given port) plus a cloudflared quick tunnel; prints an https URL to open on a phone |
 | `pnpm build` | Builds the client (`dist/client`, with service worker) and the Worker (`dist/bisou`) |
 | `pnpm typecheck` | `tsc --noEmit` for client, Worker, Vite config and tests |
-| `pnpm test` | API and client logic tests (Vitest in workerd, Resend mocked), then design-system and migration checks (Node) |
+| `pnpm test` | API and client logic tests (Vitest in workerd, Resend mocked), then design-system, migration and local seed-workflow checks (Node) |
 | `pnpm icons` | Exports the in-app logo, PNG favicons and install icons from the brand artwork |
-| `pnpm db:migrate:local` | Applies migrations to the local D1 |
+| `pnpm db:migrate:local` | Applies migrations to the original `.wrangler/state` D1; the default `pnpm dev` instance prepares its own DB automatically |
 | `pnpm run deploy` | Builds, then `wrangler deploy` (needs the setup below) |
 
 ## Deploy

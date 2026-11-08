@@ -20,7 +20,12 @@ export default defineConfig({
     { name: "bisou-palettes", transformIndexHtml: () => themeHead(palettes) },
     react(),
     tailwindcss(),
-    cloudflare(),
+    cloudflare(process.env.BISOU_LOCAL_CONFIG ? {
+      configPath: process.env.BISOU_LOCAL_CONFIG,
+      persistState: { path: process.env.BISOU_LOCAL_STATE! },
+      remoteBindings: false,
+      inspectorPort: false,
+    } : undefined),
     // The PWA plugin only concerns the browser build, not the Worker bundle.
     ...clientOnly(VitePWA({
       registerType: "autoUpdate",

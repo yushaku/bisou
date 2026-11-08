@@ -5,8 +5,8 @@ import { spawn } from "node:child_process";
 const port = process.argv[2] ?? "5180";
 const children = [];
 
-function start(cmd, args) {
-  const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"] });
+function start(cmd, args, options = {}) {
+  const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"], ...options });
   children.push(child);
   child.on("exit", (code) => {
     console.log(`[dev:phone] ${cmd} exited (${code ?? "signal"}), stopping`);
@@ -22,7 +22,7 @@ function stop(code = 0) {
 process.on("SIGINT", () => stop(0));
 process.on("SIGTERM", () => stop(0));
 
-const vite = start("pnpm", ["exec", "vite", "--port", port, "--strictPort"]);
+const vite = start("pnpm", ["dev"], { env: { ...process.env, BISOU_DEV_PORT: port } });
 vite.stdout.pipe(process.stdout);
 vite.stderr.pipe(process.stderr);
 
