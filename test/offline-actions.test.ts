@@ -37,6 +37,7 @@ function elements(node: ReactNode): ReactElement<Props>[] {
 const entry = { id: "entry", authorId: "an", date: "2020-01-01", text: "A memory", source: "partner" as const, photoIds: [], createdAt: 0, updatedAt: 0 };
 const wish = { id: "wish", title: "A book", price: null, link: null, priority: 2 as const, photoId: null, status: "open" as const, receivedOn: null, note: null, createdAt: 0, updatedAt: 0 };
 const user = { id: "an", displayName: "An", email: "an@example.com", birthDate: null, avatarId: null, locale: "en" as const, createdAt: 0 };
+const partner = { ...user, id: "binh", displayName: "Bình", email: "binh@example.com" };
 
 it.each([false, true])("entry deletion respects connectivity: online=%s", async (online) => {
   vi.stubGlobal("navigator", { onLine: online });
@@ -54,8 +55,8 @@ it.each([false, true])("entry deletion respects connectivity: online=%s", async 
 it.each([false, true])("wish deletion respects connectivity: online=%s", async (online) => {
   vi.stubGlobal("navigator", { onLine: online });
   const remove = vi.spyOn(api, "deleteWish").mockResolvedValue({ ok: false, status: 0, error: null });
-  state.push("jar", false, "all", null, false, false, undefined, wish, false, true, false, null);
-  const nodes = elements(Wishes({ user, couple: { id: "couple", startDate: null, members: [user], events: [] }, onUser: vi.fn(), onSignedOut: vi.fn() }));
+  state.push("jar", "all", null, false, false, undefined, wish, false, true, false, null);
+  const nodes = elements(Wishes({ user, couple: { id: "couple", startDate: null, members: [user, partner], events: [] }, onUser: vi.fn(), onSignedOut: vi.fn() }));
   const confirm = nodes.find((node) => node.key === "confirm-delete")!;
   expect(Boolean(confirm.props.disabled)).toBe(!online);
   confirm.props.onClick!();

@@ -81,3 +81,19 @@ it.each(["vi", "en"])("decision waiting copy includes text and neutral choices i
   expect(html).toContain(locale === "vi" ? "Hai đứa có thể lật thẻ khi cả hai đã gửi chữ hoặc một lựa chọn." : "You can flip the card once you have both submitted text or a choice.");
   expect(html).not.toContain(locale === "vi" ? "Hai thẻ sẽ cùng lật khi cả hai đã viết xong." : "The cards will flip when you have both finished writing.");
 });
+
+it.each(["vi", "en"])("today variant keeps the soft paper card private in every state (%s)", (locale) => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const render = (state: GardenCardState, props: { variant?: "deck" | "today" } = { variant: "today" }) => renderToString(h(I18nProvider, null, h(GardenCard, { card: state, myName: "An", partnerName: "Binh", onChanged: () => {}, onSignedOut: () => {}, ...props })));
+  const open = render({ ...card, mine: null });
+  expect(open).toContain(locale === "vi" ? "Viết câu trả lời" : "Write your answer");
+  expect(open).not.toContain("my words");
+  const waiting = render(card);
+  expect(waiting).toContain(locale === "vi" ? "Đã úp thẻ" : "Placed face down");
+  expect(waiting).toContain(locale === "vi" ? "Đang chờ người ấy" : "Waiting for your partner");
+  expect(waiting).not.toContain("my words");
+  const flipped = render({ ...card, partner: "partner words", flippedDay: "2026-11-08" });
+  expect(flipped).toContain(locale === "vi" ? "Lật thẻ" : "Flip");
+  expect(flipped).not.toContain("my words");
+  expect(flipped).not.toContain("partner words");
+});

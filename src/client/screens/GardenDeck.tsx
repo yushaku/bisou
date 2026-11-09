@@ -39,7 +39,13 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
   return <div className="flex min-h-dvh flex-col">
     <SubPageHeader title={deck?.name[locale] ?? t("garden.unknownDeck")} />
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 pt-3 pb-6">
-      {deck && <div className="flex items-center gap-4"><div className="w-24 shrink-0"><Plant deckId={deck.id} stage={0} /></div><p className="text-sm text-muted-foreground">{deck.purpose[locale]}</p></div>}
+      {deck && <div className="flex items-end gap-3">
+        <div className="w-20 shrink-0"><Plant deckId={deck.id} stage={0} /></div>
+        <div className="min-w-0 pb-1">
+          <h2 className="font-heading text-xl">{deck.name[locale]}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{deck.purpose[locale]}</p>
+        </div>
+      </div>}
       {failed && <div role="alert"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
       {!state && !failed && <Skeleton className="h-80" aria-label={t("loading")} />}
       {state?.active && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("garden.inPlay")}</h2>

@@ -226,6 +226,423 @@
   background-image: repeating-linear-gradient(transparent 0 calc(--spacing(8) - 1px), var(--border) calc(--spacing(8) - 1px) --spacing(8));
   background-position: 0 --spacing(3);
 }
+
+/* Today's card on Home: a warm paper wash, and folded notes for the two answers. */
+.today-frame {
+  background-image: radial-gradient(120% 85% at 50% -12%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 62%);
+}
+.today-note {
+  background-image: repeating-linear-gradient(transparent 0 calc(1.75rem - 1px), color-mix(in oklab, var(--border) 60%, transparent) calc(1.75rem - 1px) 1.75rem);
+  background-position: 0 0.65rem;
+}
+.today-note-ready::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1rem;
+  height: 1rem;
+  border-top-left-radius: 4px;
+  background: linear-gradient(135deg, transparent 50%, color-mix(in oklab, var(--primary) 22%, var(--card)) 50%);
+  pointer-events: none;
+}
+
+/* Floating-island stage map: a warm sky, a dotted trail, and one island per relationship stage. */
+.garden-isles {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-3xl);
+  border: var(--edge-width) solid color-mix(in oklab, var(--chart-2) 28%, var(--border));
+  background:
+    radial-gradient(120% 60% at 88% 0%, color-mix(in oklab, var(--chart-3) 24%, transparent) 0%, transparent 64%),
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--chart-5) 15%, var(--background)) 0%,
+      color-mix(in oklab, var(--card) 82%, var(--background)) 48%,
+      color-mix(in oklab, var(--chart-4) 12%, var(--background)) 100%);
+  box-shadow: var(--shadow-rest-sm);
+  padding: 14px 12px 18px;
+}
+.garden-isles::before,
+.garden-isles::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--card) 78%, transparent);
+}
+.garden-isles::before {
+  inset-block-start: 64px;
+  inset-inline-start: -34px;
+  width: 132px;
+  height: 30px;
+  box-shadow: 46px 12px 0 -8px color-mix(in oklab, var(--card) 62%, transparent);
+}
+.garden-isles::after {
+  inset-block-start: 250px;
+  inset-inline-end: -42px;
+  width: 150px;
+  height: 34px;
+  opacity: .75;
+}
+.garden-map-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.garden-map-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  max-width: 46%;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--primary) 26%, transparent);
+  background: color-mix(in oklab, var(--primary) 18%, var(--card));
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.garden-trail-wrap {
+  position: relative;
+  margin-top: 14px;
+}
+.garden-path {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.garden-path-road {
+  fill: none;
+  stroke: color-mix(in oklab, var(--chart-2) 52%, var(--card));
+  stroke-width: 9;
+  stroke-linecap: round;
+  opacity: .72;
+}
+.garden-path-line {
+  fill: none;
+  stroke: color-mix(in oklab, var(--card) 65%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 2 7;
+  opacity: .9;
+}
+.garden-path-segment[data-reached="true"] .garden-path-road {
+  stroke: color-mix(in oklab, var(--primary) 34%, color-mix(in oklab, var(--chart-2) 46%, var(--card)));
+  opacity: .9;
+}
+.garden-path-segment[data-reached="true"] .garden-path-line {
+  stroke: color-mix(in oklab, var(--primary) 45%, var(--card));
+  opacity: .95;
+}
+.garden-trail {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.garden-stop {
+  display: flex;
+  flex-direction: column;
+}
+.garden-stop[data-side="start"] { align-items: flex-start; }
+.garden-stop[data-side="end"] { align-items: flex-end; }
+.garden-island {
+  position: relative;
+  width: min(100%, 300px);
+  border: 0;
+  border-radius: var(--radius-2xl);
+  background: none;
+  padding: 0;
+  color: inherit;
+  text-align: center;
+  outline: none;
+}
+.garden-island:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 4px;
+}
+.garden-island-art-wrap {
+  display: block;
+  transition: transform 240ms var(--ease), filter 240ms var(--ease);
+}
+@media (hover: hover) {
+  .garden-island:hover .garden-island-art-wrap { transform: translateY(-3px); }
+}
+.island-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.garden-island-copy {
+  position: absolute;
+  inset-inline: 0;
+  top: 54%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-inline: 18px;
+  pointer-events: none;
+}
+.garden-island-name {
+  font-size: 1.05rem;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+.garden-island-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--muted-foreground);
+}
+.garden-island[data-state="current"] .island-art {
+  filter: drop-shadow(0 10px 14px color-mix(in oklab, var(--primary) 26%, transparent));
+}
+.garden-island[data-state="locked"] .island-art {
+  opacity: .56;
+  filter: saturate(.55);
+}
+.garden-island[data-state="locked"] .garden-island-copy { opacity: .78; }
+.garden-island[data-state="proposed"] .island-art,
+.garden-island[data-state="chosen"] .island-art {
+  filter: drop-shadow(0 0 10px color-mix(in oklab, var(--primary) 30%, transparent));
+}
+.garden-island[data-rank="0"] { --island-accent: var(--chart-5); }
+.garden-island[data-rank="1"] { --island-accent: var(--chart-1); }
+.garden-island[data-rank="2"] { --island-accent: var(--chart-2); }
+.garden-island[data-rank="3"] { --island-accent: var(--chart-3); }
+.garden-island[data-rank="4"] { --island-accent: var(--chart-4); }
+.garden-island[data-viewing="true"] {
+  outline: 2px solid color-mix(in oklab, var(--ring) 70%, transparent);
+  outline-offset: 5px;
+}
+.garden-island-viewing {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1.2;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+.garden-stage-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.garden-view-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.garden-view-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+}
+.garden-view-state {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.garden-view-current {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--primary) 8%, var(--card));
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .garden-stage-view { animation: island-panel-in 220ms var(--ease) both; }
+}
+@keyframes island-panel-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .garden-island-art-wrap,
+  .garden-stage-chevron { transition: none; }
+}
+.garden-planter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.garden-plot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in oklab, var(--chart-4) 28%, var(--border));
+  background:
+    radial-gradient(90% 70% at 50% 0%, color-mix(in oklab, var(--chart-4) 24%, transparent), transparent 72%),
+    linear-gradient(180deg, color-mix(in oklab, var(--card) 84%, var(--background)), color-mix(in oklab, var(--chart-4) 14%, var(--card)));
+  padding: 6px;
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--card) 80%, transparent);
+}
+.garden-plot-plant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  border-radius: var(--radius-lg);
+  padding: 2px 2px 4px;
+  outline: none;
+}
+.garden-plot-plant .garden-plant { height: 6.75rem; }
+.garden-stage-view .garden-plot-plant .garden-plant { height: 8rem; }
+.garden-plot-plant p {
+  width: 100%;
+  border-top: 1px dashed color-mix(in oklab, var(--primary) 35%, transparent);
+  padding-top: 3px;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.garden-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.garden-stage-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  border-radius: var(--radius-lg);
+  padding-block: 2px;
+  list-style: none;
+  cursor: pointer;
+  outline: none;
+}
+.garden-stage-summary::-webkit-details-marker { display: none; }
+.garden-stage-summary:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+.garden-stage-chevron { transition: transform 180ms var(--ease); }
+.garden-stage[open] .garden-stage-chevron { transform: rotate(180deg); }
+.garden-stage-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.garden-stage-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.garden-stage-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-block: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.garden-stage-item + .garden-stage-item {
+  border-top: 1px dashed color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+.garden-stage-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.garden-stage-state {
+  flex-shrink: 0;
+  max-width: 45%;
+  text-align: end;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.garden-stage-state--done { color: color-mix(in oklab, var(--success) 70%, var(--foreground)); }
+.island-shadow { fill: var(--foreground); opacity: .16; }
+.island-rock-deep { fill: color-mix(in oklab, var(--chart-2) 78%, var(--card)); }
+.island-rock {
+  fill: color-mix(in oklab, var(--chart-2) 58%, var(--card));
+  stroke: color-mix(in oklab, var(--foreground) 55%, transparent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.island-rock-rim { fill: color-mix(in oklab, var(--chart-2) 42%, var(--card)); }
+.island-hill {
+  fill: color-mix(in oklab, var(--chart-4) 62%, var(--card));
+  stroke: color-mix(in oklab, var(--foreground) 38%, transparent);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+.island-stone {
+  fill: color-mix(in oklab, var(--chart-2) 48%, var(--card));
+  stroke: color-mix(in oklab, var(--foreground) 38%, transparent);
+  stroke-width: 1;
+}
+.island-grass {
+  fill: color-mix(in oklab, var(--chart-4) 52%, var(--card));
+  stroke: color-mix(in oklab, var(--foreground) 48%, transparent);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.island-grass-light { fill: color-mix(in oklab, var(--chart-4) 30%, var(--card)); }
+.island-vine,
+.island-stem,
+.island-tuft {
+  fill: none;
+  stroke: color-mix(in oklab, var(--chart-4) 62%, var(--foreground));
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.island-flower {
+  fill: var(--island-accent, var(--chart-1));
+  stroke: color-mix(in oklab, var(--foreground) 35%, transparent);
+  stroke-width: .8;
+}
+.island-flower-core { fill: var(--chart-3); }
+.island-flag-pole {
+  fill: none;
+  stroke: color-mix(in oklab, var(--foreground) 48%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.island-flag-cloth {
+  fill: var(--island-accent, var(--primary));
+  stroke: color-mix(in oklab, var(--foreground) 35%, transparent);
+  stroke-width: .8;
+}
+.dark .island-shadow { opacity: .3; }
+.dark .island-rock { fill: color-mix(in oklab, var(--chart-2) 55%, var(--card)); }
+.dark .island-rock-deep { fill: color-mix(in oklab, var(--chart-2) 70%, var(--card)); }
+.dark .island-rock-rim { fill: color-mix(in oklab, var(--chart-2) 38%, var(--card)); }
+.dark .island-grass { fill: color-mix(in oklab, var(--chart-4) 48%, var(--card)); }
+.dark .island-grass-light { fill: color-mix(in oklab, var(--chart-4) 30%, var(--card)); }
+
 .garden-plant { overflow: visible; }
 .plant-ink, .plant-pot, .plant-leaf, .plant-flower {
   stroke: color-mix(in oklab, var(--foreground) 65%, transparent);

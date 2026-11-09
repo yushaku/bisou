@@ -1,14 +1,21 @@
-import { Link } from "wouter";
-import { useState } from "react";
-import { CARDS, LEVEL_IDS, levelRank, type GardenLevels as Levels, type LevelAction } from "../../../shared/garden";
+import { useState, type ReactNode } from "react";
+import { LEVEL_IDS, levelRank, type GardenLevels as Levels, type LevelAction } from "../../../shared/garden";
 import { api } from "../../api";
 import { useI18n } from "../../i18n";
 import { useOnline } from "../../lib/useOnline";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "../ui/drawer";
 
-export function GardenLevels({ levels, onChanged, onSignedOut }: { levels: Levels; onChanged: () => void; onSignedOut: () => void }) {
-  const { t, locale } = useI18n();
+/* The mutual stage actions. The island panel owns the stage questions and garden view. */
+export function GardenLevels({ levels, onChanged, onSignedOut, trigger, focusLevelId }: {
+  levels: Levels;
+  onChanged: () => void;
+  onSignedOut: () => void;
+  trigger?: ReactNode;
+  focusLevelId?: string;
+}) {
+  const { t } = useI18n();
   const online = useOnline();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,9 +32,9 @@ export function GardenLevels({ levels, onChanged, onSignedOut }: { levels: Level
   }
   const furthest = levels.furthestLevelId === null ? -1 : levelRank(levels.furthestLevelId);
   return <Drawer>
-    <DrawerTrigger asChild><Button variant="outline" className="h-auto justify-between gap-3 whitespace-normal py-3 text-left">
+    <DrawerTrigger asChild>{trigger ?? <Button variant="outline" className="h-auto justify-between gap-3 whitespace-normal py-3 text-left">
       <span>{t("garden.status")}</span><span>{levels.selectedLevelId ? t(`level.${levels.selectedLevelId}`) : t("garden.chooseStatus")}</span>
-    </Button></DrawerTrigger>
+    </Button>}</DrawerTrigger>
     <DrawerContent><div className="mx-auto flex w-full max-w-md flex-col gap-4 overflow-y-auto px-4 pb-6">
       <DrawerHeader className="px-0 text-left"><DrawerTitle>{t("garden.status")}</DrawerTitle><DrawerDescription>{t("garden.statusHint")}</DrawerDescription></DrawerHeader>
       {!levels.placementComplete && <p className="text-sm text-muted-foreground">{t("garden.placementHint")}</p>}
@@ -45,14 +52,11 @@ export function GardenLevels({ levels, onChanged, onSignedOut }: { levels: Level
       {!online && <p role="status" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
       {levels.placementComplete && <p className="text-sm text-muted-foreground">{t("garden.targetHint")}</p>}
       <DrawerClose asChild><Button variant="outline">{t("common.close")}</Button></DrawerClose>
-      {LEVEL_IDS.map((levelId, rank) => <section key={levelId} className="flex flex-col gap-3 rounded-xl edge bg-card p-4">
+      {LEVEL_IDS.map((levelId, rank) => <section key={levelId} className={cn("flex flex-col gap-3 rounded-xl edge bg-card p-4", focusLevelId === levelId && "ring-2 ring-ring/40")}>
         <h2 className="font-heading text-xl">{t(`level.${levelId}`)}</h2>
         {levelId !== levels.selectedLevelId && <Button variant="outline" className="h-auto min-h-11 whitespace-normal py-2" disabled={!online || busy || !!levels.proposal && !levels.proposal.proposedByMe}
           onClick={() => void act({ action: "propose", kind: !levels.placementComplete ? "placement" : rank <= furthest ? "revisit" : "target", levelId, revision: levels.revision })}>{t(!levels.placementComplete ? "garden.propose" : rank <= furthest ? "garden.revisit" : "garden.target")}</Button>}
         {rank === LEVEL_IDS.length - 1 && <p className="text-sm text-muted-foreground">{t("garden.noDecisions")}</p>}
-        {CARDS.filter((card) => card.kind === "decision" && card.levelId === levelId).map((card) => <div key={card.id} className="text-sm">
-          {rank <= furthest ? <Link className="underline underline-offset-4" href={`/garden/${card.deckId}#decisions`}>{card.text[locale]}</Link> : <p>{card.text[locale]}</p>}<p className="mt-1 text-muted-foreground">{t(rank > furthest ? "garden.locked" : levels.decisions.find((d) => d.cardId === card.id)?.complete ? "garden.complete" : "garden.incomplete")}</p>
-        </div>)}
       </section>)}
     </div></DrawerContent>
   </Drawer>;
