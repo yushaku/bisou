@@ -84,6 +84,46 @@
   }
 }
 
+/* Floating chrome (the tab island): translucent frosted glass with a lit top rim,
+   an inner shade and a soft drop shadow. Follows the active colour theme. */
+:root {
+  --glass-tint: color-mix(in oklab, var(--card) 46%, transparent);
+  --glass-tint-top: color-mix(in oklab, var(--card) 66%, transparent);
+  --glass-border: color-mix(in oklab, var(--edge-color) 42%, transparent);
+  --glass-lit: color-mix(in oklab, white 62%, transparent);
+  --glass-shade: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --glass-drop: color-mix(in oklab, var(--foreground) 34%, transparent);
+}
+:root.dark {
+  --glass-tint: color-mix(in oklab, var(--card) 54%, transparent);
+  --glass-tint-top: color-mix(in oklab, var(--card) 72%, transparent);
+  --glass-border: color-mix(in oklab, var(--edge-color) 55%, transparent);
+  --glass-lit: color-mix(in oklab, white 26%, transparent);
+  --glass-shade: color-mix(in oklab, black 26%, transparent);
+  --glass-drop: color-mix(in oklab, black 60%, transparent);
+}
+
+@layer components {
+  .liquid-glass {
+    background-color: var(--glass-tint);
+    background-image: linear-gradient(180deg, var(--glass-tint-top) 0%, transparent 54%, var(--glass-shade) 100%);
+    border: var(--edge-width) solid var(--glass-border);
+    -webkit-backdrop-filter: blur(24px) saturate(185%) brightness(1.04);
+    backdrop-filter: blur(24px) saturate(185%) brightness(1.04);
+    box-shadow:
+      inset 0 1px 0 var(--glass-lit),
+      inset 0 -1px 0 var(--glass-shade),
+      0 1px 1px -0.5px color-mix(in oklab, var(--glass-drop) 45%, transparent),
+      0 18px 44px -18px var(--glass-drop),
+      0 6px 18px -10px var(--glass-drop);
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .liquid-glass {
+      background-color: color-mix(in oklab, var(--card) 92%, transparent);
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

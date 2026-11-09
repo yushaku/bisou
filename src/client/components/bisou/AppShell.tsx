@@ -86,7 +86,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
         onCreate(destination);
       }
     }}>
-      <nav aria-label={t("nav.label")} className="sticky bottom-0 z-30 rounded-t-xl border-t-(length:--edge-width) border-(--edge-color) bg-card elevate pb-[env(safe-area-inset-bottom)] [view-transition-name:tab-bar]">
+      <nav aria-label={t("nav.label")} className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem] [view-transition-name:tab-bar]">
         <ul className="mx-auto grid w-full max-w-md grid-cols-5">
           {TABS.map((id, index) => {
             const { icon: Icon, label } = TAB_META[id];
@@ -94,7 +94,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
             return (
               <Fragment key={id}>
                 {index === 2 && <li className="flex items-center justify-center">
-                  <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-card elevate"
+                  <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-[color-mix(in_oklab,var(--card)_55%,transparent)] elevate"
                     aria-label={direct ? t(direct === "event" ? "events.add" : direct === "journal" ? "journal.new" : "wishes.add") : t("nav.create")}
                     onClick={() => direct ? onCreate(direct) : setOpen(true)}>
                     <Plus className="size-6" aria-hidden="true" />
