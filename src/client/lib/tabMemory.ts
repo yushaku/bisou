@@ -6,7 +6,7 @@ export interface TabMemoryValue {
   scroll: Map<string, number>;
   journal: JournalPage | null;
   returnFocus: string | null;
-  /* Shared by Home and Wishes; refreshed on entry and visibility, updated by mutations. */
+  /* Kept across visits to Wishes; refreshed on entry and visibility, updated by mutations. */
   wishes: { open: Wish[]; received: Wish[]; partnerJarEmpty: boolean } | null;
   wishesRequest: ReturnType<typeof api.wishes> | null;
   claims: Claim[] | null;

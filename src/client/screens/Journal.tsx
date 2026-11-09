@@ -2,21 +2,21 @@ import { useOnline } from "../lib/useOnline";
 import { BookHeart, Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { toDayString } from "../../shared/days";
-import type { Couple, JournalEntry, JournalPage, Locale } from "../../shared/types";
+import type { Couple, JournalEntry, JournalPage } from "../../shared/types";
 import { api, photoUrl } from "../api";
-import { toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import { toPeople } from "../components/bisou/CoupleAvatars";
 import { displayName } from "../lib/displayName";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { JournalDetailSheet } from "../components/bisou/JournalDetailSheet";
 import { EntryActions } from "../components/bisou/EntryActions";
-import { EntryCard, type Entry } from "../components/bisou/EntryCard";
+import { EntryCard } from "../components/bisou/EntryCard";
 import { PhotoViewer } from "../components/bisou/PhotoViewer";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
-import { useI18n, type Translate } from "../i18n";
-import { formatDay, formatTime } from "../lib/format";
+import { useI18n } from "../i18n";
+import { formatDay } from "../lib/format";
 import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../lib/journalFeed";
+import { toCard } from "../lib/journalCard";
 import { TabMemory } from "../lib/tabMemory";
 import { useCreateRequest } from "../lib/useTabNavigation";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
@@ -30,26 +30,6 @@ interface JournalProps extends SessionProps {
 
 /* Starts the next page this far before the reader reaches the bottom, so scrolling rarely waits. */
 const PREFETCH_MARGIN = "0px 0px 800px 0px";
-
-function toCard(e: JournalEntry, people: Map<string, Person>, t: Translate, locale: Locale): Entry {
-  const time = formatTime(e.createdAt, locale);
-  const written = toDayString(new Date(e.createdAt));
-  return {
-    id: e.id,
-    source: e.source,
-    date: e.date,
-    author: people.get(e.authorId) ?? { name: displayName(undefined, t), tone: "secondary" },
-    body: e.text,
-    photos: e.photoIds.map((id, i) => ({
-      src: photoUrl(id, "thumb"),
-      srcSet: `${photoUrl(id, "thumb")} 480w, ${photoUrl(id, "full")} 1440w`,
-      alt: t("entry.photo", { index: i + 1, count: e.photoIds.length }),
-    })),
-    time,
-    // A back-filled entry says when it was really written, so the time is not read as the event's.
-    note: written !== e.date ? t("journal.writtenOn", { date: formatDay(written, locale), time }) : undefined,
-  };
-}
 
 export function Journal({ couple, ...session }: JournalProps) {
   const { user, onSignedOut } = session;
