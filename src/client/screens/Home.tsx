@@ -9,16 +9,15 @@ import { upcomingEvents } from "../../shared/events";
 import { UpcomingCard } from "../components/bisou/EventRow";
 import { Button } from "../components/ui/button";
 import { TabMemory } from "../lib/tabMemory";
-import { useCreateRequest, useTabNavigation } from "../lib/useTabNavigation";
-import { useWishJar } from "../lib/useWishJar";
-import { wishJarLevels } from "../lib/wishes";
+import { useCreateRequest } from "../lib/useTabNavigation";
 import { useNow } from "../lib/useNow";
 import type { Couple, CoupleEvent } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import { DailyQuestion } from "../components/bisou/DailyQuestion";
 import { DaysCounter } from "../components/bisou/DaysCounter";
-import { WishJar } from "../components/bisou/WishJar";
+import { TodayPosts } from "../components/bisou/TodayPosts";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { useI18n } from "../i18n";
 import { startDateError } from "../lib/startDate";
@@ -50,13 +49,9 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
   };
   const now = useNow();
   const memory = useContext(TabMemory);
-  const { jar, failed } = useWishJar(session.onSignedOut);
-  const levels = wishJarLevels(jar);
-  const navigation = useTabNavigation("home");
 
   // Creator first on both phones, so each partner keeps the same tint everywhere.
   const people = toPeople(couple.members.slice(0, 2), session.user, t) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
-  const myIndex = couple.members[0]?.id === session.user.id ? 0 : 1;
 
   async function saveStartDate(day: string): Promise<string | null> {
     const res = await api.setStartDate(day);
@@ -85,19 +80,9 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
         />
       )}
 
-      <section aria-label={t("nav.wishes")} className="mt-5 grid grid-cols-2 gap-2">
-        <WishJar person={people[myIndex]} level={levels.mine} mine onOpen={() => {
-          if (memory) {
-            memory.wishesSection = "jar";
-            memory.scroll.set("wishes", 0);
-          }
-          navigation.onSelect("wishes");
-        }} />
-        <WishJar person={people[myIndex === 0 ? 1 : 0]} level={levels.partner} empty={!failed && jar?.partnerJarEmpty === true} onOpen={() => {
-          memory?.scroll.set("wishes", 0);
-          navigation.onCreate("spin");
-        }} />
-      </section>
+      <DailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
+
+      <TodayPosts couple={couple} user={session.user} today={toDayString(now)} onSignedOut={session.onSignedOut} />
 
       <InstallCard />
 
