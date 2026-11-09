@@ -83,7 +83,7 @@ export const vi = {
   "push.card.body": "Biết khi người ấy viết nhật ký và nhớ những ngày đặc biệt.",
   "push.card.button": "Bật thông báo",
   "push.card.dismiss": "Ẩn lời mời bật thông báo",
-  "push.garden": "Cả hai đã trả lời thẻ hôm nay. Lật thẻ thôi!",
+  "push.garden.answered": "Người ấy vừa trả lời thẻ hôm nay",
   "push.journal": "Nhật ký của người ấy và thẻ hôm nay",
   "push.reminders": "Nhắc ngày đặc biệt",
   "push.on": "Thông báo đang bật trên thiết bị này.",

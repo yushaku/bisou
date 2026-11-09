@@ -97,10 +97,12 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
       .bind(parsed.text, choice, now, parsed.text, choice, couple, card.id, user, ...accessValues, couple, user, couple).run();
     if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
   } else {
+    let isToday = false;
     if (card.kind === "ordinary") {
       const deck = await gardenDeck(db, couple, user, card.deckId, now);
       const today = await loadToday(db, couple, now, user);
-      if (today?.card_id !== card.id && deck.active?.cardId !== card.id) return c.json({ error: "not_found" }, 404);
+      isToday = today?.card_id === card.id;
+      if (!isToday && deck.active?.cardId !== card.id) return c.json({ error: "not_found" }, 404);
     }
     // D1 batches run transactionally; concurrent saves can claim the daily flip only once.
     // https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
@@ -133,7 +135,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
       throw error;
     }
     if (!changes[0]!.meta.changes) return c.json({ error: "not_found" }, 404);
-    if (card.kind === "ordinary" && changes[2]!.results.length) c.executionCtx.waitUntil(notifyGarden(c.env, couple, now));
+    if (isToday) c.executionCtx.waitUntil(notifyGarden(c.env, couple, user, now));
   }
   const [state] = await cardStates(db, couple, user, [card.id]);
   return c.json({ card: state }, updating ? 200 : 201);

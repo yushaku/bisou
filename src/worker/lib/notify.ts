@@ -33,16 +33,16 @@ export async function notifyJournal(env: Env, coupleId: string, authorId: string
   } catch { console.error("[bisou] journal push failed"); }
 }
 
-export async function notifyGarden(env: Env, coupleId: string, now: number): Promise<void> {
+export async function notifyGarden(env: Env, coupleId: string, authorId: string, now: number): Promise<void> {
   if (vnHour(now) >= 22 || vnHour(now) < 7) return;
   if (!env.VAPID_PRIVATE_KEY) { console.log("[bisou] push unavailable"); return; }
   try {
     const { results } = await env.DB.prepare(`SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale
       FROM push_subscriptions s JOIN users u ON u.id = s.user_id
-      JOIN couple_members m ON m.user_id = s.user_id WHERE m.couple_id = ? AND s.journal = 1`)
-      .bind(coupleId).all<PushRow & { locale: string }>();
+      WHERE s.user_id = (SELECT user_id FROM couple_members WHERE couple_id = ? AND user_id <> ?) AND s.journal = 1`)
+      .bind(coupleId, authorId).all<PushRow & { locale: string }>();
     for (const row of results) {
-      try { await sendPush(env, row, { title: translate(row.locale, "push.garden"), url: "/garden", tag: "garden" }, { ttl: pushTtl(now), topic: "garden" }); }
+      try { await sendPush(env, row, { title: translate(row.locale, "push.garden.answered"), url: "/", tag: "garden" }, { ttl: pushTtl(now), topic: "garden" }); }
       catch { console.error("[bisou] push failed", "garden", 0); }
     }
   } catch { console.error("[bisou] garden push failed"); }
