@@ -35,18 +35,16 @@ test("local startup applies missing migrations before seeding, preserves mutatio
   };
   try {
     prepareSeed(runner, directory);
-    assert.equal(applied.size, migrations.length); assert.equal(db.prepare("SELECT COUNT(*) n FROM couple_members").get().n, 8);
-    db.exec("UPDATE garden_levels SET revision=9, proposal_kind=NULL, proposal_level=NULL, proposer_id=NULL, target_agreed=0 WHERE couple_id='seed-stage-unlock'");
-    db.exec("DELETE FROM garden_answers WHERE couple_id='seed-stage-unlock' AND card_id='L2-19'");
-    db.exec("UPDATE garden_answers SET body='PO edited this' WHERE couple_id='seed-stage-reveal' AND card_id='L2-01'");
+    assert.equal(applied.size, migrations.length); assert.equal(db.prepare("SELECT COUNT(*) n FROM couple_members").get().n, 2);
+    db.exec("UPDATE garden_levels SET revision=9 WHERE couple_id='local-an-binh'");
+    db.exec("INSERT INTO garden_answers (couple_id,card_id,user_id,body,created_at,updated_at) VALUES ('local-an-binh','money-01','local-an','PO edited this',1,1)");
     pending.push({ name: "future_additive", sql: "ALTER TABLE users ADD COLUMN seed_check_future TEXT" });
     prepareSeed(runner, directory);
     assert.equal(migrationCalls, 2); assert.equal(inserts, 1); assert(applied.has("future_additive"));
-    assert.equal(db.prepare("SELECT revision FROM garden_levels WHERE couple_id='seed-stage-unlock'").get().revision, 9);
-    assert.equal(db.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id='seed-stage-unlock' AND card_id='L2-19'").get().n, 0);
-    assert.equal(db.prepare("SELECT body FROM garden_answers WHERE couple_id='seed-stage-reveal' AND card_id='L2-01'").get().body, "PO edited this");
+    assert.equal(db.prepare("SELECT revision FROM garden_levels WHERE couple_id='local-an-binh'").get().revision, 9);
+    assert.equal(db.prepare("SELECT body FROM garden_answers WHERE couple_id='local-an-binh' AND card_id='money-01'").get().body, "PO edited this");
     assert.equal(db.prepare("SELECT display_name FROM users WHERE id='unrelated'").get().display_name, "Keep me");
-    assert.equal(db.prepare("SELECT COUNT(*) n FROM users").get().n, 9);
+    assert.equal(db.prepare("SELECT COUNT(*) n FROM users").get().n, 3);
   } finally { db.close(); rmSync(parent, { recursive: true }); }
 });
 
