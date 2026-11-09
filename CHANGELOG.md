@@ -15,6 +15,15 @@
 - Tap a plant to play more cards from its deck. A card left waiting when the day turns stays in its deck until the other answers it.
 - When both of you have answered today's card, both get a notification through the partner journal switch. Nothing is sent during quiet hours.
 
+### Changed
+
+- Local `pnpm dev` now seeds one clean couple, `an@example.com` and `binh@example.com`, placed at In love with no answers, history or plants, instead of four synthetic scenario couples.
+- Today's question now appears on Home instead of the Garden tab; the Garden keeps levels and plants.
+- Home now shows "Bài viết hôm nay" / "Today's posts": only journal entries dated today, and no section when there are none.
+- The two wish jars now sit at the top of the Wishes tab instead of on Home; my jar still opens my list and my partner's jar starts a spin.
+- When one partner answers today's question, the other partner gets "Người ấy vừa trả lời thẻ hôm nay" / "Your partner answered today's card" instead of both being notified only after both answered.
+- The Today's card on Home is now a soft paper note: a stitched frame, a centered question, folded notes for the two answers, and clearer writing, waiting and flip states.
+
 ## [2026-11-07]
 
 ### Added

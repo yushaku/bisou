@@ -1,0 +1,586 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "Bisou · D1 database schema",
+    "locale": "en",
+    "output": "database-schema.html",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "pairing",
+        "label": "Identity and pairing",
+        "focus": ["users", "sessions", "couples", "couple_members", "pair_codes"],
+        "note": "A user belongs to at most one couple; couple_members is the join and enforces one membership per user."
+      },
+      {
+        "id": "journal",
+        "label": "Journal and photos",
+        "focus": ["couples", "journal_entries", "photos", "wishes", "wish_claims"],
+        "note": "Photos hang off a journal entry, a wish, or neither while an upload is still pending."
+      },
+      {
+        "id": "garden",
+        "label": "Garden levels",
+        "focus": ["couples", "garden_levels", "garden_days", "garden_answers", "garden_growth"],
+        "note": "garden_levels is one row per couple; days, answers and growth are keyed by couple plus day or card."
+      },
+      {
+        "id": "delivery",
+        "label": "Events and push",
+        "focus": ["users", "couples", "couple_events", "push_subscriptions"],
+        "note": "Shared events belong to the couple; push subscriptions belong to the individual device owner."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "entityW": 280,
+    "rowH": 26,
+    "gapX": 48,
+    "gapY": 44
+  },
+  "entities": [
+    {
+      "id": "users",
+      "label": "users",
+      "tag": "auth",
+      "row": 0,
+      "col": 0,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "email", "type": "TEXT", "key": "uk" },
+        { "name": "display_name", "type": "TEXT" },
+        { "name": "locale", "type": "TEXT · vi/en" },
+        { "name": "birth_date", "type": "TEXT · date" },
+        { "name": "avatar_id", "type": "TEXT" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "sessions",
+      "label": "sessions",
+      "tag": "auth",
+      "row": 1,
+      "col": 0,
+      "attributes": [
+        { "name": "token_hash", "type": "TEXT", "key": "pk" },
+        { "name": "user_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "expires_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "otp_codes",
+      "label": "otp_codes",
+      "tag": "auth",
+      "row": 2,
+      "col": 0,
+      "attributes": [
+        { "name": "email", "type": "TEXT", "key": "pk" },
+        { "name": "code_hash", "type": "TEXT" },
+        { "name": "expires_at", "type": "INTEGER · epoch ms" },
+        { "name": "attempts", "type": "INTEGER" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "otp_requests",
+      "label": "otp_requests",
+      "tag": "auth",
+      "row": 3,
+      "col": 0,
+      "attributes": [
+        { "name": "id", "type": "INTEGER", "key": "pk" },
+        { "name": "email", "type": "TEXT" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "avatar_uploads",
+      "label": "avatar_uploads",
+      "tag": "auth",
+      "row": 4,
+      "col": 0,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "user_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "pending", "type": "INTEGER · 0/1" }
+      ]
+    },
+    {
+      "id": "couples",
+      "label": "couples",
+      "tag": "couple",
+      "row": 0,
+      "col": 1,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "start_date", "type": "TEXT · date" },
+        { "name": "created_by", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "couple_members",
+      "label": "couple_members",
+      "tag": "couple",
+      "row": 1,
+      "col": 1,
+      "attributes": [
+        { "name": "couple_id", "type": "TEXT", "key": ["pk", "fk"], "references": "couples.id" },
+        { "name": "user_id", "type": "TEXT", "key": ["pk", "fk", "uk"], "references": "users.id" },
+        { "name": "joined_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "pair_codes",
+      "label": "pair_codes",
+      "tag": "couple",
+      "row": 2,
+      "col": 1,
+      "attributes": [
+        { "name": "code", "type": "TEXT", "key": "pk" },
+        { "name": "couple_id", "type": "TEXT", "key": ["fk", "uk"], "references": "couples.id" },
+        { "name": "expires_at", "type": "INTEGER · epoch ms" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "join_attempts",
+      "label": "join_attempts",
+      "tag": "couple",
+      "row": 3,
+      "col": 1,
+      "attributes": [
+        { "name": "id", "type": "INTEGER", "key": "pk" },
+        { "name": "user_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "journal_entries",
+      "label": "journal_entries",
+      "tag": "journal",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "couple_id", "type": "TEXT", "key": "fk", "references": "couples.id" },
+        { "name": "author_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "entry_date", "type": "TEXT · date" },
+        { "name": "body", "type": "TEXT" },
+        { "name": "source", "type": "TEXT · enum" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "updated_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "photos",
+      "label": "photos",
+      "tag": "journal",
+      "row": 1,
+      "col": 2,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "couple_id", "type": "TEXT", "key": "fk", "references": "couples.id" },
+        { "name": "uploader_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "entry_id", "type": "TEXT", "key": "fk", "references": "journal_entries.id" },
+        { "name": "wish_id", "type": "TEXT", "key": ["fk", "uk"], "references": "wishes.id" },
+        { "name": "position", "type": "INTEGER · 0-3" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "wishes",
+      "label": "wishes",
+      "tag": "wishes",
+      "row": 0,
+      "col": 3,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "couple_id", "type": "TEXT", "key": "fk", "references": "couples.id" },
+        { "name": "owner_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "title", "type": "TEXT" },
+        { "name": "price", "type": "INTEGER" },
+        { "name": "link", "type": "TEXT" },
+        { "name": "priority", "type": "INTEGER · 1-3" },
+        { "name": "status", "type": "TEXT · enum" },
+        { "name": "received_on", "type": "TEXT · date" },
+        { "name": "note", "type": "TEXT" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "updated_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "wish_claims",
+      "label": "wish_claims",
+      "tag": "wishes",
+      "row": 1,
+      "col": 3,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "wish_id", "type": "TEXT", "key": ["fk", "uk"], "references": "wishes.id" },
+        { "name": "claimer_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "gone_title", "type": "TEXT" },
+        { "name": "gone_at", "type": "INTEGER · epoch ms" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "wish_spins",
+      "label": "wish_spins",
+      "tag": "wishes",
+      "row": 2,
+      "col": 3,
+      "attributes": [
+        { "name": "id", "type": "INTEGER", "key": "pk" },
+        { "name": "user_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "garden_days",
+      "label": "garden_days",
+      "tag": "garden",
+      "row": 0,
+      "col": 4,
+      "attributes": [
+        { "name": "couple_id", "type": "TEXT", "key": ["pk", "fk"], "references": "couples.id" },
+        { "name": "day", "type": "TEXT · date", "key": "pk" },
+        { "name": "deck_id", "type": "TEXT" },
+        { "name": "card_id", "type": "TEXT" },
+        { "name": "swaps", "type": "INTEGER" },
+        { "name": "swapped_cards", "type": "TEXT · json" },
+        { "name": "flipped", "type": "INTEGER · 0/1" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "garden_answers",
+      "label": "garden_answers",
+      "tag": "garden",
+      "row": 1,
+      "col": 4,
+      "attributes": [
+        { "name": "couple_id", "type": "TEXT", "key": ["pk", "fk"], "references": "couples.id" },
+        { "name": "card_id", "type": "TEXT", "key": "pk" },
+        { "name": "round", "type": "INTEGER", "key": "pk" },
+        { "name": "user_id", "type": "TEXT", "key": ["pk", "fk"], "references": "users.id" },
+        { "name": "body", "type": "TEXT" },
+        { "name": "response_choice", "type": "TEXT · enum" },
+        { "name": "flipped_day", "type": "TEXT · date" },
+        { "name": "edited_after_flip", "type": "INTEGER · 0/1" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "updated_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "garden_growth",
+      "label": "garden_growth",
+      "tag": "garden",
+      "row": 2,
+      "col": 4,
+      "attributes": [
+        { "name": "couple_id", "type": "TEXT", "key": ["pk", "fk"], "references": "couples.id" },
+        { "name": "deck_id", "type": "TEXT", "key": "pk" },
+        { "name": "day", "type": "TEXT · date", "key": "pk" }
+      ]
+    },
+    {
+      "id": "garden_levels",
+      "label": "garden_levels",
+      "tag": "garden",
+      "row": 3,
+      "col": 4,
+      "attributes": [
+        { "name": "couple_id", "type": "TEXT", "key": ["pk", "fk"], "references": "couples.id" },
+        { "name": "initial_level", "type": "INTEGER · 0-4" },
+        { "name": "selected_level", "type": "INTEGER · 0-4" },
+        { "name": "furthest_level", "type": "INTEGER · 0-4" },
+        { "name": "revision", "type": "INTEGER" },
+        { "name": "proposal_kind", "type": "TEXT · enum" },
+        { "name": "proposal_level", "type": "INTEGER · 0-4" },
+        { "name": "proposer_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "target_agreed", "type": "INTEGER · 0/1" },
+        { "name": "gate_ids", "type": "TEXT · json" }
+      ]
+    },
+    {
+      "id": "push_subscriptions",
+      "label": "push_subscriptions",
+      "tag": "delivery",
+      "row": 0,
+      "col": 5,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "user_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "endpoint", "type": "TEXT · url", "key": "uk" },
+        { "name": "p256dh", "type": "TEXT" },
+        { "name": "auth", "type": "TEXT" },
+        { "name": "journal", "type": "INTEGER · 0/1" },
+        { "name": "reminders", "type": "INTEGER · 0/1" },
+        { "name": "journal_slot", "type": "TEXT" },
+        { "name": "reminder_slot", "type": "TEXT" },
+        { "name": "failures", "type": "INTEGER" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "last_success_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "couple_events",
+      "label": "couple_events",
+      "tag": "delivery",
+      "row": 1,
+      "col": 5,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "couple_id", "type": "TEXT", "key": "fk", "references": "couples.id" },
+        { "name": "title", "type": "TEXT" },
+        { "name": "event_date", "type": "TEXT · date" },
+        { "name": "repeats", "type": "TEXT · enum" },
+        { "name": "icon", "type": "TEXT" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "updated_at", "type": "INTEGER · epoch ms" }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "sessions_user",
+      "from": "sessions",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "couples_created_by",
+      "from": "couples",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "fromOptional": true,
+      "identifying": false,
+      "variant": "dashed"
+    },
+    {
+      "id": "couple_members_couple",
+      "from": "couple_members",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "couple_members_user",
+      "from": "couple_members",
+      "to": "users",
+      "fromCardinality": "one",
+      "toCardinality": "one"
+    },
+    {
+      "id": "pair_codes_couple",
+      "from": "pair_codes",
+      "to": "couples",
+      "fromCardinality": "one",
+      "toCardinality": "one"
+    },
+    {
+      "id": "join_attempts_user",
+      "from": "join_attempts",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "journal_entries_couple",
+      "from": "journal_entries",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "journal_entries_author",
+      "from": "journal_entries",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "photos_couple",
+      "from": "photos",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "photos_uploader",
+      "from": "photos",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "photos_entry",
+      "from": "photos",
+      "to": "journal_entries",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "fromOptional": true,
+      "identifying": false,
+      "variant": "dashed"
+    },
+    {
+      "id": "photos_wish",
+      "from": "photos",
+      "to": "wishes",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": true,
+      "identifying": false,
+      "variant": "dashed"
+    },
+    {
+      "id": "wishes_couple",
+      "from": "wishes",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "wishes_owner",
+      "from": "wishes",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "wish_claims_wish",
+      "from": "wish_claims",
+      "to": "wishes",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": true,
+      "identifying": false,
+      "variant": "dashed"
+    },
+    {
+      "id": "wish_claims_claimer",
+      "from": "wish_claims",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "wish_spins_user",
+      "from": "wish_spins",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "couple_events_couple",
+      "from": "couple_events",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "avatar_uploads_user",
+      "from": "avatar_uploads",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "push_subscriptions_user",
+      "from": "push_subscriptions",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "garden_days_couple",
+      "from": "garden_days",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "garden_answers_couple",
+      "from": "garden_answers",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "garden_answers_user",
+      "from": "garden_answers",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "garden_growth_couple",
+      "from": "garden_growth",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "garden_levels_couple",
+      "from": "garden_levels",
+      "to": "couples",
+      "fromCardinality": "one",
+      "toCardinality": "one"
+    },
+    {
+      "id": "garden_levels_proposer",
+      "from": "garden_levels",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "fromOptional": true,
+      "identifying": false,
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Source of truth",
+      "items": [
+        "All 20 tables come from the additive migrations 0001–0012 on Cloudflare D1 (SQLite).",
+        "INTEGER · epoch ms columns store Unix milliseconds; date columns store YYYY-MM-DD text with a CHECK glob.",
+        "Enum values behind “TEXT · enum” are enforced with CHECK constraints, not a lookup table."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Links without a foreign key",
+      "items": [
+        "otp_codes.email and otp_requests.email match users.email, but the DDL declares no FK.",
+        "garden_growth.day is not an FK to garden_days because its key is the composite (couple_id, day).",
+        "At most two couple_members rows per couple is enforced by the join statement, not a constraint."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "One-to-one and optional ends",
+      "items": [
+        "Unique FKs make pair_codes, wish_claims, photos.wish_id and garden_levels one-to-one; couple_members.user_id is unique too.",
+        "Dashed links are optional: photos may be unattached, a claim survives its wish deletion, and proposer_id can be NULL.",
+        "couples.created_by uses ON DELETE SET NULL, so the creator link can disappear while the couple remains."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Cleanup and partial indexes",
+      "items": [
+        "otp_codes, sessions, otp_requests, join_attempts and wish_spins are swept daily by expires_at or created_at indexes.",
+        "Photos are split by attachment with partial indexes: photos_entry, photos_wish and photos_pending.",
+        "garden_days_flipped and wish_claims_gone cover only the rows the pending work queries."
+      ]
+    }
+  ]
+}

@@ -36,6 +36,7 @@ A couple wants one place for their story: both partners write entries for a day,
 - R22. An entry's card in the feed shows its author's name with the time it was written, its text and photos; for a back-filled entry it does not show the "written on" line (R24).
 - R23. Tapping a card opens that entry's detail sheet from the bottom of the screen; a long text cut short on the card ends with "Xem thêm" ("See more"), which opens the same sheet instead of growing the card.
 - R24. The detail sheet shows the full day, the author and time, the full text, the milestone and wish marks if the entry has them, the "Ghi ngày {date} · {time}" ("Written on {date} · {time}") line for a back-filled entry only, and every photo at full width, each opening the photo viewer. Edit and Delete appear only to the author (R10, R11).
+- R25. Home shows "Bài viết hôm nay" ("Today's posts") with every entry dated today from either partner, newest first, using the feed's card content without Edit or Delete; when no entry is dated today, or they have not loaded, the section is absent.
 
 ## Running example
 
@@ -73,6 +74,7 @@ Write (text, photos, a day), read the feed, change or delete one's own entry. An
 - AC16 (R22, R24). Given Binh back-filled 12 February 2023 at 22:10 on 6 November, then its card shows "Binh" with 22:10 and no "Ghi ngày" line, and its detail sheet shows that line with 6 November 2026 and 22:10.
 - AC17 (R23, R24). Given An taps the 5 November card, then a sheet opens from the bottom with the full day, "An" and 21:00, the full text and both photos at full width, each opening the viewer; Edit and Delete show for An and not for Binh.
 - AC18 (R23). Given Binh's 6 November text is cut short on the card, when An taps "Xem thêm", then the same detail sheet opens and the card keeps its size.
+- AC19 (R25). Given today is 7 November and the journal has entries dated 6 and 7 November, then Home shows only the 7 November entries, newest first, with no Edit or Delete; when the last 7 November entry is deleted, the section disappears until another entry is dated today.
 
 ## Glossary
 

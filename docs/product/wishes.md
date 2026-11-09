@@ -51,9 +51,9 @@ Personal data
 - R23. Wishes and photos are the owner's personal data, kept only for the jar while the couple exists or until the owner deletes them for good.
 - R24. Claims and spins belong to the spinner; spins are kept only to count the limit.
 
-Home
+Wishes tab
 
-- R25. Home shows both jars under the days counter: mine on the left, my partner's on the right, each titled "Hũ của {tên}" ("{name}'s jar") with that person's photo or initial.
+- R25. The Wishes tab shows both jars above its sections: mine on the left, my partner's on the right, each titled "Hũ của {tên}" ("{name}'s jar") with that person's photo or initial.
 - R26. My jar looks fuller the more open wishes it holds (open as in R10): empty at none, then a few steps up to full at about ten.
 - R27. My partner's jar shows only empty or filled, the same one bit as R10, never how many; when empty it reads "Chưa bỏ điều ước nào" ("No wishes yet") and cannot be opened.
 - R28. Tapping my jar opens my jar; tapping my partner's filled jar opens the spin.
@@ -62,7 +62,7 @@ Wish detail
 
 - R29. Tapping a wish card in my jar opens a detail sheet from the bottom with the full title, a large photo, the price, the priority, a button to the link, the day it was added, for a received wish also its received day and note, and the same actions as the card's "⋯" menu.
 - R30. The sheet is never taller than the screen; when the content is longer, it scrolls inside the sheet.
-- R31. Claims, Home and the spin card are unchanged: the spinner still sees only what R12 allows, and no sheet shows a spin or claim (R17).
+- R31. Claims, both jars and the spin card are unchanged: the spinner still sees only what R12 allows, and no sheet shows a spin or claim (R17).
 
 ## Running example
 
@@ -94,10 +94,10 @@ Keep wishes (owner); spin, claim, release (partner); mark received (owner). Rule
 - AC12 (R20, R21). Given Binh marks it received on 20 November, then both see Binh's entry under that day, made from a wish; only Binh can change or delete it, and deleting keeps the scarf received.
 - AC13 (R6). Given Binh adds a photo to the scarf, then it is saved square and kept like journal photos, and the wish never holds more than one photo.
 - AC14 (R10, R1). Given Binh has no wishes, when An opens the spin card, then it reads "Binh hasn't put any wishes in the jar yet" and no spin is offered; if Binh's only wish is one An claimed, the spin is offered and An is told nothing fits; an outsider learns neither.
-- AC15 (R25, R26, R27, R28). Given Binh has no wishes and An has 7, then An's home shows her jar on the left mostly full and Binh's jar on the right empty, reading "Chưa bỏ điều ước nào" and not opening; Binh's home shows An's jar filled, looking the same as if she had 1 or 30, and tapping it opens the spin.
+- AC15 (R25, R26, R27, R28). Given Binh has no wishes and An has 7, then An's Wishes tab shows her jar on the left mostly full and Binh's jar on the right empty, reading "Chưa bỏ điều ước nào" and not opening; Binh's Wishes tab shows An's jar filled, looking the same as if she had 1 or 30, and tapping it opens the spin.
 - AC16 (R29, R30). Given the example jar, when Binh taps the pottery class card, then a sheet shows the full title, 900,000 VND, dream, a link button and 6 November 2026 as added day, with the card's "⋯" actions; with a long title on a small phone, the sheet stays within the screen and its content scrolls.
 - AC17 (R29). Given the scarf is received on 20 November with the note "From An, so soft", when Binh taps it in the received list, then the sheet also shows 20 November and the note.
-- AC18 (R31, R12, R17). Given An spun and claimed the scarf, then An's claim, Binh's home and An's spin card look as before, and Binh's sheet shows no sign of the claim.
+- AC18 (R31, R12, R17). Given An spun and claimed the scarf, then An's claim, Binh's Wishes tab and An's spin card look as before, and Binh's sheet shows no sign of the claim.
 
 ## Glossary
 

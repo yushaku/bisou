@@ -6,14 +6,14 @@
 - PO: nothing about spins, claims or a partner's jar (R9).
 - PO: the text says who and what, never journal text; tapping opens the journal or the events list (R8, R15).
 - PO: a Notifications page in Settings with one switch per kind and the device's state; a Home card inviting to turn them on, only in the installed app while undecided, closable for good on that device (R20 to R25).
-- PO: quiet hours 22:00 to 07:00 Vietnam time; journal notifications from the night are held to 07:00, combined (R16, R17); garden "both answered" notifications follow the same quiet hours rule.
-- PO: garden's "both answered" notification uses the partner journal kind switch; no separate switch or push_subscriptions change (R3, R16-R18 cover it).
+- PO: quiet hours 22:00 to 07:00 Vietnam time; journal notifications from the night are held to 07:00, combined (R16, R17); garden answer notifications follow the same quiet hours rule.
+- PO: garden notifications use the partner journal kind switch; no separate switch or push_subscriptions change (R3, R16-R18 cover it).
 - PO: signing out stops that device (R26); personal data as R27 to R30.
 - PM defaults, PO may veto: unpaired people get none (R4); no reminder of one's own birthday (R12); same-day events share one reminder (R11); no late reminders, and a changed or deleted event is reminded as it then stands (R13, R14); a held entry deleted before 07:00 is left out and held messages go to the devices on at 07:00 (R18); a newer journal notification replaces an older one still showing (R19); the Home card turns both kinds on (R24); a browser without notifications shows "not available in this browser" (R20); signing back in leaves them off (R26); texts follow the recipient's app language (R31).
 
 ## Purpose
 
-A partner wants to know when the other wrote in the journal, and not to miss a birthday or an anniversary, without opening Bisou to check. It builds on the [journal](journal.md), [upcoming events](events.md), [custom events](custom-events.md) and the [installed app](pwa.md), and keeps the [wish jar](wishes.md) secret.
+A partner wants to know when the other wrote in the journal, answered today's card, and not to miss a birthday or an anniversary, without opening Bisou to check. It builds on the [journal](journal.md), [garden](garden.md), [upcoming events](events.md), [custom events](custom-events.md) and the [installed app](pwa.md), and keeps the [wish jar](wishes.md) secret.
 
 ## Actors
 
@@ -36,6 +36,7 @@ Partner's journal
 - R6. Every new entry counts, back-filled ones and those made from a received wish included; changing or deleting an entry sends nothing.
 - R7. The author's own devices never get a notification of the author's own entry.
 - R8. The message never contains entry text, photos, the entry's day or whether it came from a wish; tapping it opens the journal.
+- R8a. When a partner first answers today's card, each device of the other partner with this kind on gets "Người ấy vừa trả lời thẻ hôm nay" / "Your partner answered today's card"; it never names the question, a deck or an answer, and tapping it opens Home. Changing or deleting an answer, extra play and decision answers send nothing, and the author's own devices never get it.
 
 Wish jar secrecy
 
@@ -86,10 +87,11 @@ An uses an iPhone with Bisou installed; Bình uses an Android phone. Together si
 
 1. 7 November, 09:00: An opens the installed app; Home shows the invite card. An taps it, the iPhone asks, An allows: both kinds on. Bình turns on both switches on the Notifications page.
 2. 7 November, 15:00: Bình writes an entry; An gets "Bình vừa viết nhật ký" at once and tapping it opens the journal. At 15:30 Bình fixes a typo: nothing is sent.
-3. 7 November, 23:10: Bình writes; nothing shows. 8 November, 07:00: An gets "Bình vừa viết nhật ký".
-4. 17 November, 20:00: Bình gets "Ngày mai: Sinh nhật An"; 18 November, 08:00: "Hôm nay: Sinh nhật An". An gets neither.
-5. 18 November, 20:00: both get "Ngày mai: Ngày Quốc tế Nam giới"; 19 November, 08:00: "Hôm nay: Ngày Quốc tế Nam giới".
-6. 20 November, 10:00: Bình marks the linen scarf received; An gets "Bình vừa viết nhật ký", nothing more.
+3. 7 November, 16:00: Bình answers today's card; An gets "Người ấy vừa trả lời thẻ hôm nay" and tapping it opens Home. When An answers, Bình gets the same; An editing the answer afterwards sends nothing.
+4. 7 November, 23:10: Bình writes; nothing shows. 8 November, 07:00: An gets "Bình vừa viết nhật ký".
+5. 17 November, 20:00: Bình gets "Ngày mai: Sinh nhật An"; 18 November, 08:00: "Hôm nay: Sinh nhật An". An gets neither.
+6. 18 November, 20:00: both get "Ngày mai: Ngày Quốc tế Nam giới"; 19 November, 08:00: "Hôm nay: Ngày Quốc tế Nam giới".
+7. 20 November, 10:00: Bình marks the linen scarf received; An gets "Bình vừa viết nhật ký", nothing more.
 
 ## Main flows
 
@@ -118,6 +120,7 @@ Turn on from the Home card or the Notifications page, get a notification and tap
 - AC19 (R4). Given a person not yet paired, then no notification is ever sent and Home shows no card.
 - AC20 (R27, R28, R29, R30). Given Bình turns both kinds off on the phone, then Bisou no longer keeps the phone's address or settings; while on, they go to no one but the phone's push service.
 - AC21 (R10, R31). Given Bình was born 3 January 1996 and An's app language is English, then An gets "Tomorrow: Bình's birthday" on 2 January 2027 at 20:00.
+- AC22 (R8a). Given Bình answers today's card at 16:00, then An's devices with this kind on get "Người ấy vừa trả lời thẻ hôm nay" and no other device does; tapping it opens Home; when An answers, Bình gets it; when Bình edits or deletes the answer or plays an extra card, nothing is sent.
 
 ## Glossary
 
@@ -129,7 +132,7 @@ Turn on from the Home card or the Notifications page, get a notification and tap
 
 ## Out of scope
 
-- Notifications for a light tap, avatar or start date changes, the daily question; they will reuse this framework later.
+- Notifications for a light tap, avatar or start date changes; they will reuse this framework later.
 - Email instead of a notification, choosing other times or quiet hours, reminders more than one day ahead.
 - Notifications when a partner leaves the couple; decide with leaving (see pairing).
 - Export and full deletion; they come with account deletion.

@@ -4,7 +4,7 @@ The approved v1 rules below are preserved for reference; the stage-level extensi
 
 ## Decided at Gate 1
 
-- PO: v1 is the daily card and the garden; each deck is one plant; each partner answers privately, the card flips when both have answered, either partner can swap today's card, tapping a plant opens its deck for extra play, and both get a notification when both have answered today's card (R6, R10, R12 to R15, R20, R33).
+- PO: v1 is the daily card and the garden; each deck is one plant; each partner answers privately, the card flips when both have answered, either partner can swap today's card, tapping a plant opens its deck for extra play, and each answer notifies the other partner (R6, R10, R12 to R15, R20, R33).
 - PO: freshness belongs to the whole garden and follows today's card (yellow after about 3 days, drooping after about 2 weeks, nothing dies); each plant's size shows how much its deck was played (R23, R26).
 - PO: today's card is a weighted rotation favouring smaller plants, never the same deck two days running; a swap may land in another deck; extra play stays open but a plant grows at most one size a day and never shrinks (R8 to R10, R24, R25).
 - PO: about 60 cards (6 decks of 10, Vietnamese and English) drafted by the PM from the sources below and reviewed by the PO before build (R2, R3).
@@ -40,13 +40,13 @@ Garden and decks
 
 Today's card
 
-- R6. Each day the couple has one today's card, the same for both.
+- R6. Each day the couple has one today's card, the same for both; it appears on Home, not on the Garden tab.
 - R7. At the start of a day, both partners get a new today's card; a card with one answer waiting stays on its deck to be answered later; an untouched card goes back to its place in its deck.
 - R8. A new card comes from a deck chosen at random, weighted so a small plant is drawn at most 3 times as often as a fully grown one; the draw skips any card that already holds a waiting answer unless the deck has no other card; it is that deck's card in play if it has one, otherwise its first unplayed card.
 - R9. The deck of the previous today's card is never chosen, unless it is the only deck with cards left; a deck with no card left is never chosen.
 - R10. Either partner may swap today's card ("Đổi thẻ khác" / "Another card") while neither has answered it; the new card is drawn as R8 and R9, skipping cards with a waiting answer as R8, never the swapped one, which goes to the back of its deck; both see the new card.
 - R10a. Once one partner has answered today's card, swap is locked for both; neither sees a "swap" button. The lock shows gently without naming who answered, as the accepted exception to R13 that lets each partner know the other has answered.
-- R11. When no deck has a card left, there is no today's card, the garden reads "Thẻ mới đang trên đường tới" ("New cards are on their way"), and freshness does not fade meanwhile.
+- R11. When no deck has a card left, there is no today's card, Home reads "Thẻ mới đang trên đường tới" ("New cards are on their way"), and freshness does not fade meanwhile.
 
 Answering and flipping
 
@@ -82,9 +82,9 @@ No score, no blame
 
 Notifications
 
-- R32. When both have answered today's card, every device of both partners with the partner journal kind on gets "Cả hai đã trả lời thẻ hôm nay. Lật thẻ thôi!" ("You both answered today's card. Time to flip!"); it never names the question, a deck, an answer or who answered last, and tapping it opens the garden (controlled by [notifications](notifications.md) R3 and quiet hours R16 to R18).
-- R33. Changing or deleting an answer, swapping, extra play and freshness send nothing; Bisou never sends a reminder to answer.
-- R34. When a flip happens during the quiet hours window (22:00 to 07:00 Vietnam time), no notification is sent.
+- R32. When a partner first answers today's card, each device of the other partner with the partner journal kind on gets "Người ấy vừa trả lời thẻ hôm nay" ("Your partner answered today's card"); it never names the question, a deck or an answer, and tapping it opens Home (controlled by [notifications](notifications.md) R3 and quiet hours R16 to R18). The author's own devices never get it.
+- R33. Changing or deleting an answer, swapping, extra play, decision answers and freshness send nothing; Bisou never sends a reminder to answer.
+- R34. When an answer to today's card happens during the quiet hours window (22:00 to 07:00 Vietnam time), no notification is sent and none is held for the morning.
 
 Personal data
 
@@ -98,10 +98,10 @@ Personal data
 An and Bình, together since 12 February 2023. Their garden opens on 9 November 2026 with six sprouts, fresh.
 
 1. 9 November, 08:00: today's card is money-01, "Hồi nhỏ, nhà mình nói chuyện tiền bạc với nhau như thế nào?" ("Growing up, how did your family talk about money?").
-2. 12:10: An answers; An sees the card face down and "Đang chờ người ấy". At 12:30 Bình sees the card as if nobody had answered.
-3. 21:40: Bình answers; both get "Cả hai đã trả lời thẻ hôm nay. Lật thẻ thôi!". Each flips and reads both answers. Tiền bạc grows to size 2.
+2. 12:10: An answers; An sees the card face down and "Đang chờ người ấy". Bình's phone gets "Người ấy vừa trả lời thẻ hôm nay". At 12:30 Bình sees the card as if nobody had answered.
+3. 21:40: Bình answers; An gets the same notification. Each flips and reads both answers. Tiền bạc grows to size 2.
 4. 22:15: An taps Tiền bạc and answers money-02 as extra play; Bình answers at 22:50; it flips, nothing is sent, Tiền bạc stays size 2.
-5. 10 November: today's card is memories-01; Bình swaps it before anyone answers and both get dreams-01. An answers it; Bình does not.
+5. 10 November: today's card is memories-01; Bình swaps it before anyone answers and both get dreams-01. An answers it and Bình's phone gets "Người ấy vừa trả lời thẻ hôm nay"; Bình does not answer.
 6. 11 November: the day's new card is family-01; dreams-01 with An's answer stays in Ước mơ's deck. At 23:20 Bình opens Ước mơ and answers dreams-01; it flips during quiet hours and no notification is sent. Ước mơ grew on 11 November.
 7. Nobody plays from 12 November: the garden turns yellow on 14 November and droops on 25 November. On 26 November they flip today's card and the whole garden is fresh again; no plant lost a size.
 
@@ -119,17 +119,17 @@ Answer today's card, wait face down, flip and read; swap today's card; open a pl
 - AC6 (R10, R10a, R18). Given An answered dreams-01, then neither can swap it; when An deletes that answer, the swap is offered again.
 - AC7 (R12). Given An saves an empty answer or one of 1001 characters, then it is refused; 1000 characters save.
 - AC8 (R13, R14, R31). Given step 2, then An sees "Đang chờ người ấy" with no name or time, Bình sees no sign of An's answer, and neither can read the other's.
-- AC9 (R15, R32). Given step 3, then both get the notification without the question or any answer; Bình's flip shows Bình's answer then An's, named, with no time and no sign that An answered first.
+- AC9 (R15, R32). Given step 2, then Bình gets "Người ấy vừa trả lời thẻ hôm nay" without the question or any answer; given step 3, then An gets the same; Bình's flip shows Bình's answer then An's, named, with no time and no sign that An answered first.
 - AC10 (R16, R17). Given a flipped card, then neither can reply, react, rate or comment on an answer, and no card asks to guess the other's answer.
 - AC11 (R22, R24). Given step 4, then Tiền bạc stays size 2, nothing is sent and freshness is unchanged; when they flip money-03 on 10 November, Tiền bạc grows to size 3.
 - AC12 (R7). Given step 5 (An answered dreams-01, Bình did not), when 11 November starts, then a new daily card is drawn, and dreams-01 stays in Ước mơ's deck. When Bình opens Ước mơ and answers dreams-01, it flips.
-- AC13 (R32, R34, R24). Given step 6, when both have answered during quiet hours, no notification is sent to either; Ước mơ grew on 11 November.
+- AC13 (R32, R34, R24). Given step 6, when Bình answers during quiet hours, no notification is sent to either partner and none is held for 07:00; Ước mơ grew on 11 November.
 - AC14 (R26, R28, R29, R31). Given step 7, then both see the garden fresh on 12 and 13 November, yellow with its message from 14 November, drooping with its message from 25 November, never naming anyone.
 - AC15 (R25, R27). Given step 7 on 26 November, when they flip today's card, then the whole garden is fresh at once and shown watered, with every plant at least its earlier size.
 - AC16 (R18, R13). Given An answered money-01 and Bình has not, when An changes the answer, then Bình sees neither version until the flip.
 - AC17 (R19, R25). Given money-01 and money-02 are flipped, when An changes the money-01 answer, then Bình sees the new text marked "đã sửa"; when Bình deletes the money-02 answer after confirming, then An sees "Câu trả lời này đã được xoá" and Tiền bạc keeps its size.
 - AC18 (R20, R21). Given steps 1 to 4, when An taps Tiền bạc, then An sees its name, purpose, money-03 to answer, and money-02 then money-01 with 9 November; Tiền bạc never has two cards in play.
-- AC19 (R11). Given every card is played, then there is no today's card, the garden reads "Thẻ mới đang trên đường tới", and it stays fresh.
+- AC19 (R11). Given every card is played, then there is no today's card, Home reads "Thẻ mới đang trên đường tới", and it stays fresh.
 - AC20 (R32, R33). Given Bình turned the partner journal kind off on the phone, then the phone gets no garden notification; edits, swaps and extra flips notify nobody.
 - AC21 (R4). Given An's app is in English, then An reads "Growing up, how did your family talk about money?" and Bình's answer as Bình wrote it.
 - AC22 (R36, R38). Given export exists, when An downloads their data, then it holds An's answers with questions and days and none of Bình's answers.
@@ -152,7 +152,7 @@ Answer today's card, wait face down, flip and read; swap today's card; open a pl
 - Life stage cards, a shared closing line, returning cards, a monthly self rating, a weekly good news card (Gate 1).
 - Writing or picking one's own questions, more decks, cards beyond the first 60 (they come later under the same rules).
 - Reminders to answer, notifications for extra play.
-- The garden on Home; showing the garden to anyone else.
+- The garden's plants and levels on Home; only today's card lives there. Showing the garden to anyone else.
 
 ## Relationship-stage levels
 
@@ -225,6 +225,8 @@ If partners propose different statuses, the first pending proposal remains until
 - R31 permits shared decision-completion states and each person's own response state with the inference described in R60, without blame or timestamps.
 - R36 to R38 cover response choices, selected/target statuses and shared progression records without adding export, with future couple/account deletion still governed by R39.
 - The v1 exclusion of stage cards and cards beyond the first 60 is narrowed to the initial level catalog; shared closing lines and returning-answer rounds remain deferred, and R16 still forbids replies/reactions with no new discussion-confirmation exception.
+- Today's card moves from the Garden tab to Home; the Garden tab keeps levels and plants (R6).
+- R32 and R33 replace the "both answered" notification with "Người ấy vừa trả lời thẻ hôm nay" sent to the other partner on each first answer to today's card; the partner journal switch and quiet hours still apply, and edits, deletes, swaps, extra play and decisions notify nobody.
 
 ### Acceptance criteria
 
