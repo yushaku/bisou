@@ -41,7 +41,7 @@ afterEach(() => { vi.clearAllMocks(); vi.mocked(useHistoryState).mockReturnValue
 
 it.each([0, 1])("R25: puts my jar on the left for partner %i", (index) => {
   const user = { ...session.user, ...members[index]! };
-  const html = render(h(Home, { ...session, user, couple, onCouple: () => {}, celebrate: false, onCelebrated: () => {} }));
+  const html = render(h(Wishes, { ...session, user, couple } satisfies ComponentProps<typeof Wishes>));
   const labels = [...html.matchAll(/<button[^>]*aria-label="(Hũ[^\"]+)"/g)].map((match) => match[1]);
   expect(labels).toEqual([
     `Hũ của ${user.displayName}, mở hũ của mình`,
@@ -49,13 +49,15 @@ it.each([0, 1])("R25: puts my jar on the left for partner %i", (index) => {
   ]);
 });
 
-it("returns through history when Back is pressed on a spin opened from Home", () => {
-  vi.mocked(useHistoryState).mockReturnValue({ create: "spin" });
-  const back = vi.fn();
-  vi.stubGlobal("history", { back });
-  render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>));
-  const click = [...buttons].find(([label]) => label.includes("Về hũ của mình") || label.includes("Quay lại"))?.[1];
-  expect(click).toBeDefined();
-  click!();
-  expect(back).toHaveBeenCalledOnce();
+it("returns to my jar from a spin opened by a link", () => {
+  vi.mocked(useHistoryState).mockReturnValue({ create: "spin", shortcut: true });
+  const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>));
+  const back = [...buttons].find(([label]) => label.includes("Về hũ của mình"));
+  expect(back).toBeDefined();
+  expect(html).not.toContain("Hũ của An, mở hũ của mình");
+});
+
+it("R25: leaves both jars off Home", () => {
+  const html = render(h(Home, { ...session, couple, onCouple: () => {}, celebrate: false, onCelebrated: () => {} }));
+  expect(html).not.toContain("Hũ của");
 });

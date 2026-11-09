@@ -13,11 +13,11 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
   const id = useId();
   const { t } = useI18n();
   return (
-    <button type="button" aria-label={t(mine ? "home.jarMine" : "home.jarPartner", { name: person.name })}
+    <button type="button" aria-label={t(mine ? "wishes.jarMine" : "wishes.jarPartner", { name: person.name })}
       aria-describedby={empty ? `${id}-empty` : undefined}
       aria-disabled={empty || undefined} onClick={() => { if (!empty) onOpen(); }}
       className="flex min-w-0 flex-col items-center rounded-xl py-1 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-disabled:cursor-default">
-      <span className="w-full break-words font-heading text-lg">{t("home.jarTitle", { name: person.name })}</span>
+      <span className="w-full break-words font-heading text-lg">{t("wishes.jarTitle", { name: person.name })}</span>
       <span className={`jar-wrap relative block w-35 max-w-full ${empty ? "[&>svg]:opacity-50" : ""}`}>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 160" className="jar block h-40 w-35 max-w-full" data-level={level} aria-hidden="true">
           <defs>
@@ -144,7 +144,7 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
             <use href={`#${id}-k`} className="jar-sp jar-tw" style={{ animationDelay: "-1.8s" }} />
           </g>
         </svg>
-        {empty && <span id={`${id}-empty`} className="absolute top-21 right-6 left-6 text-xs leading-snug font-semibold text-balance text-muted-foreground">{t("home.jarEmpty")}</span>}
+        {empty && <span id={`${id}-empty`} className="absolute top-21 right-6 left-6 text-xs leading-snug font-semibold text-balance text-muted-foreground">{t("wishes.jarEmpty")}</span>}
       </span>
       <PersonAvatar person={person} size="sm" className="mt-0.5" />
     </button>

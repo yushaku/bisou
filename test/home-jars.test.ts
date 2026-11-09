@@ -6,7 +6,7 @@ import { readCreateRequest, tabMove } from "../src/client/lib/navigation";
 
 afterEach(() => vi.restoreAllMocks());
 
-describe("Home wish jars", () => {
+describe("Wish jars", () => {
   it.each([[0, 0], [1, 1], [2, 1], [3, 2], [5, 2], [6, 3], [9, 3], [10, 4], [100, 4]])(
     "R26: %i open wishes fill my jar to level %i", (count, level) => {
       expect(wishJarLevels({ open: { length: count }, partnerJarEmpty: false }).mine).toBe(level);

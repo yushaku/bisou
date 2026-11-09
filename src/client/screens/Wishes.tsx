@@ -10,7 +10,7 @@ import { Celebration } from "../components/bisou/Celebration";
 import { ClaimsList } from "../components/bisou/ClaimsList";
 import { toPeople } from "../components/bisou/CoupleAvatars";
 import { SpinCard } from "../components/bisou/SpinCard";
-import { WishTeaser } from "../components/bisou/WishTeaser";
+import { WishJar } from "../components/bisou/WishJar";
 import { WishDetailSheet } from "../components/bisou/WishDetailSheet";
 import { WishCard } from "../components/bisou/WishCard";
 import { Button } from "../components/ui/button";
@@ -22,7 +22,7 @@ import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { displayName } from "../lib/displayName";
 import { useOnline } from "../lib/useOnline";
-import { wishErrorKey } from "../lib/wishes";
+import { wishErrorKey, wishJarLevels } from "../lib/wishes";
 import { useCreateRequest } from "../lib/useTabNavigation";
 import { readCreateRequest } from "../lib/navigation";
 import { useWishJar } from "../lib/useWishJar";
@@ -31,7 +31,7 @@ import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
 
-// The sections of the Wishes tab; the partner's jar sits above them on every section.
+// The sections of the Wishes tab; both jars sit above them on every section.
 const SECTIONS = { jar: "wishes.mine", claims: "claims.title" } as const;
 type Section = keyof typeof SECTIONS;
 // My jar lists open and received wishes together, narrowed by a filter.
@@ -47,12 +47,16 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const historyState = useHistoryState<{ shortcut?: boolean } | null>();
   const request = readCreateRequest(historyState);
   const [view, setView] = useState<Section | "spin">(() => request === "spin" ? "spin" : memory?.wishesSection ?? "jar");
-  const [spinFromHome, setSpinFromHome] = useState(request === "spin" && !historyState?.shortcut);
   const [filter, setFilter] = useState<Filter>(() => memory?.wishesFilter ?? "all");
   const partnerName = displayName(couple.members.find((m) => m.id !== session.user.id), t);
+  const people = toPeople(couple.members, session.user, t);
+  const myIndex = couple.members[0]?.id === session.user.id ? 0 : 1;
+  const myJar = people[myIndex]!;
+  const partnerJar = people[myIndex === 0 ? 1 : 0]!;
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const { jar, setJar, failed, refresh } = useWishJar(session.onSignedOut);
+  const levels = wishJarLevels(jar);
   useLayoutEffect(() => {
     if (!memory) return;
     if (view !== "spin") memory.wishesSection = view;
@@ -70,7 +74,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useCreateRequest("spin", () => { setSpinFromHome(!historyState?.shortcut); setView("spin"); });
+  useCreateRequest("spin", () => setView("spin"));
   useCreateRequest("wishes", () => { setFromMenu(true); setView("jar"); setEditing(null); });
 
   async function remove() {
@@ -88,8 +92,11 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const optionsButton = (wish: Wish) => <Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setDetail(false); setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>;
 
   return <SignedInShell {...session} tab="wishes">
-    {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => spinFromHome ? history.back() : setView("jar")}><ArrowLeft aria-hidden="true" />{t(spinFromHome ? "common.back" : "wishes.back")}</Button> : <>
-      <div className="mb-4"><WishTeaser onOpen={() => { setSpinFromHome(false); setView("spin"); }} disabled={jar?.partnerJarEmpty === true} title={t("spin.entry", { name: partnerName })} description={t(jar?.partnerJarEmpty ? "spin.jarEmpty" : "spin.entryHint", { name: partnerName })} /></div>
+    {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button> : <>
+      <section aria-label={t("nav.wishes")} className="mb-4 grid grid-cols-2 gap-2">
+        <WishJar person={myJar} level={levels.mine} mine onOpen={() => setView("jar")} />
+        <WishJar person={partnerJar} level={levels.partner} empty={!failed && jar?.partnerJarEmpty === true} onOpen={() => setView("spin")} />
+      </section>
       <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
         <TabsList className="w-full">
           {(Object.keys(SECTIONS) as Section[]).map((id) => <TabsTrigger key={id} value={id}>{t(SECTIONS[id])}</TabsTrigger>)}
