@@ -6,7 +6,7 @@
 
 - Choose a Garden starting status together, opening questions through that status: five relationship statuses and 35 new Vietnamese/English questions alongside the original 60 cards.
 - Answer decision questions with text, a neutral choice or a deferred/not-applicable choice; both responses reveal only after both submit, with editing and deletion controlled by each author.
-- Open a mutually chosen later status when both have answered all current decision questions; skip irrelevant statuses or stay where you are, keeping ordinary daily play and plants independent of progression.
+- Open a mutually chosen later stage immediately; skip irrelevant stages or stay where you are, keeping discussion questions, ordinary daily play and plants independent of progression.
 - The Garden tab draws one question card a day for both of you, from 6 decks of 10 cards (Memories, Dreams, Money, When we disagree, Both families, Everyday us). Each of you answers privately, and both answers show side by side only once both of you have answered.
 - Whoever answers first sees the card face down with "waiting for your partner"; the app never says who is late.
 - Swap today's card while neither of you has answered it; once one of you has answered, the card stays.
@@ -16,6 +16,8 @@
 - When both of you have answered today's card, both get a notification through the partner journal switch. Nothing is sent during quiet hours.
 
 ### Changed
+
+- Put today's card first on Home with named turns and a one-time flip that stays face up; stage choices now open immediately together, with optional discussion chips, shared banners, a one-time celebration and replacement answers after deletion.
 
 - Local `pnpm dev` now seeds one clean couple, `an@example.com` and `binh@example.com`, placed at In love with no answers, history or plants, instead of four synthetic scenario couples.
 - Today's question now appears on Home instead of the Garden tab; the Garden keeps levels and plants.
