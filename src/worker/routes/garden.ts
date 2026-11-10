@@ -1,9 +1,9 @@
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { vnDay } from "../../shared/days";
-import { answerText, cardById, DECKS, drawCard, LEVEL_IDS, type LevelAction, type ResponseChoice } from "../../shared/garden";
+import { answerText, cardById, DECKS, drawCard, LEVEL_IDS, levelRank, type LevelAction, type RelationshipLevel, type ResponseChoice } from "../../shared/garden";
 import type { AppEnv } from "../env";
-import { advanceLevels, changeLevels, levelsState, memberGuard, cardAccess, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday } from "../lib/garden";
+import { advanceLevels, changeLevels, levelsState, memberGuard, cardAccess, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday, stageAnswers } from "../lib/garden";
 import { notifyGarden } from "../lib/notify";
 
 type GardenEnv = AppEnv & { Variables: { gardenCoupleId: string } };
@@ -39,6 +39,16 @@ garden.get("/decks/:deckId", async (c) => {
   const deck = DECKS.find((d) => d.id === c.req.param("deckId"));
   if (!deck) return c.json({ error: "not_found" }, 404);
   return c.json(await gardenDeck(c.env.DB, c.get("gardenCoupleId"), c.get("user").id, deck.id, Date.now()));
+});
+
+garden.get("/stages/:levelId", async (c) => {
+  const levelId = c.req.param("levelId") as RelationshipLevel;
+  if (!LEVEL_IDS.includes(levelId)) return c.json({ error: "not_found" }, 404);
+  const couple = c.get("gardenCoupleId");
+  const user = c.get("user").id;
+  const levels = await levelsState(c.env.DB, couple, user);
+  if (!levels.placementComplete || !levels.furthestLevelId || levelRank(levelId) > levelRank(levels.furthestLevelId)) return c.json({ error: "not_found" }, 404);
+  return c.json({ cards: await stageAnswers(c.env.DB, couple, user, levelId) });
 });
 
 garden.post("/today/swap", limitBody, async (c) => {

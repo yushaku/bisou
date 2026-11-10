@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DECKS, cardById, type GardenDeckState } from "../../shared/garden";
+import { DECKS, type GardenDeckState } from "../../shared/garden";
 import type { Couple } from "../../shared/types";
 import { api } from "../api";
 import { GardenCard } from "../components/bisou/GardenCard";
@@ -40,7 +40,7 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
     <SubPageHeader title={deck?.name[locale] ?? t("garden.unknownDeck")} />
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 pt-3 pb-6">
       {deck && <div className="flex items-end gap-3">
-        <div className="w-20 shrink-0"><Plant deckId={deck.id} stage={0} /></div>
+        <div className="flex h-20 w-20 shrink-0 items-end overflow-hidden"><Plant deckId={deck.id} stage={0} /></div>
         <div className="min-w-0 pb-1">
           <h2 className="font-heading text-xl">{deck.name[locale]}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{deck.purpose[locale]}</p>
@@ -55,7 +55,6 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
       {!!state?.decisions.length && <section id="decisions" className="flex flex-col gap-6"><h2 className="font-heading text-xl">{t("garden.decisions")}</h2>
         {state.decisions.map((card) => <GardenCard key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
       </section>}
-      {!!state?.locked.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("garden.locked")}</h2>{state.locked.map((id) => <p key={id} className="text-sm text-muted-foreground">{cardById(id)?.text[locale]}</p>)}</section>}
       {!!state?.history.length && <section className="flex flex-col gap-6"><h2 className="font-heading text-xl">{t("garden.history")}</h2>
         {state.history.map((card) => <GardenCard key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
       </section>}

@@ -1,5 +1,5 @@
 import { vnDay } from "../../shared/days";
-import { CARDS, DECKS, cardById, LEVEL_IDS, gateIds, levelRank, type GardenLevels, type LevelAction, type ResponseChoice, drawCard, freshness, plantStage, type GardenCardState, type GardenState, type GardenDeckState } from "../../shared/garden";
+import { CARDS, DECKS, cardById, LEVEL_IDS, gateIds, levelRank, type GardenLevels, type LevelAction, type RelationshipLevel, type ResponseChoice, drawCard, freshness, plantStage, type GardenCardState, type GardenState, type GardenDeckState } from "../../shared/garden";
 
 export const memberGuard = `EXISTS(SELECT 1 FROM couple_members WHERE couple_id = ? AND user_id = ?)
   AND (SELECT COUNT(*) FROM couple_members WHERE couple_id = ?) = 2`;
@@ -163,6 +163,18 @@ export async function gardenState(db: D1Database, coupleId: string, userId: stri
     freshness: today ? freshness(last!.results[0]?.day ?? vnDay(now), vnDay(now)) : "fresh" };
 }
 
+/* Cards the caller has answered in one stage, newest answer first. */
+export async function stageAnswers(db: D1Database, coupleId: string, userId: string, levelId: RelationshipLevel): Promise<GardenCardState[]> {
+  const cardIds = CARDS.filter((card) => card.levelId === levelId).map((card) => card.id);
+  if (!cardIds.length) return [];
+  const rows = await db.prepare(`SELECT card_id, MAX(COALESCE(flipped_day, '')) AS flipped, MAX(updated_at) AS updated
+    FROM garden_answers WHERE couple_id = ? AND user_id = ? AND round = 1
+    AND card_id IN (${cardIds.map(() => "?").join(",")})
+    GROUP BY card_id ORDER BY flipped DESC, updated DESC`)
+    .bind(coupleId, userId, ...cardIds).all<{ card_id: string }>();
+  return cardStates(db, coupleId, userId, rows.results.map((row) => row.card_id));
+}
+
 export async function gardenDeck(db: D1Database, coupleId: string, userId: string, deckId: string, now: number): Promise<GardenDeckState> {
   const today = await loadToday(db, coupleId, now, userId);
   const input = await drawInput(db, coupleId, vnDay(now));
@@ -178,7 +190,6 @@ export async function gardenDeck(db: D1Database, coupleId: string, userId: strin
   const history = states.filter((card) => cardById(card.cardId)?.kind === "ordinary" && card.cardId !== activeId && (card.mine !== null || card.mineChoice !== null || card.mineDeleted || card.flippedDay || drawn!.results.some((row) => row.card_id === card.cardId)))
     .sort((a, b) => stamp(b.cardId) - stamp(a.cardId) || b.cardId.localeCompare(a.cardId));
   return { active: states.find((card) => card.cardId === activeId) ?? null, history,
-    decisions: states.filter((state) => { const card = cardById(state.cardId)!; return card.kind === "decision" && input.furthestLevel !== null && levelRank(card.levelId) <= input.furthestLevel; }),
-    locked: CARDS.filter((card) => card.deckId === deckId && (input.furthestLevel === null ? card.id.startsWith("L") : levelRank(card.levelId) > input.furthestLevel)).map((card) => card.id) };
+    decisions: states.filter((state) => { const card = cardById(state.cardId)!; return card.kind === "decision" && input.furthestLevel !== null && levelRank(card.levelId) <= input.furthestLevel; }) };
 }
 

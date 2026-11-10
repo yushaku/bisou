@@ -47,7 +47,8 @@ export interface GardenState {
   plants: GardenPlant[];
   freshness: Freshness;
 }
-export interface GardenDeckState { active: GardenCardState | null; history: GardenCardState[]; decisions: GardenCardState[]; locked: string[] }
+export interface GardenDeckState { active: GardenCardState | null; history: GardenCardState[]; decisions: GardenCardState[] }
+export interface GardenStageAnswers { cards: GardenCardState[] }
 
 export function answerText(raw: unknown): { text: string } | { error: "invalid_answer" | "answer_too_long" } {
   if (typeof raw !== "string") return { error: "invalid_answer" };

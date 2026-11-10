@@ -585,6 +585,22 @@ it("R50 R51 R54 AC29 AC30: revisiting earlier decisions cannot bypass the furthe
   for (const id of gateIds(3)) { await answer(a, id); await answer(b, id); }
   expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
 });
+it("stage answers list only the caller's answered cards in that stage and hide locked stages", async () => {
+  const { a, b } = await paired(); await place(a, b, "in_love");
+  await answer(a, "L1-01", "my acquainted answer");
+  await answer(a, "L2-01", "my in-love answer");
+  await answer(b, "L2-01", "partner in-love answer");
+  const stage = (who: TestUser, id: string) => call("GET", `/api/garden/stages/${id}`, { cookie: who.cookie });
+  const mine = await (await stage(a, "in_love")).json<{ cards: GardenCardState[] }>();
+  expect(mine.cards.map((card) => card.cardId)).toEqual(["L2-01"]);
+  expect(mine.cards[0]).toMatchObject({ mine: "my in-love answer", partner: "partner in-love answer", flippedDay: "2026-11-09" });
+  const partner = await (await stage(b, "in_love")).json<{ cards: GardenCardState[] }>();
+  expect(partner.cards.map((card) => card.cardId)).toEqual(["L2-01"]);
+  expect((await (await stage(a, "acquainted")).json<{ cards: GardenCardState[] }>()).cards.map((card) => card.cardId)).toEqual(["L1-01"]);
+  expect((await (await stage(b, "acquainted")).json<{ cards: GardenCardState[] }>()).cards).toEqual([]);
+  expect((await stage(a, "living_together")).status).toBe(404);
+  expect((await stage(a, "unknown")).status).toBe(404);
+});
 it("R1 R57 AC32: cross-couple and unpaired callers cannot read or mutate decision responses", async () => {
   const { a, b, couple } = await paired(); await place(a, b);
   await answer(a, "L2-01", "OUR SECRET");

@@ -522,8 +522,7 @@
   to { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .garden-island-art-wrap,
-  .garden-stage-chevron { transition: none; }
+  .garden-island-art-wrap { transition: none; }
 }
 .garden-planter {
   display: flex;
@@ -562,35 +561,6 @@
   font-size: 10.5px;
   font-weight: 700;
   line-height: 1.2;
-}
-.garden-stage {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.garden-stage-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 44px;
-  border-radius: var(--radius-lg);
-  padding-block: 2px;
-  list-style: none;
-  cursor: pointer;
-  outline: none;
-}
-.garden-stage-summary::-webkit-details-marker { display: none; }
-.garden-stage-summary:focus-visible {
-  outline: 3px solid var(--ring);
-  outline-offset: 3px;
-}
-.garden-stage-chevron { transition: transform 180ms var(--ease); }
-.garden-stage[open] .garden-stage-chevron { transform: rotate(180deg); }
-.garden-stage-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 .garden-stage-list {
   display: flex;

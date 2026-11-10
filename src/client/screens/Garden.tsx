@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Couple } from "../../shared/types";
-import type { GardenState, RelationshipLevel } from "../../shared/garden";
+import { levelRank, type GardenState, type RelationshipLevel } from "../../shared/garden";
 import { api } from "../api";
 import { GardenMap } from "../components/bisou/GardenMap";
+import { GardenStageSheet } from "../components/bisou/GardenStageSheet";
 import { GardenStageView } from "../components/bisou/GardenStageView";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
@@ -10,13 +11,14 @@ import { useI18n } from "../i18n";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 import { useLocation } from "wouter";
 
-export function Garden({ ...session }: SessionProps & { couple: Couple }) {
-  const { onSignedOut } = session;
+export function Garden({ couple, ...session }: SessionProps & { couple: Couple }) {
+  const { user, onSignedOut } = session;
   const { t } = useI18n();
   const [state, setState] = useState<GardenState | null>(null);
   const [failed, setFailed] = useState(false);
   const [view, setView] = useState<"garden" | "map">("garden");
   const [viewingId, setViewingId] = useState<RelationshipLevel | null>(null);
+  const [sheetLevel, setSheetLevel] = useState<RelationshipLevel | null>(null);
   const [location, navigate] = useLocation();
   const request = useRef(0);
   const refresh = useCallback(async () => {
@@ -36,16 +38,29 @@ export function Garden({ ...session }: SessionProps & { couple: Couple }) {
     return () => { ++request.current; clearInterval(timer); document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
   }, [refresh]);
   const stageId: RelationshipLevel = viewingId ?? state?.levels.selectedLevelId ?? state?.levels.initialLevelId ?? "acquainted";
+  const myName = user.displayName ?? t("garden.me");
+  const partnerName = couple.members.find((member) => member.id !== user.id)?.displayName ?? t("garden.partner");
+  const viewStage = (levelId: RelationshipLevel) => { setSheetLevel(null); setViewingId(levelId); setView("garden"); };
+  const selectIsland = (levelId: RelationshipLevel) => {
+    if (!state) return;
+    const levels = state.levels;
+    const furthest = levels.furthestLevelId ? levelRank(levels.furthestLevelId) : -1;
+    if (levels.placementComplete && levelRank(levelId) <= furthest) viewStage(levelId);
+    else setSheetLevel(levelId);
+  };
   return <SignedInShell {...session} tab="garden">
     <div className="flex flex-col gap-5 py-3">
       {failed && <div role="alert"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
       {!state && !failed && <Skeleton className="h-80 w-full" aria-label={t("loading")} />}
       {state && view === "map" && <GardenMap levels={state.levels} viewingId={stageId}
-        onClose={() => setView("garden")} onSelect={(levelId) => { setViewingId(levelId); setView("garden"); }} />}
-      {state && view === "garden" && <GardenStageView levels={state.levels} plants={state.plants} freshness={state.freshness} stageId={stageId}
-        onOpenMap={() => setView("map")} onSelectStage={setViewingId}
+        onClose={() => setView("garden")} onSelect={selectIsland} />}
+      {state && view === "garden" && <GardenStageView key={stageId} levels={state.levels} plants={state.plants} freshness={state.freshness} stageId={stageId}
+        myName={myName} partnerName={partnerName}
+        onOpenMap={() => setView("map")} onSelectStage={viewStage}
         onOpenDeck={(id) => navigate(`/garden/${id}`, { state: { from: location } })}
         onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
+      {state && <GardenStageSheet levels={state.levels} levelId={sheetLevel ?? stageId} open={sheetLevel !== null}
+        onClose={() => setSheetLevel(null)} onChanged={() => void refresh()} onSignedOut={onSignedOut} onViewStage={viewStage} />}
     </div>
   </SignedInShell>;
 }

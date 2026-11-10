@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(archify:*)",
+      "Shell(ls:*)",
+      "Shell(node /private/tmp/commandcode-501/-Users-nami-work-bisou/4a0b3d48-840d-45ea-a43c-5188a3ef28c8/scratchpad/archify/archify/bin/archify.mjs finalize erd .archify/erd-bisou-schema-20261108-230556/candidate.json .archify/erd-bisou-schema-20261108-230556/bisou-schema.html --quality standard --json 2 >& 1)",
+      "Shell(node /private/tmp/commandcode-501/-Users-nami-work-bisou/4a0b3d48-840d-45ea-a43c-5188a3ef28c8/scratchpad/archify/archify/bin/archify.mjs visual-check .archify/erd-bisou-schema-20261108-230556/bisou-schema.html --summary --require-provenance 2 >& 1)",
+      "artifact_publish",
+      "Shell(node /private/tmp/commandcode-501/-Users-nami-work-bisou/4a0b3d48-840d-45ea-a43c-5188a3ef28c8/scratchpad/archify/archify/bin/archify.mjs finalize erd database-schema.json database-schema.html --quality standard --out-dir /private/tmp/commandcode-501/-Users-nami-work-bisou/4a0b3d48-840d-45ea-a43c-5188a3ef28c8/scratchpad/receipts/database-schema --json 2 >& 1)",
+      "Shell(cd /Users/nami/work/bisou && rm -rf .archify/erd-bisou-schema-20261108-230556 && rmdir .archify 2>/dev/null; ls -lh docs/database-schema.* && git status --short)",
+      "Shell(rm:*)",
+      "Shell(pnpm:*)",
+      "Shell(agent-browser:*)",
+      "Shell(sleep:*)",
+      "Shell(lsof:*)",
+      "Shell(pgrep:*)",
+      "Shell(grep:*)",
+      "Shell(awk:*)",
+      "Shell(for:*)",
+      "Shell(do:*)",
+      "Shell(done:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

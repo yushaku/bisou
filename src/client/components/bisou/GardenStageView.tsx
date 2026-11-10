@@ -1,32 +1,55 @@
-import { ChevronDown, ChevronRight, Route } from "lucide-react";
-import { Link } from "wouter";
-import { CARDS, levelRank, type Freshness, type GardenLevels as Levels, type GardenPlant, type RelationshipLevel } from "../../../shared/garden";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Route } from "lucide-react";
+import { levelRank, type Freshness, type GardenCardState, type GardenLevels as Levels, type GardenPlant, type RelationshipLevel } from "../../../shared/garden";
+import { api } from "../../api";
 import { useI18n } from "../../i18n";
 import { GARDEN_STAGE_LABEL, gardenStageState } from "../../lib/gardenStages";
-import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
-import { GardenLevels } from "./GardenLevels";
+import { Skeleton } from "../ui/skeleton";
+import { GardenCard } from "./GardenCard";
 import { Planter } from "./Planter";
 
 /* The main Garden view: the shared six-plant garden for the stage being viewed. */
-export function GardenStageView({ levels, plants, freshness, stageId, onOpenMap, onSelectStage, onOpenDeck, onChanged, onSignedOut }: {
+export function GardenStageView({ levels, plants, freshness, stageId, myName, partnerName, onOpenMap, onSelectStage, onOpenDeck, onChanged, onSignedOut }: {
   levels: Levels;
   plants: GardenPlant[];
   freshness: Freshness;
   stageId: RelationshipLevel;
+  myName: string;
+  partnerName: string;
   onOpenMap: () => void;
   onSelectStage: (levelId: RelationshipLevel) => void;
   onOpenDeck: (deckId: string) => void;
   onChanged: () => void;
   onSignedOut: () => void;
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const state = gardenStageState(stageId, levels);
   const rank = levelRank(stageId);
   const furthest = levels.furthestLevelId ? levelRank(levels.furthestLevelId) : -1;
   const open = levels.placementComplete && rank <= furthest;
   const current = levels.selectedLevelId === stageId;
-  const decisions = CARDS.filter((card) => card.kind === "decision" && card.levelId === stageId);
+  const [cards, setCards] = useState<GardenCardState[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const request = useRef(0);
+  const load = useCallback(async () => {
+    if (!open) { setCards(null); setFailed(false); return; }
+    const version = ++request.current;
+    const result = await api.gardenStage(stageId);
+    if (version !== request.current) return;
+    if (result.ok) { setCards(result.data.cards); setFailed(false); }
+    else if (result.status === 401) onSignedOut();
+    else setFailed(true);
+  }, [open, stageId, onSignedOut]);
+  useEffect(() => {
+    if (!open) { setCards(null); setFailed(false); return; }
+    const visible = () => { if (document.visibilityState === "visible") void load(); };
+    void load();
+    const timer = setInterval(visible, 15000);
+    document.addEventListener("visibilitychange", visible);
+    window.addEventListener("online", visible);
+    return () => { ++request.current; clearInterval(timer); document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
+  }, [load, open]);
 
   return <div className="garden-stage-view">
     <div className="garden-view-head">
@@ -49,32 +72,16 @@ export function GardenStageView({ levels, plants, freshness, stageId, onOpenMap,
 
     <Planter plants={plants} freshness={freshness} onOpen={onOpenDeck} />
 
-    <details className="garden-stage">
-      <summary className="garden-stage-summary">
-        <span className="font-heading text-lg">{t("garden.stageQuestions")}</span>
-        <ChevronDown className="garden-stage-chevron size-4" aria-hidden="true" />
-      </summary>
-      <div className="garden-stage-body">
-        <ul className="garden-stage-list">
-          {decisions.map((card) => {
-            const complete = levels.decisions.find((decision) => decision.cardId === card.id)?.complete;
-            return <li key={card.id} className="garden-stage-item">
-              {open
-                ? <Link className="garden-stage-link" href={`/garden/${card.deckId}#decisions`}>{card.text[locale]}</Link>
-                : <span>{card.text[locale]}</span>}
-              <span className={cn("garden-stage-state", open && complete && "garden-stage-state--done")}>
-                {t(open ? complete ? "garden.complete" : "garden.incomplete" : "garden.locked")}
-              </span>
-            </li>;
-          })}
-        </ul>
-      </div>
-    </details>
-
-    <GardenLevels levels={levels} onChanged={onChanged} onSignedOut={onSignedOut} focusLevelId={stageId}
-      trigger={<Button variant="outline" className="w-full justify-between">
-        {open ? t("garden.manageStage") : t("garden.openStage")}
-        <ChevronRight className="size-4" aria-hidden="true" />
-      </Button>} />
+    {open && <section className="flex flex-col gap-3">
+      <h2 className="font-heading text-xl">{t("garden.answeredQuestions")}</h2>
+      {!cards && !failed && <Skeleton className="h-40" aria-label={t("loading")} />}
+      {failed && <div role="alert" className="flex flex-col items-start gap-2">
+        <p className="text-sm text-muted-foreground">{t("garden.loadError")}</p>
+        <Button variant="outline" onClick={() => void load()}>{t("journal.retry")}</Button>
+      </div>}
+      {cards && !cards.length && <p className="text-sm text-muted-foreground">{t("garden.noAnsweredQuestions")}</p>}
+      {cards?.map((card) => <GardenCard key={card.cardId} card={card} myName={myName} partnerName={partnerName}
+        onChanged={() => { onChanged(); void load(); }} onSignedOut={onSignedOut} />)}
+    </section>}
   </div>;
 }
