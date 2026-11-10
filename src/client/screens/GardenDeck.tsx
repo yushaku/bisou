@@ -35,7 +35,7 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
     window.addEventListener("online", visible);
     return () => { ++request.current; clearInterval(timer); document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
   }, [refresh]);
-  const names = { myName: user.displayName ?? t("garden.me"), partnerName: couple.members.find((m) => m.id !== user.id)?.displayName ?? t("garden.partner") };
+  const names = { myName: user.displayName?.trim() || t("garden.me"), partnerName: couple.members.find((m) => m.id !== user.id)?.displayName?.trim() || t("garden.partner") };
   return <div className="flex min-h-dvh flex-col">
     <SubPageHeader title={deck?.name[locale] ?? t("garden.unknownDeck")} />
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 pt-3 pb-6">
@@ -49,14 +49,14 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
       {failed && <div role="alert"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
       {!state && !failed && <Skeleton className="h-80" aria-label={t("loading")} />}
       {state?.active && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("garden.inPlay")}</h2>
-        <GardenCard key={state.active.cardId} card={state.active} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />
+        <GardenCard memoryScope={`${couple.id}:${user.id}`} key={state.active.cardId} card={state.active} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />
       </section>}
       {state && !state.active && <p className="text-center text-muted-foreground">{t("garden.allPlayed")}</p>}
       {!!state?.decisions.length && <section id="decisions" className="flex flex-col gap-6"><h2 className="font-heading text-xl">{t("garden.decisions")}</h2>
-        {state.decisions.map((card) => <GardenCard key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
+        {state.decisions.map((card) => <GardenCard memoryScope={`${couple.id}:${user.id}`} key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
       </section>}
       {!!state?.history.length && <section className="flex flex-col gap-6"><h2 className="font-heading text-xl">{t("garden.history")}</h2>
-        {state.history.map((card) => <GardenCard key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
+        {state.history.map((card) => <GardenCard memoryScope={`${couple.id}:${user.id}`} key={card.cardId} card={card} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />)}
       </section>}
     </main>
     <BottomBar active="garden" {...navigation} />

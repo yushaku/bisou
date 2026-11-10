@@ -1,5 +1,5 @@
 import { vnDay } from "../../shared/days";
-import { CARDS, DECKS, cardById, LEVEL_IDS, gateIds, levelRank, type GardenLevels, type LevelAction, type RelationshipLevel, type ResponseChoice, drawCard, freshness, plantStage, type GardenCardState, type GardenState, type GardenDeckState } from "../../shared/garden";
+import { CARDS, DECKS, cardById, LEVEL_IDS, levelRank, type GardenLevels, type LevelAction, type RelationshipLevel, type ResponseChoice, drawCard, freshness, plantStage, type GardenCardState, type GardenState, type GardenDeckState } from "../../shared/garden";
 
 export const memberGuard = `EXISTS(SELECT 1 FROM couple_members WHERE couple_id = ? AND user_id = ?)
   AND (SELECT COUNT(*) FROM couple_members WHERE couple_id = ?) = 2`;
@@ -10,7 +10,7 @@ export function cardAccess(card: { id: string; levelId: typeof LEVEL_IDS[number]
 interface LevelRow {
   initial_level: number | null; selected_level: number | null; furthest_level: number | null; revision: number;
   proposal_kind: "placement" | "target" | "revisit" | null; proposal_level: number | null;
-  proposer_id: string | null; target_agreed: number; gate_ids: string;
+  proposer_id: string | null; target_agreed: number;
 }
 export async function ensureLevels(db: D1Database, couple: string, user: string) {
   await db.prepare(`INSERT OR IGNORE INTO garden_levels(couple_id) SELECT ? WHERE ${memberGuard}`)
@@ -32,24 +32,6 @@ export async function levelsState(db: D1Database, couple: string, user: string):
       agreed: !!row.target_agreed, proposedByMe: row.proposer_id === user },
     decisions: ids.map((cardId) => ({ cardId, complete: completed.results.some((r) => r.card_id === cardId) })) };
 }
-// Paired flip markers survive personal-response deletion; only current members count.
-const gatesComplete = `json_array_length(gate_ids) > 0 AND NOT EXISTS(
-  SELECT 1 FROM json_each(gate_ids) gate WHERE
-    (SELECT COUNT(*) FROM garden_answers a WHERE a.couple_id = garden_levels.couple_id
-      AND a.card_id = gate.value AND a.round = 1 AND a.flipped_day IS NOT NULL
-      AND a.user_id IN (SELECT user_id FROM couple_members WHERE couple_id = garden_levels.couple_id)) <> 2)`;
-const gateCatalog = JSON.stringify(LEVEL_IDS.map((_, i) => gateIds(i)));
-export function advanceLevels(db: D1Database, couple: string, user: string, cardId: string) {
-  return db.prepare(`UPDATE garden_levels SET selected_level = proposal_level, furthest_level = proposal_level,
-    gate_ids = json_extract(?, '$[' || proposal_level || ']'), proposal_kind = NULL, proposal_level = NULL,
-    proposer_id = NULL, target_agreed = 0, revision = revision + 1
-    WHERE couple_id = ? AND proposal_kind = 'target' AND target_agreed = 1 AND proposal_level > furthest_level
-    AND EXISTS(SELECT 1 FROM json_each(gate_ids) WHERE value = ?)
-    AND EXISTS(SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ? AND round = 1)
-    AND ${gatesComplete} AND ${memberGuard}`)
-    .bind(gateCatalog, couple, cardId, couple, cardId, user, couple, user, couple);
-}
-
 export async function changeLevels(db: D1Database, couple: string, user: string, action: LevelAction) {
   await ensureLevels(db, couple, user);
   let sql: string;
@@ -57,28 +39,24 @@ export async function changeLevels(db: D1Database, couple: string, user: string,
   if (action.action === "propose") {
     const rank = levelRank(action.levelId);
     const eligible = action.kind === "placement" ? "initial_level IS NULL" : action.kind === "revisit"
-      ? "furthest_level IS NOT NULL AND ? <= furthest_level" : "furthest_level < 4 AND ? > furthest_level AND json_array_length(gate_ids) > 0";
+      ? "furthest_level IS NOT NULL AND ? <= furthest_level" : "furthest_level < 4 AND ? > furthest_level";
     sql = `UPDATE garden_levels SET proposal_kind = ?, proposal_level = ?, proposer_id = ?, target_agreed = 0, revision = revision + 1
       WHERE couple_id = ? AND revision = ? AND (proposal_kind IS NULL OR proposer_id = ?) AND ${eligible} AND ${memberGuard}`;
     values = [action.kind, rank, user, couple, action.revision, user, ...(action.kind !== "placement" ? [rank] : []), couple, user, couple];
   } else if (action.action === "accept") {
-    sql = `WITH choice AS (SELECT *, (proposal_kind = 'placement' OR (proposal_kind = 'target' AND ${gatesComplete})) AS opens
+    sql = `WITH choice AS (SELECT *, (proposal_kind IN ('placement', 'target')) AS opens
       FROM garden_levels WHERE couple_id = ? AND revision = ? AND proposer_id <> ?
       AND ((proposal_kind = 'placement' AND initial_level IS NULL) OR (proposal_kind = 'revisit' AND proposal_level <= furthest_level)
-        OR (proposal_kind = 'target' AND proposal_level > furthest_level AND furthest_level < 4 AND json_array_length(gate_ids) > 0))
+        OR (proposal_kind = 'target' AND proposal_level > furthest_level AND furthest_level < 4))
       AND ${memberGuard})
       UPDATE garden_levels SET
         initial_level = CASE WHEN choice.proposal_kind = 'placement' THEN choice.proposal_level ELSE choice.initial_level END,
         furthest_level = CASE WHEN choice.opens THEN choice.proposal_level ELSE choice.furthest_level END,
         selected_level = CASE WHEN choice.opens OR choice.proposal_kind = 'revisit' THEN choice.proposal_level ELSE choice.selected_level END,
-        gate_ids = CASE WHEN choice.opens THEN json_extract(?, '$[' || choice.proposal_level || ']') ELSE choice.gate_ids END,
-        proposal_kind = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN 'target' ELSE NULL END,
-        proposal_level = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN choice.proposal_level ELSE NULL END,
-        proposer_id = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN choice.proposer_id ELSE NULL END,
-        target_agreed = CASE WHEN choice.proposal_kind = 'target' AND NOT choice.opens THEN 1 ELSE 0 END,
+        proposal_kind = NULL, proposal_level = NULL, proposer_id = NULL, target_agreed = 0,
         revision = garden_levels.revision + 1
       FROM choice WHERE garden_levels.couple_id = choice.couple_id`;
-    values = [couple, action.revision, user, couple, user, couple, gateCatalog];
+    values = [couple, action.revision, user, couple, user, couple];
   } else {
     sql = `UPDATE garden_levels SET proposal_kind = NULL, proposal_level = NULL, proposer_id = NULL,
       target_agreed = 0, revision = revision + 1 WHERE couple_id = ? AND revision = ? AND proposal_kind IS NOT NULL
@@ -129,21 +107,29 @@ export async function loadToday(db: D1Database, coupleId: string, now: number, u
 
 export async function cardStates(db: D1Database, coupleId: string, userId: string, cardIds: string[]): Promise<GardenCardState[]> {
   if (!cardIds.length) return [];
-  // The join prevents partner bodies and metadata from leaving SQL before the caller has answered.
-  const rows = await db.prepare(`SELECT mine.card_id, mine.body AS mine, other.body AS partner, mine.response_choice AS mine_choice, other.response_choice AS partner_choice,
+  // Only the answered boolean crosses the reveal boundary before both submit.
+  const rows = await db.prepare(`SELECT requested.value AS card_id, mine.body AS mine, other.body AS partner,
+    mine.response_choice AS mine_choice, other.response_choice AS partner_choice,
+    EXISTS(SELECT 1 FROM garden_answers answered WHERE answered.couple_id = ? AND answered.card_id = requested.value
+      AND answered.round = 1 AND answered.user_id <> ?
+      AND answered.user_id IN (SELECT user_id FROM couple_members WHERE couple_id = ?)
+      AND (answered.body IS NOT NULL OR answered.response_choice IS NOT NULL)) AS partner_answered,
     mine.edited_after_flip AS mine_edited, COALESCE(other.edited_after_flip, 0) AS partner_edited,
     (mine.body IS NULL AND mine.response_choice IS NULL AND mine.flipped_day IS NOT NULL) AS mine_deleted,
     (other.body IS NULL AND other.response_choice IS NULL AND other.flipped_day IS NOT NULL) AS partner_deleted,
     CASE WHEN other.user_id IS NOT NULL THEN mine.flipped_day ELSE NULL END AS flipped_day
-    FROM garden_answers mine LEFT JOIN garden_answers other
+    FROM json_each(?) requested LEFT JOIN garden_answers mine
+      ON mine.couple_id = ? AND mine.user_id = ? AND mine.round = 1 AND mine.card_id = requested.value
+    LEFT JOIN garden_answers other
       ON other.couple_id = mine.couple_id AND other.card_id = mine.card_id AND other.round = mine.round
       AND other.user_id <> mine.user_id AND mine.flipped_day IS NOT NULL AND other.flipped_day IS NOT NULL
       AND other.user_id IN (SELECT user_id FROM couple_members WHERE couple_id = mine.couple_id)
-    WHERE mine.couple_id = ? AND mine.user_id = ? AND mine.round = 1 AND mine.card_id IN (${cardIds.map(() => "?").join(",")}) AND ${memberGuard}`)
-    .bind(coupleId, userId, ...cardIds, coupleId, userId, coupleId).all<{ card_id: string; mine: string | null; partner: string | null; mine_choice: ResponseChoice | null; partner_choice: ResponseChoice | null; mine_edited: number; partner_edited: number; mine_deleted: number; partner_deleted: number; flipped_day: string | null }>();
+    WHERE ${memberGuard}`)
+    .bind(coupleId, userId, coupleId, JSON.stringify(cardIds), coupleId, userId, coupleId, userId, coupleId)
+    .all<{ card_id: string; mine: string | null; partner: string | null; partner_answered: number; mine_choice: ResponseChoice | null; partner_choice: ResponseChoice | null; mine_edited: number; partner_edited: number; mine_deleted: number; partner_deleted: number; flipped_day: string | null }>();
   return cardIds.map((cardId) => {
     const row = rows.results.find((r) => r.card_id === cardId);
-    return { cardId, mine: row?.mine ?? null, partner: row?.partner ?? null, mineChoice: row?.mine_choice ?? null, partnerChoice: row?.partner_choice ?? null, mineEdited: !!row?.mine_edited,
+    return { cardId, partnerAnswered: !!row?.partner_answered, mine: row?.mine ?? null, partner: row?.partner ?? null, mineChoice: row?.mine_choice ?? null, partnerChoice: row?.partner_choice ?? null, mineEdited: !!row?.mine_edited,
       partnerEdited: !!row?.partner_edited, mineDeleted: !!row?.mine_deleted, partnerDeleted: !!row?.partner_deleted,
       flippedDay: row?.flipped_day ?? null };
   });

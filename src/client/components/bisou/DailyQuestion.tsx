@@ -7,6 +7,7 @@ import { useOnline } from "../../lib/useOnline";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { GardenCard } from "./GardenCard";
+import { GardenStageNotice } from "./GardenStageNotice";
 import { GardenScene } from "./GardenScene";
 
 /* Today's shared card lives on Home; the Garden tab keeps levels and plants. */
@@ -49,12 +50,13 @@ export function DailyQuestion({ couple, user, onSignedOut }: { couple: Couple; u
       void refresh();
     }
   }
-  return <section aria-label={t("garden.today")} className="mt-5 flex flex-col gap-3">
+  return <section aria-label={t("garden.today")} className="mb-5 flex flex-col gap-3">
+    {state && <GardenStageNotice state={state} memoryScope={`${couple.id}:${user.id}`} partnerName={partner?.displayName?.trim() || t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
     <p className="text-sm font-semibold text-muted-foreground">{t("garden.today")}</p>
     {failed && <div role="alert" className="flex flex-col items-start gap-2"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!state && !failed && <Skeleton className="h-72 w-full" aria-label={t("loading")} />}
     {state?.today ? <>
-      <GardenCard key={state.today.cardId} variant="today" card={state.today} myName={user.displayName ?? t("garden.me")} partnerName={partner?.displayName ?? t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} onFlip={() => { if (state.today?.flippedDay === state.day) setScene(true); }} />
+      <GardenCard memoryScope={`${couple.id}:${user.id}`} key={state.today.cardId} variant="today" card={state.today} myName={user.displayName?.trim() || t("garden.me")} partnerName={partner?.displayName?.trim() || t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} onFlip={() => { if (state.today?.flippedDay === state.day) setScene(true); }} />
       {!state.today.flippedDay && <div className="text-center">
         {!state.swapLocked && <Button variant="ghost" loading={swapping} disabled={!online} onClick={() => void swap()}>{t("garden.swap")}</Button>}
         {state.swapLocked && <p className="mt-1 text-sm text-muted-foreground">{t("garden.swapLocked")}</p>}

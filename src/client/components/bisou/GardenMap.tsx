@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Clock, Heart, LockKeyhole, Sparkles, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Check, Clock, Heart, Sprout, Sparkles, type LucideIcon } from "lucide-react";
 import { LEVEL_IDS, type GardenLevels as Levels, type RelationshipLevel } from "../../../shared/garden";
 import { useI18n } from "../../i18n";
 import { GARDEN_STAGE_LABEL, gardenStageState, type GardenStageState } from "../../lib/gardenStages";
@@ -8,15 +8,16 @@ import { Button } from "../ui/button";
 const STATE_ICON: Record<GardenStageState, LucideIcon> = {
   current: Heart,
   opened: Check,
-  locked: LockKeyhole,
+  locked: Sprout,
   proposed: Clock,
   chosen: Check,
   unplaced: Sparkles,
 };
 
 /* The journey overview: one floating island per relationship stage, joined by a winding path. */
-export function GardenMap({ levels, viewingId, onSelect, onClose }: {
+export function GardenMap({ levels, viewingId, partnerName, onSelect, onClose }: {
   levels: Levels;
+  partnerName: string;
   viewingId: RelationshipLevel;
   onSelect: (levelId: RelationshipLevel) => void;
   onClose: () => void;
@@ -86,7 +87,7 @@ export function GardenMap({ levels, viewingId, onSelect, onClose }: {
               <span className="garden-island-art-wrap"><IslandArt rank={rank} /></span>
               <span className="garden-island-copy">
                 <span className="garden-island-name font-heading">{t(`level.${levelId}`)}</span>
-                <span className="garden-island-state"><StateIcon className="size-3" aria-hidden="true" />{t(GARDEN_STAGE_LABEL[state])}</span>
+                <span className="garden-island-state"><StateIcon className="size-3" aria-hidden="true" />{state === "proposed" && levels.proposal?.proposedByMe ? t("garden.waitingPartner", { name: partnerName }) : t(GARDEN_STAGE_LABEL[state])}</span>
                 {viewing && state !== "current" && <span className="garden-island-viewing">{t("garden.viewingStage")}</span>}
               </span>
             </button>

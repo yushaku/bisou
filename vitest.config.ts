@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig(async () => {
   const migrations = await readD1Migrations(path.join(import.meta.dirname, "migrations"));
-  const clientTests = ["test/garden-client.test.ts", "test/detail-sheets.test.ts", "test/notification-card.test.ts", "test/push-sw.test.ts", "test/push-client.test.ts", "test/notifications.test.ts", "test/install.test.ts", "test/theme-provider.test.ts", "test/app-resilience.test.ts", "test/money-controls.test.ts", "test/offline-actions.test.ts", "test/use-wish-jar.test.ts", "test/wishes-jars-screens.test.ts", "test/update-reload.test.ts", "test/push-permission.test.ts"];
+  const clientTests = ["test/garden-client.test.ts", "test/garden-interactions.test.ts", "test/detail-sheets.test.ts", "test/notification-card.test.ts", "test/push-sw.test.ts", "test/push-client.test.ts", "test/notifications.test.ts", "test/install.test.ts", "test/theme-provider.test.ts", "test/app-resilience.test.ts", "test/money-controls.test.ts", "test/offline-actions.test.ts", "test/use-wish-jar.test.ts", "test/wishes-jars-screens.test.ts", "test/update-reload.test.ts", "test/push-permission.test.ts"];
   return {
     resolve: { alias: { "@": path.join(import.meta.dirname, "src/client") } },
     test: {

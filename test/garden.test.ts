@@ -83,7 +83,7 @@ describe("Garden daily cards", () => {
     const beforeBody = await before.clone().json<GardenDeckState>();
     await answer(a, old, "YESTERDAY SECRET");
     const after = await call("GET", path, { cookie: b.cookie });
-    expect(await after.clone().json()).toEqual(beforeBody);
+    expect(await after.clone().json()).toEqual({ ...beforeBody, active: { ...beforeBody.active, partnerAnswered: true } });
     expect([...after.headers]).toEqual([...before.headers]);
     expect(after.status).toBe(before.status);
     const saved = await answer(b, old, "my answer");
@@ -101,7 +101,7 @@ describe("Garden daily cards", () => {
     const beforeBody = await before.json<GardenDeckState>();
     const id = beforeBody.active!.cardId;
     await answer(a, id, "EXTRA SECRET");
-    expect(await (await call("GET", path, { cookie: b.cookie })).json()).toEqual(beforeBody);
+    expect(await (await call("GET", path, { cookie: b.cookie })).json()).toEqual({ ...beforeBody, active: { ...beforeBody.active, partnerAnswered: true } });
     await answer(b, id);
     vi.mocked(Date.now).mockReturnValue(NOW + 1000);
     await answer(a, "money-02");
@@ -173,17 +173,18 @@ describe("Garden daily cards", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_days WHERE couple_id = ?").bind(couple.id).first("n")).toBe(1);
   });
 
-  it("R13 R14 R31 AC8: a single answer leaves all partner response data and headers private", async () => {
+  it("R13 R14 R31 AC8: partner answered flag is visible without response content or metadata", async () => {
     const { a, b } = await paired();
     const before = await call("GET", "/api/garden", { cookie: b.cookie });
     const state = await before.clone().json<GardenState>();
     const saved = await answer(a, state.today!.cardId, "SECRET one");
     expect(saved.status).toBe(201);
     const after = await call("GET", "/api/garden", { cookie: b.cookie });
-    // D9 deliberately exposes only the shared swap lock.
+    // Only the answered flag and shared swap lock change before paired reveal.
     const beforeBody = await before.json<GardenState>();
     const afterBody = await after.json<GardenState>();
-    expect({ ...afterBody, swapLocked: false }).toEqual(beforeBody);
+    expect(afterBody.today).toMatchObject({ partnerAnswered: true, partner: null, partnerChoice: null, partnerEdited: false, partnerDeleted: false, flippedDay: null });
+    expect({ ...afterBody, today: { ...afterBody.today, partnerAnswered: false }, swapLocked: false }).toEqual(beforeBody);
     expect(afterBody.swapLocked).toBe(true);
     expect(after.status).toBe(before.status);
     expect([...after.headers]).toEqual([...before.headers]);
@@ -248,7 +249,8 @@ describe("Garden daily cards", () => {
     await answer(b, id);
     await call("DELETE", `/api/garden/cards/${id}/answer`, { cookie: a.cookie });
     expect((await garden(b)).today).toMatchObject({ partner: null, partnerDeleted: true, flippedDay: "2026-11-09" });
-    expect((await answer(a, id, "revive")).status).toBe(409);
+    expect((await answer(a, id, "revive")).status).toBe(201);
+    expect((await garden(a)).today).toMatchObject({ mine: "revive", mineEdited: true, mineDeleted: false, partner: "a private answer", flippedDay: "2026-11-09" });
   });
 
   it("R10a: daily draws and swaps avoid waiting answers when that deck has another card", async () => {
@@ -511,7 +513,7 @@ it("R42 R58 AC24 AC32: different texts and paired choices complete equally; dele
 });
 
 const levelAction = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
-it("R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: final paired decision opens one mutual skipped target, without cascade or growth", async () => {
+it("R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: mutual choice opens a skipped target before decision answers, without cascade or growth", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "living_together");
   const before = await garden(a);
   expect((await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 2 })).status).toBe(200);
@@ -521,7 +523,7 @@ it("R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: final paired decision opens one mut
     expect((await answer(a, id, "my view")).status).toBe(201);
     if (id !== gates.at(-1)) expect((await answer(b, id, "a different view")).status).toBe(201);
   }
-  expect((await garden(a)).levels.furthestLevelId).toBe("living_together");
+  expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
   const last = gates.at(-1)!;
   const saved = await call("POST", `/api/garden/cards/${last}/answer`, { cookie: b.cookie, body: { choice: "later_not_applicable" } });
   expect(saved.status).toBe(201);
@@ -533,7 +535,7 @@ it("R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: final paired decision opens one mut
   expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ? AND card_id LIKE 'L4-%'").bind(couple.id).first("n")).toBe(0);
 });
 
-it("R48 R58 R59 AC27 AC32 AC33: answers before target and post-reveal deletions still open only once on later acceptance", async () => {
+it("R48 R58 R59 AC27 AC32 AC33: answers and post-reveal deletions do not affect opening once on acceptance", async () => {
   const { a, b } = await paired(); await place(a, b, "acquainted");
   for (const id of gateIds(0)) { await answer(a, id); await answer(b, id, "different"); }
   await call("DELETE", `/api/garden/cards/${gateIds(0)[0]}/answer`, { cookie: a.cookie });
@@ -546,7 +548,7 @@ it("R48 R58 R59 AC27 AC32 AC33: answers before target and post-reveal deletions 
   await call("DELETE", `/api/garden/cards/${gateIds(0)[1]}/answer`, { cookie: b.cookie });
   expect((await garden(b)).levels.furthestLevelId).toBe("in_love");
 });
-it("R47 R59 AC33: stale acceptance after target replacement/decline saves nothing and agreement can be withdrawn by either member", async () => {
+it("R47 R59 AC33: stale acceptance after replacement or decline saves nothing and accepted choice is consumed", async () => {
   const { a, b } = await paired(); await place(a, b);
   await levelAction(a, { action: "propose", kind: "target", levelId: "living_together", revision: 2 });
   await levelAction(a, { action: "propose", kind: "target", levelId: "married", revision: 3 });
@@ -555,23 +557,22 @@ it("R47 R59 AC33: stale acceptance after target replacement/decline saves nothin
   expect((await levelAction(b, { action: "accept", revision: 4 })).status).toBe(409);
   await levelAction(b, { action: "propose", kind: "target", levelId: "living_together", revision: 5 });
   await levelAction(a, { action: "accept", revision: 6 });
-  expect((await garden(a)).levels.proposal!.agreed).toBe(true);
-  expect((await levelAction(b, { action: "decline", revision: 7 })).status).toBe(200);
-  expect((await garden(a)).levels).toMatchObject({ revision: 8, furthestLevelId: "in_love", proposal: null });
+  expect((await garden(a)).levels).toMatchObject({ revision: 7, furthestLevelId: "living_together", proposal: null });
+  expect((await levelAction(b, { action: "decline", revision: 7 })).status).toBe(409);
 });
-it("R48 R59 AC27 AC33: concurrent final responses serialize to one opening and a duplicate batch cannot mutate progress", async () => {
+it("R48 R59 AC27 AC33: concurrent responses after acceptance cannot reopen a stage or mutate its revision", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "acquainted");
   await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
   await levelAction(b, { action: "accept", revision: 3 });
   const ids = gateIds(0); for (const id of ids) await answer(a, id);
   for (const id of ids.slice(0, -2)) await answer(b, id);
   expect((await Promise.all(ids.slice(-2).map((id) => answer(b, id)))).map((r) => r.status)).toEqual([201, 201]);
-  expect((await garden(a)).levels).toMatchObject({ revision: 5, selectedLevelId: "in_love", proposal: null });
+  expect((await garden(a)).levels).toMatchObject({ revision: 4, selectedLevelId: "in_love", proposal: null });
   expect((await Promise.all([answer(b, ids.at(-1)!), answer(b, ids.at(-1)!)])).map((r) => r.status)).toEqual([409, 409]);
-  expect(await env.DB.prepare("SELECT revision FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("revision")).toBe(5);
+  expect(await env.DB.prepare("SELECT revision FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("revision")).toBe(4);
   expect((await garden(b)).levels).toEqual((await garden(a)).levels);
 });
-it("R50 R51 R54 AC29 AC30: revisiting earlier decisions cannot bypass the furthest snapshot; ordinary play needs no target", async () => {
+it("R50 R51 R54 AC29 AC30: earlier decisions stay usable and a fresh mutual choice opens beyond the furthest stage", async () => {
   const { a, b } = await paired(); await place(a, b, "married");
   await levelAction(a, { action: "propose", kind: "revisit", levelId: "acquainted", revision: 2 });
   await levelAction(b, { action: "accept", revision: 3 });
@@ -581,7 +582,7 @@ it("R50 R51 R54 AC29 AC30: revisiting earlier decisions cannot bypass the furthe
   expect((await answer(b, state.today!.cardId)).status).toBe(201);
   await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 4 });
   await levelAction(b, { action: "accept", revision: 5 });
-  expect((await garden(a)).levels.furthestLevelId).toBe("married");
+  expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
   for (const id of gateIds(3)) { await answer(a, id); await answer(b, id); }
   expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
 });
@@ -626,7 +627,7 @@ it("R1 R59 AC33: removal between middleware and decision batch prevents insertio
   });
   expect((await answer(b, gateIds(0).at(-1)!)).status).toBe(404);
   spy.mockRestore();
-  expect(await env.DB.prepare("SELECT furthest_level FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("furthest_level")).toBe(0);
+  expect(await env.DB.prepare("SELECT furthest_level FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("furthest_level")).toBe(1);
   expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ?").bind(couple.id, gateIds(0).at(-1)!, b.id).first("n")).toBe(0);
 });
 
@@ -669,5 +670,36 @@ it("R48 R59 AC27 AC33: target acceptance racing both final answers has one seria
   const result = await Promise.all([levelAction(b, { action: "accept", revision: 3 }), answer(a, ids.at(-1)!), answer(b, ids.at(-1)!)]);
   expect(result.map((r) => r.status)).toEqual([200, 201, 201]);
   const state = await garden(a); expect(state.levels.furthestLevelId).toBe("in_love"); expect(state.levels.proposal).toBeNull();
-  expect([4, 5]).toContain(state.levels.revision);
+  expect(state.levels.revision).toBe(4);
+});
+
+it("R48 R59 AC27 AC33: mutual choice opens immediately with no decision responses and cannot cascade", async () => {
+  const { a, b } = await paired(); await place(a, b, "acquainted");
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
+  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(200);
+  const state = await garden(a);
+  expect(state.levels).toMatchObject({ revision: 4, selectedLevelId: "in_love", furthestLevelId: "in_love", proposal: null });
+  expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
+  for (const id of gateIds(0)) { await answer(a, id); await answer(b, id); }
+  expect((await garden(b)).levels).toMatchObject({ revision: 4, furthestLevelId: "in_love", proposal: null });
+  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(409);
+});
+
+it("R15 R19 AC9 AC17: restored history stays face up in the API after the day changes", async () => {
+  const { a, b } = await paired(); await place(a, b, "in_love");
+  const id = (await garden(a)).today!.cardId;
+  await answer(a, id, "original"); await answer(b, id, "partner kept");
+  await call("DELETE", `/api/garden/cards/${id}/answer`, { cookie: a.cookie });
+  vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-10T08:00:00+07:00"));
+  expect((await answer(a, id, "rewritten")).status).toBe(201);
+  const deck = await (await call("GET", `/api/garden/decks/${id.split("-")[0]}`, { cookie: a.cookie })).json<GardenDeckState>();
+  expect(deck.history.find((card) => card.cardId === id)).toMatchObject({ mine: "rewritten", mineEdited: true, mineDeleted: false, partner: "partner kept", flippedDay: "2026-11-09" });
+});
+it("R6 R15 AC9: today's flipped card appears under the selected stage regardless of its catalog stage", async () => {
+  const { a, b } = await paired();
+  const id = (await garden(a)).today!.cardId;
+  await place(a, b, "in_love");
+  await answer(a, id, "own face up"); await answer(b, id, "partner face up");
+  const cards = await (await call("GET", "/api/garden/stages/in_love", { cookie: a.cookie })).json<{ cards: GardenCardState[] }>();
+  expect(cards.cards.find((card) => card.cardId === id)).toMatchObject({ mine: "own face up", partner: "partner face up", flippedDay: "2026-11-09" });
 });

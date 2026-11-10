@@ -3,7 +3,7 @@ import { bodyLimit } from "hono/body-limit";
 import { vnDay } from "../../shared/days";
 import { answerText, cardById, DECKS, drawCard, LEVEL_IDS, levelRank, type LevelAction, type RelationshipLevel, type ResponseChoice } from "../../shared/garden";
 import type { AppEnv } from "../env";
-import { advanceLevels, changeLevels, levelsState, memberGuard, cardAccess, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday, stageAnswers } from "../lib/garden";
+import { changeLevels, levelsState, memberGuard, cardAccess, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday, stageAnswers } from "../lib/garden";
 import { notifyGarden } from "../lib/notify";
 
 type GardenEnv = AppEnv & { Variables: { gardenCoupleId: string } };
@@ -48,7 +48,14 @@ garden.get("/stages/:levelId", async (c) => {
   const user = c.get("user").id;
   const levels = await levelsState(c.env.DB, couple, user);
   if (!levels.placementComplete || !levels.furthestLevelId || levelRank(levelId) > levelRank(levels.furthestLevelId)) return c.json({ error: "not_found" }, 404);
-  return c.json({ cards: await stageAnswers(c.env.DB, couple, user, levelId) });
+  const cards = await stageAnswers(c.env.DB, couple, user, levelId);
+  if (levelId === levels.selectedLevelId) {
+    const today = await loadToday(c.env.DB, couple, Date.now(), user);
+    if (today?.flipped && !cards.some((card) => card.cardId === today.card_id)) {
+      cards.unshift(...await cardStates(c.env.DB, couple, user, [today.card_id]));
+    }
+  }
+  return c.json({ cards });
 });
 
 garden.post("/today/swap", limitBody, async (c) => {
@@ -83,8 +90,9 @@ garden.post("/today/swap", limitBody, async (c) => {
 const saveAnswer: Handler<GardenEnv> = async (c) => {
   const card = cardById(c.req.param("cardId") ?? "");
   if (!card || (c.req.method === "POST" && card.retired)) return c.json({ error: "not_found" }, 404);
-  if (c.req.method === "PUT" && !await c.env.DB.prepare(`SELECT 1 FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ?
-    AND round = 1 AND (body IS NOT NULL OR response_choice IS NOT NULL)`).bind(c.get("gardenCoupleId"), card.id, c.get("user").id).first()) return c.json({ error: "not_found" }, 404);
+  const existing = await c.env.DB.prepare(`SELECT body, response_choice, flipped_day FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ?
+    AND round = 1`).bind(c.get("gardenCoupleId"), card.id, c.get("user").id).first();
+  if (c.req.method === "PUT" && !existing) return c.json({ error: "not_found" }, 404);
   const raw = await c.req.json().catch(() => null);
   if (!raw || typeof raw !== "object" || Array.isArray(raw) || Object.keys(raw).some((key) => !["text", "choice"].includes(key))
     || Object.hasOwn(raw, "text") === Object.hasOwn(raw, "choice")) return c.json({ error: "invalid_answer" }, 400);
@@ -97,15 +105,16 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
   const user = c.get("user").id;
   const now = Date.now();
   const day = vnDay(now);
-  const updating = c.req.method === "PUT";
+  const restoring = !!existing && existing.body === null && existing.response_choice === null && existing.flipped_day !== null;
+  const updating = c.req.method === "PUT" || restoring;
   const access = cardAccess(card);
   const accessValues = access === "1" ? [] : [couple];
   if (updating) {
     const result = await db.prepare(`UPDATE garden_answers SET body = ?, response_choice = ?, updated_at = ?,
       edited_after_flip = CASE WHEN flipped_day IS NOT NULL AND (body IS NOT ? OR response_choice IS NOT ?) THEN 1 ELSE edited_after_flip END
-      WHERE couple_id = ? AND card_id = ? AND round = 1 AND user_id = ? AND (body IS NOT NULL OR response_choice IS NOT NULL) AND ${access} AND ${memberGuard}`)
+      WHERE couple_id = ? AND card_id = ? AND round = 1 AND user_id = ? ${restoring ? "AND body IS NULL AND response_choice IS NULL AND flipped_day IS NOT NULL" : ""} AND ${access} AND ${memberGuard}`)
       .bind(parsed.text, choice, now, parsed.text, choice, couple, card.id, user, ...accessValues, couple, user, couple).run();
-    if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
+    if (!result.meta.changes) return restoring ? c.json({ error: "already_answered" }, 409) : c.json({ error: "not_found" }, 404);
   } else {
     let isToday = false;
     if (card.kind === "ordinary") {
@@ -138,7 +147,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
             SELECT ?, ?, ? WHERE ${ownSubmission} AND ${memberGuard}
             AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1 AND flipped_day = ?) = 2`)
             .bind(couple, card.deckId, day, ...submissionValues, ...accessValues, couple, user, couple, couple, card.id, day),
-        ] : [advanceLevels(db, couple, user, card.id)]),
+        ] : []),
       ]);
     } catch (error) {
       if (error instanceof Error && error.message.includes("UNIQUE constraint failed: garden_answers.couple_id, garden_answers.card_id, garden_answers.round, garden_answers.user_id")) return c.json({ error: "already_answered" }, 409);
@@ -148,7 +157,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
     if (isToday) c.executionCtx.waitUntil(notifyGarden(c.env, couple, user, now));
   }
   const [state] = await cardStates(db, couple, user, [card.id]);
-  return c.json({ card: state }, updating ? 200 : 201);
+  return c.json({ card: state }, c.req.method === "PUT" ? 200 : 201);
 };
 garden.post("/cards/:cardId/answer", limitBody, saveAnswer);
 garden.put("/cards/:cardId/answer", limitBody, saveAnswer);

@@ -10,11 +10,12 @@ import { GardenCard } from "./GardenCard";
 import { Planter } from "./Planter";
 
 /* The main Garden view: the shared six-plant garden for the stage being viewed. */
-export function GardenStageView({ levels, plants, freshness, stageId, myName, partnerName, onOpenMap, onSelectStage, onOpenDeck, onChanged, onSignedOut }: {
+export function GardenStageView({ levels, plants, freshness, stageId, myName, partnerName, memoryScope, onOpenMap, onSelectStage, onOpenDeck, onChanged, onSignedOut }: {
   levels: Levels;
   plants: GardenPlant[];
   freshness: Freshness;
   stageId: RelationshipLevel;
+  memoryScope: string;
   myName: string;
   partnerName: string;
   onOpenMap: () => void;
@@ -80,7 +81,7 @@ export function GardenStageView({ levels, plants, freshness, stageId, myName, pa
         <Button variant="outline" onClick={() => void load()}>{t("journal.retry")}</Button>
       </div>}
       {cards && !cards.length && <p className="text-sm text-muted-foreground">{t("garden.noAnsweredQuestions")}</p>}
-      {cards?.map((card) => <GardenCard key={card.cardId} card={card} myName={myName} partnerName={partnerName}
+      {cards?.map((card) => <GardenCard memoryScope={memoryScope} key={card.cardId} card={card} myName={myName} partnerName={partnerName}
         onChanged={() => { onChanged(); void load(); }} onSignedOut={onSignedOut} />)}
     </section>}
   </div>;

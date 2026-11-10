@@ -31,6 +31,7 @@ export interface GardenCardState {
   mine: string | null;
   mineChoice: ResponseChoice | null;
   partner: string | null;
+  partnerAnswered: boolean;
   partnerChoice: ResponseChoice | null;
   mineEdited: boolean;
   partnerEdited: boolean;
