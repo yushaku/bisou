@@ -2,8 +2,8 @@ import { expect, it } from "vitest";
 import { CARDS, DECKS } from "../src/shared/garden";
 
 it("R2 R3 R4 R17 AC21: approved stable bilingual cards retain deck, purpose and depth", () => {
-  expect(CARDS).toHaveLength(95);
-  expect(new Set(CARDS.map((c) => c.id)).size).toBe(95);
+  expect(CARDS).toHaveLength(119);
+  expect(new Set(CARDS.map((c) => c.id)).size).toBe(119);
   expect(DECKS).toHaveLength(6);
   for (const deck of DECKS) {
     expect(deck.name.vi).toBeTruthy();
@@ -23,7 +23,7 @@ it("R2 R3 R4 R17 AC21: approved stable bilingual cards retain deck, purpose and 
 });
 
 it("R41 R52 AC24: new catalog has unique bilingual stage/category/role metadata", () => {
-  expect(CARDS.filter((c) => c.id.startsWith("L"))).toHaveLength(35);
+  expect(CARDS.filter((c) => c.id.startsWith("L"))).toHaveLength(59);
   for (const card of CARDS) {
     expect(DECKS.some((deck) => deck.id === card.deckId)).toBe(true);
     expect(card.levelId).toBeTruthy();
