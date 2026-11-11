@@ -182,7 +182,7 @@ export interface Wish extends WishInput {
 export interface SpinWish {
   id: string;
   title: string;
-  price: number;
+  price: number | null;
   link: string | null;
   photoId: string | null;
 }

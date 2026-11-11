@@ -89,6 +89,6 @@ export const PAIR_CODE = "HN7K2Q";
 
 
 export async function demoSpin(budget: number): Promise<ApiResult<{ wish: SpinWish | null }>> {
-  const wish = PARTNER_WISHES.find((w) => w.price !== null && w.price <= budget);
-  return { ok: true, data: { wish: wish ? { id: wish.id, title: wish.title, price: wish.price!, link: wish.link, photoId: null } : null } };
+  const wish = PARTNER_WISHES.find((w) => w.price === null || w.price <= budget);
+  return { ok: true, data: { wish: wish ? { id: wish.id, title: wish.title, price: wish.price, link: wish.link, photoId: null } : null } };
 }

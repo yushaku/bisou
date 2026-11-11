@@ -18,12 +18,35 @@ const claim = (u: TestUser, id: string) => call("POST", `/api/wishes/${id}/claim
 const claims = async (u: TestUser) => (await (await call("GET", "/api/wishes/claims", { cookie: u.cookie })).json<{ claims: Claim[] }>()).claims;
 
 describe("secret spins and claims", () => {
+  it("wish-spin: partner's wish is drawable with price 5 tỷ", async () => {
+    const { a, b } = await paired();
+    const wish = await create(b, { title: "Five billion wish", price: 5_000_000_000 });
+    expect(await (await spin(a, 5_000_000_000)).json()).toEqual({
+      wish: { id: wish.id, title: wish.title, price: wish.price, link: null, photoId: null },
+    });
+  });
+
+  it("wish-spin: unpriced partner wish is drawable", async () => {
+    const { a, b } = await paired();
+    const wish = await create(b, { title: "Unpriced wish", price: null });
+    expect(await (await spin(a, 5_000_000_000)).json()).toEqual({
+      wish: { id: wish.id, title: wish.title, price: null, link: null, photoId: null },
+    });
+    expect((await claim(a, wish.id)).status).toBe(201);
+  });
+
+  it("wish-spin: priced partner wish above budget is excluded", async () => {
+    const { a, b } = await paired();
+    await create(b, { title: "Over budget wish", price: 5_000_000_001 });
+    expect(await (await spin(a, 5_000_000_000)).json()).toEqual({ wish: null });
+  });
+
   it("AC3, AC6 (R7-R9, R12): only eligible partner wishes and only the landed fields reach the spinner", async () => {
     const { a, b } = await paired();
     const photoId = await upload(b);
     const scarf = await create(b, { photoId });
     await create(b, { title: "Pottery", price: 900000 });
-    await create(b, { title: "Da Lat", price: null });
+    await create(b, { title: "Da Lat", price: 900000 });
     const claimed = await create(b, { title: "Candle" });
     await claim(a, claimed.id);
     await create(a, { title: "Mine", price: 1 });
@@ -113,17 +136,16 @@ describe("secret spins and claims", () => {
     expect((await env.DB.prepare("PRAGMA table_info(wish_spins)").all<{ name: string }>()).results.map((c) => c.name)).toEqual(["id", "user_id", "created_at"]);
   });
 
-  it("AC1, AC7 (R1, R8, R12, R13): own, outsider and newly unpriced landed wishes cannot be claimed", async () => {
+  it("AC1, AC7 (R1, R12, R13): only the partner can claim an open wish", async () => {
     const { a, b } = await paired();
     const outsider = await user("Outside");
     const wish = await create(b);
     expect((await claim(b, wish.id)).status).toBe(404);
     expect((await claim(outsider, wish.id)).status).toBe(404);
     expect((await spin(outsider)).status).toBe(404);
-    await spin(a);
     await call("PUT", `/api/wishes/${wish.id}`, { cookie: b.cookie, body: { title: "Scarf", price: null } });
-    expect((await claim(a, wish.id)).status).toBe(404);
-    expect(await claims(a)).toEqual([]);
+    expect((await claim(a, wish.id)).status).toBe(201);
+    expect(await claims(a)).toHaveLength(1);
   });
 
   it("R16, R22: acknowledging a notice cannot remove an open or received claim", async () => {

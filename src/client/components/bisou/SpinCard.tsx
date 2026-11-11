@@ -97,7 +97,7 @@ export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, 
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1"><h2 className="font-heading text-2xl">{state.wish.title}</h2><p className="font-heading text-2xl tabular-nums">{formatVnd(state.wish.price, locale)}</p></div>
+          <div className="min-w-0 flex-1"><h2 className="font-heading text-2xl">{state.wish.title}</h2><p className="font-heading text-2xl tabular-nums">{state.wish.price === null ? t("spin.noPrice") : formatVnd(state.wish.price, locale)}</p></div>
           {state.wish.link && <Button asChild variant="ghost" size="icon"><a href={state.wish.link} target="_blank" rel="noreferrer noopener" aria-label={t("wish.openLink")}><ExternalLink aria-hidden="true" /></a></Button>}
         </div>
       </div>}

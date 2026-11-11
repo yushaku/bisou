@@ -110,7 +110,7 @@ wishes.post("/spin", limitBody, async (c) => {
   if (retryAfter !== null) return c.json({ error: "rate_limited", retryAfter }, 429);
   // shortcut: reads the eligible jar in one query, add a cap if jars grow beyond a few hundred wishes.
   const { results } = await c.env.DB.prepare(`${WISH_SELECT} WHERE w.owner_id = ? AND w.couple_id = ?
-    AND w.status = 'open' AND w.price IS NOT NULL AND w.price <= ?
+    AND w.status = 'open' AND (w.price IS NULL OR w.price <= ?)
     AND NOT EXISTS (SELECT 1 FROM wish_claims c WHERE c.wish_id = w.id)`)
     .bind(c.get("partnerId"), c.get("wishCoupleId"), budget).all<WishRow>();
   const row = pickWeighted(results);
@@ -123,7 +123,7 @@ wishes.post("/:id/claim", async (c) => {
   const claimer = c.get("user").id;
   try {
     const result = await db.prepare(`INSERT INTO wish_claims (id, wish_id, claimer_id, created_at)
-      SELECT ?, w.id, ?, ? FROM wishes w WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ? AND w.status = 'open' AND w.price IS NOT NULL`)
+      SELECT ?, w.id, ?, ? FROM wishes w WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ? AND w.status = 'open'`)
       .bind(id, claimer, Date.now(), c.req.param("id"), c.get("partnerId"), c.get("wishCoupleId")).run();
     if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
   } catch (error) {

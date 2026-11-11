@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { MoneyInput } from "../src/client/components/bisou/MoneyInput";
 import { WishSheet } from "../src/client/components/bisou/WishSheet";
 import { api } from "../src/client/api";
+import { parseVnd } from "../src/client/lib/wishes";
 
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
@@ -21,6 +22,25 @@ it("Delete at position zero leaves the caret at zero after regrouping", () => {
   vi.stubGlobal("requestAnimationFrame", (fn: () => void) => fn());
   element.props.onChange({ currentTarget: input });
   expect(input.setSelectionRange).toHaveBeenCalledWith(0, 0);
+});
+
+it.each(["5.000.000.000", "5000000000", "5 000 000 000", "5\u00a0000\u00a0000\u00a0000"])("MoneyInput sends a vi budget of 5 billion for %s", (raw) => {
+  const onValueChange = vi.fn();
+  const element = MoneyInput({ value: "0", onValueChange });
+  const input = { value: raw, selectionStart: raw.length, setSelectionRange: vi.fn() };
+  vi.stubGlobal("requestAnimationFrame", vi.fn());
+  element.props.onChange({ currentTarget: input });
+  expect(element.props.inputMode).toBe("numeric");
+  expect(onValueChange).toHaveBeenCalledWith("5.000.000.000");
+  expect(parseVnd(onValueChange.mock.calls[0]![0] as string)).toBe(5_000_000_000);
+});
+
+it("MoneyInput treats a pasted unit suffix as digits only", () => {
+  const onValueChange = vi.fn();
+  const element = MoneyInput({ value: "0", onValueChange });
+  element.props.onPaste({ preventDefault: vi.fn(), clipboardData: { getData: () => "5 tỷ" }, currentTarget: { value: "0", selectionStart: 0, selectionEnd: 1 } });
+  expect(onValueChange).toHaveBeenCalledWith("5");
+  expect(parseVnd(onValueChange.mock.calls[0]![0] as string)).toBe(5);
 });
 
 it("WishSheet submits zero price as null", async () => {
