@@ -26,3 +26,10 @@ A partner writes a kind note ("Lời nhắn nhỏ") to the other in four parts: 
 - Accepted leak: a withdrawn note disappears from the recipient's list and the Home tile after the push announced it.
 - Notes are personal data about the relationship: never logged (logs carry counts only), deleted with the writer, recipient or couple, and joining export, unpairing and account deletion when those ship.
 - A local D1 that applied `0012_letters.sql` keeps a `letters` table and `photos.letter_id`; delete the local D1 state and apply the migrations again instead of shipping a migration that drops them.
+
+## Superseded in part (November 2026)
+
+The PO cancelled quiet hours. The text above is kept as written; where it differs, this note wins.
+- A note send always sets `notified_at = now` and pushes at once, at any hour. The 07:00 cron keeps `RELEASE_NOTES_SQL` only to flush notes still held with `notified_at` NULL (for example at deploy time), and keeps the reminder claim.
+- Every push has a fixed TTL of 24 hours.
+- `releaseNightJournal` no longer exists, so the shared 07:00 subrequest budget note no longer applies; `journal_slot` and `journal_entries_created` stay in the schema, unused.

@@ -16,7 +16,7 @@ PO, 11 November 2026 (one-pager D1 to D12 and A1 to A4, Gate 1 answers G1 to G10
 10. D10. No compliments step (Out of scope).
 11. D11. Notes never touch the garden (R8).
 12. D12. No conversation inside Bisou; the app only starts the talk, as for the garden (R30).
-13. A1. Notifications follow quiet hours, 22:00 to 07:00 (R38, R39).
+13. A1. Notifications are sent at any hour; there are no quiet hours (R38, R39).
 14. A2. Notifications and the lock screen never show note text (R41).
 15. A3, G7. The writer sees only "Chưa mở" or "Đã mở", never how many days (R17).
 16. A4, G8. Under reduced motion the mailbox stays still (R20).
@@ -25,7 +25,7 @@ PO, 11 November 2026 (one-pager D1 to D12 and A1 to A4, Gate 1 answers G1 to G10
 19. G3. Closed notes go straight to the journal (R32 to R36; revised by S11).
 20. G4. Named "Lời nhắn nhỏ" / "Kind note"; a section of the Journal tab where letters were; Home gets the inbox tile (R6, R19).
 21. G5. Each part up to 500 characters; text only, no photos (R3, R34).
-22. G6. The arrival notification and the reminder use the partner's journal switch, follow quiet hours and never show note text (R38, R41).
+22. G6. The arrival notification and the reminder use the partner's journal switch and never show note text (R38, R41).
 23. G9. Time capsule letters are dropped; nothing of them ships (Out of scope).
 24. G10. No new visual design; the PO polishes after delivery (R7).
 
@@ -52,9 +52,8 @@ A partner wants to tell the other something that bothers them, from a small habi
 Sơn and Linh are a couple. On 12 November 2026 Linh came home at 22:00 without telling Sơn, and Sơn is upset.
 
 - 12 November, 22:30: Sơn writes a note and saves it.
-- 13 November, 06:30: the 8 hours have passed; Sơn rereads the note, changes one part and sends it.
+- 13 November, 06:30: the 8 hours have passed; Sơn rereads the note, changes one part and sends it; Linh's phone shows "Sơn có một lời nhắn nhỏ" at once.
 - 13 November, 06:35: Sơn spots a typo in the sent note and fixes it; the note still shows "Chưa mở", nothing new reaches Linh and the 8 hours are not restarted.
-- 13 November, 07:00: quiet hours end and Linh's phone shows "Sơn có một lời nhắn nhỏ".
 - 13 November, 20:00: Linh opens it with "Mình sẵn sàng nghe" and reads the 06:35 version; 20:15: Linh closes it and the note appears in the journal for both.
 - 13 November, 20:30: Linh edits her own line in the journal entry; Sơn sees the new line.
 - Had Linh not opened it, one reminder would come at 07:00 on 16 November (the third Vietnam day after the send day).
@@ -100,7 +99,7 @@ Example: the note saved at 22:30 shows Sơn "Gửi được từ 06:30" ("Can be
 
 A sent note reaches the recipient at once. Until the recipient opens it, the writer can still fix it, or take it back without a trace.
 
-Example: at 06:30 Sơn sends; the note shows Sơn "Chưa mở". At 06:35 Sơn fixes a typo; Linh sees nothing new. Had Sơn withdrawn it at 06:40, Linh's Home and Lời nhắn nhỏ would look as before 06:30 and nothing would come at 07:00.
+Example: at 06:30 Sơn sends; the note shows Sơn "Chưa mở". At 06:35 Sơn fixes a typo; Linh sees nothing new. Had Sơn withdrawn it at 06:40, Linh's Home and Lời nhắn nhỏ would look as before 06:30 and Linh's phone would already have shown the arrival message, and no reminder would come.
 
 - R14. Sending delivers the note to the recipient at once; until the recipient opens it, the writer may still change it under R2 to R5, and nobody else can; a change after sending does not restart the 8 hours and sends no notification (S13; R58).
 - R15. Until the recipient opens it, the writer may withdraw a sent note after confirming; it is gone for good for both, leaves the recipient's count and section, and any notification or reminder not yet sent is dropped; a notification already shown stays, and tapping it opens Lời nhắn nhỏ without the note (D6).
@@ -109,7 +108,7 @@ Example: at 06:30 Sơn sends; the note shows Sơn "Chưa mở". At 06:35 Sơn fi
 - R18. The writer sees their own unsent and sent notes, most recently written first; the recipient never sees the writer's list.
 
 - AC9 (R14, R17). Given Sơn sent the note at 06:30, then Sơn sees "Chưa mở" with no date or days, and can still change it until Linh opens it.
-- AC10 (R15). Given Sơn withdraws the note at 06:40 and confirms, then Linh's Home, Lời nhắn nhỏ and phone show nothing of it, and nothing comes at 07:00 or on 16 November.
+- AC10 (R15). Given Sơn withdraws the note at 06:40 and confirms, then Linh's Home and Lời nhắn nhỏ show nothing of it, and no reminder comes on 16 November.
 - AC11 (R16). Given Linh opened the note at 20:00, then Sơn can no longer change, withdraw or delete it.
 
 ## 4. What the recipient sees before opening
@@ -178,18 +177,18 @@ Example: from 20:15 on 13 November both journal feeds show, under 13 November, a
 
 The recipient is told once when a note arrives and reminded once if it stays unopened for 3 days. No notification says what the note is about.
 
-Example: Linh has the partner's journal kind on. The note sent at 06:30 falls in quiet hours, so at 07:00 Linh's phone shows "Sơn có một lời nhắn nhỏ" ("Sơn left you a kind note"); tapping it opens Lời nhắn nhỏ. Linh opens the note at 20:00, so no reminder comes. Had Linh not opened it, at 07:00 on 16 November Linh would get "Lời nhắn nhỏ của Sơn vẫn ở đây" ("Sơn's kind note is still here"), and nothing after.
+Example: Linh has the partner's journal kind on. The note sent at 06:30 reaches Linh at once, so her phone shows it at 06:30: "Sơn có một lời nhắn nhỏ" ("Sơn left you a kind note"); tapping it opens Lời nhắn nhỏ. Linh opens the note at 20:00, so no reminder comes. Had Linh not opened it, at 07:00 on 16 November Linh would get "Lời nhắn nhỏ của Sơn vẫn ở đây" ("Sơn's kind note is still here"), and nothing after.
 
-- R38. When a note is sent, each device of the recipient with the partner's journal kind on gets "Sơn có một lời nhắn nhỏ" / "Sơn left you a kind note" at once, or at 07:00 when sent in quiet hours ([notifications](notifications.md) R3, R16, R34) (D8, G6, A1).
+- R38. When a note is sent, each device of the recipient with the partner's journal kind on gets "Sơn có một lời nhắn nhỏ" / "Sơn left you a kind note" at any hour ([notifications](notifications.md) R3, R34) (D8, G6, A1).
 - R39. A note still unopened 3 days after it was sent gets one reminder, "Lời nhắn nhỏ của Sơn vẫn ở đây" / "Sơn's kind note is still here", at 07:00 on the third Vietnam day after the send day; there is never a second reminder ([notifications](notifications.md) R35) (D8).
-- R40. Messages due at the same moment combine into one with the count: "Sơn có 2 lời nhắn nhỏ" / "Sơn left you 2 kind notes" for arrivals, "2 lời nhắn nhỏ của Sơn vẫn ở đây" / "2 kind notes from Sơn are still here" for reminders. When a reminder falls due at the same 07:00 as a new arrival from the same writer, they join that arrival message as a count, and the note counts as reminded.
+- R40. Messages due at the same moment combine into one with the count: "Sơn có 2 lời nhắn nhỏ" / "Sơn left you 2 kind notes" for arrivals held unsent at deploy time, "2 lời nhắn nhỏ của Sơn vẫn ở đây" / "2 kind notes from Sơn are still here" for reminders. When a reminder falls due at the same 07:00 as a new arrival from the same writer, they join that arrival message as a count, and the note counts as reminded.
 - R41. No notification ever contains a part, the pick or the line; tapping one opens Lời nhắn nhỏ (A2, G6).
 - R42. The writer gets no notification when the 8 hours end, or when the note is opened or closed (S15).
 - R43. A note opened or withdrawn before its message goes out is left out, and nothing is sent if none is left.
 
-- AC23 (R38). Given Sơn sends at 06:30, then Linh gets "Sơn có một lời nhắn nhỏ" at 07:00 and not before; given Sơn sends at 15:00, then Linh gets it at 15:00.
+- AC23 (R38). Given Sơn sends at 06:30, then Linh gets "Sơn có một lời nhắn nhỏ" at 06:30; given Sơn sends at 15:00, then Linh gets it at 15:00.
 - AC24 (R39). Given the note sent at 06:30 on 13 November stays unopened, then Linh gets one reminder at 07:00 on 16 November and nothing after; given Linh opened it on 13 November, then no reminder comes; given a note sent at 15:00 on 13 November stays unopened, then its reminder comes at 07:00 on 16 November.
-- AC25 (R40). Given Sơn sends two notes at 06:30 and 06:45, then Linh gets one message at 07:00, "Sơn có 2 lời nhắn nhỏ".
+- AC25 (R40). Given Sơn sends two notes at 06:30 and 06:45, then Linh gets "Sơn có một lời nhắn nhỏ" at each time; reminders due together count, "2 lời nhắn nhỏ của Sơn vẫn ở đây".
 - AC26 (R41, R42). Given any note notification, then it shows no part, pick or line, and tapping it opens Lời nhắn nhỏ; Sơn gets nothing at 06:30, at 20:00 or at 20:15.
 - AC27 (R38, R39). Given Linh never turned notifications on or turned the partner's journal kind off, then no arrival message or reminder comes, and the Home tile still shows.
 
