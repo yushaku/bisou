@@ -178,3 +178,26 @@ it.each(["button", "a"])("allows pulling from a %s while leaving a stationary ta
   expect(refresh).toHaveBeenCalledOnce();
   await vi.runAllTimersAsync();
 });
+
+it.each(["input", "textarea", "select", "[contenteditable]", "[role=slider]"])("excludes a pull that starts on %s", (control) => {
+  const refresh = vi.fn();
+  const { main, touch, TestElement } = setup(refresh);
+  const target = new TestElement(); target.parentElement = main;
+  target.closest.mockImplementation((selector?: string) => selector?.split(", ").includes(control) ? target : null);
+  touch("touchstart", 0, 0, 1, target);
+  expect(touch("touchmove", 100, 0, 1, target).defaultPrevented).toBe(false);
+  touch("touchend", 100, 0, 0, target);
+  expect(refresh).not.toHaveBeenCalled();
+});
+
+it("keeps the spinner and refresh working while motion-reduce drops the animations", async () => {
+  const refresh = vi.fn();
+  const { pull, render } = setup(refresh);
+  pull(80);
+  expect(refresh).toHaveBeenCalledOnce();
+  const nodes = render();
+  expect(nodes.some((node) => node.props["aria-busy"])).toBe(true);
+  expect(nodes.find((node) => node.props.className?.includes("animate-spin"))?.props.className).toContain("motion-reduce:animate-none");
+  expect(nodes.find((node) => node.props.style)?.props.className).toContain("motion-reduce:transition-none");
+  await vi.runAllTimersAsync();
+});
