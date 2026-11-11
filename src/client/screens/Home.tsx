@@ -72,8 +72,6 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
 
   return (
     <SignedInShell {...session} tab="home">
-      <DailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
-
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={people} size="sm" />
         <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: people[0].name, b: people[1].name })}</p>
@@ -88,6 +86,8 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
           action={{ label: t("startDate.set"), onClick: pick }}
         />
       )}
+
+      <DailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
 
       {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; memory.scroll.set("journal", 0); } navigation.onSelect("journal"); }} />}
       <TodayPosts couple={couple} user={session.user} today={toDayString(now)} onSignedOut={session.onSignedOut} />
