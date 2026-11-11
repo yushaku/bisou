@@ -33,7 +33,7 @@ Opting in
 Partner's journal
 
 - R5. When a partner saves a new entry, each device of the other partner with this kind on gets "Bình vừa viết nhật ký" / "Bình wrote in the journal", with the author's display name.
-- R6. Every new entry counts, back-filled ones and those made from a received wish included; changing or deleting an entry sends nothing.
+- R6. Every new entry counts, back-filled ones and those made from a received wish included; changing or deleting an entry sends nothing; the one exception is a kind note closing into the journal ([notes](notes.md) R32), which sends no push (R35).
 - R7. The author's own devices never get a notification of the author's own entry.
 - R8. The message never contains entry text, photos, the entry's day or whether it came from a wish; tapping it opens the journal.
 - R8a. When a partner first answers today's card, each device of the other partner with this kind on gets "Người ấy vừa trả lời thẻ hôm nay" / "Your partner answered today's card"; it never names the question, a deck or an answer, and tapping it opens Home. Changing or deleting an answer, extra play and decision answers send nothing, and the author's own devices never get it.
@@ -53,7 +53,7 @@ Event reminders
 
 Quiet hours
 
-- R16. From 22:00 to 07:00 Vietnam time no notification shows; event reminders already fall outside these hours.
+- R16. From 22:00 to 07:00 Vietnam time no notification shows; event reminders already fall outside these hours, and kind note messages due in them are held to 07:00 (R34, R35).
 - R17. Journal notifications from those hours are held and sent at 07:00: one entry gives the R5 message, several give one message with the count, "Bình đã viết 3 bài nhật ký" / "Bình wrote 3 journal entries".
 - R18. A held entry deleted before 07:00 is left out, and nothing is sent if none is left; the message goes to the devices with this kind on at 07:00.
 - R19. A new journal notification replaces an older one still showing on that device.
@@ -76,6 +76,11 @@ Personal data
 - R30. A partner sees what is on for a device on its Notifications page and deletes it by turning both kinds off or signing out.
 - R32. If the app's notification key ever changes, all devices are switched off, and each person turns them on again from Settings.
 - R33. The push address and keys are a new kind of personal data; the PO records them in the records of processing, kept outside the repo.
+
+Kind notes
+
+- R34. When a partner sends a kind note ([notes](notes.md) R38), each device of the recipient with the partner's journal kind on gets "Sơn có một lời nhắn nhỏ" / "Sơn left you a kind note" at once, or at 07:00 when sent in quiet hours, several due together giving one message with the count, "Sơn có 2 lời nhắn nhỏ" / "Sơn left you 2 kind notes". When a reminder falls due at the same 07:00 as a new arrival from the same writer, they join that arrival message as a count, and the note counts as reminded. Notes use the partner's journal switch; there is no third kind (R3).
+- R35. A note still unopened 3 days after it was sent gets one reminder, "Lời nhắn nhỏ của Sơn vẫn ở đây" / "Sơn's kind note is still here", at 07:00 on the third Vietnam day after the send day, never a second; no note message contains note text, tapping one opens the Lời nhắn nhỏ section, the writer gets nothing, a note opened or withdrawn before its message goes out is left out, a closed note becoming a journal entry sends nothing, and the writer changing a sent note before it is opened sends nothing and neither moves the reminder nor repeats the arrival message ([notes](notes.md) R35, R39 to R43, R58).
 
 Language
 
@@ -121,6 +126,8 @@ Turn on from the Home card or the Notifications page, get a notification and tap
 - AC20 (R27, R28, R29, R30). Given Bình turns both kinds off on the phone, then Bisou no longer keeps the phone's address or settings; while on, they go to no one but the phone's push service.
 - AC21 (R10, R31). Given Bình was born 3 January 1996 and An's app language is English, then An gets "Tomorrow: Bình's birthday" on 2 January 2027 at 20:00.
 - AC22 (R8a). Given Bình answers today's card at 16:00, then An's devices with this kind on get "Người ấy vừa trả lời thẻ hôm nay" and no other device does; tapping it opens Home; when An answers, Bình gets it; when Bình edits or deletes the answer or plays an extra card, nothing is sent.
+- AC23 (R34, R35, R16). Given Sơn sends a kind note to Linh at 06:30 on 13 November 2026 and Linh has the partner's journal kind on, then Linh's devices get "Sơn có một lời nhắn nhỏ" at 07:00 with no note text, and tapping it opens the Lời nhắn nhỏ section; Sơn gets nothing; given Linh has not opened it by then, then Linh gets one reminder, "Lời nhắn nhỏ của Sơn vẫn ở đây", at 07:00 on 16 November and none after.
+- AC24 (R6, R35). Given Linh closes the note at 20:15 and has the partner's journal kind on, then she and Sơn get no "vừa viết nhật ký" message; given Sơn fixes a typo at 06:35 in the sent note before Linh opens it, then Linh gets no extra message, the arrival message still comes at 07:00 once, and the reminder is still due at 07:00 on 16 November.
 
 ## Glossary
 

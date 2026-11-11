@@ -72,9 +72,6 @@ How might two partners keep their shared story (daily moments, milestones, and t
 - [ ] **On this day**
   - Goal: bring old moments back.
   - Outcome: journal entries from the same date in past years shown on Home.
-- [ ] **Time capsule letters**
-  - Goal: say something for later.
-  - Outcome: a letter written now stays locked until an anniversary or a chosen event.
 - [ ] **Yearly recap**
   - Goal: look back together at the end of a year.
   - Outcome: a recap built from journal entries, events and received wishes.
@@ -89,9 +86,10 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - [x] v1: daily card, 6 decks of 10 cards as plants, swap, deck play, notification on flip ([docs/product/garden.md](docs/product/garden.md)).
   - [x] Relationship statuses: mutual starting placement, 35 bilingual questions, private decision responses with neutral/deferred choices, and mutual target unlocks.
   - [ ] Later: shared closing lines, returning cards, further catalog additions.
-- [ ] **Kind feedback**
-  - Goal: say what could be better without hurting, after the compliment habit exists.
-  - Outcome: feedback written in a guided form, opened only when the partner is ready to hear it; how it touches the garden is still open.
+- [x] **Kind feedback**
+  - Goal: say what bothers you, small or big, without blame.
+  - Outcome: guided 4-part note, 8 hour cool-down and reread before sending, recipient opens when ready via a Home inbox with a push and one 3-day reminder; closed in person; no garden link.
+  - [x] v1: guided 4-part notes with an 8-hour reread, Home inbox, arrival push and reminder, and journal close ([docs/product/notes.md](docs/product/notes.md)).
 - [ ] **Date jar**
   - Goal: stop "what do we do tonight".
   - Outcome: spin for a date idea, reusing the wish jar spin.
@@ -138,7 +136,7 @@ Open decisions (from the mockups, discuss one by one):
 Risks:
 - Writing about 150 to 300 good Vietnamese cards is the main cost, not code.
 - Garden art needs layered SVG states (growth, fading, watering) in the jar's style.
-- Feedback can turn the app into a list of grievances; Kind feedback comes later with its own safeguards.
+- Feedback can turn the app into a list of grievances; Kind feedback has its own safeguards and never touches the garden.
 
 ## Market notes (Nov 2026)
 What similar couple apps charge for: a daily question with answers hidden until both reply (Paired about $80 a year per couple, Agapé, SumOne), home screen widgets with the partner's photo (Locket, I Choose You, Widgetable), a shared pet or plant (SumOne, Widgetable, Cozy Couples), Between Plus (love letters, themes, longer voice and video, no ads), date idea libraries and a monthly date goal (Lovewick, Cupla), a "thumb kiss" tap (Candle, Love8), AI coaching (Connected, Lasting). Most charge one plan for both partners.

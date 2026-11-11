@@ -14,6 +14,11 @@
 - Each deck is a plant in a shared garden. It grows one size on each day one of its cards is flipped and never shrinks. The garden turns dry after a few days without a daily card and wilts after about two weeks, but nothing dies. No numbers, streaks or scores.
 - Tap a plant to play more cards from its deck. A card left waiting when the day turns stays in its deck until the other answers it.
 - When both of you have answered today's card, both get a notification through the partner journal switch. Nothing is sent during quiet hours.
+- Start a kind note from the + on the Journal tab; each note is a small envelope. Write it in four parts; wait 8 hours and reread it before sending.
+- Edit a note until it is opened, or withdraw it.
+- Your partner opens it when ready from the Home inbox tile.
+- Get a push when it arrives (at 07:00 during quiet hours) and one reminder on the third day.
+- Close a note with a pick and a line in a journal entry that both partners can edit or delete.
 
 ### Changed
 

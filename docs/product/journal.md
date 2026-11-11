@@ -21,12 +21,12 @@ A couple wants one place for their story: both partners write entries for a day,
 - R7. An entry's day is today unless the author picks an earlier day, from 1 January 1900, also before the start date.
 - R8. An entry's day cannot be after today in the earliest time zone.
 - R9. A saved entry is visible to both partners at once; there are no drafts.
-- R10. Only the author can change an entry's text, photos or day.
-- R11. Only the author can delete an entry, after confirming; it disappears for both, with its photos, for good.
+- R10. Only the author can change an entry's text, photos or day, except an entry made from a closed kind note (R26).
+- R11. Only the author can delete an entry, after confirming; it disappears for both, with its photos, for good; except an entry made from a closed kind note (R26).
 - R12. The feed shows both partners' entries grouped by day, most recent day first.
 - R13. Within a day, the most recently written entry comes first, each with its author's display name.
 - R14. Days without entries do not appear in the feed.
-- R15. An entry records its origin: written by a partner, or, in a later version, made from a completed wish; the same rules apply to both.
+- R15. An entry records its origin: written by a partner, made from a closed kind note (R26), or, in a later version, made from a completed wish; the same rules apply to a partner's entry and a wish entry, and R26 and R27 add to a note entry.
 - R16. Each photo is kept as its chosen square only (R18), at a size good for a phone, not as the original file, and its hidden location details are removed.
 - R17. Bisou keeps entry texts and photos only to show them to the two partners, while the couple exists or until the author deletes the entry.
 - R18. Every photo is square: the author moves and zooms it in a square frame to choose the part to keep; only that square is stored, never the rest.
@@ -35,8 +35,10 @@ A couple wants one place for their story: both partners write entries for a day,
 - R21. As a partner keeps going down the feed, older days keep appearing, with nothing to press to see more.
 - R22. An entry's card in the feed shows its author's name with the time it was written, its text and photos; for a back-filled entry it does not show the "written on" line (R24).
 - R23. Tapping a card opens that entry's detail sheet from the bottom of the screen; a long text cut short on the card ends with "Xem thêm" ("See more"), which opens the same sheet instead of growing the card.
-- R24. The detail sheet shows the full day, the author and time, the full text, the milestone and wish marks if the entry has them, the "Ghi ngày {date} · {time}" ("Written on {date} · {time}") line for a back-filled entry only, and every photo at full width, each opening the photo viewer. Edit and Delete appear only to the author (R10, R11).
+- R24. The detail sheet shows the full day, the author and time, the full text, the milestone and wish marks if the entry has them, the "Ghi ngày {date} · {time}" ("Written on {date} · {time}") line for a back-filled entry only, and every photo at full width, each opening the photo viewer. Edit and Delete appear only to the author (R10, R11), and to both partners on an entry made from a closed kind note (R26).
 - R25. Home shows "Bài viết hôm nay" ("Today's posts") with every entry dated today from either partner, newest first, using the feed's card content without Edit or Delete; when no entry is dated today, or they have not loaded, the section is absent.
+- R26. An entry made from a closed kind note ([notes](notes.md) R32) belongs to both partners: either one may change its four parts, the recipient's pick and "Mình hiểu là..." line, or its day (R7, R8), and either may delete it after confirming, when it disappears for both for good; R10 and R11 do not apply to it. Its text follows [notes](notes.md) R2 to R5, not R4, and it has no photos and cannot get any (R5, notes R34); changing or deleting it sends nothing (notifications R6).
+- R27. The card and detail sheet of such an entry show both partners' names: the writer's name with the time it was closed, and the recipient's name over the pick and the line (R22, R24).
 
 ## Running example
 
@@ -75,6 +77,9 @@ Write (text, photos, a day), read the feed, change or delete one's own entry. An
 - AC17 (R23, R24). Given An taps the 5 November card, then a sheet opens from the bottom with the full day, "An" and 21:00, the full text and both photos at full width, each opening the viewer; Edit and Delete show for An and not for Binh.
 - AC18 (R23). Given Binh's 6 November text is cut short on the card, when An taps "Xem thêm", then the same detail sheet opens and the card keeps its size.
 - AC19 (R25). Given today is 7 November and the journal has entries dated 6 and 7 November, then Home shows only the 7 November entries, newest first, with no Edit or Delete; when the last 7 November entry is deleted, the section disappears until another entry is dated today.
+- AC20 (R10, R11, R15, R26). Given the entry made from Sơn's note that Linh closed, then Sơn and Linh can each change its parts, the pick, the line or the day, and each can delete it after confirming, gone for both; given a normal entry by An, then Binh still can do neither.
+- AC21 (R26). Given that entry, when either partner tries to add a photo, then it is refused; no photo control shows.
+- AC22 (R17, R24, R27). Given that entry, then its card and sheet show both "Sơn" and "Linh", and Edit and Delete show for both.
 
 ## Glossary
 
@@ -83,11 +88,13 @@ Write (text, photos, a day), read the feed, change or delete one's own entry. An
 - **Day of an entry** (ngày của bài): the day it is about, not when it was typed.
 - **Feed** (dòng nhật ký): both partners' entries grouped by day.
 - **Back-fill** (ghi bù): writing for a past day.
+- **Note entry** (bài từ lời nhắn nhỏ): an entry made from a closed kind note, shared by both partners (R26).
 
 ## Out of scope
 
 - Milestones and timeline; wishes and entries made from them.
-- Reactions, comments, drafts, later reveal, search, videos; notifying the partner of a new entry is in [notifications](notifications.md).
+- Reactions, comments, drafts, search, videos; notifying the partner of a new entry is in [notifications](notifications.md).
+- Kind notes before they are closed: they live in the Lời nhắn nhỏ section, outside the feed; a closed note appears in the feed as an entry of both partners ([notes](notes.md) R32 to R34, journal R26).
 - Undoing a delete, such as a recovery bin; export and full deletion come with account deletion (see pairing).
 - The journal when a partner leaves the couple; decide it with leaving, which pairing also leaves out.
 
