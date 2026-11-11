@@ -267,3 +267,15 @@ describe("notes recipient and joined feed query plans", () => {
     expect((await explain(sql as string, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });
+
+describe("notes push query plans", () => {
+  it.each([
+    ["held", "UPDATE notes SET notified_at = ? WHERE notified_at IS NULL AND sent_at <= ? RETURNING recipient_id, writer_id, opened_at", [1, 1], "notes_held"],
+    ["unopened", "UPDATE notes SET reminded_at = ? WHERE reminded_at IS NULL AND opened_at IS NULL AND sent_at < ? RETURNING recipient_id, writer_id", [1, 1], "notes_unopened"],
+    ["recipient devices", `SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name FROM push_subscriptions s JOIN users u ON u.id = s.user_id WHERE s.user_id = ? AND s.journal = 1`, ["writer", "recipient"], "push_subscriptions_user"],
+    ["send claims immediate push", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *", ["h", "f", "n", "r", 1, 1, 1, "note", "writer", "couple", 1], "sqlite_autoindex_notes_1"],
+  ])("%s uses indexed SEARCH", async (_name, sql, binds, index) => {
+    const plan = (await explain(sql as string, ...(binds as unknown[]))).join("\n");
+    expect(plan).toContain(index); expect(plan).toContain("SEARCH"); expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+  });
+});

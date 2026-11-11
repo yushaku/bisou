@@ -58,6 +58,10 @@ export const en: Messages = {
   "garden.stageQuestions": "Things to discuss before {stage}",
   "garden.stageLockedHint": "This stage is not open yet. Return to Journey to choose it together.",
 
+  "push.notes.one": "{name} left you a kind note",
+  "push.notes.many": "{name} left you {n} kind notes",
+  "push.notes.reminder": "{name}'s kind note is still here",
+  "push.notes.reminders": "{n} kind notes from {name} are still here",
   "home.notes": "Kind notes",
   "home.notesWaitingOne": "1 note is waiting",
   "home.notesWaiting": "{n} notes are waiting",

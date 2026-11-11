@@ -130,3 +130,52 @@ export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 
   }
   console.log("[bisou] event pushes", sent);
 }
+
+async function pushNotesToRecipient(env: Env, writer: string, recipient: string, now: number, count: number, reminder: boolean): Promise<void> {
+  const { results } = await env.DB.prepare(`SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale,
+    (SELECT display_name FROM users WHERE id = ?) AS name
+    FROM push_subscriptions s JOIN users u ON u.id = s.user_id WHERE s.user_id = ? AND s.journal = 1`)
+    .bind(writer, recipient).all<PushRow & { locale: string; name: string | null }>();
+  let sent = 0;
+  for (const row of results) {
+    const name = row.name?.trim() || translate(row.locale, "common.person");
+    const key = reminder ? count === 1 ? "push.notes.reminder" : "push.notes.reminders" : count === 1 ? "push.notes.one" : "push.notes.many";
+    try {
+      if (await sendPush(env, row, { title: translate(row.locale, key, { name, n: count }), url: "/journal?section=notes", tag: "notes" }, { ttl: pushTtl(now), topic: "notes" }) === "sent") sent++;
+    } catch { console.error("[bisou] push failed", "notes", 0); }
+  }
+  console.log("[bisou] note pushes", sent);
+}
+export async function notifyNote(env: Env, writer: string, recipient: string, now: number): Promise<void> {
+  if (!env.VAPID_PRIVATE_KEY) return;
+  await pushNotesToRecipient(env, writer, recipient, now, 1, false);
+}
+export const RELEASE_NOTES_SQL = "UPDATE notes SET notified_at = ? WHERE notified_at IS NULL AND sent_at <= ? RETURNING id, recipient_id, writer_id, opened_at";
+export const REMIND_NOTES_SQL = "UPDATE notes SET reminded_at = ? WHERE reminded_at IS NULL AND opened_at IS NULL AND sent_at < ? RETURNING id, recipient_id, writer_id";
+export async function notifyNotes(env: Env, scheduledTime: number): Promise<void> {
+  if (!env.VAPID_PRIVATE_KEY) return;
+  const cut = Date.parse(`${addDays(vnDay(scheduledTime), -2)}T00:00:00+07:00`);
+  const [release, remind] = await env.DB.batch<{ id: string; recipient_id: string; writer_id: string; opened_at: number | null }>([
+    env.DB.prepare(RELEASE_NOTES_SQL).bind(scheduledTime, scheduledTime),
+    env.DB.prepare(REMIND_NOTES_SQL).bind(scheduledTime, cut),
+  ]);
+  const arrivals = new Map<string, { writer: string; count: number }>(), reminders = new Map<string, { writer: string; count: number }>();
+  for (const row of release!.results) {
+    if (row.opened_at !== null) continue;
+    const group = arrivals.get(row.recipient_id);
+    if (group) group.count++; else arrivals.set(row.recipient_id, { writer: row.writer_id, count: 1 });
+  }
+  const released = new Set(release!.results.map((row) => row.id));
+  for (const row of remind!.results) {
+    const arrival = arrivals.get(row.recipient_id);
+    if (arrival) { if (!released.has(row.id)) arrival.count++; continue; }
+    const group = reminders.get(row.recipient_id);
+    if (group) group.count++; else reminders.set(row.recipient_id, { writer: row.writer_id, count: 1 });
+  }
+  for (const [groups, reminder] of [[arrivals, false], [reminders, true]] as const) {
+    for (const [recipient, group] of groups) {
+      try { await pushNotesToRecipient(env, group.writer, recipient, scheduledTime, group.count, reminder); }
+      catch { console.error("[bisou] note push failed"); }
+    }
+  }
+}
