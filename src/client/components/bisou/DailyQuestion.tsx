@@ -50,9 +50,9 @@ export function DailyQuestion({ couple, user, onSignedOut }: { couple: Couple; u
       void refresh();
     }
   }
-  return <section aria-label={t("garden.today")} className="mb-5 flex flex-col gap-3">
+  return <section aria-labelledby="today-card" className="mt-5 flex flex-col gap-3">
     {state && <GardenStageNotice state={state} memoryScope={`${couple.id}:${user.id}`} partnerName={partner?.displayName?.trim() || t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
-    <p className="text-sm font-semibold text-muted-foreground">{t("garden.today")}</p>
+    <h2 id="today-card" className="font-heading text-xl">{t("garden.today")}</h2>
     {failed && <div role="alert" className="flex flex-col items-start gap-2"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!state && !failed && <Skeleton className="h-72 w-full" aria-label={t("loading")} />}
     {state?.today ? <>

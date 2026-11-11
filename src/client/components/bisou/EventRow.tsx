@@ -36,12 +36,14 @@ export function EventRow({ event, onOpen }: { event: UpcomingEvent; onOpen?: (id
 export function UpcomingCard({ events, action, onOpen }: { events: UpcomingEvent[]; action: ReactNode; onOpen?: (id: string) => void }) {
   const { t } = useI18n();
   return (
-    <Card className="mt-4 gap-0 pb-0">
-      <div className="flex items-center justify-between gap-3 px-4 pb-2">
-        <h2 className="font-heading text-xl">{t("events.title")}</h2>
+    <section aria-labelledby="coming-up" className="mt-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="coming-up" className="font-heading text-xl">{t("events.title")}</h2>
         {action}
       </div>
-      <ul className="divide-y divide-border">{events.slice(0, 3).map((event, index) => <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={onOpen} />)}</ul>
-    </Card>
+      <Card className="gap-0 py-0">
+        <ul className="divide-y divide-border">{events.slice(0, 3).map((event, index) => <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={onOpen} />)}</ul>
+      </Card>
+    </section>
   );
 }
