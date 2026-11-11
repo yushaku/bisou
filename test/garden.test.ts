@@ -601,6 +601,11 @@ it("stage answers list only the caller's answered cards in that stage and hide l
   expect((await (await stage(b, "acquainted")).json<{ cards: GardenCardState[] }>()).cards).toEqual([]);
   expect((await stage(a, "living_together")).status).toBe(404);
   expect((await stage(a, "unknown")).status).toBe(404);
+  const decisions = (who: TestUser, id: string) => call("GET", `/api/garden/stages/${id}/decisions`, { cookie: who.cookie });
+  const listed = await (await decisions(b, "in_love")).json<{ cards: GardenCardState[] }>();
+  expect(listed.cards.map((card) => card.cardId)).toEqual(CARDS.filter((card) => card.kind === "decision" && card.levelId === "in_love").map((card) => card.id));
+  expect(listed.cards.find((card) => card.cardId === "L2-01")).toMatchObject({ mine: "partner in-love answer", partner: "my in-love answer" });
+  expect((await decisions(a, "living_together")).status).toBe(404);
 });
 it("R1 R57 AC32: cross-couple and unpaired callers cannot read or mutate decision responses", async () => {
   const { a, b, couple } = await paired(); await place(a, b);

@@ -562,43 +562,6 @@
   font-weight: 700;
   line-height: 1.2;
 }
-.garden-stage-list {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.garden-stage-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  padding-block: 6px;
-  font-size: 12px;
-  line-height: 1.35;
-}
-.garden-stage-item + .garden-stage-item {
-  border-top: 1px dashed color-mix(in oklab, var(--foreground) 12%, transparent);
-}
-.garden-stage-link {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.garden-stage-state {
-  flex-shrink: 0;
-  max-width: 45%;
-  min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  text-align: end;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--muted-foreground);
-}
-.garden-stage-state--done { color: color-mix(in oklab, var(--success) 70%, var(--foreground)); }
 .island-shadow { fill: var(--foreground); opacity: .16; }
 .island-rock-deep { fill: color-mix(in oklab, var(--chart-2) 78%, var(--card)); }
 .island-rock {

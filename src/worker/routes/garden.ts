@@ -1,7 +1,7 @@
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { vnDay } from "../../shared/days";
-import { answerText, cardById, DECKS, drawCard, LEVEL_IDS, levelRank, type LevelAction, type RelationshipLevel, type ResponseChoice } from "../../shared/garden";
+import { answerText, CARDS, cardById, DECKS, drawCard, LEVEL_IDS, levelRank, type LevelAction, type RelationshipLevel, type ResponseChoice } from "../../shared/garden";
 import type { AppEnv } from "../env";
 import { changeLevels, levelsState, memberGuard, cardAccess, cardStates, drawInput, drawSeed, gardenDeck, gardenState, loadToday, stageAnswers } from "../lib/garden";
 import { notifyGarden } from "../lib/notify";
@@ -56,6 +56,17 @@ garden.get("/stages/:levelId", async (c) => {
     }
   }
   return c.json({ cards });
+});
+
+garden.get("/stages/:levelId/decisions", async (c) => {
+  const levelId = c.req.param("levelId") as RelationshipLevel;
+  if (!LEVEL_IDS.includes(levelId)) return c.json({ error: "not_found" }, 404);
+  const couple = c.get("gardenCoupleId");
+  const user = c.get("user").id;
+  const levels = await levelsState(c.env.DB, couple, user);
+  if (!levels.placementComplete || !levels.furthestLevelId || levelRank(levelId) > levelRank(levels.furthestLevelId)) return c.json({ error: "not_found" }, 404);
+  const ids = CARDS.filter((card) => card.kind === "decision" && card.levelId === levelId).map((card) => card.id);
+  return c.json({ cards: await cardStates(c.env.DB, couple, user, ids) });
 });
 
 garden.post("/today/swap", limitBody, async (c) => {

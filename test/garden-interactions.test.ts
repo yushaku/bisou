@@ -3,6 +3,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { GardenCard } from "../src/client/components/bisou/GardenCard";
 import { GardenStageNotice } from "../src/client/components/bisou/GardenStageNotice";
 import { GardenStageSheet } from "../src/client/components/bisou/GardenStageSheet";
+import { GardenStageDecisions } from "../src/client/components/bisou/GardenStageDecisions";
+import { decisionStatus } from "../src/client/lib/garden";
 import { GardenScene } from "../src/client/components/bisou/GardenScene";
 import { Textarea } from "../src/client/components/ui/textarea";
 import { ToggleGroup } from "../src/client/components/ui/toggle-group";
@@ -20,6 +22,7 @@ vi.mock("react", async (original) => ({
     return [hooks.values[index], (value: unknown) => { hooks.values[index] = value; }];
   },
   useEffect: (effect: () => unknown) => { hooks.effects.push(effect); },
+  useCallback: <T,>(callback: T) => callback,
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "vi", t: (key: keyof typeof messages, vars?: Record<string, string | number>) => {
@@ -97,11 +100,31 @@ it("R48 R50 R59 AC27 AC33: named banner accepts the displayed revision and opene
   expect(render(component).find((node) => node.type === GardenScene)!.props.open).toBe(false);
 });
 
-it("R48 R54 AC27: unfinished checklist never disables the next-stage choice", () => {
+it("R48 R54 AC27: the stage sheet has no checklist and never disables the next-stage choice", () => {
   setup();
   const nodes = render(() => GardenStageSheet({ levels: { ...state.levels, proposal: null }, levelId: "living_together", partnerName: "Bình", open: true, onClose: vi.fn(), onChanged: vi.fn(), onSignedOut: vi.fn(), onViewStage: vi.fn() }));
-  expect(nodes.some((node) => node.props.children === "Điều cần bàn trước khi Sống chung")).toBe(true);
-  expect(nodes.some((node) => typeof node.props.children === "string" && /Còn \d+ điều nên bàn/.test(node.props.children))).toBe(true);
+  expect(nodes.some((node) => node.props.children === "Điều cần bàn trước khi Sống chung")).toBe(false);
   const button = nodes.find((node) => node.props.children === "Muốn bước sang Sống chung")!;
   expect((button.props as { disabled?: boolean }).disabled).toBe(false);
+});
+
+it("R54: the Garden lists the furthest stage's decisions, my turn first, three at a time", () => {
+  setup();
+  vi.spyOn(api, "gardenStageDecisions").mockResolvedValue({ ok: true, data: { cards: [] } });
+  const props = { myName: "An", partnerName: "Bình", memoryScope: "decisions-test", onChanged: vi.fn(), onSignedOut: vi.fn() };
+  hooks.values[0] = [
+    { ...card, cardId: "L2-01", mine: "x", partner: "y", flippedDay: "2026-11-09" },
+    { ...card, cardId: "L2-02" },
+    { ...card, cardId: "L2-03", partnerAnswered: true },
+    { ...card, cardId: "L2-04", mine: "mine" },
+  ];
+  const nodes = render(() => GardenStageDecisions({ ...props, stageId: "in_love" }));
+  const text = (value: string) => nodes.some((node) => node.props.children === value);
+  expect(text("Điều cần bàn trước khi Sống chung")).toBe(true);
+  expect(text("Còn 3 điều nên bàn")).toBe(true);
+  expect(text("Xem cả 4 điều")).toBe(true);
+  expect(nodes.filter((node) => node.type === "li").map((node) => node.key)).toEqual(["L2-03", "L2-02", "L2-04"]);
+  expect(decisionStatus({ ...card, partnerAnswered: true })).toBe("turn");
+  hooks.values = [];
+  expect(GardenStageDecisions({ ...props, stageId: "with_children" })).toBeNull();
 });

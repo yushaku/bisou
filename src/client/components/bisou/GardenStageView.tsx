@@ -7,6 +7,7 @@ import { GARDEN_STAGE_LABEL, gardenStageState } from "../../lib/gardenStages";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { GardenCard } from "./GardenCard";
+import { GardenStageDecisions } from "./GardenStageDecisions";
 import { Planter } from "./Planter";
 
 /* The main Garden view: the shared six-plant garden for the stage being viewed. */
@@ -72,6 +73,9 @@ export function GardenStageView({ levels, plants, freshness, stageId, myName, pa
     {!open && <p className="text-sm text-muted-foreground">{t("garden.stageLockedHint")}</p>}
 
     <Planter plants={plants} freshness={freshness} onOpen={onOpenDeck} />
+
+    {open && rank === furthest && <GardenStageDecisions stageId={stageId} myName={myName} partnerName={partnerName}
+      memoryScope={memoryScope} onChanged={() => { onChanged(); void load(); }} onSignedOut={onSignedOut} />}
 
     {open && <section className="flex flex-col gap-3">
       <h2 className="font-heading text-xl">{t("garden.answeredQuestions")}</h2>

@@ -51,6 +51,7 @@ export const api = {
   garden: () => call<GardenState>("GET", "/api/garden"),
   gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
   gardenStage: (levelId: RelationshipLevel) => call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}`),
+  gardenStageDecisions: (levelId: RelationshipLevel) => call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}/decisions`),
   swapGarden: (cardId: string) => call<GardenState>("POST", "/api/garden/today/swap", { cardId }),
   answerGarden: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("POST", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),
   editGardenAnswer: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),

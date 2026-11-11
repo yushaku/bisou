@@ -5,6 +5,12 @@ import type { Translate } from "../i18n";
 export function cardPhase(card: GardenCardState): "open" | "waiting" | "flipped" {
   return card.flippedDay ? "flipped" : (card.mine !== null || card.mineChoice != null) ? "waiting" : "open";
 }
+export type DecisionStatus = "turn" | "open" | "waiting" | "done";
+export function decisionStatus(card: GardenCardState): DecisionStatus {
+  if (card.flippedDay) return "done";
+  if (card.mine !== null || card.mineChoice != null) return "waiting";
+  return card.partnerAnswered ? "turn" : "open";
+}
 export function gardenQuestion(id: string, locale: Locale, t: Translate): string {
   return cardById(id)?.text[locale] ?? t("garden.unknownCard");
 }
