@@ -2,11 +2,9 @@
 
 A private PWA for one couple: shared journal, wish jars, upcoming events, the Garden question cards and kind notes, in Vietnamese and English. One Cloudflare Worker (Hono) serves the React SPA and the API under `/api`, with D1 for data and a private R2 bucket for photos. Free plan only.
 
-Docs (product rules, decisions, diagrams): https://yushaku.github.io/bisou/docs/ ([source](docs/README.md)). Visual rules: [DESIGN.md](DESIGN.md).
+Docs (product rules, decisions, diagrams): https://yushaku.github.io/bisou/docs/ ([source](docs/README.md)).
 
 ![Bisou system architecture: release pipeline and Cloudflare runtime](docs/system-architecture.svg)
-
-Interactive version: [docs/system-architecture.html](docs/system-architecture.html) (spec: [JSON](docs/system-architecture.json)).
 
 ## Layout
 
