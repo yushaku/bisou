@@ -31,6 +31,7 @@ Published at https://yushaku.github.io/bisou/docs/ by `.github/workflows/pages.y
 - [0007: Web Push](adr/0007-web-push.md)
 - [0008: Garden data and privacy](adr/0008-garden-data-and-privacy.md)
 - [0009: Kind notes gated in SQL, closed into the journal](adr/0009-kind-notes-gated-in-sql-and-closed-into-journal.md)
+- [0010: Push sending through Cloudflare Queues](adr/0010-push-sending-through-queues.md)
 
 ## Other
 

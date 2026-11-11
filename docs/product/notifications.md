@@ -64,7 +64,7 @@ Settings and Home
 
 Personal data
 
-- R27. For each device turned on, Bisou keeps the push address and keys the browser gives and which kinds are on, only to send these notifications.
+- R27. For each device turned on, Bisou keeps the push address and keys the browser gives and which kinds are on, only to send these notifications. A notification waiting to be sent (its text and which device it is for, never the push address or keys) is kept at most 24 hours.
 - R28. It keeps them until both kinds are off on that device, the person signs out there, the push service says the address is gone, or the account is deleted.
 - R29. They are never shared beyond the push service of the device's browser, which delivers the messages.
 - R30. A partner sees what is on for a device on its Notifications page and deletes it by turning both kinds off or signing out.
