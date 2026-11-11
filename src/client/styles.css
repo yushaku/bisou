@@ -84,6 +84,38 @@
   }
 }
 
+.note-envelope-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--spacing) * 4); align-items: start; }
+.note-envelope { min-width: 0; }
+.note-envelope-item { display: block; }
+.note-envelope-paper {
+  --envelope-paper: color-mix(in oklab, var(--card) 94%, var(--chart-3));
+  --envelope-shade: color-mix(in oklab, var(--chart-3) 40%, var(--envelope-paper));
+  --envelope-ink: var(--foreground);
+  --envelope-wax: var(--destructive);
+  --envelope-wax-dark: color-mix(in oklab, var(--envelope-wax) 65%, var(--envelope-ink));
+  --envelope-wax-light: color-mix(in oklab, var(--envelope-wax) 75%, var(--envelope-paper));
+  --envelope-stamp: color-mix(in oklab, var(--chart-4) 35%, var(--envelope-paper));
+  display: block;
+  width: 100%;
+  max-width: calc(var(--spacing) * 42);
+  height: auto;
+  margin-inline: auto;
+  filter: drop-shadow(0 var(--spacing) var(--spacing) color-mix(in oklab, var(--foreground) 12%, transparent));
+}
+.dark .note-envelope-paper {
+  --envelope-paper: color-mix(in oklab, var(--foreground) 92%, var(--chart-3));
+  --envelope-ink: var(--card);
+  --envelope-wax: oklch(from var(--destructive) .52 c h);
+}
+.note-envelope-caption { display: block; padding-top: var(--spacing); line-height: 1.5; }
+.note-ready-button { margin-top: calc(var(--spacing) * 2); white-space: normal; height: auto; min-height: calc(var(--spacing) * 12); padding-inline: calc(var(--spacing) * 2); }
+.note-envelope-button { border-radius: var(--radius-sm); }
+.note-envelope-button:active { transform: translateY(var(--spacing)); }
+@media (prefers-reduced-motion: reduce) {
+  .note-envelope-button { transition: none; }
+  .note-envelope-button:active { transform: none; }
+}
+
 /* Floating chrome (the tab island): translucent frosted glass with a lit top rim,
    an inner shade and a soft drop shadow. Follows the active colour theme. */
 :root {

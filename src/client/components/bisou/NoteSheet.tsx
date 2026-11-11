@@ -4,6 +4,7 @@ import type { WrittenNote, NoteInput } from "../../../shared/types";
 import { api } from "@/api";
 import { useI18n } from "@/i18n";
 import { useOnline } from "@/lib/useOnline";
+import { focusCreateButton } from "@/lib/useTabNavigation";
 import { noteBlock } from "@/lib/notes";
 import { saveErrorKey } from "@/lib/compose";
 import { formatTime } from "@/lib/format";
@@ -11,14 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { NoteFields } from "./NoteFields";
-interface Props { open: boolean; onOpenChange: (open: boolean) => void; partnerName: string; entry?: WrittenNote; onSaved: (note: WrittenNote) => void; onRefresh: () => void; onSignedOut: () => void }
-export function NoteSheet({ open, onOpenChange, ...props }: Props) {
+interface Props { fromMenu?: boolean; open: boolean; onOpenChange: (open: boolean) => void; partnerName: string; entry?: WrittenNote; onSaved: (note: WrittenNote) => void; onRefresh: () => void; onSignedOut: () => void }
+export function NoteSheet({ open, onOpenChange, fromMenu, ...props }: Props) {
   const { t } = useI18n();
   const [lock, setLock] = useState<"saving" | "dirty" | null>(null);
   const [confirm, setConfirm] = useState(false);
   const close = () => { if (lock === "saving") return; if (lock === "dirty") setConfirm(true); else onOpenChange(false); };
   return <Drawer open={open} onOpenChange={(value) => value ? onOpenChange(true) : close()} dismissible={lock !== "saving"}>
-    <DrawerContent><NoteForm key={props.entry?.id ?? "new"} {...props} onLock={setLock} onClose={close} onDone={() => onOpenChange(false)} /></DrawerContent>
+    <DrawerContent onCloseAutoFocus={(event) => { if (fromMenu) { event.preventDefault(); focusCreateButton(); } }}><NoteForm key={props.entry?.id ?? "new"} {...props} onLock={setLock} onClose={close} onDone={() => onOpenChange(false)} /></DrawerContent>
     <Dialog open={confirm} onOpenChange={setConfirm}><DialogContent><DialogHeader><DialogTitle>{t("compose.discardTitle")}</DialogTitle><DialogDescription>{t("compose.discardBody")}</DialogDescription></DialogHeader><DialogFooter><Button variant="destructive" onClick={() => { setConfirm(false); onOpenChange(false); }}>{t("compose.discard")}</Button><Button onClick={() => setConfirm(false)}>{t("compose.keep")}</Button></DialogFooter></DialogContent></Dialog>
   </Drawer>;
 }

@@ -1,4 +1,3 @@
-import { useOnline } from "../lib/useOnline";
 import { BookHeart, Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -21,9 +20,11 @@ import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from 
 import { toCard } from "../lib/journalCard";
 import { TabMemory } from "../lib/tabMemory";
 import { useCreateRequest } from "../lib/useTabNavigation";
+import { useOnline } from "../lib/useOnline";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
+const ClosedNoteSheet = lazy(() => import("../components/bisou/ClosedNoteSheet").then((m) => ({ default: m.ClosedNoteSheet })));
 const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
 
 interface JournalProps extends SessionProps {
@@ -73,20 +74,28 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const detail = feed?.entries.find((e) => e.id === detailId);
   useEffect(() => { if (!detail) setDetailId(null); }, [detail]);
+  const [closedEditing, setClosedEditing] = useState<(JournalEntry & { note: NonNullable<JournalEntry["note"]> }) | null>(null);
   const write = (entry: JournalEntry | null = null, fromMenu = false) => {
     setSection("feed");
+    if (entry?.note) { setClosedEditing({ ...entry, note: entry.note }); return; }
     setFromMenu(fromMenu);
     setEditing(entry);
     setComposeLoaded(true);
     setComposing(true);
   };
 
+  const [noteRequested, setNoteRequested] = useState(false);
+  useCreateRequest("notes", () => { setSection("notes"); setNoteRequested(true); });
   useCreateRequest("journal", () => write(null, true));
 
   // Kept after closing, so focus can go back to the tile of the photo last shown.
   const [viewer, setViewer] = useState<{ entry: JournalEntry; index: number; open: boolean } | null>(null);
   const viewed = viewer?.open ? viewer.entry.photoIds : null;
 
+  const deleteItem = (id: string) => {
+    const entry = feed?.entries.find((e) => e.id === id);
+    return entry?.note ? api.deleteNote(entry.note.id) : api.deleteEntry(id);
+  };
   const onDeleted = (id: string) => {
     setFeed((f) => f && removeEntry(f, id));
     toast.success(t("entry.deleted"));
@@ -177,7 +186,7 @@ export function Journal({ couple, ...session }: JournalProps) {
     <SignedInShell {...session} tab="journal">
       <Tabs value={section} onValueChange={(value) => { const next = value === "notes" ? "notes" : "feed"; setSection(next); if (memory) memory.journalSection = next; }}>
         <TabsList className="mb-4 w-full"><TabsTrigger value="feed">{t("journal.sectionFeed")}</TabsTrigger><TabsTrigger value="notes">{t("journal.sectionNotes")}</TabsTrigger></TabsList>
-        <TabsContent value="notes"><NotesSection onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
+        <TabsContent value="notes"><NotesSection composeRequested={noteRequested} onComposeHandled={() => setNoteRequested(false)} onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
         <TabsContent value="feed">
 
       {feed && online && stale && (
@@ -234,9 +243,9 @@ export function Journal({ couple, ...session }: JournalProps) {
                     showDate={false}
                     onOpen={() => setDetailId(e.id)}
                     onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
-                    // Only the author changes or deletes an entry (R10, R11); the server checks it again.
+                    // Only the author changes or deletes an entry (R10, R11), either partner a note entry (R26); the server checks it again.
                     actions={
-                      e.authorId === user.id && (
+                      (e.authorId === user.id || !!e.note) && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -294,10 +303,11 @@ export function Journal({ couple, ...session }: JournalProps) {
         }
       />
 
-      <EntryActions entry={detail ?? null} own={detail?.authorId === user.id} onClose={() => setDetailId(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut}
+      <EntryActions entry={detail ?? null} own={detail?.authorId === user.id || !!detail?.note} remove={deleteItem} onClose={() => setDetailId(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut}
         detail={detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={(index) => { setDetailId(null); setViewer({ entry: detail, index, open: true }); }} />} />
-      <EntryActions entry={acting} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
+      <EntryActions remove={deleteItem} entry={acting} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
 
+      {closedEditing && <Suspense fallback={null}><ClosedNoteSheet key={closedEditing.id} entry={closedEditing} onClose={() => setClosedEditing(null)} onSignedOut={onSignedOut} onSaved={(entry) => { onSaved(entry); setClosedEditing(null); }} /></Suspense>}
       {composeLoaded && (
         <Suspense fallback={null}>
           <ComposeSheet

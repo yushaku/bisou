@@ -1,22 +1,22 @@
-import { useOnline } from "@/lib/useOnline";
-import { CalendarDays, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
-import { latestDay, toDayString } from "../../../shared/days";
+import { latestDay } from "../../../shared/days";
 import { ENTRY_PHOTOS_MAX, ENTRY_TEXT_MAX, entryText } from "../../../shared/journal";
 import { receivedText } from "../../../shared/wishes";
 import type { JournalEntry, Wish } from "../../../shared/types";
 import { api } from "@/api";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n, type MessageKey } from "@/i18n";
 import { defaultDay, saveBlock, saveErrorKey, textLength, type SaveBlock } from "@/lib/compose";
-import { formatDay, parseDay } from "@/lib/format";
+import { formatDay } from "@/lib/format";
 import { focusCreateButton } from "@/lib/useTabNavigation";
+import { useOnline } from "@/lib/useOnline";
 import { cn } from "@/lib/utils";
 import { PersonAvatar, type Person } from "./CoupleAvatars";
+import { DayField } from "./DayField";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
 
@@ -36,7 +36,6 @@ interface ComposeSheetProps {
 /* Changed: closing asks first. Saving: closing waits. */
 type Lock = "dirty" | "saving" | null;
 
-const FIRST_DAY = new Date(1900, 0, 1);
 const COUNTER_FROM = 1800;
 
 const HINTS: Record<SaveBlock, MessageKey> = {
@@ -109,7 +108,6 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
   const [date, setDate] = useState(() => entry?.date ?? defaultDay(now));
   const [text, setText] = useState(entry?.text ?? "");
   const [dirty, setDirty] = useState(false);
-  const [picking, setPicking] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -167,47 +165,7 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
           </p>
 
           {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
-          <div className="flex flex-col gap-2">
-            <span id={`${ids}-day`} className="font-semibold">
-              {t(receiving ? "received.day" : "compose.day")}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 justify-start"
-              aria-labelledby={`${ids}-day ${ids}-day-value`}
-              aria-describedby={`${ids}-day-help`}
-              disabled={saving}
-              aria-expanded={picking}
-              aria-controls={`${ids}-calendar`}
-              onClick={() => setPicking((v) => !v)}
-            >
-              <CalendarDays aria-hidden="true" />
-              <span id={`${ids}-day-value`}>{formatDay(date, locale)}</span>
-            </Button>
-            {picking && (
-              <Calendar
-                id={`${ids}-calendar`}
-                mode="single"
-                captionLayout="dropdown"
-                required
-                selected={parseDay(date)}
-                onSelect={(d) => {
-                  setDate(toDayString(d));
-                  setPicking(false);
-                  change();
-                }}
-                defaultMonth={parseDay(date)}
-                startMonth={FIRST_DAY}
-                endMonth={parseDay(max)}
-                disabled={[{ before: FIRST_DAY }, { after: parseDay(max) }]}
-                className="edge mx-auto rounded-lg"
-              />
-            )}
-            <p id={`${ids}-day-help`} className="text-sm text-muted-foreground">
-              {t("compose.dayHelp")}
-            </p>
-          </div>
+          <DayField value={date} now={now} disabled={saving} label={receiving ? "received.day" : "compose.day"} onChange={(value) => { setDate(value); change(); }} />
 
           <div className="flex flex-col gap-2">
             <label htmlFor={`${ids}-text`} className="font-semibold">

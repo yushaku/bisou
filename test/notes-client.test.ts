@@ -42,7 +42,12 @@ test("R26: an opened recipient note offers reading again", () => {
   const couple = { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Linh" }] };
   const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));
   expect(html).toContain("Đọc lại");
-  expect(html).not.toContain(">Đã mở<");
+  expect(html).toContain(">Đã mở<");
+  expect(html).toContain('data-seal="broken"');
+  expect(html).not.toContain('data-seal="intact"');
+  expect(html).toContain("Từ Linh");
+  expect(html).toContain("Yesterday");
+  expect(html).not.toContain("Viết cho Linh");
 });
 
 test("AC32: offline waiting note disables opening and explains the connection", () => {
@@ -54,5 +59,42 @@ test("AC32: offline waiting note disables opening and explains the connection", 
   const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));
   expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Mình sẵn sàng nghe<\/button>/);
   expect(html).toContain('<p class="text-sm text-muted-foreground">Cần kết nối mạng để tiếp tục</p>');
+  expect(html).toContain('data-envelope-state="waiting"');
+  expect(html).toMatchSnapshot();
+  expect(html).toContain('data-seal="intact"');
+  expect(html).toContain('aria-label="Từ Linh, Chưa mở, Mình sẵn sàng nghe"');
+  expect(html).toContain('class="note-postmark"');
+  expect(html).not.toContain('class="note-address-lines');
   expect(html).not.toContain("Yesterday");
+  expect(html).not.toMatch(/<time|\d{1,2}:\d{2}|\d{4}-\d{2}-\d{2}/);
+  expect(html).toContain("Từ Linh");
+  expect(html).not.toContain("Viết cho Linh");
+});
+
+test.each(["vi", "en"])("envelope writer states have readable captions and no top write action in %s", (locale) => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const clock = vi.spyOn(Date, "now").mockReturnValue(new Date(2026, 10, 11, 18, 0).getTime());
+  try {
+    const memory = createTabMemory();
+    memory.notes = { toMe: [], fromMe: [
+      { ...input, id: "cooling", state: "draft", sendableAt: new Date(2026, 10, 11, 18, 36).getTime() },
+      { ...input, id: "ready", state: "draft", sendableAt: Date.now() - 1 },
+      { ...input, id: "sent", state: "sent", sendableAt: 1 },
+      { ...input, id: "opened", state: "opened", sendableAt: 1 },
+    ] };
+    const user = { id: "a", displayName: "An", email: "an@example.com", locale: "vi" as const, birthDate: null, avatarId: null, createdAt: 1 };
+    const couple = { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Linh" }] };
+    const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));
+    for (const stamp of locale === "vi" ? ["Gửi được từ 18:36", "Đọc lại và gửi", "Chưa mở", "Đã mở"] : ["Can be sent from 18:36", "Reread and send", "Not opened yet", "Opened"]) expect(html).toContain(`>${stamp}<`);
+    expect(html).toContain(locale === "vi" ? "Gửi Linh" : "To Linh");
+    expect(html).not.toContain(locale === "vi" ? "Viết cho Linh" : "Write to Linh");
+    expect(html.match(/<button/g)).toHaveLength(4);
+    const cards = html.split('<button').slice(1);
+    expect(cards.map((card) => card.includes('class="note-postmark"'))).toEqual([false, false, true, true]);
+    expect(cards.map((card) => card.includes('data-seal="intact"'))).toEqual([true, true, true, false]);
+    expect(cards.map((card) => card.includes('data-seal="broken"'))).toEqual([false, false, false, true]);
+    for (const card of cards) expect(card).toMatch(locale === 'vi' ? /aria-label="Gửi Linh, / : /aria-label="To Linh, /);
+    const ids = [...html.matchAll(/ id="([^"]+)"/g)].map((match) => match[1]);
+    expect(new Set(ids).size).toBe(ids.length);
+  } finally { clock.mockRestore(); }
 });

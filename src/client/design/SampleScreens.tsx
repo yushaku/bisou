@@ -35,7 +35,7 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
     onSelect: (tab: TabId) => {
       if (tab === "home" || tab === "journal" || tab === "wishes") { setScreen(tab); setSettings(false); }
     },
-    onCreate: (tab: CreateDestination) => { setScreen(tab === "event" ? "home" : tab === "spin" ? "wishes" : tab); setSettings(false); toast.info(d("previewOnly")); },
+    onCreate: (tab: CreateDestination) => { setScreen(tab === "event" ? "home" : tab === "spin" ? "wishes" : tab === "notes" ? "journal" : tab); setSettings(false); toast.info(d("previewOnly")); },
   };
   if (settings) return (
     <AppShell tabs={tabs} title={t("settings.title")} className={cn(framed && "min-h-full")} action={

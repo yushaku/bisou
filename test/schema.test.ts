@@ -1,5 +1,8 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { WRITTEN_NOTES_SQL, RECEIVED_NOTES_SQL } from "../src/worker/lib/notes";
+import { RELEASE_NOTES_SQL, REMIND_NOTES_SQL } from "../src/worker/lib/notify";
+import { OPEN_NOTE_SQL, CLOSE_NOTE_SQL, CLOSE_ENTRY_SQL, UPDATE_CLOSED_NOTE_SQL } from "../src/worker/routes/notes";
 import worker from "../src/worker/index";
 import { call, explain, jpeg, paired, photoForm, resetDb, webp } from "./helpers";
 
@@ -239,12 +242,11 @@ describe("wish query plans", () => {
 
 describe("notes query plans", () => {
   it.each([
-    ["writer list", "SELECT * FROM notes WHERE writer_id = ? AND couple_id = ? AND closed_at IS NULL ORDER BY created_at DESC, id DESC", ["writer", "couple"]],
-    ["recipient list", `SELECT id, opened_at, sent_at, CASE WHEN opened_at IS NOT NULL THEN happened END AS happened, CASE WHEN opened_at IS NOT NULL THEN feel END AS feel, CASE WHEN opened_at IS NOT NULL THEN need END AS need, CASE WHEN opened_at IS NOT NULL THEN hope END AS hope FROM notes WHERE recipient_id = ? AND couple_id = ? AND sent_at IS NOT NULL AND closed_at IS NULL ORDER BY sent_at, id`, ["recipient", "couple"]],
+    ["writer list", WRITTEN_NOTES_SQL, ["writer", "couple"]],
+    ["recipient list", RECEIVED_NOTES_SQL, ["recipient", "couple"]],
     ["writer ownership", "SELECT * FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL", ["note", "writer", "couple"]],
     ["save before open", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL RETURNING *", ["h", "f", "n", "r", 1, "note", "writer", "couple"]],
-    ["send after cooling", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *", ["h", "f", "n", "r", 1, 1, "note", "writer", "couple", 1]],
-    ["withdraw", "DELETE FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL", ["note", "writer", "couple"]],
+    ["send after cooling", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *", ["h", "f", "n", "r", 1, 1, 1, "note", "writer", "couple", 1]],
     ["withdraw conflict", "SELECT opened_at FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL", ["note", "writer", "couple"]],
     ["create", "INSERT INTO notes (id, couple_id, writer_id, recipient_id, happened, feel, need, hope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *", ["id", "couple", "writer", "recipient", "h", "f", "n", "r", 1, 1]],
   ])("%s uses indexed lookups without table scans or temporary sorting", async (_name, sql, binds) => {
@@ -255,9 +257,9 @@ describe("notes query plans", () => {
 
 describe("notes recipient and joined feed query plans", () => {
   it.each([
-    ["open", `UPDATE notes SET opened_at = COALESCE(opened_at, ?) WHERE id = ? AND recipient_id = ? AND couple_id = ? AND sent_at IS NOT NULL AND closed_at IS NULL RETURNING id, happened, feel, need, hope`, [1, "note", "recipient", "couple"]],
-    ["close", "UPDATE notes SET pick = ?, line = ?, closed_at = ?, updated_at = ? WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL", ["try", "", 1, 1, "note", "recipient", "couple"]],
-    ["close insert", `INSERT INTO journal_entries (id, couple_id, author_id, entry_date, body, note_id, created_at, updated_at) SELECT ?, couple_id, writer_id, ?, '', id, ?, ? FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND closed_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM journal_entries WHERE note_id = ?)`, ["entry", "2026-11-13", 1, 1, "note", "recipient", "couple", "note"]],
+    ["open", OPEN_NOTE_SQL, [1, "note", "recipient", "couple"]],
+    ["close", CLOSE_NOTE_SQL, ["try", "", 1, 1, "note", "recipient", "couple"]],
+    ["close insert", CLOSE_ENTRY_SQL, ["entry", "2026-11-13", 1, 1, "note", "recipient", "couple", "note"]],
     ["invalid close visibility", "SELECT id FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL", ["note", "recipient", "couple"]],
     ["note join feed", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", 21]],
     ["note join next page", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? AND e.entry_date <= ? AND (e.entry_date < ? OR (e.entry_date = ? AND (e.created_at < ? OR (e.created_at = ? AND e.id < ?)))) ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", "2026-11-13", "2026-11-13", "2026-11-13", 1, 1, "entry", 21]],
@@ -270,12 +272,24 @@ describe("notes recipient and joined feed query plans", () => {
 
 describe("notes push query plans", () => {
   it.each([
-    ["held", "UPDATE notes SET notified_at = ? WHERE notified_at IS NULL AND sent_at <= ? RETURNING recipient_id, writer_id, opened_at", [1, 1], "notes_held"],
-    ["unopened", "UPDATE notes SET reminded_at = ? WHERE reminded_at IS NULL AND opened_at IS NULL AND sent_at < ? RETURNING recipient_id, writer_id", [1, 1], "notes_unopened"],
+    ["held", RELEASE_NOTES_SQL, [1, 1], "notes_held"],
+    ["unopened", REMIND_NOTES_SQL, [1, 1], "notes_unopened"],
     ["recipient devices", `SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name FROM push_subscriptions s JOIN users u ON u.id = s.user_id WHERE s.user_id = ? AND s.journal = 1`, ["writer", "recipient"], "push_subscriptions_user"],
     ["send claims immediate push", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *", ["h", "f", "n", "r", 1, 1, 1, "note", "writer", "couple", 1], "sqlite_autoindex_notes_1"],
   ])("%s uses indexed SEARCH", async (_name, sql, binds, index) => {
     const plan = (await explain(sql as string, ...(binds as unknown[]))).join("\n");
     expect(plan).toContain(index); expect(plan).toContain("SEARCH"); expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+  });
+});
+
+describe("closed-note edit and delete query plans", () => {
+  it.each([
+    ["closed edit", UPDATE_CLOSED_NOTE_SQL, ["h", "f", "n", "r", "try", "", 1, "note", "couple"]],
+    ["entry day", "UPDATE journal_entries SET entry_date = ?, updated_at = ? WHERE note_id = ? AND couple_id = ?", ["2026-11-13", 1, "note", "couple"]],
+    ["entry lookup", "SELECT id FROM journal_entries WHERE note_id = ? AND couple_id = ?", ["note", "couple"]],
+    ["closed visibility", "SELECT id FROM notes WHERE id = ? AND couple_id = ? AND closed_at IS NOT NULL", ["note", "couple"]],
+    ["delete note cascades entry", "DELETE FROM notes WHERE id = ? AND couple_id = ? AND ((writer_id = ? AND opened_at IS NULL) OR closed_at IS NOT NULL)", ["note", "couple", "writer"]],
+  ])("%s uses indexed lookups without scans or temporary sorting", async (_name, sql, binds) => {
+    expect((await explain(sql as string, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });

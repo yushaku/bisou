@@ -79,7 +79,7 @@ journal.put("/:id", limitEntryBody, async (c) => {
   const id = c.req.param("id");
   const userId = c.get("user").id;
   const current = await findEntry(db, id, userId);
-  if (!current) return c.json({ error: "not_found" }, 404);
+  if (!current || current.note_id) return c.json({ error: "not_found" }, 404);
   if (current.author_id !== userId) return c.json({ error: "not_author" }, 403);
   const now = Date.now();
   const parsed = validateEntry(await c.req.json().catch(() => null), now);
@@ -119,7 +119,7 @@ journal.delete("/:id", async (c) => {
   const id = c.req.param("id");
   const userId = c.get("user").id;
   const current = await findEntry(db, id, userId);
-  if (!current) return c.json({ error: "not_found" }, 404);
+  if (!current || current.note_id) return c.json({ error: "not_found" }, 404);
   if (current.author_id !== userId) return c.json({ error: "not_author" }, 403);
   const { results: photos } = await db.prepare("SELECT id, couple_id FROM photos WHERE entry_id = ?")
     .bind(id).all<{ id: string; couple_id: string }>();

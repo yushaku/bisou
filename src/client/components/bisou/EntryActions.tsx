@@ -24,7 +24,7 @@ interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoI
 }
 
 /*
- * Edit or delete one's own entry (R10, R11) or a note entry (R25). Delete asks first, naming the day and photo
+ * Edit or delete one's own entry (R10, R11) or a note entry (R26). Delete asks first, naming the day and photo
  * count; a failure keeps the entry and the dialog for another try. There is no undo.
  */
 export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photoIds">>({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, title, own = true, remove: deleteItem = api.deleteEntry }: EntryActionsProps<T>) {

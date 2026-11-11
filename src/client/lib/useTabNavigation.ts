@@ -48,7 +48,7 @@ export function useTabNavigation(tab?: TabId) {
 
   return {
     onSelect: (next: TabId) => go(next),
-    onCreate: (destination: CreateDestination) => go(destination === "event" ? "home" : destination === "spin" ? "wishes" : destination, destination),
+    onCreate: (destination: CreateDestination) => go(destination === "event" ? "home" : destination === "spin" ? "wishes" : destination === "notes" ? "journal" : destination, destination),
   };
 }
 

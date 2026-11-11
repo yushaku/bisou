@@ -1,11 +1,12 @@
 import { useOnline } from "@/lib/useOnline";
-import { BookHeart, Gift, House, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
+import { BookHeart, Gift, House, Mailbox, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import type { CreateDestination } from "@/lib/navigation";
 import { SettingsRow } from "./SettingsGroup";
 import { useI18n, type MessageKey } from "@/i18n";
+import { focusCreateButton } from "@/lib/useTabNavigation";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "./BrandMark";
 
@@ -73,8 +74,8 @@ interface BottomBarProps {
 export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  // The + adds directly to the active tab.
-  const direct: CreateDestination | null = active === "home" ? "event" : active === "journal" || active === "wishes" ? active : null;
+  // Tabs with one create action skip the menu.
+  const direct: CreateDestination | null = active === "home" ? "event" : active === "wishes" ? active : null;
   // Open the editor after the menu closes, unless the user has left this screen.
   const pending = useRef<CreateDestination | null>(null);
   useEffect(() => () => { pending.current = null; }, []);
@@ -95,7 +96,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
               <Fragment key={id}>
                 {index === 2 && <li className="flex items-center justify-center">
                   <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-[color-mix(in_oklab,var(--card)_55%,transparent)] elevate"
-                    aria-label={direct ? t(direct === "event" ? "events.add" : direct === "journal" ? "journal.new" : "wishes.add") : t("nav.create")}
+                    aria-label={direct ? t(direct === "event" ? "events.add" : "wishes.add") : t("nav.create")}
                     onClick={() => direct ? onCreate(direct) : setOpen(true)}>
                     <Plus className="size-6" aria-hidden="true" />
                   </Button>
@@ -118,18 +119,18 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
           })}
         </ul>
       </nav>
-      <DrawerContent>
+      <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); focusCreateButton(); }}>
         <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
           <DrawerHeader className="px-0 text-left">
             <DrawerTitle className="font-heading text-2xl">{t("nav.create")}</DrawerTitle>
-            <DrawerDescription className="sr-only">{t("nav.createHint")}</DrawerDescription>
+            <DrawerDescription className="sr-only">{t(active === "journal" ? "nav.journalCreateHint" : "nav.createHint")}</DrawerDescription>
           </DrawerHeader>
           <div className="overflow-hidden rounded-xl edge bg-card divide-y divide-border">
             <DrawerClose asChild>
-              <SettingsRow icon={BookHeart} label={t("journal.new")} onClick={() => { pending.current = "journal"; }} />
+              <SettingsRow icon={BookHeart} label={t(active === "journal" ? "nav.writeJournal" : "journal.new")} onClick={() => { pending.current = "journal"; }} />
             </DrawerClose>
             <DrawerClose asChild>
-              <SettingsRow icon={Gift} label={t("wishes.add")} onClick={() => { pending.current = "wishes"; }} />
+              <SettingsRow icon={active === "journal" ? Mailbox : Gift} label={t(active === "journal" ? "nav.writeNote" : "wishes.add")} onClick={() => { pending.current = active === "journal" ? "notes" : "wishes"; }} />
             </DrawerClose>
           </div>
           <Button variant="outline" className="mt-3 w-full" onClick={() => setOpen(false)}>{t("common.close")}</Button>

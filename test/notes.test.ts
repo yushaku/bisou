@@ -13,7 +13,7 @@ test("AC28 AC29: a draft is byte-identical to no note for its recipient on every
   expect(created.status).toBe(201);
   const { note } = await created.json<{ note: { id: string } }>();
   expect(await (await call("GET", "/api/notes", { cookie: b.cookie })).text()).toBe(before);
-  for (const [method, suffix] of [["POST", "/open"], ["POST", "/close"], ["PUT", ""], ["POST", "/send"], ["DELETE", ""]]) {
+  for (const [method, suffix] of [["POST", "/open"], ["POST", "/close"], ["PUT", ""], ["PUT", "/closed"], ["POST", "/send"], ["DELETE", ""]]) {
     const hidden = await call(method!, `/api/notes/${note.id}${suffix}`, { cookie: b.cookie, body: input });
     const missing = await call(method!, `/api/notes/random${suffix}`, { cookie: b.cookie, body: input });
     expect(hidden.status).toBe(404);
@@ -161,7 +161,7 @@ test("AC30: unpaired and paired outsiders get uniform 404 on every notes route",
       const code = (await res.json<{ couple: { pendingCode: { code: string } } }>()).couple.pendingCode.code;
       await call("POST", "/api/couple/join", { cookie: partner.cookie, body: { code } });
     }
-    for (const [method, path] of [["GET", ""], ["POST", ""], ["PUT", `/${id}`], ["POST", `/${id}/open`], ["POST", `/${id}/close`], ["POST", `/${id}/send`], ["DELETE", `/${id}`]]) {
+    for (const [method, path] of [["GET", ""], ["POST", ""], ["PUT", `/${id}`], ["PUT", `/${id}/closed`], ["POST", `/${id}/open`], ["POST", `/${id}/close`], ["POST", `/${id}/send`], ["DELETE", `/${id}`]]) {
       // List/create belong to the caller's own couple; id routes always hide another couple's note.
       if (pairedOutside && !path) continue;
       const res = await call(method!, `/api/notes${path}`, { cookie: outsider.cookie, body: method === "GET" ? undefined : input });
@@ -203,4 +203,54 @@ test("AC18 AC19: a failed journal insert rolls back closing without losing the o
     expect((await (await call("GET", "/api/notes", { cookie: a.cookie })).json<{ fromMe: { state: string }[] }>()).fromMe[0]?.state).toBe("opened");
     expect(await env.DB.prepare("SELECT closed_at, pick FROM notes WHERE id = ?").bind(id).first()).toEqual({ closed_at: null, pick: null });
   } finally { await env.DB.exec("DROP TRIGGER reject_note_entry"); }
+});
+
+async function closedNote() {
+  const pair = await sentNote();
+  await call("POST", `/api/notes/${pair.id}/open`, { cookie: pair.b.cookie });
+  const res = await call("POST", `/api/notes/${pair.id}/close`, { cookie: pair.b.cookie, body: { pick: "try" } });
+  const { entry } = await res.json<{ entry: import("../src/shared/types").JournalEntry }>();
+  return { ...pair, entry };
+}
+test("AC20 journal AC20 AC21: either partner edits all closed-note fields and day, normal journal routes hide it", async () => {
+  const { a, b, id, entry } = await closedNote();
+  for (const person of [a,b]) {
+    const body = { ...input, hope: `Talk with ${person.id}`, pick: "differ", line: "My understanding", date: "2026-11-12" };
+    const res = await call("PUT", `/api/notes/${id}/closed`, { cookie: person.cookie, body }); expect(res.status).toBe(200);
+    expect((await res.json<{ entry: unknown }>()).entry).toMatchObject({ date: body.date, note: { hope: body.hope, pick: body.pick, line: body.line, recipientId: b.id } });
+    const other = person === a ? b : a;
+    expect((await (await call("GET", "/api/journal", { cookie: other.cookie })).json<{ entries: unknown[] }>()).entries[0]).toMatchObject({ note: { hope: body.hope } });
+    for (const method of ["PUT", "DELETE"]) expect((await call(method, `/api/journal/${entry.id}`, { cookie: person.cookie, body: { date: body.date, text: "Bypass", photoIds: [] } })).status).toBe(404);
+  }
+});
+test("AC20: closed notes permit 2500 characters but reject bad parts, pick, day and photoIds", async () => {
+  const { a, id } = await closedNote();
+  const body = { happened: "h".repeat(500), feel: "f".repeat(500), need: "n".repeat(500), hope: "r".repeat(500), line: "l".repeat(500), pick: "talk", date: "2026-11-12" };
+  expect((await call("PUT", `/api/notes/${id}/closed`, { cookie: a.cookie, body })).status).toBe(200);
+  for (const change of [{ hope: "x".repeat(501) }, { line: "x".repeat(501) }, { pick: "other" }, { photoIds: [] }, { date: "2026-11-15" }]) {
+    const res = await call("PUT", `/api/notes/${id}/closed`, { cookie: a.cookie, body: { ...body, ...change } }); expect(res.status).toBe(400);
+    if ("date" in change) expect(await res.json()).toEqual({ error: "invalid_entry_date" });
+  }
+});
+test.each(["writer", "recipient"])("AC36: %s deletes the closed note and cascading entry for both", async (who) => {
+  const { a, b, id, entry } = await closedNote();
+  expect((await call("DELETE", `/api/notes/${id}`, { cookie: (who === "writer" ? a : b).cookie })).status).toBe(200);
+  expect(await env.DB.prepare("SELECT id FROM notes WHERE id = ?").bind(id).first()).toBeNull();
+  expect(await env.DB.prepare("SELECT id FROM journal_entries WHERE id = ?").bind(entry.id).first()).toBeNull();
+  for (const person of [a,b]) expect((await (await call("GET", "/api/journal", { cookie: person.cookie })).json<{ entries: unknown[] }>()).entries).toEqual([]);
+});
+
+test("AC20 AC21: open notes refuse closed edits; closed edits and deletes never push at the next 07:00", async () => {
+  const { a, b, id } = await closedNote();
+  await subscribe(a, await device("writer")); await subscribe(b, await device("recipient"));
+  const body = { ...input, pick: "talk", line: "Understood", date: "2026-11-12" };
+  const { note } = await (await call("POST", "/api/notes", { cookie: a.cookie, body: input })).json<{ note: { id: string } }>();
+  for (const person of [a,b]) expect((await call("PUT", `/api/notes/${note.id}/closed`, { cookie: person.cookie, body })).status).toBe(404);
+  const push = mockPush();
+  try {
+    vi.setSystemTime(new Date("2026-11-13T23:00:00+07:00"));
+    expect((await call("PUT", `/api/notes/${id}/closed`, { cookie: b.cookie, body })).status).toBe(200);
+    expect((await call("DELETE", `/api/notes/${id}`, { cookie: a.cookie })).status).toBe(200);
+    await waitForBackground(); await runPushCron("2026-11-14T07:00:00+07:00"); expect(push.sent).toHaveLength(0);
+  } finally { push.spy.mockRestore(); }
 });

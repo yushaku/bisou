@@ -1,5 +1,7 @@
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
+import { toast } from "sonner";
+import { NotesSection } from "../src/client/components/bisou/NotesSection";
 import { api } from "../src/client/api";
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
 import { ClaimsList } from "../src/client/components/bisou/ClaimsList";
@@ -173,4 +175,49 @@ it("notes AC33 AC40: an offline draft cannot save or send", async () => {
   expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled();
   expect(nodes.find(n => n.props.children === "notes.save")!.props.disabled).toBe(true);
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
+});
+
+it("notes AC20 AC40: closed-note editing keeps fields but cannot submit offline", async () => {
+  vi.stubGlobal("navigator", { onLine: false });
+  const save = vi.spyOn(api, "updateClosedNote");
+  const noteEntry = { ...entry, note: { id: "note", recipientId: "binh", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", pick: "try" as const, line: "Understood" } };
+  const { ClosedNoteSheet } = await import("../src/client/components/bisou/ClosedNoteSheet");
+  const nodes = elements(ClosedNoteSheet({ entry: noteEntry, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() }));
+  nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() }); await Promise.resolve();
+  expect(save).not.toHaveBeenCalled(); expect(nodes.find(n => n.props.children === "notes.save")!.props.disabled).toBe(true);
+  expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
+});
+
+it.each(["draft", "sent"] as const)("R13 R15: %s has its own deletion label and consequence", (status) => {
+  const note = { id: "n", state: status, happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", createdAt: 0, sendableAt: 1 };
+  const sheet = NoteSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", entry: note, onRefresh: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const form = sheet.props.children[0].props.children;
+  const nodes = elements(form.type(form.props));
+  const label = status === "draft" ? "notes.delete" : "notes.withdraw";
+  expect(nodes.filter(n => n.props.children === label)).toHaveLength(2);
+  expect(nodes.some(n => n.props.children === (status === "draft" ? "notes.deleteBody" : "notes.withdrawBody"))).toBe(true);
+});
+
+it.each(["draft", "sent"] as const)("notes: saving a %s shows the matching toast", (status) => {
+  vi.stubGlobal("navigator", { onLine: true });
+  vi.spyOn(api, "notes").mockResolvedValue({ ok: true, data: { fromMe: [], toMe: [] } });
+  const success = vi.spyOn(toast, "success");
+  state.push(null, null, null, { notes: { fromMe: [], toMe: [] } }, { fromMe: [], toMe: [] }, false, 0, undefined, true, true, null);
+  const tree = NotesSection({ user, couple: { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Binh" }] }, onSignedOut: vi.fn() });
+  const sheet = tree!.props.children.at(-1).props.children;
+  sheet.props.onSaved({ state: status });
+  expect(success).toHaveBeenCalledWith(status === "sent" ? "notes.sent" : "notes.saved");
+});
+it.each(["draft", "sent"] as const)("notes: removing a %s shows the deleted toast", async (status) => {
+  vi.stubGlobal("navigator", { onLine: true });
+  vi.spyOn(api, "deleteNote").mockResolvedValue({ ok: true, data: { ok: true } });
+  const success = vi.spyOn(toast, "success");
+  const note = { id: "n", state: status, happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", createdAt: 0, sendableAt: 1 };
+  const sheet = NoteSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", entry: note, onRefresh: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const form = sheet.props.children[0].props.children;
+  const nodes = elements(form.type(form.props));
+  const label = status === "draft" ? "notes.delete" : "notes.withdraw";
+  nodes.find(n => n.props.children === label && (n.props as { variant?: string }).variant === "destructive")!.props.onClick!();
+  await Promise.resolve();
+  expect(success).toHaveBeenCalledWith("notes.deleted");
 });
