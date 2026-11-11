@@ -80,8 +80,7 @@ it("refreshes only when a downward pull starts at the top and reaches 80px", asy
   await vi.runAllTimersAsync();
 });
 
-
-it("cancels short, upward, horizontal, multi-touch and interrupted pulls without blocking normal scrolling", () => {
+it("cancels upward, horizontal, multi-touch and interrupted pulls without blocking normal scrolling", () => {
   const refresh = vi.fn();
   const { win, touch, render } = setup(refresh);
   for (const [y, x, count] of [[-20, 0, 1], [80, 100, 1], [100, 0, 2]]) {
