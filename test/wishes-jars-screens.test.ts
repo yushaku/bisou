@@ -69,3 +69,22 @@ it("notes AC4: Notes stays inside the Journal tabs", () => {
   const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, couple }))) }));
   expect(html).toContain('role="tablist"'); expect(html).toContain('>Nhật ký<'); expect(html).toContain('>Lời nhắn<'); expect(html).toContain("Chưa có lời nhắn nào");
 });
+
+it("notes AC12 AC13: Home shows only waiting notes with a mailbox and count", () => {
+  vi.stubGlobal("localStorage", { getItem: () => "vi" });
+  const memory = createTabMemory();
+  const page = () => renderToString(h(Router, { ssrPath: "/", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Home, { ...session, couple, onCouple() {}, celebrate: false, onCelebrated() {} }))) }));
+  expect(page()).not.toContain("mailbox-wait");
+  memory.notes = { fromMe: [], toMe: [{ id: "one", state: "waiting" }, { id: "two", state: "waiting" }] };
+  expect(page()).toContain("mailbox-wait"); expect(page()).toContain("2 lời nhắn đang đợi");
+  memory.notes.toMe = [{ id: "one", state: "opened", happened: "h", feel: "f", need: "n", hope: "r" }];
+  expect(page()).not.toContain("mailbox-wait");
+});
+it("notes AC19 journal AC22: feed keeps writer name/time and recipient above pick/line with a badge", () => {
+  vi.stubGlobal("localStorage", { getItem: () => "vi" });
+  const memory = createTabMemory(); memory.journal = { entries: [{ id: "e", authorId: "an", date: "2026-11-13", text: "", source: "partner", photoIds: [], createdAt: 1794556500000, updatedAt: 1794556500000, note: { id: "n", recipientId: "binh", happened: "What happened", feel: "Feelings", need: "Need", hope: "Hope", pick: "talk", line: "I understand" } }], nextCursor: null };
+  const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, couple }))) }));
+  expect(html).toContain("Lời nhắn nhỏ"); expect(html).toContain("What happened");
+  expect(html.indexOf("Bình", html.indexOf("What happened"))).toBeLessThan(html.indexOf("Mình muốn nói trực tiếp"));
+  expect(html).toContain("I understand");
+});

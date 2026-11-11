@@ -1,4 +1,4 @@
-import type { ApiError, NoteInput } from "./types";
+import type { ApiError, CloseInput, NoteInput, NotePick } from "./types";
 export const NOTE_FIELD_MAX = 500;
 export const NOTE_LINE_MAX = 500;
 export const NOTE_COOLDOWN = 8 * 3_600_000;
@@ -18,4 +18,13 @@ export function validateNote(raw: unknown): { input: NoteInput } | ApiError {
     input[field] = text.trim();
   }
   return { input };
+}
+
+export function validateClose(raw: unknown): { input: CloseInput } | ApiError {
+  if (!raw || typeof raw !== "object") return { error: "invalid_body" };
+  const { pick, line = "" } = raw as Record<string, unknown>;
+  if (!NOTE_PICKS.includes(pick as NotePick) || typeof line !== "string") return { error: "invalid_body" };
+  if (/[\p{Cc}\u202a-\u202e\u2066-\u2069]/u.test(line.replace(/[\n\r\t]/g, ""))) return { error: "invalid_body" };
+  if (Array.from(line.trim()).length > NOTE_LINE_MAX) return { error: "note_text_too_long" };
+  return { input: { pick: pick as NotePick, line: line.trim() } };
 }

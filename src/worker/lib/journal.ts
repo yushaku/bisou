@@ -11,7 +11,13 @@ export interface EntryRow {
   source: JournalEntry["source"];
   created_at: number;
   updated_at: number;
+  note_id: string | null;
+  recipient_id: string | null;
+  happened: string; feel: string; need: string; hope: string;
+  pick: NonNullable<JournalEntry["note"]>["pick"]; line: string;
 }
+
+export const ENTRY_SELECT = `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id`;
 
 export function validateEntry(raw: unknown, now: number): { input: EntryInput } | { error: ApiErrorCode } {
   if (!raw || typeof raw !== "object" || !("date" in raw) || typeof raw.date !== "string"
@@ -52,12 +58,13 @@ export async function entriesWithPhotos(db: D1Database, rows: EntryRow[]): Promi
   }
   return rows.map((row) => ({
     id: row.id, authorId: row.author_id, date: row.entry_date, text: row.body, source: row.source,
+    ...(row.note_id ? { note: { id: row.note_id, recipientId: row.recipient_id!, happened: row.happened, feel: row.feel, need: row.need, hope: row.hope, pick: row.pick, line: row.line } } : {}),
     photoIds: photos.get(row.id) ?? [], createdAt: row.created_at, updatedAt: row.updated_at,
   }));
 }
 
 export function findEntry(db: D1Database, id: string, userId: string): Promise<EntryRow | null> {
-  return db.prepare(`SELECT e.* FROM journal_entries e
+  return db.prepare(`${ENTRY_SELECT}
     WHERE e.id = ? AND e.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?)`)
     .bind(id, userId).first<EntryRow>();
 }

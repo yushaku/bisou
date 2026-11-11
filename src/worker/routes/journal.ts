@@ -3,7 +3,7 @@ import { bodyLimit } from "hono/body-limit";
 import { FEED_PAGE_SIZE } from "../../shared/journal";
 import type { AppEnv } from "../env";
 import { findMembership } from "../lib/couples";
-import { entriesWithPhotos, entryCursor, findEntry, readCursor, validateEntry, type EntryRow } from "../lib/journal";
+import { ENTRY_SELECT, entriesWithPhotos, entryCursor, findEntry, readCursor, validateEntry, type EntryRow } from "../lib/journal";
 import { PENDING_PHOTO_TTL } from "../lib/time";
 import { purgePhotos } from "../lib/photos";
 import { notifyJournal } from "../lib/notify";
@@ -28,12 +28,12 @@ journal.get("/", async (c) => {
   const db = c.env.DB;
   const coupleId = c.get("journalCoupleId");
   const query = cursor
-    ? db.prepare(`SELECT * FROM journal_entries WHERE couple_id = ? AND entry_date <= ?
-        AND (entry_date < ? OR (entry_date = ? AND (created_at < ? OR (created_at = ? AND id < ?))))
-        ORDER BY entry_date DESC, created_at DESC, id DESC LIMIT ?`)
+    ? db.prepare(`${ENTRY_SELECT} WHERE e.couple_id = ? AND e.entry_date <= ?
+        AND (e.entry_date < ? OR (e.entry_date = ? AND (e.created_at < ? OR (e.created_at = ? AND e.id < ?))))
+        ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`)
       .bind(coupleId, cursor[0], cursor[0], cursor[0], cursor[1], cursor[1], cursor[2], FEED_PAGE_SIZE + 1)
-    : db.prepare(`SELECT * FROM journal_entries WHERE couple_id = ?
-        ORDER BY entry_date DESC, created_at DESC, id DESC LIMIT ?`).bind(coupleId, FEED_PAGE_SIZE + 1);
+    : db.prepare(`${ENTRY_SELECT} WHERE e.couple_id = ?
+        ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`).bind(coupleId, FEED_PAGE_SIZE + 1);
   const { results } = await query.all<EntryRow>();
   const rows = results.slice(0, FEED_PAGE_SIZE);
   return c.json({

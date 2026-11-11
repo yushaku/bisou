@@ -44,24 +44,26 @@ function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, onLock,
     if (!online || saving || !entry) return;
     setSaving(true);
     const res = await api.deleteNote(entry.id); setSaving(false);
-    if (res.ok || res.status === 404) { onRefresh(); onDone(); return; }
+    if (res.ok || res.status === 404) { toast.success(t("notes.deleted")); onRefresh(); onDone(); return; }
     if (res.status === 401) return onSignedOut();
     setWithdraw(false);
     if (res.error?.error === "note_opened") { setLocked(true); setError(t("notes.errors.opened", { partner: partnerName })); onRefresh(); }
     else setError(t("notes.deleteError"));
   }
-  return <form onSubmit={(e) => { e.preventDefault(); void save(!!ready); }} className="mx-auto flex min-h-0 w-full max-w-md flex-col">
+  return <form onSubmit={(e) => { e.preventDefault(); void save(!!ready); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
     <DrawerHeader><DrawerTitle>{t(entry ? "notes.edit" : "notes.write", { partner: partnerName })}</DrawerTitle></DrawerHeader>
-    <div className="flex flex-col gap-3 px-5 pb-3">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-3">
       {ready && <p>{t("notes.reread")}</p>}
       <NoteFields value={value} disabled={saving} onChange={(next) => { setValue(next); setDirty(true); if (!locked) setError(null); }} />
       <p className="text-sm text-muted-foreground">{!online ? t("offline.save") : block ? t(block === "tooLong" ? "notes.tooLong" : "notes.emptyHint") : entry?.state === "draft" && !ready ? t("notes.cooling", { time: formatTime(entry.sendableAt, locale) }) : !entry ? t("notes.saveHint") : ""}</p>
       {error && <p role="alert" className="text-destructive">{error}</p>}
+    </div>
+    <div className="flex shrink-0 flex-col gap-2 border-t px-5 pt-3 pb-5">
       <Button type="submit" size="lg" loading={saving} disabled={!online || !!block || locked}>{t(ready ? "notes.send" : "notes.save", { partner: partnerName })}</Button>
       {ready && <Button type="button" variant="outline" disabled={!online || saving || !!block || locked} onClick={() => void save()}>{t("notes.saveLater")}</Button>}
-      {entry && entry.state !== "opened" && <Button type="button" variant="ghost" disabled={!online || saving || locked} onClick={() => setWithdraw(true)}>{t("notes.withdraw")}</Button>}
+      {entry && entry.state !== "opened" && <Button type="button" variant="ghost" disabled={!online || saving || locked} onClick={() => setWithdraw(true)}>{t(entry?.state === "draft" ? "notes.delete" : "notes.withdraw")}</Button>}
       <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>{t("common.close")}</Button>
     </div>
-    <Dialog open={withdraw} onOpenChange={setWithdraw}><DialogContent><DialogHeader><DialogTitle>{t("notes.withdrawTitle")}</DialogTitle><DialogDescription>{t("notes.withdrawBody")}</DialogDescription></DialogHeader><DialogFooter><Button variant="destructive" disabled={!online || saving} onClick={() => void remove()}>{t("notes.withdraw")}</Button><Button variant="outline" disabled={saving} onClick={() => setWithdraw(false)}>{t("entry.cancel")}</Button></DialogFooter></DialogContent></Dialog>
+    <Dialog open={withdraw} onOpenChange={setWithdraw}><DialogContent><DialogHeader><DialogTitle>{t(entry?.state === "draft" ? "notes.deleteTitle" : "notes.withdrawTitle")}</DialogTitle><DialogDescription>{t(entry?.state === "draft" ? "notes.deleteBody" : "notes.withdrawBody")}</DialogDescription></DialogHeader><DialogFooter><Button variant="destructive" disabled={!online || saving} onClick={() => void remove()}>{t(entry?.state === "draft" ? "notes.delete" : "notes.withdraw")}</Button><Button variant="outline" disabled={saving} onClick={() => setWithdraw(false)}>{t("entry.cancel")}</Button></DialogFooter></DialogContent></Dialog>
   </form>;
 }

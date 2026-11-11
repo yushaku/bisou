@@ -1,5 +1,6 @@
-import { Flag, Gift } from "lucide-react";
+import { Flag, Gift, Mailbox } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
+import type { NoteInput } from "../../../shared/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { formatDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { PersonAvatar, type Person } from "./CoupleAvatars";
+import { NoteReply, type Reply } from "./NoteReply";
 import { PhotoGrid, type Photo } from "./PhotoGrid";
 
 export interface Entry {
@@ -17,7 +19,9 @@ export interface Entry {
   body: string;
   photos: Photo[];
   milestone?: string;
-  source?: "partner" | "wish";
+  source?: "partner" | "wish" | "note";
+  parts?: NoteInput;
+  reply?: Reply;
   /* Time written, beside the author ("22:00"). */
   time?: string;
   /* A quiet line under the body, such as when a back-filled entry was written. */
@@ -68,6 +72,7 @@ export function EntryCard({
         {showDate && (
           <time dateTime={entry.date} className="text-sm text-muted-foreground">{formatDay(entry.date, locale, "numeric")}</time>
         )}
+        {entry.source === "note" && <Badge variant="secondary"><Mailbox aria-hidden="true" />{t("entry.fromNote")}</Badge>}
         {entry.source === "wish" && <Badge variant="secondary"><Gift aria-hidden="true" />{t("entry.fromWish")}</Badge>}
         {entry.milestone && (
           <Badge variant="secondary" className="shrink-0">
@@ -105,6 +110,7 @@ export function EntryCard({
 
 
 
+      {entry.reply && <NoteReply reply={entry.reply} />}
       <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="relative px-1" />
     </Card>
   );

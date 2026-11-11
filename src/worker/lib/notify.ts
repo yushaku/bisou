@@ -50,7 +50,7 @@ export async function notifyGarden(env: Env, coupleId: string, authorId: string,
 
 export async function releaseNightJournal(env: Env, scheduledTime: number): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) { console.log("[bisou] push unavailable"); return; }
-  const { results } = await env.DB.prepare("SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ?")
+  const { results } = await env.DB.prepare("SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ? AND note_id IS NULL")
     .bind(scheduledTime - 9 * HOUR, scheduledTime).all<{ couple_id: string; author_id: string }>();
   const authors = new Map<string, { coupleId: string; count: number }>();
   for (const row of results) {

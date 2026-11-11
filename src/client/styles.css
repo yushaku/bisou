@@ -672,3 +672,7 @@
 @media (prefers-reduced-motion: no-preference) {
   .garden-card-flip { animation: garden-card-flip 450ms var(--ease) both; }
 }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes mailbox-wait { 0%, 100% { transform: rotate(0); } 35% { transform: rotate(-8deg); } 70% { transform: rotate(8deg); } }
+  .mailbox-wait { animation: mailbox-wait var(--duration) var(--ease) 2; }
+}

@@ -137,6 +137,7 @@ export interface JournalEntry {
   date: string;
   text: string;
   source: "partner" | "wish";
+  note?: NoteInput & { id: string; recipientId: string; pick: NotePick; line: string };
   /** Ordered by position. */
   photoIds: string[];
   createdAt: number;

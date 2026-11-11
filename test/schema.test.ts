@@ -252,3 +252,18 @@ describe("notes query plans", () => {
     expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });
+
+describe("notes recipient and joined feed query plans", () => {
+  it.each([
+    ["open", `UPDATE notes SET opened_at = COALESCE(opened_at, ?) WHERE id = ? AND recipient_id = ? AND couple_id = ? AND sent_at IS NOT NULL AND closed_at IS NULL RETURNING id, happened, feel, need, hope`, [1, "note", "recipient", "couple"]],
+    ["close", "UPDATE notes SET pick = ?, line = ?, closed_at = ?, updated_at = ? WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL", ["try", "", 1, 1, "note", "recipient", "couple"]],
+    ["close insert", `INSERT INTO journal_entries (id, couple_id, author_id, entry_date, body, note_id, created_at, updated_at) SELECT ?, couple_id, writer_id, ?, '', id, ?, ? FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND closed_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM journal_entries WHERE note_id = ?)`, ["entry", "2026-11-13", 1, 1, "note", "recipient", "couple", "note"]],
+    ["invalid close visibility", "SELECT id FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL", ["note", "recipient", "couple"]],
+    ["note join feed", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", 21]],
+    ["note join next page", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? AND e.entry_date <= ? AND (e.entry_date < ? OR (e.entry_date = ? AND (e.created_at < ? OR (e.created_at = ? AND e.id < ?)))) ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", "2026-11-13", "2026-11-13", "2026-11-13", 1, 1, "entry", 21]],
+    ["joined find entry", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.id = ? AND e.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?)`, ["entry", "user"]],
+    ["night release excludes notes", "SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ? AND note_id IS NULL", [1, 2]],
+  ])("%s uses indexed lookups without scans or temporary sorting", async (_name, sql, binds) => {
+    expect((await explain(sql as string, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+  });
+});

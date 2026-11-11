@@ -33,3 +33,26 @@ test.each(["vi", "en"])("AC1 AC31: empty section offers writing to the named par
   expect(render()).toContain(locale === "vi" ? "Viết cho Linh" : "Write to Linh");
   couple.members.pop(); expect(render()).toBe("");
 });
+
+test("R26: an opened recipient note offers reading again", () => {
+  vi.stubGlobal("localStorage", { getItem: () => "vi" });
+  const memory = createTabMemory();
+  memory.notes = { fromMe: [], toMe: [{ id: "n", state: "opened", ...input }] };
+  const user = { id: "a", displayName: "An", email: "an@example.com", locale: "vi" as const, birthDate: null, avatarId: null, createdAt: 1 };
+  const couple = { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Linh" }] };
+  const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));
+  expect(html).toContain("Đọc lại");
+  expect(html).not.toContain(">Đã mở<");
+});
+
+test("AC32: offline waiting note disables opening and explains the connection", () => {
+  vi.stubGlobal("localStorage", { getItem: () => "vi" });
+  vi.stubGlobal("navigator", { onLine: false });
+  const memory = createTabMemory(); memory.notes = { fromMe: [], toMe: [{ id: "n", state: "waiting" }] };
+  const user = { id: "a", displayName: "An", email: "an@example.com", locale: "vi" as const, birthDate: null, avatarId: null, createdAt: 1 };
+  const couple = { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Linh" }] };
+  const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));
+  expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Mình sẵn sàng nghe<\/button>/);
+  expect(html).toContain('<p class="text-sm text-muted-foreground">Cần kết nối mạng để tiếp tục</p>');
+  expect(html).not.toContain("Yesterday");
+});

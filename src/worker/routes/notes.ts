@@ -1,6 +1,8 @@
+import { vnDay } from "../../shared/days";
+import { entriesWithPhotos, findEntry } from "../lib/journal";
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { NOTE_COOLDOWN, validateNote } from "../../shared/notes";
+import { NOTE_COOLDOWN, validateClose, validateNote } from "../../shared/notes";
 import type { AppEnv } from "../env";
 import { noteLists, toWritten, type NoteRow } from "../lib/notes";
 type NoteEnv = AppEnv & { Variables: { noteCouple: string; notePartner: string } };
@@ -48,4 +50,31 @@ notes.delete("/:id", async (c) => {
   if (removed.meta.changes) return c.json({ ok: true });
   const row = await db.prepare("SELECT opened_at FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL").bind(id, user, couple).first<{ opened_at: number | null }>();
   return row?.opened_at != null ? c.json({ error: "note_opened" }, 409) : c.json({ error: "not_found" }, 404);
+});
+
+export const OPEN_NOTE_SQL = `UPDATE notes SET opened_at = COALESCE(opened_at, ?) WHERE id = ? AND recipient_id = ? AND couple_id = ? AND sent_at IS NOT NULL AND closed_at IS NULL RETURNING id, happened, feel, need, hope`;
+notes.post("/:id/open", async (c) => {
+  const row = await c.env.DB.prepare(OPEN_NOTE_SQL).bind(Date.now(), c.req.param("id"), c.get("user").id, c.get("noteCouple")).first();
+  if (!row) return c.json({ error: "not_found" }, 404);
+  return c.json({ note: { ...row, state: "opened" } });
+});
+
+export const CLOSE_NOTE_SQL = "UPDATE notes SET pick = ?, line = ?, closed_at = ?, updated_at = ? WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL";
+export const CLOSE_ENTRY_SQL = `INSERT INTO journal_entries (id, couple_id, author_id, entry_date, body, note_id, created_at, updated_at) SELECT ?, couple_id, writer_id, ?, '', id, ?, ? FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND closed_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM journal_entries WHERE note_id = ?)`;
+notes.post("/:id/close", limitBody, async (c) => {
+  const db = c.env.DB, id = c.req.param("id"), user = c.get("user").id, couple = c.get("noteCouple"), now = Date.now();
+  const parsed = validateClose(await c.req.json().catch(() => null));
+  if ("error" in parsed) {
+    const visible = await db.prepare("SELECT id FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL").bind(id, user, couple).first();
+    return visible ? c.json(parsed, 400) : c.json({ error: "not_found" }, 404);
+  }
+  const entryId = crypto.randomUUID();
+  const [closed] = await db.batch([
+    db.prepare(CLOSE_NOTE_SQL).bind(parsed.input.pick, parsed.input.line, now, now, id, user, couple),
+    db.prepare(CLOSE_ENTRY_SQL).bind(entryId, vnDay(now), now, now, id, user, couple, id),
+  ]);
+  if (!closed!.meta.changes) return c.json({ error: "not_found" }, 404);
+  const row = await findEntry(db, entryId, user);
+  const [entry] = await entriesWithPhotos(db, [row!]);
+  return c.json({ entry }, 201);
 });

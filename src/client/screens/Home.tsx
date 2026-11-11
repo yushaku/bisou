@@ -1,5 +1,3 @@
-import { InstallCard } from "../components/bisou/InstallCard";
-import { NotificationCard } from "../components/bisou/NotificationCard";
 import { CalendarHeart } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useState } from "react";
 import { toast } from "sonner";
@@ -9,8 +7,10 @@ import { upcomingEvents } from "../../shared/events";
 import { UpcomingCard } from "../components/bisou/EventRow";
 import { Button } from "../components/ui/button";
 import { TabMemory } from "../lib/tabMemory";
-import { useCreateRequest } from "../lib/useTabNavigation";
+import { useCreateRequest, useTabNavigation } from "../lib/useTabNavigation";
 import { useNow } from "../lib/useNow";
+import { useNotes } from "../lib/useNotes";
+import { useOnline } from "../lib/useOnline";
 import type { Couple, CoupleEvent } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
@@ -19,8 +19,12 @@ import { DailyQuestion } from "../components/bisou/DailyQuestion";
 import { DaysCounter } from "../components/bisou/DaysCounter";
 import { TodayPosts } from "../components/bisou/TodayPosts";
 import { EmptyState } from "../components/bisou/EmptyState";
+import { NotesInbox } from "../components/bisou/NotesInbox";
+import { NotificationCard } from "../components/bisou/NotificationCard";
+import { InstallCard } from "../components/bisou/InstallCard";
 import { useI18n } from "../i18n";
 import { startDateError } from "../lib/startDate";
+import { waitingCount } from "../lib/notes";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The calendar (react-day-picker and its locales) loads on first use, outside the main bundle.
@@ -37,6 +41,7 @@ interface HomeProps extends SessionProps {
 
 export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
+  const online = useOnline();
   const [editingEvent, setEditingEvent] = useState<CoupleEvent | null>();
   const openAdd = useCallback(() => setEditingEvent(null), []);
   useCreateRequest("event", openAdd);
@@ -49,6 +54,8 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
   };
   const now = useNow();
   const memory = useContext(TabMemory);
+  const { lists, failed: notesFailed } = useNotes(session.onSignedOut);
+  const navigation = useTabNavigation("home");
 
   // Creator first on both phones, so each partner keeps the same tint everywhere.
   const people = toPeople(couple.members.slice(0, 2), session.user, t) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
@@ -82,6 +89,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
         />
       )}
 
+      {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; memory.scroll.set("journal", 0); } navigation.onSelect("journal"); }} />}
       <TodayPosts couple={couple} user={session.user} today={toDayString(now)} onSignedOut={session.onSignedOut} />
 
       <InstallCard />
