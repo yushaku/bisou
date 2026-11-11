@@ -22,6 +22,7 @@
 
 ### Changed
 
+- Spins can land on an unpriced open wish; it remains claimable, and its result says "Chưa ghi giá" / "No price set".
 - The stage sheet no longer lists discussion questions; the "Điều cần bàn trước khi {stage}" list now sits on the Garden screen, shows whose turn each question is (your turn first, three at a time) and opens a tapped question in a sheet to answer there instead of jumping to a plant.
 - Put today's card first on Home with named turns and a one-time flip that stays face up; stage choices now open immediately together, with optional discussion chips, shared banners, a one-time celebration and replacement answers after deletion.
 

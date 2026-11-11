@@ -23,8 +23,8 @@ Jar
 
 Spin
 
-- R7. The spinner enters a budget in VND and Bisou picks one wish at random among those priced at or below it; the same wish may come up again later.
-- R8. A wish without a price, a received wish or a claimed wish never comes up.
+- R7. The spinner enters a budget in VND and Bisou picks one wish at random among those without a price or priced at or below it; the same wish may come up again later.
+- R8. A received wish or a claimed wish never comes up.
 - R9. In the pick, a dream counts three times and a really want twice as much as a nice to have.
 - R10. When the owner's jar holds no open wish (received or deleted ones do not count, claimed ones do), the spinner is told so before spinning, for example "Bình chưa bỏ điều ước nào vào hũ" or "Binh hasn't put any wishes in the jar yet", and no spin is offered. When the jar has wishes but none fits the budget, the spinner is told only that nothing fits. Neither shows a count, a price or a claim.
 - R11. A partner may spin at most 20 times in any rolling 24 hours; further spins wait until the oldest is 24 hours old.
@@ -70,7 +70,7 @@ An and Binh, together since 12 February 2023. Binh's jar on 6 November 2026: sce
 
 1. 10 November: An spins with 500,000 VND; it lands on the scarf. An sees its title, photo and price, and claims it.
 2. 12 November: Binh changes the scarf to 480,000 VND and sees no sign of the claim; An's claim shows the new price.
-3. 12 November: An spins with 1,000,000 VND; scarf and Da Lat cannot come up. It lands on the pottery class; An does not claim it.
+3. 12 November: An spins with 1,000,000 VND; the claimed scarf cannot come up. It lands on the pottery class; An does not claim it.
 4. 20 November: Binh receives the scarf, marks it received with 1 photo and the note "From An, so soft", and sees the celebration.
 5. Both see under 20 November Binh's entry "Received: Linen scarf. From An, so soft" with the photo; An's claim shows as received.
 
@@ -82,8 +82,8 @@ Keep wishes (owner); spin, claim, release (partner); mark received (owner). Rule
 
 - AC1 (R1, R2). Given a couple, then An cannot see or change Binh's jar, an outsider learns nothing, and an unpaired person has no jar.
 - AC2 (R3, R4, R5). Given Binh saves only a title, then it saves as really want; an empty title, 101 characters or 0 VND are refused.
-- AC3 (R7, R8, R9). Given the example jar, when An spins with 500,000 VND, then only candle, scarf or mug come up, scarf and mug each twice as often as the candle.
-- AC4 (R10). Given An spins with 200,000 VND, then An is told nothing fits, with no hint of any price.
+- AC3 (R7-R9). Given the example jar, when An spins with 500,000 VND, then candle, scarf, mug or Da Lat may come up; scarf and mug each count twice, Da Lat three times, and candle once.
+- AC4 (R10). Given Binh's only open, unclaimed wish costs 450,000 VND, when An spins with 200,000 VND, then An is told nothing fits, with no hint of any price.
 - AC5 (R11). Given An spun 20 times from 08:00, when An spins at 21:00, then it is refused; from 08:00 next day it works.
 - AC6 (R12). Given a spin lands on the scarf, then An sees title, photo, price and link, not the priority or another wish.
 - AC7 (R13, R8). Given An claimed the scarf, then it never comes up again and a second claim is refused.
