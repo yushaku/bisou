@@ -1,8 +1,9 @@
-import { env } from "cloudflare:test";
+import { createExecutionContext, createMessageBatch, env, getQueueResult } from "cloudflare:test";
 import { expect, vi } from "vitest";
 import { fromBase64Url, toBase64Url } from "../src/worker/lib/crypto";
 import { call, type TestUser } from "./helpers";
 import worker from "../src/worker/index";
+import type { PushJob } from "../src/worker/lib/pushQueue";
 
 export async function runPushCron(time: string) {
   const pending: Promise<unknown>[] = [];
@@ -27,8 +28,37 @@ export async function subscribe(who: TestUser, d: Awaited<ReturnType<typeof devi
   return res;
 }
 
+/** Runs jobs through the worker's queue handler, as Queues would: batches of five, first delivery unless `attempts` is given. */
+export async function runPushQueue(jobs: PushJob[], attempts = 1) {
+  const results = [];
+  for (let i = 0; i < jobs.length; i += 5) {
+    const batch = createMessageBatch<PushJob>("bisou", jobs.slice(i, i + 5).map((body, n) => ({ id: `msg-${i + n}`, timestamp: Date.now(), attempts, body })));
+    // The plugin's QueueResult drops the per message delay, so record the retry calls here.
+    const retries: { msgId: string; delaySeconds?: number }[] = [];
+    for (const message of batch.messages) {
+      const retry = message.retry.bind(message);
+      message.retry = (options) => { retries.push({ msgId: message.id, delaySeconds: options?.delaySeconds }); retry(options); };
+    }
+    const ctx = createExecutionContext();
+    await worker.queue(batch, env, ctx);
+    results.push({ ...await getQueueResult(batch, ctx), retries });
+  }
+  return results;
+}
+
+/**
+ * Stands in for the push service and for Queues: records every job given to PUSH_QUEUE.sendBatch in
+ * `queued`, then feeds it through the consumer at once so `sent` holds what reached the push service.
+ */
 export function mockPush(status = 201) {
   const sent: { endpoint: string; headers: Headers; body: Uint8Array<ArrayBuffer> }[] = [];
+  const queued: PushJob[] = [];
+  const queue = vi.spyOn(env.PUSH_QUEUE, "sendBatch").mockImplementation(async (messages) => {
+    const jobs = [...messages].map((message) => message.body);
+    queued.push(...jobs);
+    await runPushQueue(jobs);
+    return {} as QueueSendBatchResponse;
+  });
   const spy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     expect(init?.redirect).toBe("manual");
     // workerd rejects redirect "error" here, as the real fetch does at the edge.
@@ -36,7 +66,7 @@ export function mockPush(status = 201) {
     sent.push({ endpoint: String(input), headers: new Headers(init?.headers), body: new Uint8Array(await new Response(init?.body).arrayBuffer()) });
     return new Response(null, { status });
   });
-  return { sent, spy };
+  return { sent, queued, spy, queue };
 }
 
 // Receiver side uses HMAC extract/expand independently of the sender's HKDF implementation.

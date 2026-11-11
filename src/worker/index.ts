@@ -3,12 +3,18 @@ import { app } from "./app";
 import { runCleanup, sweepPhotos } from "./lib/cleanup";
 import { vnHour } from "../shared/days";
 import { notifyNotes, remindEvents } from "./lib/notify";
+import { consumePushBatch, type PushJob } from "./lib/pushQueue";
 
 // Static assets (the SPA) are served by Workers assets; only /api/* reaches this Worker
 // (see assets.run_worker_first in wrangler.jsonc).
 export default {
   fetch(request, env, ctx) {
     return app.fetch(request, env, ctx);
+  },
+
+  // Queue `bisou`: sends one Web Push per message (ADR 0010).
+  async queue(batch, env, _ctx) {
+    await consumePushBatch(batch, env);
   },
 
   // One hourly trigger dispatches jobs using Vietnam time.
@@ -39,4 +45,4 @@ export default {
       }),
     );
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<Env, PushJob>;

@@ -1,8 +1,11 @@
 import type { Locale, User } from "../shared/types";
+import type { PushJob } from "./lib/pushQueue";
 
 export interface Env {
   DB: D1Database;
   PHOTOS: R2Bucket;
+  /** Queue `bisou`: one job per device, produced and consumed by this Worker (ADR 0010). */
+  PUSH_QUEUE: Queue<PushJob>;
   /** "development" locally (from .dev.vars), "production" otherwise. */
   ENVIRONMENT?: string;
   /** Optional fixed login code for local development only. */

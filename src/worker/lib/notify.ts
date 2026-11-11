@@ -4,7 +4,8 @@ import { addDays, vnDay, vnHour } from "../../shared/days";
 import { eventTitle, upcomingEvents } from "../../shared/events";
 import { isLocale, type Couple, type Locale } from "../../shared/types";
 import type { Env } from "../env";
-import { MAX_PUSH_PLAINTEXT, sendPush, type PushMessage, type PushRow } from "./webpush";
+import { MAX_PUSH_PLAINTEXT, type PushMessage } from "./webpush";
+import { enqueuePush, pushJob, type PushJob } from "./pushQueue";
 import { loadCouple } from "./couples";
 
 function translate(locale: string, key: MessageKey, vars: Record<string, string | number> = {}): string {
@@ -12,34 +13,32 @@ function translate(locale: string, key: MessageKey, vars: Record<string, string 
   return text.replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match));
 }
 
-// Every push lives 24 hours; there are no quiet hours.
-const PUSH_TTL = 86400;
+// Every push lives 24 hours (see pushJob); there are no quiet hours. Sending happens in the queue consumer (ADR 0010).
 
 export async function notifyJournal(env: Env, coupleId: string, authorId: string): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) { console.log("[bisou] push unavailable"); return; }
   try {
-    const { results } = await env.DB.prepare(`SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale,
+    const { results } = await env.DB.prepare(`SELECT s.id, u.locale,
       (SELECT display_name FROM users WHERE id = ?) AS name
       FROM push_subscriptions s JOIN users u ON u.id = s.user_id
       WHERE s.user_id = (SELECT user_id FROM couple_members WHERE couple_id = ? AND user_id <> ?) AND s.journal = 1`)
-      .bind(authorId, coupleId, authorId).all<PushRow & { locale: string; name: string | null }>();
-    for (const row of results) {
-      try { await sendPush(env, row, { title: translate(row.locale, "push.journal.one", { name: row.name ?? "" }), url: "/journal", tag: "journal" }, { ttl: PUSH_TTL, topic: "journal" }); } catch { console.error("[bisou] push failed", "journal", 0); }
-    }
+      .bind(authorId, coupleId, authorId).all<{ id: string; locale: string; name: string | null }>();
+    const now = Date.now();
+    await enqueuePush(env, results.map((row) => pushJob(row.id, "journal",
+      { title: translate(row.locale, "push.journal.one", { name: row.name ?? "" }), url: "/journal", tag: "journal" }, now)));
   } catch { console.error("[bisou] journal push failed"); }
 }
 
 export async function notifyGarden(env: Env, coupleId: string, authorId: string): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) { console.log("[bisou] push unavailable"); return; }
   try {
-    const { results } = await env.DB.prepare(`SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale
+    const { results } = await env.DB.prepare(`SELECT s.id, u.locale
       FROM push_subscriptions s JOIN users u ON u.id = s.user_id
       WHERE s.user_id = (SELECT user_id FROM couple_members WHERE couple_id = ? AND user_id <> ?) AND s.journal = 1`)
-      .bind(coupleId, authorId).all<PushRow & { locale: string }>();
-    for (const row of results) {
-      try { await sendPush(env, row, { title: translate(row.locale, "push.garden.answered"), url: "/", tag: "garden" }, { ttl: PUSH_TTL, topic: "garden" }); }
-      catch { console.error("[bisou] push failed", "garden", 0); }
-    }
+      .bind(coupleId, authorId).all<{ id: string; locale: string }>();
+    const now = Date.now();
+    await enqueuePush(env, results.map((row) => pushJob(row.id, "garden",
+      { title: translate(row.locale, "push.garden.answered"), url: "/", tag: "garden" }, now)));
   } catch { console.error("[bisou] garden push failed"); }
 }
 
@@ -67,8 +66,7 @@ export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 
   const today = vnDay(scheduledTime);
   const target = addDays(today, offset);
   const slot = `${today}T${String(vnHour(scheduledTime)).padStart(2, "0")}`;
-  let sent = 0;
-  // shortcut: sends share one invocation, move to Queues before about 40 devices per run.
+  const jobs: PushJob[] = [];
   for (const [userId, rawLocale] of recipients) {
     try {
       let couple = couples.get(userId);
@@ -87,29 +85,27 @@ export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 
       const message = reminderMessage(titles, locale, offset);
       const devices = await env.DB.prepare(`UPDATE push_subscriptions SET reminder_slot = ?
         WHERE user_id = ? AND reminders = 1 AND (reminder_slot IS NULL OR reminder_slot <> ?)
-        RETURNING id, endpoint, p256dh, auth`).bind(slot, userId, slot).all<PushRow>();
-      for (const row of devices.results) {
-        try { if (await sendPush(env, row, message, { ttl: PUSH_TTL, topic: "events" }) === "sent") sent++; } catch { console.error("[bisou] push failed", "events", 0); }
-      }
+        RETURNING id`).bind(slot, userId, slot).all<{ id: string }>();
+      for (const row of devices.results) jobs.push(pushJob(row.id, "events", message));
     } catch { console.error("[bisou] push failed", "events", 0); }
   }
-  console.log("[bisou] event pushes", sent);
+  await enqueuePush(env, jobs);
+  console.log("[bisou] event pushes queued", jobs.length);
 }
 
 async function pushNotesToRecipient(env: Env, writer: string, recipient: string, count: number, reminder: boolean): Promise<void> {
-  const { results } = await env.DB.prepare(`SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale,
+  const { results } = await env.DB.prepare(`SELECT s.id, u.locale,
     (SELECT display_name FROM users WHERE id = ?) AS name
     FROM push_subscriptions s JOIN users u ON u.id = s.user_id WHERE s.user_id = ? AND s.journal = 1`)
-    .bind(writer, recipient).all<PushRow & { locale: string; name: string | null }>();
-  let sent = 0;
-  for (const row of results) {
+    .bind(writer, recipient).all<{ id: string; locale: string; name: string | null }>();
+  const now = Date.now();
+  const jobs = results.map((row) => {
     const name = row.name?.trim() || translate(row.locale, "common.person");
     const key = reminder ? count === 1 ? "push.notes.reminder" : "push.notes.reminders" : count === 1 ? "push.notes.one" : "push.notes.many";
-    try {
-      if (await sendPush(env, row, { title: translate(row.locale, key, { name, n: count }), url: "/journal?section=notes", tag: "notes" }, { ttl: PUSH_TTL, topic: "notes" }) === "sent") sent++;
-    } catch { console.error("[bisou] push failed", "notes", 0); }
-  }
-  console.log("[bisou] note pushes", sent);
+    return pushJob(row.id, "notes", { title: translate(row.locale, key, { name, n: count }), url: "/journal?section=notes", tag: "notes" }, now);
+  });
+  await enqueuePush(env, jobs);
+  console.log("[bisou] note pushes queued", jobs.length);
 }
 export async function notifyNote(env: Env, writer: string, recipient: string): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) return;

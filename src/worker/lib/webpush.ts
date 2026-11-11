@@ -64,36 +64,51 @@ export interface PushRow {
 }
 
 export interface PushMessage { title: string; url: string; tag: string }
+export type PushTopic = "journal" | "events" | "garden" | "notes";
+
+export interface PushResult { outcome: "sent" | "gone" | "retry" | "failed"; retryAfter?: number }
+
+// Retry-After is delay seconds or an HTTP date (RFC 9110 10.2.3).
+function retryAfterSeconds(value: string | null, now: number): number | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) return Number(trimmed);
+  const date = Date.parse(trimmed);
+  return Number.isNaN(date) ? undefined : Math.max(0, Math.ceil((date - now) / 1000));
+}
 
 export async function sendPush(env: Env, row: PushRow, message: PushMessage, options: {
-  ttl: number; topic: "journal" | "events" | "garden" | "notes";
-}): Promise<"sent" | "gone" | "failed"> {
-  if (!env.VAPID_PRIVATE_KEY) return "failed";
-  let status = 0;
+  ttl: number; topic: PushTopic;
+}): Promise<PushResult> {
+  if (!env.VAPID_PRIVATE_KEY) return { outcome: "failed" };
+  let status = 0, retryAfter: number | undefined, thrown = false;
   try {
     if (!isPushEndpoint(row.endpoint)) throw new Error("invalid push endpoint");
     const body = await encrypt(encoder.encode(JSON.stringify(message)), row.p256dh, row.auth);
+    const now = Date.now();
     const response = await fetch(row.endpoint, {
       method: "POST", redirect: "manual", body,
       headers: {
         "Content-Type": "application/octet-stream", "Content-Encoding": "aes128gcm",
         TTL: String(options.ttl), Urgency: "normal", Topic: options.topic,
-        Authorization: await vapidHeader(row.endpoint, JSON.parse(env.VAPID_PRIVATE_KEY), Date.now()),
+        Authorization: await vapidHeader(row.endpoint, JSON.parse(env.VAPID_PRIVATE_KEY), now),
       },
     });
     status = response.status;
+    retryAfter = retryAfterSeconds(response.headers.get("Retry-After"), now);
     await response.body?.cancel();
-  } catch { /* Fetch errors can contain the endpoint. A 3xx stays unfollowed and counts as a failure. */ }
+  } catch { thrown = true; /* Fetch errors can contain the endpoint, so none is logged. A 3xx stays unfollowed and counts as a failure. */ }
   if (status >= 200 && status < 300) {
     await env.DB.prepare("UPDATE push_subscriptions SET last_success_at = ?, failures = 0 WHERE id = ?")
       .bind(Date.now(), row.id).run();
-    return "sent";
+    return { outcome: "sent" };
   }
   if ([401, 403, 404, 410].includes(status)) {
     await env.DB.prepare("DELETE FROM push_subscriptions WHERE id = ?").bind(row.id).run();
-    return "gone";
+    return { outcome: "gone" };
   }
   await env.DB.prepare("UPDATE push_subscriptions SET failures = failures + 1 WHERE id = ?").bind(row.id).run();
   console.error("[bisou] push failed", options.topic, status);
-  return "failed";
+  const retry = thrown || status === 429 || status >= 500;
+  return retry ? { outcome: "retry", ...(retryAfter === undefined ? {} : { retryAfter }) } : { outcome: "failed" };
 }
