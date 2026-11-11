@@ -29,7 +29,7 @@ it("R32 R33 AC9 AC20: each daily answer notifies only the other partner's journa
   expect(toB).toEqual({ title: "Your partner answered today's card", url: "/", tag: "garden" });
   expect(JSON.stringify(toB)).not.toMatch(/ANSWER SECRET|money|An|Minh/);
   expect(send.sent[0]!.headers.get("topic")).toBe("garden");
-  expect(send.sent[0]!.headers.get("ttl")).toBe("25200");
+  expect(send.sent[0]!.headers.get("ttl")).toBe("86400");
   await save(b, id);
   await waitForBackground();
   expect(send.sent).toHaveLength(3);
@@ -41,7 +41,7 @@ it("R32 R33 AC9 AC20: each daily answer notifies only the other partner's journa
     expect(message).toEqual({ title: "Người ấy vừa trả lời thẻ hôm nay", url: "/", tag: "garden" });
     expect(JSON.stringify(message)).not.toMatch(/ANSWER SECRET|money|An|Minh/);
     expect(sent.headers.get("topic")).toBe("garden");
-    expect(sent.headers.get("ttl")).toBe("25200");
+    expect(sent.headers.get("ttl")).toBe("86400");
   }
 });
 
@@ -82,20 +82,7 @@ it("R22 R35 AC11 AC20: swap, extra play and an old daily card answered on a late
   expect(send.sent).toHaveLength(1);
 });
 
-it.each(["2026-11-09T22:00:00+07:00", "2026-11-10T06:59:59+07:00"])("R33 R34 AC13: quiet-hour answer at %s is dropped and never held for the morning", async (time) => {
-  const { a, b } = await paired();
-  await subscribe(a, await device("a")); await subscribe(b, await device("b"));
-  vi.mocked(Date.now).mockReturnValue(Date.parse(time));
-  const id = await today(a);
-  const send = mockPush();
-  await save(a, id); await save(b, id);
-  await waitForBackground();
-  expect(send.sent).toHaveLength(0);
-  await runPushCron("2026-11-10T07:00:00+07:00");
-  expect(send.sent).toHaveLength(0);
-});
-
-it.each(["2026-11-09T21:59:59+07:00", "2026-11-10T07:00:00+07:00"])("R32 R33: daily answers notify at the daytime boundary %s", async (time) => {
+it.each(["2026-11-09T21:59:59+07:00", "2026-11-09T22:00:00+07:00", "2026-11-10T06:59:59+07:00", "2026-11-10T07:00:00+07:00"])("R32 R33 AC13: daily answers notify at once at any hour, such as %s", async (time) => {
   const { a, b } = await paired();
   await subscribe(a, await device("a"));
   vi.mocked(Date.now).mockReturnValue(Date.parse(time));

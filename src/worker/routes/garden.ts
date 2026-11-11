@@ -165,7 +165,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
       throw error;
     }
     if (!changes[0]!.meta.changes) return c.json({ error: "not_found" }, 404);
-    if (isToday) c.executionCtx.waitUntil(notifyGarden(c.env, couple, user, now));
+    if (isToday) c.executionCtx.waitUntil(notifyGarden(c.env, couple, user));
   }
   const [state] = await cardStates(db, couple, user, [card.id]);
   return c.json({ card: state }, c.req.method === "PUT" ? 200 : 201);

@@ -70,7 +70,7 @@ journal.post("/", limitEntryBody, async (c) => {
   }
   const row = await findEntry(db, id, userId);
   const [entry] = await entriesWithPhotos(db, [row!]);
-  c.executionCtx.waitUntil(notifyJournal(c.env, coupleId, userId, now));
+  c.executionCtx.waitUntil(notifyJournal(c.env, coupleId, userId));
   return c.json({ entry }, 201);
 });
 

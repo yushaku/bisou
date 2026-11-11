@@ -204,6 +204,6 @@ wishes.post("/:id/received", limitBody, async (c) => {
   const wish = await findWish(db, id, owner, couple);
   if (!row || !wish) return c.json({ error: "not_found" }, 404);
   const [entry] = await entriesWithPhotos(db, [row]);
-  c.executionCtx.waitUntil(notifyJournal(c.env, couple, owner, now));
+  c.executionCtx.waitUntil(notifyJournal(c.env, couple, owner));
   return c.json({ wish: toWish(wish), entry }, 201);
 });

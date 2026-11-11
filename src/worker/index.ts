@@ -2,7 +2,7 @@ import type { Env } from "./env";
 import { app } from "./app";
 import { runCleanup, sweepPhotos } from "./lib/cleanup";
 import { vnHour } from "../shared/days";
-import { notifyNotes, releaseNightJournal, remindEvents } from "./lib/notify";
+import { notifyNotes, remindEvents } from "./lib/notify";
 
 // Static assets (the SPA) are served by Workers assets; only /api/* reaches this Worker
 // (see assets.run_worker_first in wrangler.jsonc).
@@ -21,7 +21,6 @@ export default {
         return;
       case 7:
         ctx.waitUntil(notifyNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] note push failed")));
-        ctx.waitUntil(releaseNightJournal(env, controller.scheduledTime).catch(() => console.error("[bisou] night journal push failed")));
         return;
       case 3:
         break;
