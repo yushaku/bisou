@@ -5,6 +5,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ErrorBoundary } from "./components/bisou/ErrorBoundary";
 import { App } from "./App";
+import { OfflineNotice } from "./components/bisou/OfflineNotice";
 import { Toaster } from "./components/ui/ding-toaster";
 import { I18nProvider } from "./i18n";
 import { captureJoinLink } from "./lib/joinLink";
@@ -35,6 +36,7 @@ createRoot(document.getElementById("root")!).render(
         <ErrorBoundary>
           <App />
           <Toaster />
+          <OfflineNotice />
         </ErrorBoundary>
       </I18nProvider>
     </ThemeProvider>

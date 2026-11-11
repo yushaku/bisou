@@ -168,7 +168,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   return (
     <div className="flex min-h-dvh flex-col">
       <SubPageHeader title={t("settings.title")} />
-      <p id="settings-offline" role="status" className="sticky top-[calc(env(safe-area-inset-top)+--spacing(14))] z-30 bg-warning px-4 py-3 text-center text-sm text-warning-foreground empty:py-0">{!online ? t("offline.bar") : ""}</p>
+      <p id="settings-offline" className="sr-only">{!online ? t("offline.save") : ""}</p>
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
           <button type="button" aria-label={t("avatar.change")} aria-busy={avatarBusy} disabled={avatarBusy}

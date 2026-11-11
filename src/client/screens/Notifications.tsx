@@ -79,7 +79,7 @@ export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
 
   return <div className="flex min-h-dvh flex-col">
     <SubPageHeader title={t("push.title")} />
-    <p id="push-offline" role="status" className="sticky top-[calc(env(safe-area-inset-top)+--spacing(14))] z-30 bg-warning px-4 py-3 text-center text-sm text-warning-foreground empty:py-0">{!online ? t("offline.bar") : ""}</p>
+    <p id="push-offline" className="sr-only">{!online ? t("offline.save") : ""}</p>
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
       <p id="push-state" role="status" className="text-sm text-muted-foreground">{t(state)}</p>
       <div className="divide-y divide-border overflow-hidden rounded-xl edge bg-card text-card-foreground" aria-busy={busy}>

@@ -119,23 +119,6 @@ it("AC11 R11: a new wish is not sent offline and its save button is disabled wit
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
 });
 
-it.each([false, true])("AC9 R9: the app shell shows one offline bar only while offline: online=%s", (online) => {
-  vi.stubGlobal("navigator", { onLine: online });
-  const bar = elements(AppShell({ title: "Home", children: null })).filter((node) => node.props.children === "offline.bar");
-  expect(bar).toHaveLength(online ? 0 : 1);
-});
-
-
-it("keeps an empty shell status region mounted inside the sticky header online", () => {
-  vi.stubGlobal("navigator", { onLine: true });
-  const tree = AppShell({ children: null });
-  const header = elements(tree).find((node) => node.type === "header")!;
-  const status = elements(header).filter((node) => node.props.role === "status");
-  expect(status).toHaveLength(1);
-  expect(status[0]!.props.children).toBe("");
-  expect(status[0]!.props.className).not.toContain("absolute");
-});
-
 it("describes disabled entry deletion with plain offline text", () => {
   vi.stubGlobal("navigator", { onLine: false });
   state.push(entry, false, null);

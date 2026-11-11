@@ -39,7 +39,7 @@ async function setup({ permission = "default", online = true, key = "public-key"
 }
 
 it.each([
-  [{ permission: "denied" }, "push.blocked"], [{ online: false }, "offline.bar"],
+  [{ permission: "denied" }, "push.blocked"], [{ online: false }, "offline.save"],
   [{ key: "" }, "push.unavailable"], [{ registered: false }, "push.unsupported"], [{ userAgent: "iPhone" }, "push.needsInstall"],
 ])("AC20, R20, R22: explains %s and disables the switches", async (options, text) => {
   const { registration } = await setup(options);
