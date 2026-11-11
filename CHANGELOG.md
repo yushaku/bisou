@@ -4,6 +4,8 @@
 
 ### Added
 
+- Pull down from the top of Home, Journal, Wishes or Garden to refresh that screen’s data.
+
 - Explore five relationship statuses and 35 new Vietnamese/English questions alongside the original 60 cards.
 - Start every new Garden at Làm quen automatically; existing couples without a saved starting stage also see Làm quen without a data migration.
 - Answer decision questions with text, a neutral choice or a deferred/not-applicable choice; both responses reveal only after both submit, with editing and deletion controlled by each author.
