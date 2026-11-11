@@ -10,22 +10,24 @@ import { useI18n } from "@/i18n";
 import { formatDay } from "@/lib/format";
 import { useOnline } from "@/lib/useOnline";
 
-interface EntryActionsProps {
+interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoIds">> {
   /* The author's own entry whose actions are open, or null. */
-  entry: JournalEntry | null;
+  entry: T | null;
   detail?: ReactNode;
+  title?: string;
+  remove?: typeof api.deleteEntry;
   own?: boolean;
   onClose: () => void;
-  onEdit: (entry: JournalEntry) => void;
+  onEdit: (entry: T) => void;
   onDeleted: (id: string) => void;
   onSignedOut: () => void;
 }
 
 /*
- * Edit or delete one's own entry (R10, R11). Delete asks first, naming the day and photo
+ * Edit or delete one's own entry (R10, R11) or a note entry (R25). Delete asks first, naming the day and photo
  * count; a failure keeps the entry and the dialog for another try. There is no undo.
  */
-export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, own = true }: EntryActionsProps) {
+export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photoIds">>({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, title, own = true, remove: deleteItem = api.deleteEntry }: EntryActionsProps<T>) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const offlineId = useId();
@@ -33,15 +35,15 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut, d
   const last = useRef(entry);
   if (entry) last.current = entry;
   const shown = entry ?? last.current;
-  const [target, setTarget] = useState<JournalEntry | null>(null);
+  const [target, setTarget] = useState<T | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function remove(e: JournalEntry) {
+  async function remove(e: T) {
     if (!online || deleting) return;
     setDeleting(true);
     setError(null);
-    const res = await api.deleteEntry(e.id);
+    const res = await deleteItem(e.id);
     setDeleting(false);
     // Already gone (deleted on the other phone): the result the author wanted.
     if (res.ok || res.error?.error === "not_found") {
@@ -62,7 +64,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut, d
         <DrawerContent className="max-h-[80vh]" aria-describedby={undefined}>
           <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col gap-2 px-5 pb-5">
             <DrawerHeader className="px-0 text-left">
-              <DrawerTitle className="font-heading text-xl">{shown ? formatDay(shown.date, locale) : ""}</DrawerTitle>
+              <DrawerTitle className="font-heading text-xl">{title ?? (shown ? formatDay(shown.date, locale) : "")}</DrawerTitle>
             </DrawerHeader>
             <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
             {detail}
@@ -98,7 +100,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut, d
             </>}
             </div>
             <Button variant="ghost" size="lg" onClick={onClose}>
-              {t("entry.cancel")}
+              {t(own ? "entry.cancel" : "common.close")}
             </Button>
           </div>
         </DrawerContent>
@@ -121,7 +123,7 @@ export function EntryActions({ entry, onClose, onEdit, onDeleted, onSignedOut, d
               {t("entry.deleteYes")}
             </Button>
             <Button autoFocus disabled={deleting} onClick={() => setTarget(null)}>
-              {t("entry.cancel")}
+              {t(own ? "entry.cancel" : "common.close")}
             </Button>
           </DialogFooter>
         </DialogContent>

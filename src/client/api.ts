@@ -1,5 +1,5 @@
 import type {
-  ApiError,
+  ApiError, NoteInput, NoteLists, WrittenNote, ReceivedNote,
   PushState,
   PushDevice,
   PushSubscriptionInput,
@@ -48,6 +48,12 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 
 export const api = {
   gardenLevels: (body: LevelAction) => call<{ levels: GardenLevels }>("POST", "/api/garden/levels", body),
+  notes: () => call<NoteLists>("GET", "/api/notes"),
+  createNote: (input: NoteInput) => call<{ note: WrittenNote }>("POST", "/api/notes", input),
+  updateNote: (id: string, input: NoteInput) => call<{ note: WrittenNote }>("PUT", `/api/notes/${encodeURIComponent(id)}`, input),
+  deleteNote: (id: string) => call<{ ok: true }>("DELETE", `/api/notes/${encodeURIComponent(id)}`),
+  sendNote: (id: string, input: NoteInput) => call<{ note: WrittenNote }>("POST", `/api/notes/${encodeURIComponent(id)}/send`, input),
+  openNote: (id: string) => call<{ note: ReceivedNote }>("POST", `/api/notes/${encodeURIComponent(id)}/open`),
   garden: () => call<GardenState>("GET", "/api/garden"),
   gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
   gardenStage: (levelId: RelationshipLevel) => call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}`),

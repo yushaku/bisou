@@ -10,9 +10,11 @@ import { EmptyState } from "../components/bisou/EmptyState";
 import { JournalDetailSheet } from "../components/bisou/JournalDetailSheet";
 import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard } from "../components/bisou/EntryCard";
+import { NotesSection } from "../components/bisou/NotesSection";
 import { PhotoViewer } from "../components/bisou/PhotoViewer";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../lib/journalFeed";
@@ -35,6 +37,12 @@ export function Journal({ couple, ...session }: JournalProps) {
   const { user, onSignedOut } = session;
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
+  const [section, setSection] = useState<"feed" | "notes">(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("section") === "notes" ? "notes" : memory?.journalSection ?? "feed");
+  useEffect(() => {
+    if (memory) memory.journalSection = section;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("section") === "notes") { url.searchParams.delete("section"); history.replaceState(history.state, "", url); }
+  }, [memory, section]);
   // null until the first page arrives; never shown as an empty journal while loading or failed.
   const [feed, setFeed] = useState<JournalPage | null>(() => memory?.journal ?? null);
   useLayoutEffect(() => {
@@ -66,6 +74,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   const detail = feed?.entries.find((e) => e.id === detailId);
   useEffect(() => { if (!detail) setDetailId(null); }, [detail]);
   const write = (entry: JournalEntry | null = null, fromMenu = false) => {
+    setSection("feed");
     setFromMenu(fromMenu);
     setEditing(entry);
     setComposeLoaded(true);
@@ -166,6 +175,10 @@ export function Journal({ couple, ...session }: JournalProps) {
 
   return (
     <SignedInShell {...session} tab="journal">
+      <Tabs value={section} onValueChange={(value) => { const next = value === "notes" ? "notes" : "feed"; setSection(next); if (memory) memory.journalSection = next; }}>
+        <TabsList className="mb-4 w-full"><TabsTrigger value="feed">{t("journal.sectionFeed")}</TabsTrigger><TabsTrigger value="notes">{t("journal.sectionNotes")}</TabsTrigger></TabsList>
+        <TabsContent value="notes"><NotesSection couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
+        <TabsContent value="feed">
 
       {feed && online && stale && (
         <div role="status" className="mb-4 rounded-control bg-warning px-4 py-3 text-base text-warning-foreground">
@@ -299,6 +312,7 @@ export function Journal({ couple, ...session }: JournalProps) {
           />
         </Suspense>
       )}
+      </TabsContent></Tabs>
     </SignedInShell>
   );
 }

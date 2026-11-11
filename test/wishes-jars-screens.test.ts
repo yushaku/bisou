@@ -3,6 +3,7 @@ import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { Router } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
+import { Journal } from "../src/client/screens/Journal";
 import { Home } from "../src/client/screens/Home";
 import { Wishes } from "../src/client/screens/Wishes";
 import { I18nProvider } from "../src/client/i18n";
@@ -60,4 +61,11 @@ it("returns to my jar from a spin opened by a link", () => {
 it("R25: leaves both jars off Home", () => {
   const html = render(h(Home, { ...session, couple, onCouple: () => {}, celebrate: false, onCelebrated: () => {} }));
   expect(html).not.toContain("Hũ của");
+});
+
+it("notes AC4: Notes stays inside the Journal tabs", () => {
+  vi.stubGlobal("localStorage", { getItem: () => "vi" });
+  const memory = createTabMemory(); memory.journal = { entries: [], nextCursor: null }; memory.notes = { fromMe: [], toMe: [] }; memory.journalSection = "notes";
+  const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, couple }))) }));
+  expect(html).toContain('role="tablist"'); expect(html).toContain('>Nhật ký<'); expect(html).toContain('>Lời nhắn<'); expect(html).toContain("Chưa có lời nhắn nào");
 });

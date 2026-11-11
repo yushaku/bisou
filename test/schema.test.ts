@@ -235,3 +235,20 @@ describe("wish query plans", () => {
     expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });
+
+
+describe("notes query plans", () => {
+  it.each([
+    ["writer list", "SELECT * FROM notes WHERE writer_id = ? AND couple_id = ? AND closed_at IS NULL ORDER BY created_at DESC, id DESC", ["writer", "couple"]],
+    ["recipient list", `SELECT id, opened_at, sent_at, CASE WHEN opened_at IS NOT NULL THEN happened END AS happened, CASE WHEN opened_at IS NOT NULL THEN feel END AS feel, CASE WHEN opened_at IS NOT NULL THEN need END AS need, CASE WHEN opened_at IS NOT NULL THEN hope END AS hope FROM notes WHERE recipient_id = ? AND couple_id = ? AND sent_at IS NOT NULL AND closed_at IS NULL ORDER BY sent_at, id`, ["recipient", "couple"]],
+    ["writer ownership", "SELECT * FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL", ["note", "writer", "couple"]],
+    ["save before open", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL RETURNING *", ["h", "f", "n", "r", 1, "note", "writer", "couple"]],
+    ["send after cooling", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *", ["h", "f", "n", "r", 1, 1, "note", "writer", "couple", 1]],
+    ["withdraw", "DELETE FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL", ["note", "writer", "couple"]],
+    ["withdraw conflict", "SELECT opened_at FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL", ["note", "writer", "couple"]],
+    ["create", "INSERT INTO notes (id, couple_id, writer_id, recipient_id, happened, feel, need, hope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *", ["id", "couple", "writer", "recipient", "h", "f", "n", "r", 1, 1]],
+  ])("%s uses indexed lookups without table scans or temporary sorting", async (_name, sql, binds) => {
+    const plan = (await explain(sql as string, ...binds)).join("\n");
+    expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+  });
+});

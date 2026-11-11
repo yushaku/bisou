@@ -28,6 +28,7 @@ export async function resetDb() {
     env.DB.prepare("DELETE FROM garden_days"),
     env.DB.prepare("DELETE FROM push_subscriptions"),
     env.DB.prepare("DELETE FROM photos"),
+    env.DB.prepare("DELETE FROM notes"),
     env.DB.prepare("DELETE FROM wish_spins"),
     env.DB.prepare("DELETE FROM wish_claims"),
     env.DB.prepare("DELETE FROM wishes"),

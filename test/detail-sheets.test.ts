@@ -44,3 +44,9 @@ it.each(["open", "received"] as const)("shows received details only for received
   expect(result.some(n => n.props.children === "received.on")).toBe(status === "received");
   expect(result.some(n => n.props.children === "Thank you")).toBe(status === "received");
 });
+it("notes AC9 AC16: a read-only note detail has its state title and Close, without a journal date header", () => {
+  const result = nodes(EntryActions({ entry: { id: "note", date: "2026-11-13", photoIds: [] }, title: "notes.opened", own: false, onClose: vi.fn(), onEdit: vi.fn(), onDeleted: vi.fn(), onSignedOut: vi.fn() }));
+  expect(result.some(n => n.props.children === "notes.opened")).toBe(true);
+  expect(result.some(n => n.props.children === "common.close")).toBe(true);
+  expect(result.some(n => n.props.children === "entry.cancel")).toBe(false);
+});

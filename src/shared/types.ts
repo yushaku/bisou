@@ -21,6 +21,11 @@ export interface User {
 
 /** Error codes returned by the API as { error: ApiErrorCode }. */
 export type ApiErrorCode =
+  | "note_empty"
+  | "note_text_too_long"
+  | "note_cooling"
+  | "note_sent"
+  | "note_opened"
   | "invalid_answer"
   | "answer_too_long"
   | "already_answered"
@@ -212,3 +217,11 @@ export interface PushState {
 export interface PushSubscriptionInput extends PushDevice {
   keys: { p256dh: string; auth: string };
 }
+
+export type NotePick = "try" | "talk" | "differ";
+export interface NoteInput { happened: string; feel: string; need: string; hope: string }
+export interface WrittenNote extends NoteInput { id: string; state: "draft" | "sent" | "opened"; sendableAt: number }
+export type ReceivedNote = { id: string; state: "waiting" } | ({ id: string; state: "opened" } & NoteInput);
+export interface NoteLists { toMe: ReceivedNote[]; fromMe: WrittenNote[] }
+export interface CloseInput { pick: NotePick; line: string }
+export interface ClosedNoteInput extends NoteInput, CloseInput { date: string }

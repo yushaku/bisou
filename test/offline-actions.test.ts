@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../src/client/api";
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
 import { ClaimsList } from "../src/client/components/bisou/ClaimsList";
+import { NoteSheet } from "../src/client/components/bisou/NoteSheet";
 import { ComposeSheet } from "../src/client/components/bisou/ComposeSheet";
 import { AppShell } from "../src/client/components/bisou/AppShell";
 import { WishSheet } from "../src/client/components/bisou/WishSheet";
@@ -158,4 +159,18 @@ it("AC19: Home hides the invitation for an unpaired user", () => {
   vi.stubGlobal("navigator", { onLine: true });
   const nodes = elements(Home({ user, onUser: vi.fn(), onSignedOut: vi.fn(), couple: { id: "c", members: [user], events: [], startDate: null } as never, onCouple: vi.fn(), celebrate: false, onCelebrated: vi.fn() }));
   expect(nodes.some(n => n.type === NotificationCard)).toBe(false);
+});
+
+it("notes AC33 AC40: an offline draft cannot save or send", async () => {
+  vi.stubGlobal("navigator", { onLine: false });
+  const create = vi.spyOn(api, "createNote"), update = vi.spyOn(api, "updateNote"), send = vi.spyOn(api, "sendNote");
+  const sheet = NoteSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", onRefresh: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const form = sheet.props.children[0].props.children;
+  state.push({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" });
+  const nodes = elements(form.type(form.props));
+  nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await Promise.resolve();
+  expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled();
+  expect(nodes.find(n => n.props.children === "notes.save")!.props.disabled).toBe(true);
+  expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
 });

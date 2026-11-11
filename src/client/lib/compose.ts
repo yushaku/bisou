@@ -66,6 +66,11 @@ export function startable(items: { localId: string; state: PhotoState }[]): stri
 }
 
 const SAVE_ERRORS: Partial<Record<ApiErrorCode, MessageKey>> = {
+  note_empty: "notes.emptyHint",
+  note_text_too_long: "notes.tooLong",
+  note_cooling: "notes.errors.cooling",
+  note_sent: "notes.errors.sent",
+  note_opened: "notes.errors.opened",
   entry_empty: "compose.emptyHint",
   entry_text_too_long: "compose.tooLong",
   invalid_entry_date: "compose.dateError",
