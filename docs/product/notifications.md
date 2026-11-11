@@ -6,10 +6,10 @@
 - PO: nothing about spins, claims or a partner's jar (R9).
 - PO: the text says who and what, never journal text; tapping opens the journal or the events list (R8, R15).
 - PO: a Notifications page in Settings with one switch per kind and the device's state; a Home card inviting to turn them on, only in the installed app while undecided, closable for good on that device (R20 to R25).
-- PO: quiet hours 22:00 to 07:00 Vietnam time; journal notifications from the night are held to 07:00, combined (R16, R17); garden answer notifications follow the same quiet hours rule.
-- PO: garden notifications use the partner journal kind switch; no separate switch or push_subscriptions change (R3, R16-R18 cover it).
+- PO, November 2026: no quiet hours; notifications are sent at any time, and every push lives 24 hours (an offline device may show a reminder late).
+- PO: garden notifications use the partner journal kind switch; no separate switch or push_subscriptions change (R3 covers it).
 - PO: signing out stops that device (R26); personal data as R27 to R30.
-- PM defaults, PO may veto: unpaired people get none (R4); no reminder of one's own birthday (R12); same-day events share one reminder (R11); no late reminders, and a changed or deleted event is reminded as it then stands (R13, R14); a held entry deleted before 07:00 is left out and held messages go to the devices on at 07:00 (R18); a newer journal notification replaces an older one still showing (R19); the Home card turns both kinds on (R24); a browser without notifications shows "not available in this browser" (R20); signing back in leaves them off (R26); texts follow the recipient's app language (R31).
+- PM defaults, PO may veto: unpaired people get none (R4); no reminder of one's own birthday (R12); same-day events share one reminder (R11); no late reminders, and a changed or deleted event is reminded as it then stands (R13, R14); a newer journal notification replaces an older one still showing (R19); the Home card turns both kinds on (R24); a browser without notifications shows "not available in this browser" (R20); signing back in leaves them off (R26); texts follow the recipient's app language (R31).
 
 ## Purpose
 
@@ -37,6 +37,7 @@ Partner's journal
 - R7. The author's own devices never get a notification of the author's own entry.
 - R8. The message never contains entry text, photos, the entry's day or whether it came from a wish; tapping it opens the journal.
 - R8a. When a partner first answers today's card, each device of the other partner with this kind on gets "Người ấy vừa trả lời thẻ hôm nay" / "Your partner answered today's card"; it never names the question, a deck or an answer, and tapping it opens Home. Changing or deleting an answer, extra play and decision answers send nothing, and the author's own devices never get it.
+- R19. A new journal notification replaces an older one still showing on that device.
 
 Wish jar secrecy
 
@@ -51,13 +52,6 @@ Event reminders
 - R14. An event changed or deleted before its reminder is reminded as it then stands, or not at all.
 - R15. Tapping a reminder opens the full events list.
 
-Quiet hours
-
-- R16. From 22:00 to 07:00 Vietnam time no notification shows; event reminders already fall outside these hours, and kind note messages due in them are held to 07:00 (R34, R35).
-- R17. Journal notifications from those hours are held and sent at 07:00: one entry gives the R5 message, several give one message with the count, "Bình đã viết 3 bài nhật ký" / "Bình wrote 3 journal entries".
-- R18. A held entry deleted before 07:00 is left out, and nothing is sent if none is left; the message goes to the devices with this kind on at 07:00.
-- R19. A new journal notification replaces an older one still showing on that device.
-
 Settings and Home
 
 - R20. Settings has a Notifications page ("Thông báo") showing this device's state: on, off, blocked by the system, not available until Bisou is installed (iPhone in a browser tab), or not available in this browser.
@@ -70,7 +64,7 @@ Settings and Home
 
 Personal data
 
-- R27. For each device turned on, Bisou keeps the push address and keys the browser gives and which kinds are on, only to send these notifications; held journal notifications are kept only until 07:00.
+- R27. For each device turned on, Bisou keeps the push address and keys the browser gives and which kinds are on, only to send these notifications. A notification waiting to be sent (its text and which device it is for, never the push address or keys) is kept at most 24 hours.
 - R28. It keeps them until both kinds are off on that device, the person signs out there, the push service says the address is gone, or the account is deleted.
 - R29. They are never shared beyond the push service of the device's browser, which delivers the messages.
 - R30. A partner sees what is on for a device on its Notifications page and deletes it by turning both kinds off or signing out.
@@ -79,7 +73,7 @@ Personal data
 
 Kind notes
 
-- R34. When a partner sends a kind note ([notes](notes.md) R38), each device of the recipient with the partner's journal kind on gets "Sơn có một lời nhắn nhỏ" / "Sơn left you a kind note" at once, or at 07:00 when sent in quiet hours, several due together giving one message with the count, "Sơn có 2 lời nhắn nhỏ" / "Sơn left you 2 kind notes". When a reminder falls due at the same 07:00 as a new arrival from the same writer, they join that arrival message as a count, and the note counts as reminded. Notes use the partner's journal switch; there is no third kind (R3).
+- R34. When a partner sends a kind note ([notes](notes.md) R38), each device of the recipient with the partner's journal kind on gets "Sơn có một lời nhắn nhỏ" / "Sơn left you a kind note" at any hour, each arrival sending its own message. Reminders due together at 07:00 give one message with the count, "2 lời nhắn nhỏ của Sơn vẫn ở đây" / "2 kind notes from Sơn are still here"; a note held unsent at deploy time goes out at the next 07:00. When a reminder falls due at the same 07:00 as a held arrival from the same writer, they join that arrival message as a count, and the note counts as reminded. Notes use the partner's journal switch; there is no third kind (R3).
 - R35. A note still unopened 3 days after it was sent gets one reminder, "Lời nhắn nhỏ của Sơn vẫn ở đây" / "Sơn's kind note is still here", at 07:00 on the third Vietnam day after the send day, never a second; no note message contains note text, tapping one opens the Lời nhắn nhỏ section, the writer gets nothing, a note opened or withdrawn before its message goes out is left out, a closed note becoming a journal entry sends nothing, and the writer changing a sent note before it is opened sends nothing and neither moves the reminder nor repeats the arrival message ([notes](notes.md) R35, R39 to R43, R58).
 
 Language
@@ -93,7 +87,7 @@ An uses an iPhone with Bisou installed; Bình uses an Android phone. Together si
 1. 7 November, 09:00: An opens the installed app; Home shows the invite card. An taps it, the iPhone asks, An allows: both kinds on. Bình turns on both switches on the Notifications page.
 2. 7 November, 15:00: Bình writes an entry; An gets "Bình vừa viết nhật ký" at once and tapping it opens the journal. At 15:30 Bình fixes a typo: nothing is sent.
 3. 7 November, 16:00: Bình answers today's card; An gets "Người ấy vừa trả lời thẻ hôm nay" and tapping it opens Home. When An answers, Bình gets the same; An editing the answer afterwards sends nothing.
-4. 7 November, 23:10: Bình writes; nothing shows. 8 November, 07:00: An gets "Bình vừa viết nhật ký".
+4. 7 November, 23:10: Bình writes; An gets "Bình vừa viết nhật ký" at once.
 5. 17 November, 20:00: Bình gets "Ngày mai: Sinh nhật An"; 18 November, 08:00: "Hôm nay: Sinh nhật An". An gets neither.
 6. 18 November, 20:00: both get "Ngày mai: Ngày Quốc tế Nam giới"; 19 November, 08:00: "Hôm nay: Ngày Quốc tế Nam giới".
 7. 20 November, 10:00: Bình marks the linen scarf received; An gets "Bình vừa viết nhật ký", nothing more.
@@ -115,8 +109,8 @@ Turn on from the Home card or the Notifications page, get a notification and tap
 - AC9 (R11). Given "Xem phim" added for 12 February 2027, then the 20:00 reminder on 11 February names the anniversary first, then "Xem phim", in one message; given five events on one day, then the reminder names the first three in list order and ends "và 2 sự kiện khác" / "and 2 more", and tapping it opens the events list.
 - AC10 (R13). Given An adds "Bay đi Đà Lạt" on 19 December at 21:00 for 20 December, then no day-before reminder comes; on 20 December at 08:00 both get "Hôm nay: Bay đi Đà Lạt".
 - AC11 (R14). Given Bình deletes "Bay đi Đà Lạt" on 19 December at 10:00, then no reminder for it comes.
-- AC12 (R16, R17). Given Bình writes at 21:59, then An gets it at once; given Bình writes at 22:00, 23:10 and 06:59, then An gets one message at 07:00: "Bình đã viết 3 bài nhật ký".
-- AC13 (R18). Given Bình writes at 23:10 and deletes it at 23:30, then nothing is sent at 07:00.
+- AC12 (R5). Given Bình writes at 21:59, 22:00, 23:10 and 06:59, then An gets each one at once, whatever the hour, and nothing more at 07:00.
+- AC13 (R5, R6). Given Bình writes at 23:10 and deletes it at 23:30, then An already got the message at 23:10 and nothing more is sent.
 - AC14 (R19). Given Bình writes at 15:00 and 15:05 and An has not opened the first, then An's phone shows one notification.
 - AC15 (R2, R3, R21). Given Bình also turned both kinds on in a laptop browser, when Bình turns event reminders off on the laptop, then the phone still gets both kinds and the laptop gets journal ones only.
 - AC16 (R20, R22). Given An opens Bisou in Safari, not installed, then the page says notifications are not available until Bisou is installed; given Bình refused the system prompt, then it shows blocked, the switches cannot be turned on, and it says how to allow Bisou.
@@ -126,21 +120,20 @@ Turn on from the Home card or the Notifications page, get a notification and tap
 - AC20 (R27, R28, R29, R30). Given Bình turns both kinds off on the phone, then Bisou no longer keeps the phone's address or settings; while on, they go to no one but the phone's push service.
 - AC21 (R10, R31). Given Bình was born 3 January 1996 and An's app language is English, then An gets "Tomorrow: Bình's birthday" on 2 January 2027 at 20:00.
 - AC22 (R8a). Given Bình answers today's card at 16:00, then An's devices with this kind on get "Người ấy vừa trả lời thẻ hôm nay" and no other device does; tapping it opens Home; when An answers, Bình gets it; when Bình edits or deletes the answer or plays an extra card, nothing is sent.
-- AC23 (R34, R35, R16). Given Sơn sends a kind note to Linh at 06:30 on 13 November 2026 and Linh has the partner's journal kind on, then Linh's devices get "Sơn có một lời nhắn nhỏ" at 07:00 with no note text, and tapping it opens the Lời nhắn nhỏ section; Sơn gets nothing; given Linh has not opened it by then, then Linh gets one reminder, "Lời nhắn nhỏ của Sơn vẫn ở đây", at 07:00 on 16 November and none after.
-- AC24 (R6, R35). Given Linh closes the note at 20:15 and has the partner's journal kind on, then she and Sơn get no "vừa viết nhật ký" message; given Sơn fixes a typo at 06:35 in the sent note before Linh opens it, then Linh gets no extra message, the arrival message still comes at 07:00 once, and the reminder is still due at 07:00 on 16 November.
+- AC23 (R34, R35). Given Sơn sends a kind note to Linh at 06:30 on 13 November 2026 and Linh has the partner's journal kind on, then Linh's devices get "Sơn có một lời nhắn nhỏ" at 06:30 with no note text, and tapping it opens the Lời nhắn nhỏ section; Sơn gets nothing; given Linh has not opened it by then, then Linh gets one reminder, "Lời nhắn nhỏ của Sơn vẫn ở đây", at 07:00 on 16 November and none after.
+- AC24 (R6, R35). Given Linh closes the note at 20:15 and has the partner's journal kind on, then she and Sơn get no "vừa viết nhật ký" message; given Sơn fixes a typo at 06:35 in the sent note before Linh opens it, then Linh gets no extra message, the arrival message came once at 06:30, and the reminder is still due at 07:00 on 16 November.
 
 ## Glossary
 
 - **Notification** (thông báo): a message shown by the phone or browser outside Bisou.
 - **Partner's journal** (nhật ký của người ấy): the kind in R5.
 - **Event reminder** (nhắc sự kiện): the kind in R10.
-- **Quiet hours** (giờ yên tĩnh): 22:00 to 07:00 Vietnam time.
 - **Undecided** (chưa chọn): a device never turned on, never refused, card never closed.
 
 ## Out of scope
 
 - Notifications for a light tap, avatar or start date changes; they will reuse this framework later.
-- Email instead of a notification, choosing other times or quiet hours, reminders more than one day ahead.
+- Email instead of a notification, choosing other times, quiet hours (cancelled by the PO, November 2026), reminders more than one day ahead.
 - Notifications when a partner leaves the couple; decide with leaving (see pairing).
 - Export and full deletion; they come with account deletion.
 

@@ -22,5 +22,10 @@
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "bisou" }]
+  "r2_buckets": [{ "binding": "PHOTOS", "bucket_name": "bisou" }],
+  // Push sending (ADR 0010). Create once before the first deploy: wrangler queues create bisou
+  "queues": {
+    "producers": [{ "binding": "PUSH_QUEUE", "queue": "bisou" }],
+    "consumers": [{ "queue": "bisou", "max_batch_size": 5, "max_batch_timeout": 1, "max_retries": 3 }]
+  }
 }

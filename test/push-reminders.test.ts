@@ -26,8 +26,8 @@ async function addEvent(who: TestUser, title: string, date: string) {
 it("AC7, R10, R12: only Bình receives the two reminders of An's birthday", async () => {
   const { bDevice } = await example(); const send = mockPush();
   for (const [at, title, ttl] of [
-    ["2026-11-17T13:00:00Z", "Ngày mai: Sinh nhật An", "7200"],
-    ["2026-11-18T01:00:00Z", "Hôm nay: Sinh nhật An", "50400"],
+    ["2026-11-17T13:00:00Z", "Ngày mai: Sinh nhật An", "86400"],
+    ["2026-11-18T01:00:00Z", "Hôm nay: Sinh nhật An", "86400"],
   ]) {
     await runPushCron(at!);
     const sent = send.sent.at(-1)!;

@@ -79,3 +79,12 @@ Privacy
 - A session that expires without a sign out keeps its device subscribed; a device that turns notifications on again for another account moves the row to that account.
 - One cron invocation sends to every device. On Workers Free each push is one subrequest of 50 and a few ms of CPU; past about 40 devices per run, move sending to Queues or the paid plan.
 - The day before reminder runs at 20:00, so an event added after 20:00 for the next day gets only its 08:00 reminder (R13).
+
+## Superseded in part (November 2026)
+
+The PO cancelled quiet hours. The text above is kept as written; where it differs, this note wins.
+- No push is held or dropped by the hour: journal, garden and kind note pushes are sent at once at any time.
+- Every push has a fixed TTL of 24 hours (86400 s), event reminders included, so a device that was offline may show a reminder late (R13 still stops Bisou itself from scheduling late reminders). The "TTL until the next 22:00" rule is gone.
+- The 07:00 night journal release and its combined "wrote N entries" message are removed; each entry sends its own push and the existing tag lets a newer one replace an older one (R19). The 07:00 cron keeps only the kind note dispatch.
+- `push_subscriptions.journal_slot` and the index `journal_entries_created` are no longer used; they stay in the schema because migrations are additive only.
+- Sending now goes through Cloudflare Queues, one message per device, with retries; see [ADR 0010](0010-push-sending-through-queues.md). The "move to Queues before about 40 devices" limit is gone.

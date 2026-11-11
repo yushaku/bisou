@@ -160,7 +160,6 @@ export const en: Messages = {
   "garden.allPlayed": "New cards are on their way",
   "garden.loadError": "The garden could not load. Please try again.",
   "push.journal.one": "{name} wrote in the journal",
-  "push.journal.many": "{name} wrote {n} journal entries",
   "push.events.today": "Today: {events}",
   "push.events.tomorrow": "Tomorrow: {events}",
   "push.events.more": "and {n} more",

@@ -16,15 +16,17 @@
 - Edit or delete your own answer at any time; an answer changed after the flip shows an "edited" mark to both of you.
 - Each deck is a plant in a shared garden. It grows one size on each day one of its cards is flipped and never shrinks. The garden turns dry after a few days without a daily card and wilts after about two weeks, but nothing dies. No numbers, streaks or scores.
 - Tap a plant to play more cards from its deck. A card left waiting when the day turns stays in its deck until the other answers it.
-- When both of you have answered today's card, both get a notification through the partner journal switch. Nothing is sent during quiet hours.
+- When both of you have answered today's card, both get a notification through the partner journal switch. It is sent at any hour.
 - Start a kind note from the + on the Journal tab; each note is a small envelope. Write it in four parts; wait 8 hours and reread it before sending.
 - Edit a note until it is opened, or withdraw it.
 - Your partner opens it when ready from the Home inbox tile.
-- Get a push when it arrives (at 07:00 during quiet hours) and one reminder on the third day.
+- Get a push when it arrives (at any hour) and one reminder on the third day.
 - Close a note with a pick and a line in a journal entry that both partners can edit or delete.
 
 ### Changed
 
+- Push notifications are now sent through a Cloudflare queue, one message per device: a push after a write can arrive 1 to 2 seconds later, a push the push service refuses for a moment (busy or unreachable) is retried up to 3 times within its 24 hours, and the hourly reminders no longer limit how many devices Bisou can notify.
+- Quiet hours are cancelled: journal entries, Garden answers and kind notes now notify at once at any hour, every push lives 24 hours (event reminders too, so an offline phone may show one late), and the 07:00 combined night journal notification is gone.
 - Spins can land on an unpriced open wish; it remains claimable, and its result says "Chưa ghi giá" / "No price set".
 - The stage sheet no longer lists discussion questions; the "Điều cần bàn trước khi {stage}" list now sits on the Garden screen, shows whose turn each question is (your turn first, three at a time) and opens a tapped question in a sheet to answer there instead of jumping to a plant.
 - Put today's card first on Home with named turns and a one-time flip that stays face up; stage choices now open immediately together, with optional discussion chips, shared banners, a one-time celebration and replacement answers after deletion.

@@ -1,4 +1,4 @@
-import { vnDay, vnHour } from "../../shared/days";
+import { vnDay } from "../../shared/days";
 import { notifyNote } from "../lib/notify";
 import { entriesWithPhotos, findEntry } from "../lib/journal";
 import { Hono, type Handler } from "hono";
@@ -29,9 +29,8 @@ const save: Handler<NoteEnv> = async (c) => {
   const parsed = validateNote(await c.req.json().catch(() => null));
   if ("error" in parsed) return c.json(parsed, 400);
   const { happened, feel, need, hope } = parsed.input;
-  const quiet = vnHour(now) >= 22 || vnHour(now) < 7;
   const statement = sending
-    ? db.prepare(`UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *`).bind(happened, feel, need, hope, now, now, quiet ? null : now, id, user, couple, now - NOTE_COOLDOWN)
+    ? db.prepare(`UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *`).bind(happened, feel, need, hope, now, now, now, id, user, couple, now - NOTE_COOLDOWN)
     : updating
     ? db.prepare(`UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL RETURNING *`).bind(happened, feel, need, hope, now, id, user, couple)
     : db.prepare(`INSERT INTO notes (id, couple_id, writer_id, recipient_id, happened, feel, need, hope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`).bind(id, couple, user, c.get("notePartner"), happened, feel, need, hope, now, now);
@@ -41,7 +40,7 @@ const save: Handler<NoteEnv> = async (c) => {
     if (!latest) return c.json({ error: "not_found" }, 404);
     return c.json({ error: sending ? latest.sent_at !== null ? "note_sent" : "note_cooling" : "note_opened" }, 409);
   }
-  if (sending && !quiet) c.executionCtx.waitUntil(notifyNote(c.env, user, row.recipient_id, now).catch(() => console.error("[bisou] note push failed")));
+  if (sending) c.executionCtx.waitUntil(notifyNote(c.env, user, row.recipient_id).catch(() => console.error("[bisou] note push failed")));
   return c.json({ note: toWritten(row) }, updating || sending ? 200 : 201);
 };
 notes.post("/", limitBody, save);

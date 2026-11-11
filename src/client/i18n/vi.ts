@@ -159,7 +159,6 @@ export const vi = {
   "garden.allPlayed": "Thẻ mới đang trên đường tới",
   "garden.loadError": "Chưa mở được vườn. Thử lại nhé.",
   "push.journal.one": "{name} vừa viết nhật ký",
-  "push.journal.many": "{name} đã viết {n} bài nhật ký",
   "push.events.today": "Hôm nay: {events}",
   "push.events.tomorrow": "Ngày mai: {events}",
   "push.events.more": "và {n} sự kiện khác",

@@ -10,7 +10,7 @@
       "url": "git@github.com:yushaku/bisou.git",
       "provider": "github",
       "link_mode": "local-only",
-      "revision": "4006ef2f106e25696bedf528f5832928587e666a"
+      "revision": "1d781b26dcea085579279fda81cd03d3db270ab4"
     }
   },
   "components": [
@@ -29,14 +29,20 @@
       "sources": [{ "path": "wrangler.jsonc", "line": 10, "end_line": 13 }] },
     { "id": "worker", "type": "backend", "label": "Worker bisou", "sublabel": "Hono · /api/*", "pos": [450, 290], "size": [200, 84],
       "sources": [
-        { "path": "src/worker/index.ts", "line": 9, "end_line": 13 },
+        { "path": "src/worker/index.ts", "line": 10, "end_line": 18, "label": "fetch and queue handlers" },
         { "path": "src/worker/app.ts", "line": 17, "end_line": 35 },
         { "path": "wrangler.jsonc", "line": 1, "end_line": 7 }
+      ] },
+    { "id": "queue", "type": "messagebus", "label": "Queue bisou", "sublabel": "PUSH_QUEUE · 1 job/device", "pos": [450, 460], "size": [200, 64],
+      "sources": [
+        { "path": "wrangler.jsonc", "line": 26, "end_line": 30 },
+        { "path": "src/worker/lib/pushQueue.ts", "line": 23, "end_line": 29, "label": "enqueuePush" },
+        { "path": "src/worker/lib/pushQueue.ts", "line": 42, "end_line": 65, "label": "consumePushBatch" }
       ] },
     { "id": "cron", "type": "cloud", "label": "Cron Trigger", "sublabel": "0 * * * * (VN hour)", "pos": [230, 450], "size": [160, 60],
       "sources": [
         { "path": "wrangler.jsonc", "line": 8, "end_line": 9 },
-        { "path": "src/worker/index.ts", "line": 14, "end_line": 41 }
+        { "path": "src/worker/index.ts", "line": 20, "end_line": 47 }
       ] },
     { "id": "d1", "type": "database", "label": "D1 bisou", "sublabel": "binding DB", "pos": [800, 290], "size": [150, 84],
       "sources": [
@@ -55,12 +61,12 @@
       ] },
     { "id": "push", "type": "external", "label": "Push service", "sublabel": "Web Push (VAPID)", "pos": [600, 630], "size": [160, 60],
       "sources": [
-        { "path": "src/worker/lib/webpush.ts", "line": 68, "end_line": 85 },
+        { "path": "src/worker/lib/webpush.ts", "line": 80, "end_line": 100, "label": "sendPush" },
         { "path": "src/worker/env.ts", "line": 14, "end_line": 15 }
       ] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Cloudflare free plan (workers.dev)", "wraps": ["assets", "worker", "cron", "d1", "r2"], "pad": 20 }
+    { "kind": "region", "label": "Cloudflare free plan (workers.dev)", "wraps": ["assets", "worker", "queue", "cron", "d1", "r2"], "pad": 20 }
   ],
   "connections": [
     { "from": "dev", "to": "github", "label": "git push", "variant": "emphasis" },
@@ -73,7 +79,9 @@
     { "from": "worker", "to": "d1", "label": "SQL" },
     { "from": "worker", "to": "r2", "label": "photos" },
     { "from": "worker", "to": "resend", "label": "OTP mail", "variant": "dashed" },
-    { "from": "worker", "to": "push", "label": "reminders", "variant": "dashed" }
+    { "from": "worker", "to": "queue", "label": "enqueue" },
+    { "from": "queue", "to": "worker", "label": "batch of 5", "variant": "dashed" },
+    { "from": "worker", "to": "push", "label": "Web Push", "variant": "dashed" }
   ],
   "cards": [
     { "dot": "cyan", "title": "Release", "items": [
@@ -85,6 +93,7 @@
     { "dot": "emerald", "title": "Data", "items": [
       "D1 holds users, sessions, couples, couple events, journal, wishes",
       "R2 photos only via the Worker after a session and couple check",
+      "Push jobs wait in Queue bisou up to 24 hours, with no endpoint or keys",
       "users.avatar_id names the profile photo at R2 users/<id>/avatar/"
     ] },
     { "dot": "rose", "title": "Secrets and auth", "items": [
@@ -94,7 +103,7 @@
     ] },
     { "dot": "amber", "title": "Hourly cron", "items": [
       "08:00 and 20:00: event reminders by push",
-      "07:00: releases last night's journal by push",
+      "07:00: kind note reminders by push",
       "03:00: cleans D1 rows and R2 photos"
     ] }
   ]
