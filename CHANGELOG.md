@@ -4,7 +4,8 @@
 
 ### Added
 
-- Choose a Garden starting status together, opening questions through that status: five relationship statuses and 35 new Vietnamese/English questions alongside the original 60 cards.
+- Explore five relationship statuses and 35 new Vietnamese/English questions alongside the original 60 cards.
+- Start every new Garden at Làm quen automatically; existing couples without a saved starting stage also see Làm quen without a data migration.
 - Answer decision questions with text, a neutral choice or a deferred/not-applicable choice; both responses reveal only after both submit, with editing and deletion controlled by each author.
 - Open a mutually chosen later stage immediately; skip irrelevant stages or stay where you are, keeping discussion questions, ordinary daily play and plants independent of progression.
 - The Garden tab draws one question card a day for both of you, from 6 decks of 10 cards (Memories, Dreams, Money, When we disagree, Both families, Everyday us). Each of you answers privately, and both answers show side by side only once both of you have answered.

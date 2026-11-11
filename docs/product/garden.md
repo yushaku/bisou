@@ -169,9 +169,9 @@ Partners work through questions about their relationship's current situation and
 
 ### Scope and decision provenance
 
-The PO directed the team to proceed with coding without a Designer. Under that direction, the coordinator selected the following implementation defaults, which are not separate verbatim PO approvals:
+The PO directed the team to proceed with coding without a Designer. Under that direction, the coordinator selected these implementation defaults; the PO decided item 1:
 
-1. One starting stage chosen by both opens it and earlier content without any answer quota, so an already-married couple can start at Married. (revised 10 Nov 2026)
+1. Every new couple starts at Getting acquainted automatically; a couple with no saved starting stage reads as Getting acquainted without rewriting existing data. (PO decision, revised 11 Nov 2026)
 2. Both choose the next applicable later stage, skipping irrelevant stages without any decision-answer gate or requirement to marry or have children. (revised 10 Nov 2026)
 
 The initial scope uses five statuses based on the PO's examples: Getting acquainted, In love, Living together, Married, and With children, with 35 new bilingual questions and their existing catalog roles. This is the content selected for the authorized build, not a required lifetime sequence or a fixed question quota. Preparing-to-cohabit decisions belong in In love, before Living together unlocks. Living together includes marriage-preparation questions, and Married includes questions about whether and how children fit their plans; not wanting children is a valid response. With children has ordinary reflection questions and no next level in this scope.
@@ -185,8 +185,8 @@ Catalog wording remains editorially reviewable during delivery without adding a 
 - R42. A decision question is complete as soon as both partners submit a response, with no further discussion confirmation, agreement requirement, correctness assessment or shared decision text.
 - R43. Each partner may respond to a decision question with text, a neutral no-details choice or a deferred/not-applicable choice without explanation, and each choice counts equally toward completion.
 - R44. Decision cards show no privacy notice or pre-submit privacy hint; response types use styled chips, non-text choices hide the text box, and the actions are "Úp thẻ" and "Thôi". (revised 10 Nov 2026)
-- R45. Starting placement requires both partners to choose the same stage once and opens ordinary and decision content through that stage without marking earlier questions answered. (revised 10 Nov 2026)
-- R46. Until starting placement is agreed, the existing daily garden continues unchanged and no new stage-question answers or stage advances are accepted.
+- R45. Every new couple starts at Getting acquainted automatically, opening its ordinary and decision content without marking questions answered; later stage changes still require both partners to choose the same stage. (revised 11 Nov 2026)
+- R46. A couple with no saved starting stage reads as Getting acquainted without rewriting its data; the existing daily garden continues unchanged until both partners agree on a later stage.
 - R47. Next-stage selection requires a fresh mutual choice of the same applicable stage beyond the furthest opened one; one partner chooses and the other agrees or declines, the proposer can withdraw, and stale revisions change nothing. (revised 10 Nov 2026)
 - R48. The mutually chosen target opens immediately on acceptance, regardless of unanswered decision cards, with no decision-answer quota, ordinary-question quota, plant threshold or waiting period. (revised 10 Nov 2026)
 - R49. Choosing a later applicable stage may skip stages without answering any decision questions; skipped content opens for optional use without marking it answered or recording a move, marriage, pregnancy, birth or agreement to them. (revised 10 Nov 2026)
@@ -208,9 +208,9 @@ Catalog wording remains editorially reviewable during delivery without adding a 
 
 ### Main flows and exceptions
 
-An and Bình choose In love as their starting status and Living together as the next status they want to explore. They answer In love's designated decision questions about rent, financial obligations, housework, personal space, conflict, guests, consent, expectations and ending shared living. Each question completes on the second response, including a neutral or deferred response. Their mutual stage choice opens Living together immediately, whether any of these questions are answered; they may still be planning their move. (revised 10 Nov 2026) Ordinary daily questions and plants continue independently.
+An and Bình start at Getting acquainted automatically, then choose In love together as the next status they want to explore. They answer In love's designated decision questions about rent, financial obligations, housework, personal space, conflict, guests, consent, expectations and ending shared living. Each question completes on the second response, including a neutral or deferred response. Their mutual stage choice opens Living together immediately, whether any of these questions are answered; they may still be planning their move. (revised 11 Nov 2026) Ordinary daily questions and plants continue independently.
 
-A couple already married can choose Married together at first placement and keep all existing answers without an earlier answer quota. A couple who does not plan to marry can mutually choose With children from Living together without completing either decision set. (revised 10 Nov 2026) A couple who does not plan to have children can remain at any opened status indefinitely. Changing one's mind about a proposed target before it opens changes the target only by mutual choice and does not discard saved answers.
+A couple already married can choose Married together as a later stage from Getting acquainted and keep all existing answers without an earlier answer quota. A couple who does not plan to marry can mutually choose With children from Living together without completing either decision set. (revised 10 Nov 2026) A couple who does not plan to have children can remain at any opened status indefinitely. Changing one's mind about a proposed target before it opens changes the target only by mutual choice and does not discard saved answers.
 
 If partners propose different statuses, the first pending proposal remains until accepted, declined or withdrawn, and an outdated acceptance changes nothing. Neither person can place or advance the couple alone. Previously completed decision questions stay complete after edits or post-reveal deletion, and a later target change does not require rewriting them. Viewing old or skipped questions never changes the selected status or opens another one. No subsequent status is included after With children.
 
@@ -232,7 +232,7 @@ If partners propose different statuses, the first pending proposal remains until
 
 - AC24 (R40 to R42). Given a question about preparing to live together, when partners inspect it, then it belongs to In love and an existing category, and both responses alone complete it regardless of agreement.
 - AC25 (R42 to R44). Given An wrote an answer, when Bình chooses a neutral or deferred chip, then the text box hides and submission completes the question and allows paired reveal, without a notice, privacy hint or discussion-confirmation step; "Thôi" cancels without submitting. (revised 10 Nov 2026)
-- AC26 (R45, R46, R52). Given a couple already married with saved garden answers, when both choose Married initially, then content through Married opens without marking earlier questions answered, and existing history, waiting cards and plants stay intact. (revised 10 Nov 2026)
+- AC26 (R45, R46, R52). Given a new couple or an existing couple with no saved starting stage, when either opens Garden, then Getting acquainted is already selected and open without rewriting existing data, and saved history, waiting cards and plants stay intact. (revised 11 Nov 2026)
 - AC27 (R47, R48, R50). Given In love and unanswered current decision cards, when one chooses Living together, then the partner sees the named banner on Home and Garden; accepting immediately opens Living together once while unfinished questions remain optional. (revised 10 Nov 2026)
 - AC28 (R47 to R49). Given Living together, when both choose With children, then it opens immediately without answering current or Married decision sets and without recording marriage or pregnancy. (revised 10 Nov 2026)
 - AC29 (R50, R62). Given partners do not want children or a next status, when they leave the next target unset, then their existing play and history continue without penalty, reminders or a claim of incomplete relationship development.
@@ -246,7 +246,7 @@ If partners propose different statuses, the first pending proposal remains until
 
 ### Glossary
 
-- Stage (giai đoạn): a named relationship context selected by the couple for Bisou questions. (revised 10 Nov 2026)
+- Stage (giai đoạn): a named relationship context opened by default at Getting acquainted or selected together for a later stage. (revised 11 Nov 2026)
 - Getting acquainted (Làm quen), In love (Yêu nhau), Living together (Sống chung), Married (Cưới), With children (Có con): the initial status names based on the PO's examples.
 - Opened status (giai đoạn đã mở): content the couple can use, without asserting a real-world event.
 - Target status (giai đoạn muốn mở tiếp): the later applicable context both choose to unlock.
