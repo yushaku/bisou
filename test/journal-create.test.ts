@@ -7,8 +7,10 @@ import { BottomBar } from "../src/client/components/bisou/AppShell";
 import { DrawerContent, DrawerTitle } from "../src/client/components/ui/drawer";
 import { vi as vietnamese } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
+import { api } from "../src/client/api";
 
 const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, refs: [] as { current: unknown }[], refIndex: 0, locale: "vi", effects: [] as (() => unknown)[], requests: new Map<string, () => void>() }));
+const notesRefresh = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useState: (initial: unknown) => {
@@ -19,14 +21,15 @@ vi.mock("react", async (original) => ({
   useRef: (initial: unknown) => hooks.refs[hooks.refIndex++] ?? (hooks.refs[hooks.refIndex - 1] = { current: initial }),
   useEffect: (effect: () => unknown) => { hooks.effects.push(effect); },
   useLayoutEffect: vi.fn(), useContext: () => null, useCallback: <T,>(callback: T) => callback,
+  useImperativeHandle: (ref: { current: unknown } | undefined, create: () => unknown) => { if (ref) ref.current = create(); },
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
-vi.mock("../src/client/lib/useNotes", () => ({ useNotes: () => ({ lists: { fromMe: [], toMe: [] }, failed: false, refresh: vi.fn() }) }));
+vi.mock("../src/client/lib/useNotes", () => ({ useNotes: () => ({ lists: { fromMe: [], toMe: [] }, failed: false, refresh: notesRefresh }) }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: keyof typeof vietnamese) => (hooks.locale === "vi" ? vietnamese : english)[key] }) }));
 
 vi.mock("../src/client/lib/useTabNavigation", async (original) => ({ ...await original<typeof import("../src/client/lib/useTabNavigation")>(), useCreateRequest: (destination: string, onOpen: () => void) => { hooks.requests.set(destination, onOpen); } }));
 
-type Props = { value?: string; composeRequested?: boolean; onComposeHandled?: () => void; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
+type Props = { ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; composeRequested?: boolean; onComposeHandled?: () => void; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -36,7 +39,7 @@ function render(active: "journal" | "home" | "garden" | "wishes", onCreate = vi.
   hooks.index = 0; hooks.refIndex = 0;
   return nodes(BottomBar({ active, onCreate, onSelect: vi.fn() }));
 }
-afterEach(() => { hooks.values = []; hooks.refs = []; hooks.locale = "vi"; hooks.effects = []; hooks.requests.clear(); vi.unstubAllGlobals(); });
+afterEach(() => { hooks.values = []; hooks.refs = []; hooks.locale = "vi"; hooks.effects = []; hooks.requests.clear(); vi.unstubAllGlobals(); vi.restoreAllMocks(); notesRefresh.mockReset(); });
 it.each(["vi", "en"])("Journal + opens a titled sheet with journal and kind note rows in %s", (locale) => {
   hooks.locale = locale;
   const create = vi.fn();
@@ -79,6 +82,28 @@ function journal() {
   hooks.index = 0; hooks.refIndex = 0;
   return nodes(Journal({ user, couple, onSignedOut: vi.fn(), onUser: vi.fn() }));
 }
+it.each(["feed", "notes"])("pulling on %s refreshes its data and waits for completion", async (section) => {
+  const feedRefresh = vi.spyOn(api, "journal").mockResolvedValue({ ok: true, data: { entries: [], nextCursor: null } });
+  journal();
+  if (section === "notes") hooks.requests.get("notes")!();
+  const tree = journal();
+  const notes = tree.find(n => n.type === NotesSection)!;
+  hooks.values = []; hooks.index = 0; hooks.refIndex = 0;
+  NotesSection({ user, couple, onSignedOut: vi.fn(), ref: notes.props.ref });
+  let finish!: () => void;
+  notesRefresh.mockImplementation(() => new Promise<void>((resolve) => { finish = resolve; }));
+  let done = false;
+  const pending = tree[0]!.props.onRefresh!().then(() => { done = true; });
+  expect(feedRefresh).toHaveBeenCalledOnce();
+  if (section === "notes") {
+    expect(notesRefresh).toHaveBeenCalledOnce();
+    await Promise.resolve();
+    expect(done).toBe(false);
+    finish();
+  } else expect(notesRefresh).not.toHaveBeenCalled();
+  await pending;
+  expect(done).toBe(true);
+});
 it("the journal choice opens ComposeSheet on the feed", () => {
   journal(); hooks.requests.get("journal")!();
   const tree = journal();

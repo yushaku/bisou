@@ -19,7 +19,7 @@ vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useState: (value: unknown) => [state.length ? state.shift() : typeof value === "function" ? value() : value, vi.fn()],
   useId: () => "test", useRef: (value: unknown) => ({ current: value }),
-  useContext: () => null, useEffect: vi.fn(), useLayoutEffect: vi.fn(), useCallback: (fn: unknown) => fn,
+  useContext: () => null, useEffect: vi.fn(), useLayoutEffect: vi.fn(), useImperativeHandle: vi.fn(), useCallback: (fn: unknown) => fn,
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "en", t: (key: string) => key }) }));

@@ -71,7 +71,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
     const begin = (event: TouchEvent) => {
       if (busy || window.scrollY > 0 || event.touches.length !== 1) return;
       if (event.target instanceof Element) {
-        if (event.target.closest("button, a, input, textarea, select, [contenteditable], [role=slider]")) return;
+        if (event.target.closest("input, textarea, select, [contenteditable], [role=slider]")) return;
         for (let target: Element | null = event.target; target && target !== main; target = target.parentElement) {
           if (target.scrollHeight > target.clientHeight && /auto|scroll/.test(getComputedStyle(target).overflowY)) return;
         }
@@ -144,7 +144,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
       </header>
 
       <main ref={mainRef} tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">
-        {canRefresh && <div className={cn("flex shrink-0 items-center justify-center overflow-hidden text-muted-foreground motion-reduce:transition-none", settling && "transition-[height] duration-200")} style={{ height: pull }}>
+        {canRefresh && <div className={cn("flex shrink-0 items-center justify-center overflow-hidden text-muted-foreground motion-reduce:transition-none", settling && "transition-[height] duration-(--duration) ease-(--ease)")} style={{ height: pull }}>
           {pull > 0 && <span role="status" aria-busy={refreshing}>
             <Loader2Icon aria-hidden="true" className={cn("size-5", refreshing && "animate-spin motion-reduce:animate-none")} />
             <span className="sr-only">{t("loading")}</span>

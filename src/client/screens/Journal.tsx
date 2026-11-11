@@ -55,6 +55,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   const online = useOnline();
   const moreBusy = useRef(false);
   const sentinel = useRef<HTMLDivElement>(null);
+  const notesRef = useRef<{ refresh: () => Promise<void> }>(null);
 
   // Creator first, as on Home, so each partner keeps one tint everywhere.
   const people = new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person]));
@@ -129,6 +130,10 @@ export function Journal({ couple, ...session }: JournalProps) {
     setFeed((f) => (f ? refreshFirstPage(f, res.data) : res.data));
   }, [onSignedOut]);
 
+  const pullRefresh = useCallback(async () => {
+    await Promise.all([refresh(), section === "notes" ? notesRef.current?.refresh() : undefined]);
+  }, [refresh, section]);
+
   const loadMore = useCallback(async () => {
     const cursor = feed?.nextCursor;
     if (!cursor || moreBusy.current) return;
@@ -183,10 +188,10 @@ export function Journal({ couple, ...session }: JournalProps) {
   }, [autoLoad, loadMore, more, feed]);
 
   return (
-    <SignedInShell {...session} tab="journal" onRefresh={refresh}>
+    <SignedInShell {...session} tab="journal" onRefresh={pullRefresh}>
       <Tabs value={section} onValueChange={(value) => { const next = value === "notes" ? "notes" : "feed"; setSection(next); if (memory) memory.journalSection = next; }}>
         <TabsList className="mb-4 w-full"><TabsTrigger value="feed">{t("journal.sectionFeed")}</TabsTrigger><TabsTrigger value="notes">{t("journal.sectionNotes")}</TabsTrigger></TabsList>
-        <TabsContent value="notes"><NotesSection composeRequested={noteRequested} onComposeHandled={() => setNoteRequested(false)} onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
+        <TabsContent value="notes"><NotesSection ref={notesRef} composeRequested={noteRequested} onComposeHandled={() => setNoteRequested(false)} onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
         <TabsContent value="feed">
 
       {feed && online && stale && (

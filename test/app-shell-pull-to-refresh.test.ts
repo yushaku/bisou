@@ -30,7 +30,7 @@ afterEach(() => {
   vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 
-type Props = { children?: ReactNode; ref?: { current: unknown }; role?: string; style?: { height?: number }; "aria-busy"?: boolean };
+type Props = { children?: ReactNode; ref?: { current: unknown }; role?: string; className?: string; style?: { height?: number }; "aria-busy"?: boolean };
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -112,6 +112,8 @@ it.each(["resolve", "reject"])("holds the spinner until refresh and minimum dura
   finish(); await vi.runAllTimersAsync();
   expect(render().some((node) => node.props["aria-busy"])).toBe(false);
   expect(render().find((node) => node.props.style)?.props.style?.height).toBe(0);
+  expect(render().find((node) => node.props.style)?.props.className).toContain("duration-(--duration) ease-(--ease)");
+  expect(render().find((node) => node.props.style)?.props.className).toContain("motion-reduce:transition-none");
   if (result === "reject") expect(toast.error).toHaveBeenCalledWith("error.generic");
   pull(80); expect(refresh).toHaveBeenCalledTimes(2);
   await vi.runAllTimersAsync();
@@ -148,15 +150,31 @@ it("restores native overscroll and removes touch and scroll listeners on unmount
   pull(100); expect(refresh).not.toHaveBeenCalled();
 });
 
-it("keeps buttons and nested scrolling areas outside the gesture", () => {
+it("keeps inputs and nested scrolling areas outside the gesture", () => {
   const refresh = vi.fn();
   const { main, touch, TestElement } = setup(refresh);
-  const button = new TestElement(); button.closest.mockReturnValue(button);
+  const input = new TestElement(); input.closest.mockReturnValue(input);
   const scroller = new TestElement(); scroller.scrollHeight = 200; scroller.clientHeight = 100; scroller.parentElement = main;
-  for (const target of [button, scroller]) {
+  for (const target of [input, scroller]) {
     touch("touchstart", 0, 0, 1, target);
     expect(touch("touchmove", 100, 0, 1, target).defaultPrevented).toBe(false);
     touch("touchend");
   }
   expect(refresh).not.toHaveBeenCalled();
+});
+
+it.each(["button", "a"])("allows pulling from a %s while leaving a stationary tap alone", async (tag) => {
+  const refresh = vi.fn();
+  const { main, touch, TestElement } = setup(refresh);
+  const button = new TestElement(); button.parentElement = main;
+  button.closest.mockImplementation((selector?: string) => selector?.split(", ").includes(tag) ? button : null);
+  touch("touchstart", 0, 0, 1, button);
+  expect(touch("touchmove", 0, 0, 1, button).defaultPrevented).toBe(false);
+  expect(touch("touchend", 0, 0, 0, button).defaultPrevented).toBe(false);
+  expect(refresh).not.toHaveBeenCalled();
+  touch("touchstart", 0, 0, 1, button);
+  expect(touch("touchmove", 80, 0, 1, button).defaultPrevented).toBe(true);
+  touch("touchend", 80, 0, 0, button);
+  expect(refresh).toHaveBeenCalledOnce();
+  await vi.runAllTimersAsync();
 });

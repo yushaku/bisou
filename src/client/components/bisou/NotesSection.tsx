@@ -1,4 +1,4 @@
-import { lazy, Suspense, useContext, useEffect, useState } from "react";
+import { lazy, Suspense, useContext, useEffect, useImperativeHandle, useState, type Ref } from "react";
 import { Mailbox } from "lucide-react";
 import { toast } from "sonner";
 import type { Couple, User, WrittenNote, ReceivedNote, JournalEntry } from "../../../shared/types";
@@ -18,12 +18,13 @@ import { NoteParts } from "./NoteParts";
 import { NoteEnvelope } from "./NoteEnvelope";
 const NoteSheet = lazy(() => import("./NoteSheet").then((m) => ({ default: m.NoteSheet })));
 const NoteCloseSheet = lazy(() => import("./NoteCloseSheet").then((m) => ({ default: m.NoteCloseSheet })));
-export function NotesSection({ couple, user, onSignedOut, onClosed, composeRequested, onComposeHandled }: { couple: Couple; user: User; onSignedOut: () => void; onClosed?: (entry: JournalEntry) => void; composeRequested?: boolean; onComposeHandled?: () => void }) {
+export function NotesSection({ ref, couple, user, onSignedOut, onClosed, composeRequested, onComposeHandled }: { ref?: Ref<{ refresh: () => Promise<void> }>; couple: Couple; user: User; onSignedOut: () => void; onClosed?: (entry: JournalEntry) => void; composeRequested?: boolean; onComposeHandled?: () => void }) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const memory = useContext(TabMemory);
   const [opening, setOpening] = useState<string | null>(null), [received, setReceived] = useState<Extract<ReceivedNote, { state: "opened" }> | null>(null), [closing, setClosing] = useState<string | null>(null);
   const { lists, failed, refresh } = useNotes(onSignedOut);
+  useImperativeHandle(ref, () => ({ refresh }), [refresh]);
   const [editing, setEditing] = useState<WrittenNote>(), [composing, setComposing] = useState(false), [loaded, setLoaded] = useState(false), [detail, setDetail] = useState<WrittenNote | null>(null);
   const people = toPeople(couple.members, user, t), partner = people[couple.members.findIndex((m) => m.id !== user.id)];
   const [fromMenu, setFromMenu] = useState(false);
