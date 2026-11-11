@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import type { WrittenNote, NoteInput } from "../../../shared/types";
 import { api } from "@/api";
 import { useI18n } from "@/i18n";

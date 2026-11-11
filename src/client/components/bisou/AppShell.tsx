@@ -1,6 +1,6 @@
 import { useOnline } from "@/lib/useOnline";
 import { BookHeart, Gift, House, Loader2Icon, Mailbox, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";

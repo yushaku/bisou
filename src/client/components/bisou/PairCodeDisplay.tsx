@@ -1,6 +1,6 @@
 import { Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { Button } from "@/components/ui/button";
 import { useI18n, type Translate } from "@/i18n";
 import { cn } from "@/lib/utils";

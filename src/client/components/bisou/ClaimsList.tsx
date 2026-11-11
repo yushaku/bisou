@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { Check, ExternalLink, Gift } from "lucide-react";
 import { useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import type { Claim } from "../../../shared/types";
 import { api, photoUrl } from "@/api";
 import { Button } from "@/components/ui/button";

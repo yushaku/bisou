@@ -708,3 +708,19 @@
   @keyframes mailbox-wait { 0%, 100% { transform: rotate(0); } 35% { transform: rotate(-8deg); } 70% { transform: rotate(8deg); } }
   .mailbox-wait { animation: mailbox-wait var(--duration) var(--ease) 2; }
 }
+
+/* Ding toast: Dynamic Island pill, inverted from the active theme (foreground as surface). */
+body .tst-viewport {
+  --tst-bg: var(--foreground);
+  --tst-fg: var(--background);
+  --tst-success: var(--success);
+  --tst-warning: var(--warning);
+  --tst-info: var(--info);
+  --tst-error: color-mix(in oklab, var(--destructive) 55%, var(--background));
+}
+.dark body .tst-viewport {
+  --tst-success: var(--success-foreground);
+  --tst-warning: var(--warning-foreground);
+  --tst-info: var(--info-foreground);
+  --tst-error: var(--destructive);
+}

@@ -1,6 +1,6 @@
 import { CalendarHeart } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { Link } from "wouter";
 import { toDayString } from "../../shared/days";
 import { upcomingEvents } from "../../shared/events";

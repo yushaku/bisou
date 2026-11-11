@@ -15,7 +15,7 @@ vi.mock("react", async (original) => ({
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@yusufceng1z/ding-react", () => ({ toast: { error: vi.fn() } }));
 afterEach(() => { hooks.values = []; hooks.effects = []; hooks.index = 0; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 type Props = { children?: ReactNode; disabled?: boolean; "aria-label"?: string; onClick?: () => Promise<void> | void };

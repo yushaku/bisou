@@ -1,7 +1,7 @@
 import { demoSpin } from "./samples";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { AppShell, type TabId } from "@/components/bisou/AppShell";
 import { DaysCounter } from "@/components/bisou/DaysCounter";
 import { EntryCard } from "@/components/bisou/EntryCard";

@@ -5,7 +5,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ErrorBoundary } from "./components/bisou/ErrorBoundary";
 import { App } from "./App";
-import { Toaster } from "./components/ui/sonner";
+import { Toaster } from "./components/ui/ding-toaster";
 import { I18nProvider } from "./i18n";
 import { captureJoinLink } from "./lib/joinLink";
 import { ThemeProvider } from "./theme/ThemeProvider";

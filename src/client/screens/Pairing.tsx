@@ -1,6 +1,6 @@
 import { ArrowLeft, Heart, KeyRound, Share2, Sparkles, TimerOff } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { normalizePairCode, PAIR_CODE_LENGTH } from "../../shared/pairCode";
 import type { ApiError, Couple } from "../../shared/types";
 import { api } from "../api";

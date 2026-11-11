@@ -2,7 +2,7 @@ import { useOnline } from "../lib/useOnline";
 import { Bell, Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
 import { currentSubscription } from "../lib/push";
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { useLocation } from "wouter";
 import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
 import { api } from "../api";

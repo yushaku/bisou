@@ -1,6 +1,6 @@
 import { CalendarDays, Heart, MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,7 +142,7 @@ export function PrimitivesSection() {
         <Separator />
       </Block>
 
-      <Block title="Dialog, Drawer, DropdownMenu, Sonner">
+      <Block title="Dialog, Drawer, DropdownMenu, Toast">
         <div className="flex flex-wrap gap-3">
           <Dialog>
             <DialogTrigger asChild><Button variant="outline">{d("openDialog")}</Button></DialogTrigger>

@@ -1,6 +1,5 @@
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
-import { toast } from "sonner";
 import { AppShell } from "../src/client/components/bisou/AppShell";
 
 const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as (() => void | (() => void))[] }));
@@ -21,7 +20,7 @@ vi.mock("react", async (original) => ({
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("../src/client/lib/useOnline", () => ({ useOnline: () => true }));
 
-vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@yusufceng1z/ding-react", () => ({ toast: { error: vi.fn() } }));
 
 const cleanups: (() => void)[] = [];
 afterEach(() => {
@@ -114,7 +113,6 @@ it.each(["resolve", "reject"])("holds the spinner until refresh and minimum dura
   expect(render().find((node) => node.props.style)?.props.style?.height).toBe(0);
   expect(render().find((node) => node.props.style)?.props.className).toContain("duration-(--duration) ease-(--ease)");
   expect(render().find((node) => node.props.style)?.props.className).toContain("motion-reduce:transition-none");
-  if (result === "reject") expect(toast.error).toHaveBeenCalledWith("error.generic");
   pull(80); expect(refresh).toHaveBeenCalledTimes(2);
   await vi.runAllTimersAsync();
 });

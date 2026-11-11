@@ -1,7 +1,7 @@
 import { useOnline } from "@/lib/useOnline";
 import { useId, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import { toDayString } from "../../../shared/days";
 import { EVENT_ICONS, validateEvent, type EventIcon } from "../../../shared/events";
 import type { Couple, CoupleEvent, CoupleEventInput } from "../../../shared/types";

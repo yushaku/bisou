@@ -1,6 +1,6 @@
 import { lazy, Suspense, useContext, useEffect, useImperativeHandle, useState, type Ref } from "react";
 import { Mailbox } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, User, WrittenNote, ReceivedNote, JournalEntry } from "../../../shared/types";
 import { vnDay } from "../../../shared/days";
 import { api } from "@/api";

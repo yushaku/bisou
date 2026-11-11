@@ -1,6 +1,6 @@
 import { BookHeart, Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, JournalEntry, JournalPage } from "../../shared/types";
 import { api, photoUrl } from "../api";
 import { toPeople } from "../components/bisou/CoupleAvatars";

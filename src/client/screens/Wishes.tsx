@@ -2,7 +2,7 @@ import { ArrowLeft, Check, Ellipsis, Gift, ListFilter, PencilLine, Plus, Trash2 
 import { lazy, Suspense, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, Wish } from "../../shared/types";
 import { api } from "../api";
 import { EmptyState } from "../components/bisou/EmptyState";
