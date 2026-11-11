@@ -23,6 +23,7 @@
 
 ### Changed
 
+- Push notifications are now sent through a Cloudflare queue, one message per device: a push after a write can arrive 1 to 2 seconds later, a push the push service refuses for a moment (busy or unreachable) is retried up to 3 times within its 24 hours, and the hourly reminders no longer limit how many devices Bisou can notify.
 - Quiet hours are cancelled: journal entries, Garden answers and kind notes now notify at once at any hour, every push lives 24 hours (event reminders too, so an offline phone may show one late), and the 07:00 combined night journal notification is gone.
 - Spins can land on an unpriced open wish; it remains claimable, and its result says "Chưa ghi giá" / "No price set".
 - The stage sheet no longer lists discussion questions; the "Điều cần bàn trước khi {stage}" list now sits on the Garden screen, shows whose turn each question is (your turn first, three at a time) and opens a tapped question in a sheet to answer there instead of jumping to a plant.

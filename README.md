@@ -61,6 +61,7 @@ The GitHub `production` environment needs the `CLOUDFLARE_API_TOKEN` secret (Wor
 1. Resend: add the domain `mail.yuchi-education.com`, its DNS records in Cloudflare, and an API key.
 2. `wrangler d1 create bisou`, put the `database_id` in `wrangler.jsonc`, then `wrangler d1 migrations apply bisou --remote`.
 3. `wrangler r2 bucket create bisou` (keep public access off; bound as `PHOTOS`).
+   `wrangler queues create bisou` (push sending, bound as `PUSH_QUEUE`; deploy fails without it).
 4. `wrangler secret put RESEND_API_KEY` and `wrangler secret put OTP_PEPPER` (a long random value).
 5. `node scripts/vapid-key.mjs`, then `wrangler secret put VAPID_PRIVATE_KEY` with the printed JWK. Never reuse the key in `.dev.vars.example`.
 6. `pnpm run deploy`, add the app to the iPhone Home Screen, log in, and reopen it to confirm the session persists.

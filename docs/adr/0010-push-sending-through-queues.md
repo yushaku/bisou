@@ -30,7 +30,7 @@ Failures
 ## Decision
 
 Queue and binding
-- One queue `bisou-push`. The same Worker produces and consumes it: `queues.producers` binds `PUSH_QUEUE`, `queues.consumers` sets `max_batch_size` 5, `max_batch_timeout` 1, `max_retries` 3, no dead letter queue. Batch size 5 keeps one consumer invocation within 10 ms of CPU; tune it from `cpuTime` in Workers observability.
+- One queue `bisou`, named like the D1 database and R2 bucket. The same Worker produces and consumes it: `queues.producers` binds `PUSH_QUEUE`, `queues.consumers` sets `max_batch_size` 5, `max_batch_timeout` 1, `max_retries` 3, no dead letter queue. Batch size 5 keeps one consumer invocation within 10 ms of CPU; tune it from `cpuTime` in Workers observability.
 - `Env.PUSH_QUEUE: Queue<PushJob>`.
 
 Message
@@ -46,7 +46,7 @@ Consumer (`queue(batch, env)` in `src/worker/index.ts`, logic in `src/worker/lib
 - Web Push has no multi device send: each device needs its own encrypted payload and POST (RFC 8291), so one job is one device. The messages of a batch are handled in parallel (`Promise.allSettled`); this cuts wall time, not CPU, so the batch size stays bound by CPU.
 - For each message: if `Date.now() >= expiresAt`, ack and drop. Else load `id, endpoint, p256dh, auth` by id; no row, ack. Else `sendPush` with `ttl = floor((expiresAt - now) / 1000)`.
 - `sendPush` returns `sent`, `gone`, `retry` (429, 5xx, network error, with `retryAfter` seconds when given) or `failed` (other statuses). It keeps its D1 updates: `sent` clears `failures`, `gone` deletes the row, `retry` and `failed` add 1 to `failures`.
-- `sent`, `gone`, `failed`: ack. `retry`: `message.retry({ delaySeconds })` while `message.attempts <= 3` and `now + delay < expiresAt`, else ack.
+- `sent`, `gone`, `failed`: ack. `retry`: `message.retry({ delaySeconds })` while `message.attempts <= 3` and `now + delay < expiresAt`, else ack. A D1 error while loading or updating the device counts as `retry`.
 - One log line per batch with counts only: sent, gone, retried, dropped, failed. Never an endpoint, key, payload or response body (ADR 0007 Privacy).
 
 Duplicates and order
@@ -56,7 +56,7 @@ Duplicates and order
 Local dev, tests and deploy
 - `wrangler dev` and the Vitest pool run the queue locally from `wrangler.jsonc`; no setup.
 - Producer tests assert the jobs enqueued; consumer tests use `createMessageBatch` and `getQueueResult` from `cloudflare:test` for ack, retry with delay, expiry drop and deleted device. Existing end to end push tests run the consumer on the enqueued jobs.
-- Before the merge that ships this, the PO runs `wrangler queues create bisou-push` once on the production account; deploy fails without it.
+- Before the merge that ships this, the queue must exist on the production account (`wrangler queues create bisou`, done by the PO on 11 November 2026); deploy fails without it.
 - No migration.
 
 Privacy
