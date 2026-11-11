@@ -25,6 +25,8 @@
 
 ### Changed
 
+- The offline notice is now a toast at the top (title, a line about loaded data, Retry and close) that stays while you are offline and goes away when the connection returns; a newer toast can temporarily replace it.
+- Notifications inside the app (saved, deleted, errors) now use the ding toast, one at a time at the top, in the current theme's colors.
 - Push notifications are now sent through a Cloudflare queue, one message per device: a push after a write can arrive 1 to 2 seconds later, a push the push service refuses for a moment (busy or unreachable) is retried up to 3 times within its 24 hours, and the hourly reminders no longer limit how many devices Bisou can notify.
 - Quiet hours are cancelled: journal entries, Garden answers and kind notes now notify at once at any hour, every push lives 24 hours (event reminders too, so an offline phone may show one late), and the 07:00 combined night journal notification is gone.
 - Spins can land on an unpriced open wish; it remains claimable, and its result says "Chưa ghi giá" / "No price set".

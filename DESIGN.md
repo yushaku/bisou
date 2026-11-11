@@ -9,6 +9,7 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Chất vải chỉ gợi nhẹ trên nền và thẻ. Len/nỉ rõ nét dành cho vài minh hoạ điểm nhấn; không biến toàn app thành thế giới đồ chơi.
 - Bề mặt mờ, bóng mềm, nút hơi đệm và nhấn nhẹ. Tránh nhựa bóng, đường may dày khắp nơi, bóng cứng hoặc chuyển động nhún liên tục trong hướng A.
 - Giữ tinh thần kem–đào ở bản sáng và ấm, dịu ở bản tối. Khi dùng bảng màu khác, giữ chất liệu và độ dễ đọc; không ép mọi theme về màu đào.
+- Toast dùng ding (`@yusufceng1z/ding-react`), icon gốc của ding, dáng Dynamic Island: viên thuốc đảo màu theo theme (nền `--foreground`, chữ `--background`), xem `src/client/styles.css`.
 - Journal và Sticker vẫn là lựa chọn riêng. Không trộn đặc trưng của chúng vào Soft hoặc tạo một phong cách riêng cho từng màn hình.
 - Bảng màu, phong cách và nền phải tiếp tục độc lập, dùng chung component. Thêm theme không được kéo theo một bản UI riêng.
 - Ảnh nhật ký giữ chất ảnh thật. Minh hoạ đôi chỉ là trang trí, không thay ảnh đại diện hay giả làm danh tính của người dùng.
@@ -22,5 +23,6 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Hũ điều ước dùng phương án A: hũ thuỷ tinh nét vẽ tay, giấy gấp lấy màu từ các token chart. Hũ của mình có mức 0, 1, 2, 3, 4 tương ứng 0, 1 đến 2, 3 đến 5, 6 đến 9, từ 10 điều ước đang mở; hũ người kia chỉ hiện mức 0 khi trống hoặc mức 2 khi có điều ước, không lộ số lượng.
 - Hũ người kia trống thì làm mờ hình hũ, kèm lời giải thích đọc được bằng trình đọc màn hình. Tia lấp lánh đứng yên khi bật giảm chuyển động; mỗi hũ có ID clipPath riêng.
 - Thẻ hôm nay là khối đầu trên Home, sau banner chọn giai đoạn nếu có. Bốn lượt rõ ràng: viết, đợi người ấy theo tên, người ấy đã úp thẻ tới lượt mình, cùng lật. Tên thật hiện cả trước và sau khi lật. Lật và tưới một lần trên thiết bị, rồi giữ hai câu trả lời ngửa ở mọi nơi. Câu trả lời lựa chọn dùng chip ToggleGroup; chọn không ghi chi tiết hoặc để sau thì ẩn ô chữ. “Thôi” dùng để huỷ, “Để sau” chỉ là lựa chọn trả lời.
+- Các khối trên Home (Thẻ hôm nay, Bài hôm nay, Sắp tới) dùng cùng một mẫu: tiêu đề `font-heading text-xl` nằm ngoài thẻ, nút phụ như “Xem tất cả” ở bên phải tiêu đề, nội dung là thẻ bên dưới.
 - Hộp thư lời nhắn nhỏ nghiêng nhẹ hai lần rồi nghỉ; đứng yên khi bật giảm chuyển động.
 - Mỗi lời nhắn nhỏ là một phong bì màu nước vẽ tay, xếp hai cột: giấy kem, mực nâu, nắp gập hình chữ V ở mặt sau. Chưa mở thì có dấu sáp đỏ hình trái tim; đã mở thì nắp hé và dấu sáp vỡ. Tem hình bông hoa (không dùng trái tim), dấu bưu điện lượn sóng chỉ hiện khi đã gửi, ghi "Gửi {partner}" hoặc "Từ {partner}" trên phong bì. Trạng thái và một dòng xem trước nằm ở chú thích bên dưới; lời nhắn đang chờ mở thì không có xem trước và không có ngày.

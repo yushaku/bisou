@@ -215,7 +215,7 @@ Example: before 22:30 on 12 November both see Lời nhắn nhỏ empty, with "Vi
 
 - R48. Lời nhắn nhỏ has two groups, "Gửi cho mình" ("To me": waiting and opened notes) and "Mình đã viết" ("I wrote": unsent, not opened and opened notes); an empty group is left out; with both empty it reads "Chưa có lời nhắn nào" ("No notes yet") and offers to write to the partner by name ("Viết cho Linh" / "Write to Linh").
 - R49. The invitation to write says a note suits things that are hard to say, and that a serious problem is better talked about directly.
-- R50. Without a connection, Lời nhắn nhỏ and the Home tile keep showing what was loaded, under the offline bar.
+- R50. Without a connection, Lời nhắn nhỏ and the Home tile keep showing what was loaded, while the offline toast shows.
 - R51. Saving, changing, sending, withdrawing, deleting, opening and closing a note need a connection; offline, the action says so and nothing happens later on its own.
 
 - AC31 (R48, R49). Given no notes, then Sơn sees "Chưa có lời nhắn nào", "Viết cho Linh" and the invitation; Linh sees "Viết cho Sơn".

@@ -5,7 +5,7 @@
 - Splash: the felt heart logo on the linen background, light or dark, instead of a white flash.
 - Install guide: a small card on Home in a browser tab only; 3 steps on iPhone Safari, the browser's own prompt on Android; closing it hides it for good on that device.
 - New deploy: unchanged; the app reloads itself at once. The PO accepts that an unsaved draft can be lost.
-- Offline: one offline bar for every tab; loaded data stays visible; saving needs a connection, nothing is queued.
+- Offline: one offline toast for every tab; loaded data stays visible; saving needs a connection, nothing is queued.
 - Errors: a friendly screen with a Reload button instead of a white page.
 - Status bar: follows the chosen theme.
 - Android shortcuts: Write in the journal, Spin.
@@ -42,7 +42,7 @@ Updates
 
 Offline
 
-- R9. Without a connection, one offline bar shows on every tab, and goes away when the connection returns.
+- R9. Without a connection, one offline toast shows at the top of every tab and stays while offline: a title, a line saying loaded data is still here, Retry (reloads once the connection is back) and close; a newer toast can temporarily replace it, and it goes away when the connection returns.
 - R10. Home and Wishes keep showing data already loaded.
 - R11. While offline, save buttons say plainly that they need a connection; nothing is saved later on its own.
 
@@ -68,7 +68,7 @@ Open Bisou in a tab, follow the card to install, open from the icon, use it on a
 - AC6 (R7). Given An closes the card, when An reloads or comes back days later in Safari on that iPhone, then it stays hidden; on another device it shows again.
 - AC7 (R4). Given An opens the installed app, then the card never shows.
 - AC8 (R8). Given Binh has the app open and a new version is deployed, when it takes over, then the app reloads at once without asking.
-- AC9 (R9). Given An loses signal, then one offline bar shows on Home, Journal and Wishes alike; when signal returns, it goes away.
+- AC9 (R9). Given An loses signal, then one offline toast shows on Home, Journal and Wishes alike; when signal returns, it goes away.
 - AC10 (R10). Given An loaded Home and Wishes before losing signal, then both still show their data offline.
 - AC11 (R11). Given An is offline, when An tries to save a journal entry or a wish, then the save button says it needs a connection and nothing is sent later on its own.
 - AC12 (R12). Given a screen fails unexpectedly, then Binh sees a friendly screen with a Reload button; tapping it reloads the app.
@@ -77,7 +77,7 @@ Open Bisou in a tab, follow the card to install, open from the icon, use it on a
 
 - **Installed app** (ứng dụng đã cài): Bisou added to the home screen.
 - **Install card** (thẻ hướng dẫn cài): the card in R4 to R7.
-- **Offline bar** (thanh ngoại tuyến): the bar in R9.
+- **Offline toast** (thông báo ngoại tuyến): the toast in R9.
 
 ## Out of scope
 
