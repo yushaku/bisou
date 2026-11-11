@@ -21,8 +21,9 @@ const TAB_TITLES: Partial<Record<TabId, MessageKey>> = { home: "home.ourCorner",
 
 export function SignedInShell({
   tab,
+  onRefresh,
   children,
-}: SessionProps & { tab?: TabId; children: ReactNode }) {
+}: SessionProps & { tab?: TabId; onRefresh?: () => void | Promise<void>; children: ReactNode }) {
   const { t } = useI18n();
   const [location, navigate] = useLocation();
   const titleKey = tab && TAB_TITLES[tab];
@@ -50,6 +51,7 @@ export function SignedInShell({
         if (memory) memory.returnFocus = "settings-button";
         navigate("/settings", { state: { from: location } });
       }}
+      onRefresh={onRefresh}
       tabs={tab ? { active: tab, ...navigation } : undefined}
     >
       {children}

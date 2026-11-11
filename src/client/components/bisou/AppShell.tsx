@@ -1,5 +1,6 @@
 import { useOnline } from "@/lib/useOnline";
-import { BookHeart, Gift, House, Mailbox, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
+import { BookHeart, Gift, House, Loader2Icon, Mailbox, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -28,6 +29,7 @@ interface AppShellProps {
   action?: ReactNode;
   /* Omit on onboarding and pairing. */
   tabs?: BottomBarProps;
+  onRefresh?: () => void | Promise<void>;
   children: ReactNode;
   className?: string;
 }
@@ -37,9 +39,92 @@ interface AppShellProps {
  * in thumb reach above the home indicator. Both bars are sticky, so the shell works in
  * the page scroll and inside the /design phone frames alike.
  */
-export function AppShell({ title, onOpenSettings, action, tabs, children, className }: AppShellProps) {
+export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, children, className }: AppShellProps) {
   const { t } = useI18n();
   const online = useOnline();
+  const mainRef = useRef<HTMLElement>(null);
+  const [pull, setPull] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const [settling, setSettling] = useState(false);
+  const canRefresh = Boolean(tabs && onRefresh);
+
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main || !canRefresh || !onRefresh) return;
+    setPull(0);
+    setRefreshing(false);
+    setSettling(false);
+    let start: { x: number; y: number } | null = null;
+    let distance = 0;
+    let busy = false;
+    let disposed = false;
+    const root = document.documentElement;
+    const overscroll = root.style.overscrollBehaviorY;
+    // The page scrolls, so suppress native refresh on the root rather than main.
+    root.style.overscrollBehaviorY = "none";
+    const cancel = () => {
+      start = null;
+      distance = 0;
+      setSettling(false);
+      if (!busy) setPull(0);
+    };
+    const begin = (event: TouchEvent) => {
+      if (busy || window.scrollY > 0 || event.touches.length !== 1) return;
+      if (event.target instanceof Element) {
+        if (event.target.closest("button, a, input, textarea, select, [contenteditable], [role=slider]")) return;
+        for (let target: Element | null = event.target; target && target !== main; target = target.parentElement) {
+          if (target.scrollHeight > target.clientHeight && /auto|scroll/.test(getComputedStyle(target).overflowY)) return;
+        }
+      }
+      const touch = event.touches[0]!;
+      start = { x: touch.clientX, y: touch.clientY };
+    };
+    const move = (event: TouchEvent) => {
+      if (!start) return;
+      if (event.touches.length !== 1 || window.scrollY > 0) { cancel(); return; }
+      const touch = event.touches[0]!;
+      const dy = touch.clientY - start.y;
+      if (dy <= 0 || Math.abs(touch.clientX - start.x) > dy || !event.cancelable) { cancel(); return; }
+      event.preventDefault();
+      distance = dy;
+      setSettling(false);
+      setPull(Math.min(dy / 2, 96));
+    };
+    const end = (event: TouchEvent) => {
+      const ready = event.touches.length === 0 && start !== null && distance >= 80;
+      cancel();
+      if (!ready || busy) return;
+      busy = true;
+      setRefreshing(true);
+      setPull(48);
+      const minimum = new Promise<void>((resolve) => setTimeout(resolve, 300));
+      void (async () => {
+        try { await onRefresh(); }
+        catch { if (!disposed) toast.error(t("error.generic")); }
+        finally {
+          await minimum;
+          busy = false;
+          if (!disposed) { setRefreshing(false); setSettling(true); setPull(0); }
+        }
+      })();
+    };
+    const scroll = () => { if (window.scrollY > 0) cancel(); };
+    main.addEventListener("touchstart", begin, { passive: true });
+    main.addEventListener("touchmove", move, { passive: false });
+    main.addEventListener("touchend", end);
+    main.addEventListener("touchcancel", cancel);
+    window.addEventListener("scroll", scroll, { passive: true });
+    return () => {
+      disposed = true;
+      root.style.overscrollBehaviorY = overscroll;
+      main.removeEventListener("touchstart", begin);
+      main.removeEventListener("touchmove", move);
+      main.removeEventListener("touchend", end);
+      main.removeEventListener("touchcancel", cancel);
+      window.removeEventListener("scroll", scroll);
+    };
+  }, [canRefresh, onRefresh, t]);
+
   return (
     <div className={cn("flex min-h-dvh flex-col", className)}>
       <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)] [view-transition-name:tab-header]">
@@ -58,7 +143,15 @@ export function AppShell({ title, onOpenSettings, action, tabs, children, classN
         <p role="status" className="bg-warning px-4 py-3 text-center text-sm text-warning-foreground empty:py-0">{!online ? t("offline.bar") : ""}</p>
       </header>
 
-      <main tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">{children}</main>
+      <main ref={mainRef} tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">
+        {canRefresh && <div className={cn("flex shrink-0 items-center justify-center overflow-hidden text-muted-foreground motion-reduce:transition-none", settling && "transition-[height] duration-200")} style={{ height: pull }}>
+          {pull > 0 && <span role="status" aria-busy={refreshing}>
+            <Loader2Icon aria-hidden="true" className={cn("size-5", refreshing && "animate-spin motion-reduce:animate-none")} />
+            <span className="sr-only">{t("loading")}</span>
+          </span>}
+        </div>}
+        {children}
+      </main>
 
       {tabs && <BottomBar {...tabs} />}
     </div>

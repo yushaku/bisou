@@ -91,7 +91,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
 
   const optionsButton = (wish: Wish) => <Button variant="ghost" size="icon" aria-label={t("wish.options", { title: wish.title })} onClick={() => { setDetail(false); setActing(wish); setDeleting(false); setError(null); }}><Ellipsis aria-hidden="true" /></Button>;
 
-  return <SignedInShell {...session} tab="wishes">
+  return <SignedInShell {...session} tab="wishes" onRefresh={refresh}>
     {view === "spin" ? <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}><ArrowLeft aria-hidden="true" />{t("wishes.back")}</Button> : <>
       <section aria-label={t("nav.wishes")} className="mb-4 grid grid-cols-2 gap-2">
         <WishJar person={myJar} level={levels.mine} mine onOpen={() => setView("jar")} />

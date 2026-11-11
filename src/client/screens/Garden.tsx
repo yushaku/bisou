@@ -43,7 +43,7 @@ export function Garden({ couple, ...session }: SessionProps & { couple: Couple }
   const partnerName = couple.members.find((member) => member.id !== user.id)?.displayName?.trim() || t("garden.partner");
   const viewStage = (levelId: RelationshipLevel) => { setSheetLevel(null); setViewingId(levelId); setView("garden"); };
   const selectIsland = (levelId: RelationshipLevel) => setSheetLevel(levelId);
-  return <SignedInShell {...session} tab="garden">
+  return <SignedInShell {...session} tab="garden" onRefresh={refresh}>
     <div className="flex flex-col gap-5 py-3">
       {state && <GardenStageNotice state={state} memoryScope={`${couple.id}:${user.id}`} partnerName={partnerName} onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
       {failed && <div role="alert"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}

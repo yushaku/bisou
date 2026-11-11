@@ -34,12 +34,13 @@ const DateSheet = lazy(() => import("../components/bisou/DateSheet").then((m) =>
 interface HomeProps extends SessionProps {
   couple: Couple;
   onCouple: (couple: Couple | null) => void;
+  onRefresh?: () => void | Promise<void>;
   /* True right after pairing: plays the celebration once. */
   celebrate: boolean;
   onCelebrated: () => void;
 }
 
-export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: HomeProps) {
+export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...session }: HomeProps) {
   const { t } = useI18n();
   const online = useOnline();
   const [editingEvent, setEditingEvent] = useState<CoupleEvent | null>();
@@ -71,7 +72,7 @@ export function Home({ couple, onCouple, celebrate, onCelebrated, ...session }: 
   if (couple.members.length !== 2) return null;
 
   return (
-    <SignedInShell {...session} tab="home">
+    <SignedInShell {...session} tab="home" onRefresh={onRefresh}>
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={people} size="sm" />
         <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: people[0].name, b: people[1].name })}</p>

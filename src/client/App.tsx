@@ -160,7 +160,7 @@ function SignedIn({
         <Garden {...session} couple={couple} />
       </Route>
       <Route>
-        <Home {...session} couple={couple} onCouple={onCouple} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
+        <Home {...session} couple={couple} onCouple={onCouple} onRefresh={refresh} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
       </Route>
     </Switch>
   );

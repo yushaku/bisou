@@ -183,7 +183,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   }, [autoLoad, loadMore, more, feed]);
 
   return (
-    <SignedInShell {...session} tab="journal">
+    <SignedInShell {...session} tab="journal" onRefresh={refresh}>
       <Tabs value={section} onValueChange={(value) => { const next = value === "notes" ? "notes" : "feed"; setSection(next); if (memory) memory.journalSection = next; }}>
         <TabsList className="mb-4 w-full"><TabsTrigger value="feed">{t("journal.sectionFeed")}</TabsTrigger><TabsTrigger value="notes">{t("journal.sectionNotes")}</TabsTrigger></TabsList>
         <TabsContent value="notes"><NotesSection composeRequested={noteRequested} onComposeHandled={() => setNoteRequested(false)} onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
