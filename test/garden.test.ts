@@ -411,35 +411,49 @@ describe("Garden daily cards", () => {
 
 
 describe("Relationship placement", () => {
-  it("R45 R46 AC26 AC33: placement is mutual, stale acceptance cannot consume a replacement", async () => {
+  it("R45 R46 AC26: new couples start at Làm quen and legacy empty placement reads as Làm quen", async () => {
+    const { a, b, couple } = await paired();
+    const expected = { initialLevelId: "acquainted", selectedLevelId: "acquainted", furthestLevelId: "acquainted", placementComplete: true };
+    expect((await garden(a)).levels).toMatchObject(expected);
+    await env.DB.prepare("UPDATE garden_levels SET initial_level = NULL, selected_level = NULL, furthest_level = NULL WHERE couple_id = ?").bind(couple.id).run();
+    expect((await garden(b)).levels).toMatchObject(expected);
+    expect(await env.DB.prepare("SELECT initial_level FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("initial_level")).toBeNull();
+    const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
+    expect((await act(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 })).status).toBe(200);
+    expect((await act(b, { action: "accept", revision: 1 })).status).toBe(200);
+    expect((await garden(a)).levels).toMatchObject({ ...expected, selectedLevelId: "in_love", furthestLevelId: "in_love" });
+  });
+  it("R45 R47 AC33: default placement cannot be replaced and later stage choices stay mutual", async () => {
     const { a, b, couple } = await paired();
     const initial = await garden(a);
     const action = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
-    expect((await action(a, { action: "propose", kind: "placement", levelId: "married", revision: 0 })).status).toBe(200);
+    expect(initial.levels).toMatchObject({ initialLevelId: "acquainted", placementComplete: true });
+    expect((await action(a, { action: "propose", kind: "placement", levelId: "married", revision: 0 })).status).toBe(409);
+    expect((await action(a, { action: "propose", kind: "target", levelId: "married", revision: 0 })).status).toBe(200);
     expect((await action(a, { action: "accept", revision: 1 })).status).toBe(409);
-    expect((await action(a, { action: "propose", kind: "placement", levelId: "in_love", revision: 1 })).status).toBe(200);
-    expect((await action(b, { action: "accept", revision: 1 })).status).toBe(409);
-    expect((await action(b, { action: "accept", revision: 2 })).status).toBe(200);
+    expect((await action(b, { action: "accept", revision: 1 })).status).toBe(200);
     const state = await garden(a);
-    expect(state).toMatchObject({ levels: { initialLevelId: "in_love", selectedLevelId: "in_love", furthestLevelId: "in_love" } });
+    expect(state).toMatchObject({ levels: { initialLevelId: "acquainted", selectedLevelId: "married", furthestLevelId: "married" } });
     expect(state.today).toEqual(initial.today);
     expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
-    expect((await action(a, { action: "propose", kind: "placement", levelId: "married", revision: 3 })).status).toBe(409);
+    expect((await action(a, { action: "propose", kind: "target", levelId: "married", revision: 2 })).status).toBe(409);
   });
-  it("R46 R56 AC36: unplaced couples keep legacy play and cannot forge a locked ordinary answer", async () => {
+  it("R45 R56 AC36: Làm quen is open and later ordinary content stays locked", async () => {
     const { a } = await paired();
+    expect((await answer(a, "L1-02")).status).toBe(201);
     expect((await answer(a, "L2-02")).status).toBe(404);
     expect((await garden(a)).today?.cardId).not.toMatch(/^L/);
   });
 });
 
-it("R45 R51 R52 AC26 AC30 AC31: Married starting placement preserves waiting cards and growth; mutual revisit keeps access", async () => {
+it("R45 R47 R51 R52 AC30 AC31: legacy default and mutual stage changes preserve waiting cards and growth", async () => {
   const { a, b, couple } = await paired();
   const before = await garden(a);
   await answer(a, before.today!.cardId);
   await env.DB.prepare("INSERT INTO garden_growth VALUES (?, 'money', '2026-11-08')").bind(couple.id).run();
   const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
-  expect((await act(a, { action: "propose", kind: "placement", levelId: "married", revision: 0 })).status).toBe(200);
+  await env.DB.prepare("UPDATE garden_levels SET initial_level = NULL, selected_level = NULL, furthest_level = NULL WHERE couple_id = ?").bind(couple.id).run();
+  expect((await act(a, { action: "propose", kind: "target", levelId: "married", revision: 0 })).status).toBe(200);
   expect((await act(b, { action: "accept", revision: 1 })).status).toBe(200);
   const state = await garden(b);
   expect(state.today!.cardId).toBe(before.today!.cardId);
@@ -447,23 +461,24 @@ it("R45 R51 R52 AC26 AC30 AC31: Married starting placement preserves waiting car
   expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
   expect((await act(a, { action: "propose", kind: "revisit", levelId: "in_love", revision: 2 })).status).toBe(200);
   expect((await act(b, { action: "accept", revision: 3 })).status).toBe(200);
-  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "in_love", furthestLevelId: "married", initialLevelId: "married" });
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "in_love", furthestLevelId: "married", initialLevelId: "acquainted" });
   expect((await answer(b, before.today!.cardId)).status).toBe(201);
 });
-it("R1 R46 AC33: only current paired members mutate levels; pending proposals require decline before counterproposal", async () => {
+it("R1 R47 AC33: only current paired members mutate levels; pending proposals require decline before counterproposal", async () => {
   const { a, b, couple } = await paired(); const outsider = await user("Outside");
   const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
   expect((await act(outsider, { action: "accept", revision: 1 })).status).toBe(404);
-  await act(a, { action: "propose", kind: "placement", levelId: "married", revision: 0 });
-  expect((await act(b, { action: "propose", kind: "placement", levelId: "in_love", revision: 1 })).status).toBe(409);
+  await act(a, { action: "propose", kind: "target", levelId: "married", revision: 0 });
+  expect((await act(b, { action: "propose", kind: "target", levelId: "in_love", revision: 1 })).status).toBe(409);
   expect((await act(b, { action: "decline", revision: 1 })).status).toBe(200);
-  expect((await act(b, { action: "propose", kind: "placement", levelId: "in_love", revision: 2 })).status).toBe(200);
+  expect((await act(b, { action: "propose", kind: "target", levelId: "in_love", revision: 2 })).status).toBe(200);
   await env.DB.prepare("DELETE FROM couple_members WHERE couple_id = ? AND user_id = ?").bind(couple.id, a.id).run();
   expect((await act(b, { action: "accept", revision: 3 })).status).toBe(404);
 });
 
 async function place(a: TestUser, b: TestUser, levelId = "in_love") {
-  expect((await call("POST", "/api/garden/levels", { cookie: a.cookie, body: { action: "propose", kind: "placement", levelId, revision: 0 } })).status).toBe(200);
+  if (levelId === "acquainted") return;
+  expect((await call("POST", "/api/garden/levels", { cookie: a.cookie, body: { action: "propose", kind: "target", levelId, revision: 0 } })).status).toBe(200);
   expect((await call("POST", "/api/garden/levels", { cookie: b.cookie, body: { action: "accept", revision: 1 } })).status).toBe(200);
 }
 it.each(["no_details", "later_not_applicable"])("R42 R43 R44 AC24 AC25 AC32: %s reveals text only on paired submission and retains completion on deletion", async (choice) => {
@@ -540,11 +555,11 @@ it("R48 R58 R59 AC27 AC32 AC33: answers and post-reveal deletions do not affect 
   for (const id of gateIds(0)) { await answer(a, id); await answer(b, id, "different"); }
   await call("DELETE", `/api/garden/cards/${gateIds(0)[0]}/answer`, { cookie: a.cookie });
   expect((await garden(a)).levels.furthestLevelId).toBe("acquainted");
-  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
-  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(200);
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
+  expect((await levelAction(b, { action: "accept", revision: 1 })).status).toBe(200);
   const state = await garden(a);
-  expect(state.levels).toMatchObject({ revision: 4, selectedLevelId: "in_love", proposal: null });
-  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(409);
+  expect(state.levels).toMatchObject({ revision: 2, selectedLevelId: "in_love", proposal: null });
+  expect((await levelAction(b, { action: "accept", revision: 1 })).status).toBe(409);
   await call("DELETE", `/api/garden/cards/${gateIds(0)[1]}/answer`, { cookie: b.cookie });
   expect((await garden(b)).levels.furthestLevelId).toBe("in_love");
 });
@@ -562,14 +577,14 @@ it("R47 R59 AC33: stale acceptance after replacement or decline saves nothing an
 });
 it("R48 R59 AC27 AC33: concurrent responses after acceptance cannot reopen a stage or mutate its revision", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "acquainted");
-  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
-  await levelAction(b, { action: "accept", revision: 3 });
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
+  await levelAction(b, { action: "accept", revision: 1 });
   const ids = gateIds(0); for (const id of ids) await answer(a, id);
   for (const id of ids.slice(0, -2)) await answer(b, id);
   expect((await Promise.all(ids.slice(-2).map((id) => answer(b, id)))).map((r) => r.status)).toEqual([201, 201]);
-  expect((await garden(a)).levels).toMatchObject({ revision: 4, selectedLevelId: "in_love", proposal: null });
+  expect((await garden(a)).levels).toMatchObject({ revision: 2, selectedLevelId: "in_love", proposal: null });
   expect((await Promise.all([answer(b, ids.at(-1)!), answer(b, ids.at(-1)!)])).map((r) => r.status)).toEqual([409, 409]);
-  expect(await env.DB.prepare("SELECT revision FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("revision")).toBe(4);
+  expect(await env.DB.prepare("SELECT revision FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("revision")).toBe(2);
   expect((await garden(b)).levels).toEqual((await garden(a)).levels);
 });
 it("R50 R51 R54 AC29 AC30: earlier decisions stay usable and a fresh mutual choice opens beyond the furthest stage", async () => {
@@ -622,8 +637,8 @@ it("R1 R57 AC32: cross-couple and unpaired callers cannot read or mutate decisio
 });
 it("R1 R59 AC33: removal between middleware and decision batch prevents insertion, completion and advancement", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "acquainted");
-  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
-  await levelAction(b, { action: "accept", revision: 3 });
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
+  await levelAction(b, { action: "accept", revision: 1 });
   for (const id of gateIds(0)) { await answer(a, id); if (id !== gateIds(0).at(-1)) await answer(b, id); }
   const original = env.DB.batch.bind(env.DB);
   const spy = vi.spyOn(env.DB, "batch").mockImplementationOnce(async (statements) => {
@@ -671,23 +686,23 @@ it("R56 AC36: opened ordinary exhaustion remains fresh with locked and decision 
 it("R48 R59 AC27 AC33: target acceptance racing both final answers has one serial outcome", async () => {
   const { a, b } = await paired(); await place(a, b, "acquainted");
   const ids = gateIds(0); for (const id of ids.slice(0, -1)) { await answer(a, id); await answer(b, id); }
-  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
-  const result = await Promise.all([levelAction(b, { action: "accept", revision: 3 }), answer(a, ids.at(-1)!), answer(b, ids.at(-1)!)]);
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
+  const result = await Promise.all([levelAction(b, { action: "accept", revision: 1 }), answer(a, ids.at(-1)!), answer(b, ids.at(-1)!)]);
   expect(result.map((r) => r.status)).toEqual([200, 201, 201]);
   const state = await garden(a); expect(state.levels.furthestLevelId).toBe("in_love"); expect(state.levels.proposal).toBeNull();
-  expect(state.levels.revision).toBe(4);
+  expect(state.levels.revision).toBe(2);
 });
 
 it("R48 R59 AC27 AC33: mutual choice opens immediately with no decision responses and cannot cascade", async () => {
   const { a, b } = await paired(); await place(a, b, "acquainted");
-  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 2 });
-  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(200);
+  await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
+  expect((await levelAction(b, { action: "accept", revision: 1 })).status).toBe(200);
   const state = await garden(a);
-  expect(state.levels).toMatchObject({ revision: 4, selectedLevelId: "in_love", furthestLevelId: "in_love", proposal: null });
+  expect(state.levels).toMatchObject({ revision: 2, selectedLevelId: "in_love", furthestLevelId: "in_love", proposal: null });
   expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
   for (const id of gateIds(0)) { await answer(a, id); await answer(b, id); }
-  expect((await garden(b)).levels).toMatchObject({ revision: 4, furthestLevelId: "in_love", proposal: null });
-  expect((await levelAction(b, { action: "accept", revision: 3 })).status).toBe(409);
+  expect((await garden(b)).levels).toMatchObject({ revision: 2, furthestLevelId: "in_love", proposal: null });
+  expect((await levelAction(b, { action: "accept", revision: 1 })).status).toBe(409);
 });
 
 it("R15 R19 AC9 AC17: restored history stays face up in the API after the day changes", async () => {

@@ -15,6 +15,7 @@ export interface GardenLevels {
   decisions: { cardId: string; complete: boolean }[];
 }
 export const levelRank = (id: RelationshipLevel) => LEVEL_IDS.indexOf(id);
+export const FIRST_LEVEL = levelRank(LEVEL_IDS[0]);
 export function ordinaryEligible(card: GardenCard, furthestLevel: number | null = null): boolean {
   return card.kind === "ordinary" && (furthestLevel === null ? !card.id.startsWith("L") : levelRank(card.levelId) <= furthestLevel);
 }
