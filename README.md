@@ -1,6 +1,6 @@
 # Bisou
 
-A private PWA for one couple: shared journal, wish jars, upcoming events, the Garden question cards and kind notes, in Vietnamese and English. One Cloudflare Worker (Hono) serves the React SPA and the API under `/api`, with D1 for data and a private R2 bucket for photos. Free plan only.
+A private PWA for one couple: shared journal, wish jars, upcoming events, the Garden question cards, Card box and kind notes, in Vietnamese and English. One Cloudflare Worker (Hono) serves the React SPA and the API under `/api`, with D1 for data and a private R2 bucket for photos. Free plan only.
 
 Docs (product rules, decisions, diagrams): https://yushaku.github.io/bisou/docs/ ([source](docs/README.md)).
 
