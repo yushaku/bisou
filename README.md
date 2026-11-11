@@ -16,6 +16,10 @@ To install, open Bisou in Safari on iPhone and choose Share, Add to Home Screen,
 
 One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and the API under `/api`. D1 stores couples, journal entries, photo records, wishes, birthdays and events; the private R2 bucket `bisou`, bound as `PHOTOS` in `wrangler.jsonc`, stores the cropped photos, and profile photos under `users/<id>/avatar/`. Free plan only.
 
+![Bisou system architecture: release pipeline and Cloudflare runtime](docs/system-architecture.svg)
+
+The interactive version with source references is [docs/system-architecture.html](docs/system-architecture.html) (spec: [docs/system-architecture.json](docs/system-architecture.json)).
+
 ## Layout
 
 - `src/worker`: the Worker. `app.ts` mounts one route module per area: `auth`, `me`, `couple`, `events`, `journal`, `photos` and `wishes`.
