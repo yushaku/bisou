@@ -1,0 +1,50 @@
+name: Docs site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "README.md"
+      - "DESIGN.md"
+      - "CHANGELOG.md"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Publish only the docs, keeping repo-relative paths so links like ../DESIGN.md resolve.
+      # README.md becomes the site home and docs/README.md the docs index.
+      - name: Stage docs
+        run: |
+          mkdir site
+          cp -r docs README.md DESIGN.md CHANGELOG.md site/
+          printf 'title: Bisou docs\n' > site/_config.yml
+      - uses: actions/configure-pages@v6
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./site
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v5
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

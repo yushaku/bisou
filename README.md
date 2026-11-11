@@ -18,7 +18,7 @@ One Cloudflare Worker (Hono) serves the React SPA (Workers static assets) and th
 
 ![Bisou system architecture: release pipeline and Cloudflare runtime](docs/system-architecture.svg)
 
-The interactive version with source references is [docs/system-architecture.html](docs/system-architecture.html) (spec: [docs/system-architecture.json](docs/system-architecture.json)).
+The interactive version with source references is [docs/system-architecture.html](docs/system-architecture.html) (spec: [docs/system-architecture.json](docs/system-architecture.json)). All docs: [docs/](docs/README.md), published at https://yushaku.github.io/bisou/docs/.
 
 ## Layout
 
