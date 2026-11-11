@@ -93,6 +93,10 @@ How might two partners keep their shared story (daily moments, milestones, and t
 - [ ] **Date jar**
   - Goal: stop "what do we do tonight".
   - Outcome: spin for a date idea, reusing the wish jar spin.
+- [ ] **Card box**
+  - Goal: a good card to talk about when we sit together, nothing to write.
+  - Outcome: free and paid boxes of question, dare, would-you-rather, point and scale cards, drawn at random on one phone; paid boxes unlock per couple with a single-use code, first 3 cards as preview; Home block opens `/boxes`; no answers kept, no Garden link.
+  - Ref: .team/research/card-box.md
 
 ### Questions and Garden: one-pager (brainstorm, Nov 2026)
 How might the two of us understand each other more deeply through questions grounded in relationship psychology, cared for like a garden, without it feeling like a test?
