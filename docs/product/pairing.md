@@ -9,6 +9,13 @@ Bisou is private to exactly two partners. Their two accounts must first become o
 - **Partner**: a signed in person; either may invite (inviter) or join (invitee), and once paired both have the same rights.
 - **Outsider**: any other signed in person.
 
+## User stories
+
+- US1 (inviter): invite my partner with a code or link that stays valid for a day, so that we can become a couple even when we are hours apart. AC3, AC6
+- US2 (invitee): join my partner's couple with their code or link, so that our two accounts become one couple. AC1, AC4, AC5, AC7, AC8, AC9
+- US3 (partner): set the day we started and see our days together and next milestone, so that we celebrate what matters. AC10, AC11, AC12, AC13, AC14
+- US4 (person): choose my display name and keep my email and couple private from others, so that my partner knows who I am and nobody else learns anything. AC2, AC15
+
 ## Business rules
 
 - R1. A person belongs to at most one couple, and a couple has at most two people.
@@ -33,34 +40,29 @@ Bisou is private to exactly two partners. Their two accounts must first become o
 - R20. For a 29 February start date, the anniversary falls on 28 February in other years.
 - R21. Bisou keeps only the email (to sign in), the display name (so the partner knows who they are with), the optional birthday ([events](events.md)) and the optional profile photo ([avatar](avatar.md)), for as long as the account exists.
 
-## Main flow
+## Main flows and exceptions
 
-Running example: An and Binh, together since 12 February 2023.
-
-1. On 3 November 2026 at 20:00 An signs in, chooses the name "An" and shares code `K7PQ2M` as a link.
-2. Nobody uses it; on 5 November at 08:00 An makes code `R3XHWD`.
-3. At 09:00 Binh opens the link, chooses the name "Binh" and joins; both see they are a couple.
-4. Binh sets the start date; both see the days together and the next milestone.
-
-Exceptions: AC4 to AC9.
+- Flow for US1: a new person chooses a name, gets a code and shares it as a link or text. If nobody uses it within 24 hours, a new code is offered; until then no new code is given.
+- Flow for US2: the invitee signs in, chooses a name, enters the code or opens the link, and both see they are a couple. Exceptions: an expired, used, own or malformed code is refused with a reason; after 10 wrong attempts in an hour every attempt is refused until the wait ends; a person already in a couple cannot join.
+- Flow for US3: either partner sets or changes the start date, also while waiting; both then see the days together and the next milestone. Exception: a date after today in the earliest time zone or before 1900 is refused.
 
 ## Acceptance criteria
 
-- AC1 (R1, R2). Given An and Binh are a couple, when either joins another code, then it is refused and nothing changes.
-- AC2 (R4). Given a new person, when the name is empty or over 40 characters, then they cannot continue; later An can rename to "An Nguyen" but not clear it.
-- AC3 (R6, R8). Given An makes a code at 20:00 on 3 November 2026, then it has 6 characters without look-alikes and works until just before 20:00 on 4 November.
-- AC4 (R7, R11). Given code `R3XHWD`, when Binh types "r3x-hwd" or opens the link, then the join succeeds.
-- AC5 (R9, R1). Given Binh joined with `R3XHWD`, when a third person enters it, then it is refused.
-- AC6 (R10). Given An's code is valid, when An asks for a new one, then it is refused; once expired, a new code is given and the old one is refused.
-- AC7 (R12). Given An made `R3XHWD`, when An enters it, then An is told it is their own code and it is not counted.
-- AC8 (R13). Given both made codes, when Binh joins An's code, then they are a couple and Binh's code works for nobody.
-- AC9 (R14). Given Binh made 10 wrong attempts from 08:00, when Binh enters the right code at 08:15, then it is refused with a 45 minute wait; just after 09:00 it succeeds; others are not affected.
-- AC10 (R15). Given waiting An set 14 February 2023, when Binh joins and sets 12 February 2023, then both see 12 February 2023.
+- AC1 (R1, R2). Given A and B are a couple, when either joins another code, then it is refused and nothing changes.
+- AC2 (R4). Given a new person, when the name is empty or over 40 characters, then they cannot continue; later A can rename but not clear it.
+- AC3 (R6, R8). Given A makes a code at 20:00 on a day, then it has 6 characters without look-alikes and works until just before 20:00 the next day.
+- AC4 (R7, R11). Given code R3XHWD, when B types "r3x-hwd" or opens the link, then the join succeeds.
+- AC5 (R9, R1). Given B joined with a code, when a third person enters it, then it is refused.
+- AC6 (R10). Given A's code is valid, when A asks for a new one, then it is refused; once expired, a new code is given and the old one is refused.
+- AC7 (R12). Given A made a code, when A enters it, then A is told it is their own code and it is not counted.
+- AC8 (R13). Given both made codes, when B joins A's code, then they are a couple and B's code works for nobody.
+- AC9 (R14). Given B made 10 wrong attempts from 08:00, when B enters the right code at 08:15, then it is refused with a 45 minute wait; just after 09:00 it succeeds; others are not affected.
+- AC10 (R15). Given waiting A set 14 February 2023, when B joins and sets 12 February 2023, then both see 12 February 2023.
 - AC11 (R16). Given today is 5 November 2026 everywhere, when a partner picks 6 November 2026 or 31 December 1899, then it is refused.
-- AC12 (R17, R18). Given today is 5 November 2026, then the counter shows 1363 days and the next milestone is day 1400 on 12 December 2026, 37 days left.
-- AC13 (R18, R19). Given today is 12 February 2026, then Bisou shows "today is your 3 year anniversary".
+- AC12 (R17, R18). Given a start date of 12 February 2023 and today 5 November 2026, then the counter shows 1363 days and the next milestone is day 1400 on 12 December 2026, 37 days left.
+- AC13 (R18, R19). Given the same start date and today 12 February 2026, then the milestone is announced as today, the 3 year anniversary.
 - AC14 (R20). Given start date 29 February 2024 and today 20 February 2025, then the next milestone is the 1 year anniversary on 28 February 2025.
-- AC15 (R3, R5). Given An and Binh are a couple, then an outsider sees no couple, and Binh sees An's name, not An's email.
+- AC15 (R3, R5). Given A and B are a couple, then an outsider sees no couple, and B sees A's name, not A's email.
 
 ## Glossary
 
@@ -82,3 +84,5 @@ Exceptions: AC4 to AC9.
 ## Open questions
 
 None.
+
+Retired: none

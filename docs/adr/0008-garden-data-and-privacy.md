@@ -1,6 +1,6 @@
 # ADR 0008: Garden cards live in code, answers in D1 keyed by card, and the server hides the partner's answer until both answered
 
-Status: Accepted (November 2026)
+Status: accepted (November 2026)
 
 ## Context
 The garden ([garden spec](../product/garden.md)) draws one daily card per couple from topic decks; each partner answers privately, the card flips when both answered, each deck is a plant that grows at most one step a day and never shrinks, and the garden's freshness follows the last flipped daily card. Nothing on screen or in a response may reveal who is late ([ADR 0005](0005-wish-jar-privacy-and-photo-reuse.md) patterns). About 60 cards ship now and more come later. Migrations are additive only.

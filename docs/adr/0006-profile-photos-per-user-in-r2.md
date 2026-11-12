@@ -1,6 +1,6 @@
 # ADR 0006: Profile photos belong to the user, one private R2 object named by a column on users
 
-Status: proposed (November 2026)
+Status: accepted (November 2026)
 
 ## Context
 Each person sets, replaces or removes one profile photo ([profile photo spec](../product/avatar.md)). It shows to the person before pairing and to both partners after (R11), is stored as privately as journal photos (R12), is one 512 px square without metadata (R6), and replacing or removing deletes it for good (R7, R8). Journal and wish photos are `photos` rows under `couples/<coupleId>/` ([ADR 0004](0004-photos-upload-first-private-r2.md), [ADR 0005](0005-wish-jar-privacy-and-photo-reuse.md)), but a person may have no couple yet, and joining a partner deletes the joiner's empty couple, which cascades its `photos` rows.

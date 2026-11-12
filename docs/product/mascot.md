@@ -1,28 +1,49 @@
 # Mascot
 
-## Gate 1 decisions
+## Purpose
 
-1. The girl and boy match the faces, hair, sweaters and knitted wool style of the Home couple illustration.
-2. Illustrations appear lightly in empty, initial waiting, error and celebration states.
-3. Each person chooses on their device in Settings. The choice needs no server field or migration.
-4. A registry maps each mascot to empty, waiting, error and celebrate images. New mascots require one registry entry and its image set.
-5. Images have transparent backgrounds and contain no text.
-6. The eight approved images are used. The girl is the default.
-7. Celebrations appear on Home on hundred-day multiples and anniversaries, and after a successful gift box unlock.
+Empty, waiting, error and celebration moments in Bisou can feel cold. A mascot, a friendly girl or boy, adds warmth without adding words or work, and each person picks the one they like.
 
-## Rules
+## Actors
 
-- R1: Store the mascot preference on this device, retain it through sign out and fall back to the girl for missing or unknown IDs. If storage is unavailable, retain changes for the current session.
-- R2: Settings offers a compact, labelled thumbnail picker in Vietnamese and English. Selection applies immediately to mounted illustrations.
-- R3: Shared empty and load failure states use the matching illustration. Full-screen initial waiting uses waiting; individual skeleton rows keep their current appearance.
-- R4: Home uses celebrate only when the next hundred-day or anniversary milestone is today. A successful gift unlock opens the existing celebration dialog; failed or pending unlocks do not celebrate.
-- R5: Illustrations are decorative, lazy loaded, static and contain no text. Existing text and actions carry the meaning. Layouts remain usable at 360px in Peach and Cocoa, including reduced motion.
-- R6: Each transparent WebP is 480px wide and below 80 KB. The design page shows all four situations for every mascot.
+- **Partner**: a signed-in person, who picks a mascot for their own device.
+
+## User stories
+
+- US1 (partner): pick the mascot I like, so that Bisou feels like mine. AC1, AC2
+- US2 (partner): see the mascot in empty, waiting, error and celebration moments, so that those moments feel warm while the text still tells me what to do. AC3, AC4
+
+## Business rules
+
+- R1. The mascot choice belongs to the device: it survives signing out, another device keeps its own choice, a missing or unknown choice means the girl, and if the choice cannot be kept it holds for the current session only.
+- R2. A person picks the girl or the boy from a compact labelled choice in Vietnamese and English, and the choice shows at once everywhere a mascot is visible.
+- R3. The illustration shows in shared empty states, in load failures and in full-view initial waiting; waits that show only placeholder rows keep their current look.
+- R4. The celebration illustration shows at celebration moments, including when the next hundred-day multiple or anniversary is today on Home and after a successful gift unlock of a paid card box ([card-box-unlock](card-box-unlock.md) R80); a failed or pending unlock does not celebrate.
+- R5. An illustration is decoration only: it carries no text and never replaces the text or actions that carry the meaning.
+- R7. A mascot has one illustration for each of four situations: empty, waiting, error and celebration; every mascot has all four.
+
+## Main flows and exceptions
+
+- Flow for US1: the person opens the settings, picks a mascot and sees every visible illustration change at once; with no choice yet they see the girl.
+- Flow for US2: an empty list, a failed load or a first load shows the illustration with its usual text and action; milestone days and the gift unlock show the celebration illustration.
 
 ## Acceptance criteria
 
-- AC1: A fresh device and an unknown stored ID use the girl. Changing to the boy survives sign out on that device; another device retains its own selection.
-- AC2: Settings renders the localized picker and selecting a mascot immediately changes illustrations without a network request.
-- AC3: Every registry entry includes all four situations. Empty, initial waiting and error states retain their text and actions alongside the illustration.
-- AC4: Hundred-day and anniversary dates show celebrate on Home; adjacent ordinary days do not. Gift unlock success celebrates, while failure does not.
-- AC5: The design page displays eight illustrations, each asset retains alpha and is below 80 KB, and the picker fits 360px and 390px screens in both themes.
+- AC1 (R1, R2). Given a fresh device or an unknown stored choice, then the girl shows; when the person picks the boy, then it shows at once, survives signing out on that device, and another device keeps its own choice.
+- AC2 (R2). Given the settings, then the choice is labelled in the person's language and picking one changes the visible illustrations at once, with no connection needed.
+- AC3 (R3, R5, R7). Given every mascot, then each has all four situations; given an empty, waiting or failed state, then the illustration shows alongside the same text and actions as without it.
+- AC4 (R4). Given a hundred-day or anniversary day, then Home shows the celebration illustration, and the adjacent ordinary days do not; given a successful gift unlock, then it celebrates, and a failed one does not.
+
+## Glossary
+
+- **Mascot** (linh vật): the girl or the boy; **situation** (tình huống): empty, waiting, error or celebration.
+
+## Out of scope
+
+- Mascots chosen for the couple or shared between devices; animated or talking mascots; more mascots than the girl and the boy.
+
+## Open questions
+
+None.
+
+Retired: R6, AC5

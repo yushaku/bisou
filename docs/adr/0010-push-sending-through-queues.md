@@ -1,6 +1,6 @@
 # ADR 0010: Push sending goes through Cloudflare Queues, one message per device
 
-Status: proposed (November 2026)
+Status: accepted (November 2026)
 
 ## Context
 Every push is sent inline today ([ADR 0007](0007-web-push.md)): routes send in `ctx.waitUntil` after the write, and the hourly cron sends every reminder and kind note message in one invocation. On Workers Free an invocation has 50 subrequests and 10 ms of CPU; each push is one `fetch` plus ECDH, HKDF, AES-GCM and an ECDSA signature. ADR 0007 set the limit at about 40 devices per run. A push that fails with 429, 5xx or a network error only adds 1 to `failures` and is never tried again.

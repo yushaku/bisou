@@ -1,6 +1,6 @@
 # ADR 0011: Card box text lives in Worker code, and a paid box sends only its preview cards
 
-Status: proposed (November 2026)
+Status: accepted (November 2026)
 
 ## Context
 The card box ([card box spec](../product/card-box.md)) is Bisou's first paid content. Free boxes are open to every couple. A paid box marks some of its cards as preview cards; a couple that does not own the box plays only those. A couple gets a paid box by a gift unlock (a tap after the joke dialog, R78 to R82); codes and real payment are deferred. Card text a couple may not play must never reach its phones, by any means (R42). Seen history stays on each phone (R61) and a loaded box plays offline (R44). The [garden spec](../product/garden.md) lists paid services as out of scope: that still holds for the garden, which stays free, and this ADR covers paid boxes only.

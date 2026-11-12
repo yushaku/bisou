@@ -82,7 +82,8 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: device opt-in notifications for partner journal entries and event reminders, quiet hours with batched night entries, and an installed-app invitation on Home. On iPhone it works only after Add to Home Screen; the Worker sends it, Cron Triggers are free.
 - [ ] **Questions and the Garden**
   - Goal: a relationship built on understanding and respect, cared for a little every day.
-  - Outcome: a daily question card both answer privately and flip together; topic decks, each one a plant in one shared garden; relationship-status questions and mutually chosen progression. Rules: [Garden](docs/product/garden.md); the brainstorm below is historical.
+  - Outcome: a daily question card both answer privately and flip together; topic decks, each one a plant in one shared garden; relationship-status questions and mutually chosen progression. Rules: [Garden](docs/product/garden.md).
+  - Ref: .team/research/garden.md
   - [x] v1: daily card, 6 decks of 10 cards as plants, swap, deck play, notification on flip ([docs/product/garden.md](docs/product/garden.md)).
   - [x] Relationship statuses: mutual starting placement, 35 bilingual questions, private decision responses with neutral/deferred choices, and mutual target unlocks.
   - [x] Starred cards: a shared star on flipped cards, the three newest on Home under "Các câu hỏi quan trọng mà chúng ta đã thống nhất" with "Xem tất cả" ([docs/product/garden.md](docs/product/garden.md)).
@@ -96,55 +97,11 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: spin for a date idea, reusing the wish jar spin.
 - [x] **Card box**
   - Goal: a good card to talk about when we sit together, nothing to write.
-  - Outcome: free box “Làm quen lại” in full and paid “Deep Connection” through 3 preview cards; five card kinds; random draw favouring unseen cards with a previous-card button; Home block opens `/boxes`; works offline once opened; nothing is kept on the server ([docs/product/card-box.md](docs/product/card-box.md)).
+  - Outcome: free box “Làm quen lại” in full; paid boxes (Deep Connection, Truth or Dare, Rau răm 18+) through their preview cards, unlocked for the couple as a gift from Bisou; random draw favouring unseen cards with a previous-card button; works offline once opened ([docs/product/card-box.md](docs/product/card-box.md)).
 - [ ] **Card box unlock and payment**
-  - Goal: unlock paid boxes per couple.
-  - Outcome: single-use codes issued by the PO first, then a payment gateway such as VietQR; price on the preview end.
+  - Goal: charge for paid boxes; today a couple gets a paid box free as a gift.
+  - Outcome: single-use codes issued by the PO first, then a payment gateway such as VietQR, replacing the gift.
   - Ref: .team/research/card-box.md and docs/adr/0011-card-box-content-in-worker-and-preview-cards.md
-
-### Questions and Garden: one-pager (brainstorm, Nov 2026)
-How might the two of us understand each other more deeply through questions grounded in relationship psychology, cared for like a garden, without it feeling like a test?
-
-Concept:
-- Every question is a card. Cards sit in decks by topic (for example Memories, Dreams, Money, When we disagree, Both families).
-- Every deck is one plant in one shared garden, so the garden is the map of how well we know each other.
-- Plant size grows when both answer that deck's cards and never shrinks. Freshness comes from the daily card: leaves turn after about 3 days without playing, droop after about 2 weeks, and nothing dies.
-- Beauty is balance: an untouched topic stays a sprout next to a big tree. No numbers, scores, streaks or percentages on screen.
-
-Daily loop (about 2 minutes):
-- The app draws today's card. Each partner answers privately; whoever answers first sees the card face down with "waiting for your partner", never who is late.
-- When both answered, a push says so; "Flip" opens both answers side by side and waters the plant. Reading the partner's answer is the reward.
-- Either partner can swap today's card. Tapping a plant opens its deck for extra play.
-
-Two kinds of cards:
-- Daily cards: light to deep, inspired by Aron's 36 questions (reference only, not used as is).
-- Stage cards: per life stage (getting to know, close, in love, living together, married, kids, chosen by the couple, not by time) and per topic; the things to talk through before the next stage. Both answer, then write one shared closing line: an agreement or a recorded difference ("not agreed yet, talk again after Tet"). Both count as discussed. Stage cards are suggestions and never lock moving to a stage.
-
-Agreed rules:
-- No in-app reply or reaction to answers; the two talk in person.
-- Some cards come back periodically and show the new answer next to the old one, to keep the map up to date (Gottman Love Maps; long couples guess each other worse, Thomas, Fletcher and Lange 1997).
-- No guessing quiz (Simpson and Ickes: accuracy can hurt on threatening topics).
-- The garden shows only the shared state, never who neglected it (same as the wish jar's R10).
-
-Grounding: Aron 1997 (layered self-disclosure), Reis and Shaver 1988 and Laurenceau 1998 (intimacy needs feeling understood; ask about feelings, not only events), Gottman Love Maps (use as inspiration, his prediction figures are not cross-validated, Heyman and Slep 2001), Stanley and Rhoades (deciding, not sliding, into living together), Dew 2012 (money disagreements), Gottman's perpetual conflicts (the goal is talking about them, not ending them).
-
-Design: mockup variant 002 "card first" (big felt card in the middle, flips to a lined writing side, placed face down in a "Me" and partner slot; the garden as a small planter below), plus two ideas from the other variants: after Flip the planter opens into the full garden scene for the watering moment (001), and a deck page shows a path through the life stages (003). No board or level framing. Mockups (local, not committed): `.team/sketches/garden/`.
-
-Open decisions (from the mockups, discuss one by one):
-- Freshness per plant or for the whole garden (the daily card waters one plant; per plant fading punishes a couple that plays daily). Mockup used garden-wide freshness and per deck size.
-- How today's card is chosen: always the smallest plant nags (a couple avoiding money gets Money daily); weighted rotation suggested, and whether swap can leave the deck.
-- Extra play can grow a big tree in one evening and turn size into a score: cap daily growth, or only daily cards add size.
-- Closing line: who edits it, both editing at once, whether "talk again later" gets a reminder.
-- Returning cards: dates and old next to new can read as judging change; copy must be gentle.
-- "Lá" means both card and leaf; pick distinct words.
-- More decks later: only the planter layout scrolls.
-- Plant labels under each plant as tags, readable size.
-- Proposed, not confirmed: a monthly private self rating of feeling understood (Reis responsiveness items); a weekly good news card (Gable 2004, 2006).
-
-Risks:
-- Writing about 150 to 300 good Vietnamese cards is the main cost, not code.
-- Garden art needs layered SVG states (growth, fading, watering) in the jar's style.
-- Feedback can turn the app into a list of grievances; Kind feedback has its own safeguards and never touches the garden.
 
 ## Market notes (Nov 2026)
 What similar couple apps charge for: a daily question with answers hidden until both reply (Paired about $80 a year per couple, Agapé, SumOne), home screen widgets with the partner's photo (Locket, I Choose You, Widgetable), a shared pet or plant (SumOne, Widgetable, Cozy Couples), Between Plus (love letters, themes, longer voice and video, no ads), date idea libraries and a monthly date goal (Lovewick, Cupla), a "thumb kiss" tap (Candle, Love8), AI coaching (Connected, Lasting). Most charge one plan for both partners.

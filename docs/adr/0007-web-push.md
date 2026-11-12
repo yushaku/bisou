@@ -1,6 +1,6 @@
 # ADR 0007: Web Push sent by the Worker with WebCrypto, one hourly cron, no queue table
 
-Status: proposed (November 2026)
+Status: accepted (November 2026); push sending superseded by [0010](0010-push-sending-through-queues.md)
 
 ## Context
 Partners turn notifications on per device for two kinds: the partner's new journal entry and event reminders at 20:00 the day before and 08:00 on the day, Vietnam time, with quiet hours from 22:00 to 07:00 ([notifications spec](../product/notifications.md)). The app is one Worker on Workers Free (10 ms CPU and 50 subrequests per invocation, a handful of Cron Triggers per account) with D1 ([ADR 0001](0001-cloudflare-workers-d1-r2.md)), and a PWA whose service worker vite-plugin-pwa generates ([ADR 0003](0003-pwa-instead-of-native.md)). iPhone delivers Web Push only to the installed app (iOS 16.4 or later). Today one cron, `0 20 * * *` (03:00 in Vietnam), runs cleanup.
