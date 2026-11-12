@@ -3,6 +3,8 @@ import type { NoteLists, Claim, JournalPage, Wish } from "../../shared/types";
 import { api } from "../api";
 
 export interface TabMemoryValue {
+  boxes: import("../../shared/cardBox").CardBoxSummary[] | null;
+  boxesRequest: ReturnType<typeof api.boxes> | null;
   notes: NoteLists | null;
   notesRequest: ReturnType<typeof api.notes> | null;
   journalSection: "feed" | "notes";
@@ -18,7 +20,7 @@ export interface TabMemoryValue {
 }
 
 export function createTabMemory(): TabMemoryValue {
-  return { notes: null, notesRequest: null, journalSection: "feed", scroll: new Map(), journal: null, returnFocus: null, wishes: null, wishesRequest: null, claims: null, wishesSection: "jar", wishesFilter: "all" };
+  return { boxes: null, boxesRequest: null, notes: null, notesRequest: null, journalSection: "feed", scroll: new Map(), journal: null, returnFocus: null, wishes: null, wishesRequest: null, claims: null, wishesSection: "jar", wishesFilter: "all" };
 }
 
 export async function loadWishes(memory: TabMemoryValue, refresh = false): ReturnType<typeof api.wishes> {
@@ -43,3 +45,13 @@ export async function loadNotes(memory: TabMemoryValue, refresh = false): Return
 
 // The signed-in provider owns this memory; signing out discards the feed and positions.
 export const TabMemory = createContext<TabMemoryValue | null>(null);
+
+export async function loadBoxes(memory: TabMemoryValue, refresh = false): ReturnType<typeof api.boxes> {
+  if (memory.boxesRequest) return memory.boxesRequest;
+  if (memory.boxes && !refresh) return { ok: true, data: { boxes: memory.boxes } };
+  memory.boxesRequest = api.boxes().then(res => {
+    if (res.ok) memory.boxes = res.data.boxes;
+    return res;
+  }).finally(() => { memory.boxesRequest = null; });
+  return memory.boxesRequest;
+}

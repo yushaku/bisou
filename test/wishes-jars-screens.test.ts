@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { createElement as h, type ComponentProps, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
@@ -104,4 +105,12 @@ it.each([[1, "1 note is waiting"], [2, "2 notes are waiting"]])("notes AC12: Eng
   memory.notes = { fromMe: [], toMe: Array.from({ length: count as number }, (_, i) => ({ id: String(i), state: "waiting" as const })) };
   const html = renderToString(h(Router, { ssrPath: "/", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Home, { ...session, couple, onCouple() {}, celebrate: false, onCelebrated() {} }))) }));
   expect(html).toContain(text);
+});
+
+it("card box AC5: Home puts the box section directly after DailyQuestion and before notes", () => {
+  const html = render(h(Home, { ...session, couple, onCouple() {}, celebrate: false, onCelebrated() {} }));
+  expect(html).toContain("Hộp thẻ");
+  const source = readFileSync("src/client/screens/Home.tsx", "utf8");
+  expect(source.indexOf("<DailyQuestion")).toBeLessThan(source.indexOf("<CardBoxBlock"));
+  expect(source.indexOf("<CardBoxBlock")).toBeLessThan(source.indexOf("<NotesInbox"));
 });

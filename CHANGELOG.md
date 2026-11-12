@@ -4,6 +4,8 @@
 
 ### Added
 
+- Play card boxes from Home: free boxes in full, a paid box through its preview cards, with seen cards kept only on your phone.
+
 - Pull down from the top of Home, Journal, Wishes or Garden to refresh that screen’s data.
 
 - Explore five relationship statuses and 35 new Vietnamese/English questions alongside the original 60 cards.

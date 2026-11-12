@@ -1,3 +1,4 @@
+import { CardBoxBlock } from "../components/bisou/CardBoxBlock";
 import { CalendarHeart } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
@@ -89,6 +90,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
       )}
 
       <DailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
+      <CardBoxBlock onSignedOut={session.onSignedOut} />
 
       {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; memory.scroll.set("journal", 0); } navigation.onSelect("journal"); }} />}
       <TodayPosts couple={couple} user={session.user} today={toDayString(now)} onSignedOut={session.onSignedOut} />

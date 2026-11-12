@@ -26,3 +26,5 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Các khối trên Home (Thẻ hôm nay, Bài hôm nay, Sắp tới) dùng cùng một mẫu: tiêu đề `font-heading text-xl` nằm ngoài thẻ, nút phụ như “Xem tất cả” ở bên phải tiêu đề, nội dung là thẻ bên dưới.
 - Hộp thư lời nhắn nhỏ nghiêng nhẹ hai lần rồi nghỉ; đứng yên khi bật giảm chuyển động.
 - Mỗi lời nhắn nhỏ là một phong bì màu nước vẽ tay, xếp hai cột: giấy kem, mực nâu, nắp gập hình chữ V ở mặt sau. Chưa mở thì có dấu sáp đỏ hình trái tim; đã mở thì nắp hé và dấu sáp vỡ. Tem hình bông hoa (không dùng trái tim), dấu bưu điện lượn sóng chỉ hiện khi đã gửi, ghi "Gửi {partner}" hoặc "Từ {partner}" trên phong bì. Trạng thái và một dòng xem trước nằm ở chú thích bên dưới; lời nhắn đang chờ mở thì không có xem trước và không có ngày.
+
+- Hộp thẻ nằm ngay dưới Thẻ hôm nay trên Home, dùng cùng mẫu tiêu đề ngoài thẻ và “Xem tất cả”. Player hiển thị một thẻ với nhãn loại; hai lựa chọn và thang từ 1 đến 10 là nội dung tĩnh, không ghi câu trả lời.

@@ -1,3 +1,5 @@
+import { CardBoxes } from "./screens/CardBoxes";
+import { CardBoxPlayer } from "./screens/CardBoxPlayer";
 import { Activity, lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
@@ -146,6 +148,8 @@ function SignedIn({
   else if (!couple || !paired) content = <Pairing {...session} couple={couple} onCouple={onCouple} />;
   else content = (
     <Switch location={settingsOpen ? historyState?.from ?? "/" : location}>
+      <Route path="/boxes/:boxId">{params => <CardBoxPlayer key={params.boxId} {...session} couple={couple} boxId={params.boxId} />}</Route>
+      <Route path="/boxes"><CardBoxes {...session} /></Route>
       <Route path="/events">
         <Events user={user} couple={couple} onCouple={onCouple} onSignedOut={onSignedOut} />
       </Route>

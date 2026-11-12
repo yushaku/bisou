@@ -1,3 +1,4 @@
+import type { CardBoxDetail, CardBoxSummary } from "../shared/cardBox";
 import type {
   ApiError, ClosedNoteInput, CloseInput, NoteInput, NoteLists, WrittenNote, ReceivedNote,
   PushState,
@@ -47,6 +48,8 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  boxes: () => call<{ boxes: CardBoxSummary[] }>("GET", "/api/boxes"),
+  box: (id: string) => call<CardBoxDetail>("GET", `/api/boxes/${encodeURIComponent(id)}`),
   gardenLevels: (body: LevelAction) => call<{ levels: GardenLevels }>("POST", "/api/garden/levels", body),
   notes: () => call<NoteLists>("GET", "/api/notes"),
   createNote: (input: NoteInput) => call<{ note: WrittenNote }>("POST", "/api/notes", input),

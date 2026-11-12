@@ -10,7 +10,7 @@ export function readCreateRequest(state: unknown): CreateDestination | null {
 export function tabMove(location: string, from: string | undefined, path: string, create?: CreateDestination): "scroll" | "back" | "replace" | "push" {
   if (from === path) return "back";
   if (location === path && !create) return "scroll";
-  return location === path || from || location.startsWith("/settings") || location === "/events" ? "replace" : "push";
+  return location === path || from || location.startsWith("/settings") || location === "/events" || location.startsWith("/boxes") ? "replace" : "push";
 }
 
 export function readShortcutRequest(path: string, search: string): CreateDestination | null {
