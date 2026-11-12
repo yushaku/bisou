@@ -15,9 +15,6 @@ describe("push query plans", () => {
     ["notifications AC7, R10: reminder device claim", `UPDATE push_subscriptions SET reminder_slot = ?
       WHERE user_id = ? AND reminders = 1 AND (reminder_slot IS NULL OR reminder_slot <> ?)
       RETURNING id, endpoint, p256dh, auth`, ["2026-11-08T08", "user", "2026-11-08T08"], ["push_subscriptions_reminders"]],
-    ["AC12, AC13, R18: night window", "SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ?", [100, 200], ["journal_entries_created"]],
-    ["AC12, R17: night recipient", `SELECT u.id, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name
-      FROM couple_members m JOIN users u ON u.id = m.user_id WHERE m.couple_id = ? AND m.user_id <> ?`, ["author", "couple", "author"], ["sqlite_autoindex_users_1", "sqlite_autoindex_couple_members_"]],
     ["notifications R2, R30: own devices", "SELECT endpoint, journal, reminders FROM push_subscriptions WHERE user_id = ?", ["user"], ["push_subscriptions_user"]],
     ["notifications R27: device cap", `DELETE FROM push_subscriptions WHERE id IN (
       SELECT id FROM push_subscriptions WHERE user_id = ? AND endpoint <> ? ORDER BY created_at DESC LIMIT -1 OFFSET 9
@@ -43,7 +40,6 @@ describe("push query plans", () => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(endpoint) DO UPDATE SET
       id = excluded.id, user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
       journal = excluded.journal, reminders = excluded.reminders,
-      journal_slot = CASE WHEN user_id = excluded.user_id THEN journal_slot ELSE NULL END,
       reminder_slot = CASE WHEN user_id = excluded.user_id THEN reminder_slot ELSE NULL END,
       created_at = excluded.created_at, failures = 0, last_success_at = NULL`, "id", "user", "endpoint", "p256dh", "auth", 1, 1, 100);
     expect(plan.join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
@@ -260,7 +256,6 @@ describe("notes recipient and joined feed query plans", () => {
     ["note join feed", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", 21]],
     ["note join next page", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? AND e.entry_date <= ? AND (e.entry_date < ? OR (e.entry_date = ? AND (e.created_at < ? OR (e.created_at = ? AND e.id < ?)))) ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", "2026-11-13", "2026-11-13", "2026-11-13", 1, 1, "entry", 21]],
     ["joined find entry", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.id = ? AND e.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?)`, ["entry", "user"]],
-    ["night release excludes notes", "SELECT couple_id, author_id FROM journal_entries WHERE created_at >= ? AND created_at < ? AND note_id IS NULL", [1, 2]],
   ])("%s uses indexed lookups without scans or temporary sorting", async (_name, sql, binds) => {
     expect((await explain(sql as string, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });

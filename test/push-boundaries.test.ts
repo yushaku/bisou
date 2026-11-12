@@ -40,7 +40,7 @@ it("notifications R10: 19:59 and 07:59 send nothing, 20:00 and 08:00 send the re
   expect(await titles(send, aPhone, bPhone)).toEqual(Array(2).fill("Ngày mai: Xem phim").concat(Array(2).fill("Hôm nay: Xem phim")));
 });
 
-it("R10, R16: the Vietnam day changes at 00:00 VN (17:00 UTC), not at 00:00 UTC", async () => {
+it("notifications R10: the Vietnam day changes at 00:00 VN (17:00 UTC), not at 00:00 UTC", async () => {
   const { a, aPhone, bPhone } = await couple(); await addEvent(a, "Xem phim", "2026-12-01"); const send = mockPush();
   await runPushCron("2026-11-30T16:59:00Z"); await runPushCron("2026-11-30T17:00:00Z"); await runPushCron("2026-12-01T00:00:00Z");
   expect(send.sent).toHaveLength(0);

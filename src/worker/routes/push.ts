@@ -55,7 +55,6 @@ push.put("/subscription", async (c) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(endpoint) DO UPDATE SET
       id = excluded.id, user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
       journal = excluded.journal, reminders = excluded.reminders,
-      journal_slot = CASE WHEN user_id = excluded.user_id THEN journal_slot ELSE NULL END,
       reminder_slot = CASE WHEN user_id = excluded.user_id THEN reminder_slot ELSE NULL END,
       created_at = excluded.created_at, failures = 0, last_success_at = NULL`)
       .bind(crypto.randomUUID(), userId, endpoint, keys.p256dh, keys.auth, Number(journal), Number(reminders), Date.now()),

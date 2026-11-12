@@ -9,7 +9,7 @@ const people = [
 ];
 const start = "2023-02-12";
 
-it("R10, R31: shared event titles preserve the on-screen names and number formatting", () => {
+it("notifications R10 R31: shared event titles preserve the on-screen names and number formatting", () => {
   const timing = { date: "2027-02-12", daysLeft: 1 };
   const events: UpcomingEvent[] = [
     { ...timing, kind: "anniversary", years: 4 }, { ...timing, kind: "days", days: 1000 },
