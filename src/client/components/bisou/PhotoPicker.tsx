@@ -1,6 +1,7 @@
 import { ImagePlus, RotateCw, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/ding-toaster";
 import { useI18n } from "@/i18n";
 import { fitSquare, takeRoom } from "@/lib/compose";
 import { decodePhoto, renderSquare, type Area } from "@/lib/photo";
@@ -16,8 +17,12 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
 }) {
   const { t } = useI18n();
   const [preparing, setPreparing] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
   const [cropping, setCropping] = useState<CropRequest | null>(null);
+  const toastId = useId();
+  const loading = useRef<"preparing" | "uploading" | null>(null);
+  const batch = useRef(new Set<string>());
+  const latestQueue = useRef(queue);
+  latestQueue.current = queue;
   const fileInput = useRef<HTMLInputElement>(null);
   const mounted = useRef(true);
   const cancelCrop = useRef<(() => void) | null>(null);
@@ -26,6 +31,39 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
     mounted.current = true;
     return () => { mounted.current = false; cancelCrop.current?.(); onPreparingChange?.(false); };
   }, [onPreparingChange]);
+  useEffect(() => () => { toast.dismiss(toastId); }, [toastId]);
+  useEffect(() => {
+    const pending = queue.items.filter((item) => item.state === "queued" || item.state === "uploading");
+    for (const item of pending) batch.current.add(item.localId);
+    const photos = queue.items.filter((item) => batch.current.has(item.localId));
+    if (pending.length) {
+      const settled = photos.filter((item) => item.state === "done" || item.state === "failed").length;
+      const title = t("compose.uploadProgress", { index: Math.min(settled + 1, photos.length), total: photos.length });
+      const progress = photos.reduce((sum, item) => sum + (item.state === "done" ? 1 : item.state === "uploading" ? item.progress : 0), 0) / photos.length;
+      toast.loading(title, { id: toastId, progress });
+      loading.current = "uploading";
+    } else if (preparing) {
+      if (loading.current !== "preparing") toast.loading(t("compose.preparing"), { id: toastId });
+      loading.current = "preparing";
+    } else if (loading.current) {
+      const failed = queue.items.filter((item) => item.state === "failed");
+      if (failed.length) {
+        toast.error(t(failed[0]!.error ?? "compose.photoFailed"), {
+          id: toastId,
+          action: { label: t("journal.retry"), onClick: () => {
+            if (!mounted.current) return;
+            for (const item of latestQueue.current.items) {
+              if (item.state === "failed") latestQueue.current.retry(item.localId);
+            }
+          } },
+        });
+      } else if (photos.some((item) => item.state === "done")) {
+        toast.success(t("compose.photosUploaded"), { id: toastId });
+      } else toast.dismiss(toastId);
+      loading.current = null;
+      batch.current.clear();
+    }
+  }, [queue.items, queue.retry, preparing, t, toastId]);
   /* The square the author frames in the crop step, or null when they skip the photo. */
   const frame = (file: File, bitmap: ImageBitmap, index: number, total: number) =>
     new Promise<Area | null>((resolve) => {
@@ -43,8 +81,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
   async function addFiles(files: File[]) {
     if (preparing) return;
     const { take, refused } = takeRoom(queue.items.length, files.length, max);
-    const messages: string[] = refused ? [t(max === 1 ? "wish.photoLimit" : "compose.limit")] : [];
-    setPhotoError(refused ? messages.join(" ") : null);
+    if (refused) toast.warning(t(max === 1 ? "wish.photoLimit" : "compose.limit"));
     if (take === 0) return;
     change();
     setPreparing(true);
@@ -56,7 +93,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
       try {
         bitmap = await decodePhoto(file);
       } catch {
-        messages.push(t("compose.photoUnreadable", { name: file.name }));
+        if (mounted.current) toast.error(t("compose.photoUnreadable", { name: file.name }));
         continue;
       }
       if (!mounted.current) { bitmap.close(); break; }
@@ -69,12 +106,11 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
         const renditions = await renderSquare(bitmap, area);
         if (mounted.current) queue.add(renditions);
       } catch {
-        messages.push(t("compose.photoUnreadable", { name: file.name }));
+        if (mounted.current) toast.error(t("compose.photoUnreadable", { name: file.name }));
       }
     }
     if (!mounted.current) return;
     setPreparing(false);
-    setPhotoError(messages.length ? messages.join(" ") : null);
   }
 
   return <>
@@ -90,9 +126,21 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
               <ul className="grid grid-cols-2 gap-3">
                 {queue.items.map((item, i) => (
                   <li key={item.localId} className="overflow-hidden rounded-(--photo-radius) edge bg-background">
-                    <img src={item.previewUrl} alt={t("compose.photo", { index: i + 1 })} className="aspect-square w-full object-cover" />
+                    <img src={item.previewUrl} alt={t("compose.photo", { index: i + 1 })} className={`aspect-square w-full object-cover${item.state === "uploading" || item.state === "queued" ? " opacity-60" : ""}`} />
                     <div className="flex items-center justify-between pl-2 text-sm">
                       <span>{t("compose.photo", { index: i + 1 })}</span>
+                      {item.state === "failed" && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t("compose.retryPhoto", { index: i + 1 })}
+                          disabled={saving}
+                          onClick={() => queue.retry(item.localId)}
+                        >
+                          <RotateCw aria-hidden="true" />
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
@@ -101,34 +149,12 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
                         disabled={saving}
                         onClick={() => {
                           queue.remove(item);
-                          setPhotoError(null);
                           change();
                         }}
                       >
                         <X aria-hidden="true" />
                       </Button>
                     </div>
-                    {item.state === "uploading" && (
-                      <div
-                        role="progressbar"
-                        aria-label={t("compose.uploading", { index: i + 1 })}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={Math.round(item.progress * 100)}
-                        className="mx-2 mb-2 h-1.5 overflow-hidden rounded-full bg-muted"
-                      >
-                        <div className="h-full bg-primary transition-[width]" style={{ width: `${item.progress * 100}%` }} />
-                      </div>
-                    )}
-                    {item.state === "failed" && (
-                      <div className="flex flex-col gap-1 px-2 pb-2">
-                        <p className="text-sm text-destructive">{t(item.error ?? "compose.photoFailed")}</p>
-                        <Button type="button" variant="outline" size="sm" onClick={() => queue.retry(item.localId)}>
-                          <RotateCw aria-hidden="true" />
-                          {t("journal.retry")}
-                        </Button>
-                      </div>
-                    )}
                   </li>
                 ))}
               </ul>
@@ -141,7 +167,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
               loading={preparing}
               disabled={saving}
               onClick={() => {
-                if (queue.items.length >= max) setPhotoError(t(max === 1 ? "wish.photoLimit" : "compose.limit"));
+                if (queue.items.length >= max) toast.warning(t(max === 1 ? "wish.photoLimit" : "compose.limit"));
                 else fileInput.current?.click();
               }}
             >
@@ -162,9 +188,6 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
               }}
             />
             <p className="text-sm text-muted-foreground">{t("compose.photoHelp")}</p>
-            <p role="alert" className="text-sm text-destructive empty:hidden">
-              {photoError}
-            </p>
           </div>
     <PhotoCropDialog request={cropping} />
   </>;
