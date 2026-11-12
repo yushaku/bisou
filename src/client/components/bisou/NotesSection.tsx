@@ -53,9 +53,8 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref
       </div>;
     })}</div></section>}
     {!!lists?.fromMe.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("notes.fromMe")}</h2><div className="note-envelope-grid">{lists.fromMe.map((note) => {
-      const time = formatTime(note.sendableAt, locale), day = vnDay(note.sendableAt);
-      const state = note.state === "opened" ? t("notes.opened") : note.state === "sent" ? t("notes.notOpened") : note.scheduledAt ? t("notes.scheduled", { time: `${formatDay(new Date(note.sendableAt), locale, "short")} ${time}` }) : Date.now() >= note.sendableAt ? t("notes.ready") : t("notes.cooling", { time: day === vnDay(Date.now()) ? time : `${formatDay(day, locale, "short")} ${time}` });
-      const kind = note.state === "draft" ? !note.scheduledAt && Date.now() >= note.sendableAt ? "ready" : "cooling" : note.state;
+      const state = note.state === "opened" ? t("notes.opened") : note.state === "sent" ? t("notes.notOpened") : note.scheduledAt ? t("notes.scheduled", { time: `${formatDay(new Date(note.scheduledAt), locale, "short")} ${formatTime(note.scheduledAt, locale)}` }) : t("notes.ready");
+      const kind = note.state === "draft" ? note.scheduledAt ? "cooling" : "ready" : note.state;
       return <div key={note.id} className="note-envelope"><button type="button" aria-label={`${t("notes.toPartner", { partner: partner.name })}, ${state}`} className="note-envelope-button press min-h-11 w-full p-0 text-left focus-visible:outline-2 focus-visible:outline-ring" onClick={() => note.state === "opened" ? setDetail(note) : write(note)}><NoteEnvelope address={t("notes.toPartner", { partner: partner.name })} state={{ kind, text: state }} preview={note.happened} /></button></div>;
     })}</div></section>}
     <EntryActions title={t("notes.opened")} entry={detail && { id: detail.id, date: vnDay(Date.now()), photoIds: [] }} own={false} onClose={() => setDetail(null)} onEdit={() => {}} onDeleted={() => {}} onSignedOut={onSignedOut} detail={detail && <NoteParts note={detail} />} />

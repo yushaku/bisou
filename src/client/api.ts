@@ -56,7 +56,6 @@ export const api = {
   createNote: (input: NoteInput & NoteDelivery) => call<{ note: WrittenNote }>("POST", "/api/notes", input),
   updateNote: (id: string, input: NoteInput & NoteDelivery) => call<{ note: WrittenNote }>("PUT", `/api/notes/${encodeURIComponent(id)}`, input),
   deleteNote: (id: string) => call<{ ok: true }>("DELETE", `/api/notes/${encodeURIComponent(id)}`),
-  sendNote: (id: string, input: NoteInput) => call<{ note: WrittenNote }>("POST", `/api/notes/${encodeURIComponent(id)}/send`, input),
   updateClosedNote: (id: string, input: ClosedNoteInput) => call<{ entry: JournalEntry }>("PUT", `/api/notes/${encodeURIComponent(id)}/closed`, input),
   closeNote: (id: string, input: CloseInput) => call<{ entry: JournalEntry }>("POST", `/api/notes/${encodeURIComponent(id)}/close`, input),
   openNote: (id: string) => call<{ note: ReceivedNote }>("POST", `/api/notes/${encodeURIComponent(id)}/open`),

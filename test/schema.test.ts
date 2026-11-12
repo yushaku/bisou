@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WRITTEN_NOTES_SQL, RECEIVED_NOTES_SQL } from "../src/worker/lib/notes";
-import { RELEASE_NOTES_SQL, REMIND_NOTES_SQL } from "../src/worker/lib/notify";
+import { REMIND_NOTES_SQL } from "../src/worker/lib/notify";
 import { OPEN_NOTE_SQL, CLOSE_NOTE_SQL, CLOSE_ENTRY_SQL, UPDATE_CLOSED_NOTE_SQL } from "../src/worker/routes/notes";
 import worker from "../src/worker/index";
 import { call, explain, jpeg, paired, photoForm, resetDb, webp } from "./helpers";
@@ -243,7 +243,6 @@ describe("notes query plans", () => {
     ["recipient list", RECEIVED_NOTES_SQL, ["recipient", "couple"]],
     ["writer ownership", "SELECT * FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL", ["note", "writer", "couple"]],
     ["save before open", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL RETURNING *", ["h", "f", "n", "r", 1, "note", "writer", "couple"]],
-    ["send after cooling", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *", ["h", "f", "n", "r", 1, 1, 1, "note", "writer", "couple", 1]],
     ["withdraw conflict", "SELECT opened_at FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL", ["note", "writer", "couple"]],
     ["create", "INSERT INTO notes (id, couple_id, writer_id, recipient_id, happened, feel, need, hope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *", ["id", "couple", "writer", "recipient", "h", "f", "n", "r", 1, 1]],
   ])("%s uses indexed lookups without table scans or temporary sorting", async (_name, sql, binds) => {
@@ -269,10 +268,8 @@ describe("notes recipient and joined feed query plans", () => {
 
 describe("notes push query plans", () => {
   it.each([
-    ["held", RELEASE_NOTES_SQL, [1, 1], "notes_held"],
     ["unopened", REMIND_NOTES_SQL, [1, 1], "notes_unopened"],
     ["recipient devices", `SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale, (SELECT display_name FROM users WHERE id = ?) AS name FROM push_subscriptions s JOIN users u ON u.id = s.user_id WHERE s.user_id = ? AND s.journal = 1`, ["writer", "recipient"], "push_subscriptions_user"],
-    ["send claims immediate push", "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *", ["h", "f", "n", "r", 1, 1, 1, "note", "writer", "couple", 1], "sqlite_autoindex_notes_1"],
   ])("%s uses indexed SEARCH", async (_name, sql, binds, index) => {
     const plan = (await explain(sql as string, ...(binds as unknown[]))).join("\n");
     expect(plan).toContain(index); expect(plan).toContain("SEARCH"); expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);

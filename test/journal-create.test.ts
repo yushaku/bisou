@@ -217,7 +217,7 @@ it.each(["vi", "en"])("shared composer forms keep only screen reader titles in %
 
 it.each(["now", "eightHours", "custom"] as const)("note composer submits %s delivery", async (delivery) => {
   hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
-  const created = vi.spyOn(api, "createNote").mockResolvedValue({ ok: true, data: { note: { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft", sendableAt: 1 } } });
+  const created = vi.spyOn(api, "createNote").mockResolvedValue({ ok: true, data: { note: { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" } } });
   const props = { partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
   const render = () => { hooks.index = 0; return nodes(NoteForm(props)); };
   let form = render();
@@ -248,7 +248,7 @@ it("changing custom delivery to a past date keeps the note in the form", async (
 });
 
 it.each([false, true])("editing a scheduled note preserves delivery unless changed (send now: %s)", async (sendNow) => {
-  const entry = { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" as const, sendableAt: new Date("2099-11-13T06:30").getTime(), scheduledAt: new Date("2099-11-13T06:30").getTime() };
+  const entry = { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" as const, scheduledAt: new Date("2099-11-13T06:30").getTime() };
   const update = vi.spyOn(api, "updateNote").mockResolvedValue({ ok: true, data: { note: entry } });
   const props = { entry, partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
   const render = () => { hooks.index = 0; return nodes(NoteForm(props)); };

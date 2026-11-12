@@ -60,15 +60,23 @@ test("scheduled note notifies once; changing the time and withdrawing cancel the
   } finally { push.spy.mockRestore(); push.queue.mockRestore(); }
 });
 
-test.each([{ delivery: "bad" }, { delivery: "custom" }, { delivery: "custom", sendAt: "tomorrow" }, { delivery: "custom", sendAt: 1 }, { delivery: "custom", sendAt: 1e20 }])("reject invalid delivery %j", async (delivery) => {
+test.each([{}, { delivery: "bad" }, { delivery: "custom" }, { delivery: "custom", sendAt: "tomorrow" }, { delivery: "custom", sendAt: 1 }, { delivery: "custom", sendAt: 1e20 }])("reject invalid delivery %j", async (delivery) => {
   const { a } = await paired();
   expect((await call("POST", "/api/notes", { cookie: a.cookie, body: { ...input, ...delivery } })).status).toBe(400);
 });
 
-test("a manual draft can send now; a scheduled note can send early without repeating delivery", async () => {
-  const { a, b } = await paired();
-  for (const initial of [{}, { delivery: "eightHours" }]) {
-    const { note } = await (await call("POST", "/api/notes", { cookie: a.cookie, body: { ...input, ...initial } })).json<{ note: WrittenNote }>();
+// A draft saved before delivery choices existed: no send time, no delivery.
+async function legacyDraft(pair: { a: { id: string }; b: { id: string }; couple: { id: string } }) {
+  const id = crypto.randomUUID(), now = Date.now();
+  await env.DB.prepare("INSERT INTO notes (id, couple_id, writer_id, recipient_id, happened, feel, need, hope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    .bind(id, pair.couple.id, pair.a.id, pair.b.id, input.happened, input.feel, input.need, input.hope, now, now).run();
+  return id;
+}
+
+test("notes R64 R67 AC44: a draft with no delivery can send now; a scheduled note can send early without repeating delivery", async () => {
+  const pair = await paired(), { a, b } = pair;
+  for (const initial of [null, { delivery: "eightHours" }]) {
+    const note = { id: initial ? (await (await call("POST", "/api/notes", { cookie: a.cookie, body: { ...input, ...initial } })).json<{ note: WrittenNote }>()).note.id : await legacyDraft(pair) };
     const res = await call("PUT", `/api/notes/${note.id}`, { cookie: a.cookie, body: { ...input, delivery: "now" } });
     expect(res.status).toBe(200);
     expect((await res.json<{ note: WrittenNote }>()).note.state).toBe("sent");
@@ -78,12 +86,12 @@ test("a manual draft can send now; a scheduled note can send early without repea
   }
 });
 
-test("overlapping ticks claim a due note once and preserve old drafts", async () => {
-  const { a, b } = await paired();
+test("notes R66 R67 AC46: overlapping ticks claim a due note once and a draft with no delivery is never delivered", async () => {
+  const pair = await paired(), { a, b } = pair;
   await subscribe(b, await device("note-overlap"));
   const push = mockPush();
   try {
-    const legacy = await (await call("POST", "/api/notes", { cookie: a.cookie, body: input })).json<{ note: WrittenNote }>();
+    const legacy = { note: { id: await legacyDraft(pair) } };
     await call("POST", "/api/notes", { cookie: a.cookie, body: { ...input, delivery: "eightHours" } });
     await Promise.all([runPushCron("2026-11-13T06:31:00+07:00"), runPushCron("2026-11-13T06:31:00+07:00")]);
     expect(push.queued).toHaveLength(1);

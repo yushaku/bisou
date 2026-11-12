@@ -3,7 +3,7 @@ import { app } from "./app";
 import { runCleanup, sweepPhotos } from "./lib/cleanup";
 import { sendScheduledNotes } from "./lib/notes";
 import { vnHour } from "../shared/days";
-import { notifyNotes, remindEvents } from "./lib/notify";
+import { remindNotes, remindEvents } from "./lib/notify";
 import { consumePushBatch, type PushJob } from "./lib/pushQueue";
 
 // Static assets (the SPA) are served by Workers assets; only /api/* reaches this Worker
@@ -29,7 +29,7 @@ export default {
           .catch(() => console.error("[bisou] event push failed")));
         return;
       case 7:
-        ctx.waitUntil(notifyNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] note push failed")));
+        ctx.waitUntil(remindNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] note push failed")));
         return;
       case 3:
         break;

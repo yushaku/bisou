@@ -79,15 +79,15 @@ test.each(["vi", "en"])("envelope writer states have readable captions and no to
   try {
     const memory = createTabMemory();
     memory.notes = { toMe: [], fromMe: [
-      { ...input, id: "cooling", state: "draft", sendableAt: new Date(2026, 10, 11, 18, 36).getTime() },
-      { ...input, id: "ready", state: "draft", sendableAt: Date.now() - 1 },
-      { ...input, id: "sent", state: "sent", sendableAt: 1 },
-      { ...input, id: "opened", state: "opened", sendableAt: 1 },
+      { ...input, id: "cooling", state: "draft", scheduledAt: new Date(2026, 10, 11, 18, 36).getTime() },
+      { ...input, id: "ready", state: "draft" },
+      { ...input, id: "sent", state: "sent" },
+      { ...input, id: "opened", state: "opened" },
     ] };
     const user = { id: "a", displayName: "An", email: "an@example.com", locale: "vi" as const, birthDate: null, avatarId: null, createdAt: 1 };
     const couple = { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Linh" }] };
     const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));
-    for (const stamp of locale === "vi" ? ["Gửi được từ 18:36", "Đọc lại và gửi", "Chưa mở", "Đã mở"] : ["Can be sent from 18:36", "Reread and send", "Not opened yet", "Opened"]) expect(html).toContain(`>${stamp}<`);
+    for (const stamp of locale === "vi" ? ["Hẹn gửi 11 thg 11 18:36", "Đọc lại và gửi", "Chưa mở", "Đã mở"] : ["Scheduled for 11 Nov 18:36", "Reread and send", "Not opened yet", "Opened"]) expect(html).toContain(`>${stamp}<`);
     expect(html).toContain(locale === "vi" ? "Gửi Linh" : "To Linh");
     expect(html).not.toContain(locale === "vi" ? "Viết cho Linh" : "Write to Linh");
     expect(html.match(/<button/g)).toHaveLength(4);
@@ -110,7 +110,7 @@ test.each(["vi", "en"])("note form offers immediate, eight-hour and custom deliv
 test("scheduled note shows its date and time instead of asking the writer to send", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const memory = createTabMemory();
-  memory.notes = { toMe: [], fromMe: [{ ...input, id: "n", state: "draft", sendableAt: Date.now() - 1, scheduledAt: Date.now() - 1 }] };
+  memory.notes = { toMe: [], fromMe: [{ ...input, id: "n", state: "draft", scheduledAt: Date.now() - 1 }] };
   const user = { id: "a", displayName: "An", email: "an@example.com", locale: "vi" as const, birthDate: null, avatarId: null, createdAt: 1 };
   const couple = { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Linh" }] };
   const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));

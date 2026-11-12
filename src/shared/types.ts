@@ -23,7 +23,6 @@ export interface User {
 export type ApiErrorCode =
   | "note_empty"
   | "note_text_too_long"
-  | "note_cooling"
   | "invalid_note_schedule"
   | "note_sent"
   | "note_opened"
@@ -223,7 +222,7 @@ export interface PushSubscriptionInput extends PushDevice {
 export type NotePick = "try" | "talk" | "differ";
 export interface NoteInput { happened: string; feel: string; need: string; hope: string }
 export interface NoteDelivery { delivery?: "now" | "eightHours" | "custom"; sendAt?: number }
-export interface WrittenNote extends NoteInput { id: string; state: "draft" | "sent" | "opened"; sendableAt: number; scheduledAt?: number }
+export interface WrittenNote extends NoteInput { id: string; state: "draft" | "sent" | "opened"; scheduledAt?: number }
 export type ReceivedNote = { id: string; state: "waiting" } | ({ id: string; state: "opened" } & NoteInput);
 export interface NoteLists { toMe: ReceivedNote[]; fromMe: WrittenNote[] }
 export interface CloseInput { pick: NotePick; line: string }

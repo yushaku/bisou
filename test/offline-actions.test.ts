@@ -145,16 +145,16 @@ it("notifications AC19: Home hides the invitation for an unpaired user", () => {
   expect(nodes.some(n => n.type === NotificationCard)).toBe(false);
 });
 
-it("notes AC33 AC40: an offline draft cannot save or send", async () => {
+it("notes AC33 AC40: an offline draft cannot save", async () => {
   vi.stubGlobal("navigator", { onLine: false });
-  const create = vi.spyOn(api, "createNote"), update = vi.spyOn(api, "updateNote"), send = vi.spyOn(api, "sendNote");
+  const create = vi.spyOn(api, "createNote"), update = vi.spyOn(api, "updateNote");
   const sheet = NoteSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", onRefresh: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   const form = sheet.props.children[0].props.children;
   state.push({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" });
   const nodes = elements(form.type(form.props));
   nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
   await Promise.resolve();
-  expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled();
   expect(nodes.find(n => n.props.children === "notes.send")!.props.disabled).toBe(true);
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
 });
@@ -171,7 +171,7 @@ it("notes-journal AC20, notes AC40: closed-note editing keeps fields but cannot 
 });
 
 it.each(["draft", "sent"] as const)("notes R13 R15: %s has its own deletion label and consequence", (status) => {
-  const note = { id: "n", state: status, happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", createdAt: 0, sendableAt: 1 };
+  const note = { id: "n", state: status, happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", createdAt: 0 };
   const sheet = NoteSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", entry: note, onRefresh: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   const form = sheet.props.children[0].props.children;
   const nodes = elements(form.type(form.props));
