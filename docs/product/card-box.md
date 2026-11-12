@@ -34,6 +34,10 @@ PO, 11 November 2026 (one-pager D1 to D8 and A1 to A5, Gate 1 answers G1 to G6, 
 28. Truth or Dare, items 2 and 6. 20 cards, each holding both a truth and a dare, in Vietnamese and English, rewritten in Bisou's voice from the research sources and never copied; the first 10 truths and 10 dares are kept, 10 more of each are added, and they are paired so both sides of a card feel about equally light; card copy follows R48 to R54 (R70, Appendix).
 29. Truth or Dare, items 3 and 6 (item 6 replaces the labels of item 3). A new kind, truth or dare ("Thật hay thử thách" / "Truth or dare"), shows the truth and the dare as two blocks marked "Thật" / "Truth" and "Thử thách" / "Dare", like a rather card; whoever drew reads both and picks one aloud, with nothing to tap and nothing recorded. No box sets its own labels. Drawing is random as in every box, with no step to choose truth or dare before a card shows (R19, R71, R72).
 30. Truth or Dare, item 4. The cover is white line art of a bottle on soft lilac, and the box colour is lilac, with a light and a dark version like the other boxes (R70).
+31. Rau răm, 12 November 2026, item 7. A new free box "Rau răm" / "Spicy" for adults (18+), open in full to every couple, with 10 cards, all of kind truth or dare (R73).
+32. Rau răm, item 8. Flirty, teasing talk about desire and bolder intimate dares between the two partners, never graphic or explicit; always consensual and skippable, no pressure wording, no alcohol, no third parties, no photos or recording, nothing in front of others. Card copy follows R47 to R54 except the "never intimate" limit, which this box alone lifts (R75, R76).
+33. Rau răm, item 9. Shown like the other boxes on Home and in the box list, with an "18+" badge on its product card and on its cards; no age check, warning screen or setting (R74).
+34. Rau răm, item 10. The cover is white line art of a sprig of rau răm leaves on deep rose, with no text in the image; the box colour is rose, with a light and a dark version like the other boxes (R73).
 
 ## Purpose
 
@@ -193,13 +197,13 @@ Example: dc-07 asks Sơn and Linh to hold hands and each say a "Cảm ơn vì...
 - R47. Every card is original Bisou writing; no card copies another app, game or list.
 - R48. Every card follows [garden](garden.md) R62: respectful adult language, no private financial or intimate details required, and nothing that implies consent to intimacy.
 - R49. A dare is done right then, by both partners together where they are, within a few minutes, with nothing to buy or prepare.
-- R50. A dare asks at most light affection either partner can easily decline, such as holding hands or a hug; never kissing, undressing or anything sexual.
+- R50. A dare asks at most light affection either partner can easily decline, such as holding hands or a hug; never kissing, undressing or anything sexual. Rau răm alone lifts this limit (R75).
 - R51. A dare never involves anyone else or being seen: no calling, messaging or posting to others, nothing done in public.
 - R52. A point card is about a harmless habit or a sweet trait, never a fault that blames or mocks.
 - R53. A scale card asks each partner about themselves, never to rate the other partner, the relationship or their love.
 - R54. A card's Vietnamese and English say the same thing, each written naturally; Vietnamese cards speak to both partners without "anh" / "em" or any form that assumes who is who.
 
-- AC28 (R49 to R54). Given the launch cards in the appendix, then each dare can be done on the spot by the two of them alone with at most holding hands, each point card is about a harmless habit, each scale card asks about oneself, and no Vietnamese card uses "anh" or "em".
+- AC28 (R49 to R54). Given the launch cards in the appendix other than Rau răm (AC39), then each dare can be done on the spot by the two of them alone with at most holding hands, each point card is about a harmless habit, each scale card asks about oneself, and no Vietnamese card uses "anh" or "em".
 
 ## 10. Issuing codes (deferred)
 
@@ -257,6 +261,23 @@ Example: at 21:30 Linh opens Truth or Dare (49.000đ, "Xem thử") and gets tod-
 - AC35 (R71, R19, R25). Given Linh's app is in Vietnamese and tod-04 shows, then she sees the label "Thật hay thử thách" and two blocks marked "Thật" and "Thử thách"; in English they read "Truth or dare", "Truth" and "Dare"; tapping either block marks nothing and nothing is kept.
 - AC36 (R72). Given Linh opens Truth or Dare, then a card with both its truth and its dare shows right away, with nothing to pick first; when she taps "Thẻ tiếp", then the next card shows without asking what they did.
 
+## 14. Rau răm
+
+A free box for adults: every card holds a flirty truth and a bolder, intimate dare for the two partners alone. It plays like any box; only its copy limit differs.
+
+Example: at 22:30, at home with the door closed, Linh opens Rau răm ("Miễn phí", "18+") and gets rr-02. She picks the truth and answers. On rr-09 Sơn does not feel like the dare, so they take the truth instead; on the next card Linh just taps "Thẻ tiếp" and nothing asks why.
+
+- R73. Bisou has the free box "Rau răm" / "Spicy", for adults, with a deep rose cover of a sprig of rau răm leaves in white line art and a rose box colour; it holds 10 cards, all of kind truth or dare (R71), open in full to every couple like any free box (R3) (Appendix).
+- R74. Rau răm shows on Home and in the box list like every box, among the free boxes (R10, R11), with an "18+" badge on its product card and on each of its cards in the player; there is no age check, warning screen or setting to show or hide it.
+- R75. For Rau răm only, cards may talk about desire, attraction and intimate memories, and dares may ask the two partners for kissing, touching, a slow massage, taking off a piece of clothing or whispered wishes; this lifts the intimacy limit of R48 and R50 for this box and no other.
+- R76. Rau răm cards still follow R47, R49 and R51 to R54, and also: wording is tasteful, never graphic or anatomical; a dare involves only the two partners, in private, never in front of others or in public; no card mentions or involves anyone else, alcohol or any substance, or photos, video or recording; no card pressures (no "phải", "không được từ chối" or similar), and a dare that undresses or touches the other asks for their yes.
+- R77. Either partner can say no to any Rau răm card at any time: whoever drew may take the truth instead of the dare, and "Thẻ tiếp" skips the card without asking why (R18).
+
+- AC37 (R73, R74, R12). Given the box list, then Rau răm shows among the free boxes with its cover, name, description, "Miễn phí" and an "18+" badge; when Linh opens it, then a card shows right away with no age check or warning first, and any of rr-01 to rr-10 can come up.
+- AC38 (R74, R71). Given rr-04 shows, then Linh sees the "18+" badge, the label "Thật hay thử thách" and the two blocks "Thật" and "Thử thách"; tapping either block records nothing.
+- AC39 (R75, R76, R54). Given the Rau răm cards in the appendix, then each dare is done by the two of them alone, in private, with nothing graphic or anatomical; no card names a third person, alcohol, a camera or recording, or a public place; no card uses pressure wording, and no Vietnamese card uses "anh" or "em".
+- AC40 (R77, R18). Given rr-09 shows and Sơn does not want the dare, when they take the truth or Linh taps "Thẻ tiếp", then Bisou asks nothing and keeps nothing.
+
 ## Decisions to confirm
 
 None open.
@@ -282,6 +303,7 @@ None open.
 - Any link to the garden (no "save to garden", no growth or freshness) and any notification.
 - Depth-ordered sessions, writing one's own cards, more boxes and cards beyond the launch set (they come later under these rules).
 - Owned boxes when a couple splits, export and account deletion (R64).
+- An age check, warning screen or setting to hide an 18+ box (R74).
 
 ## Appendix: Launch cards
 
@@ -349,3 +371,22 @@ Every card is of kind truth or dare and shows its truth in the "Thật" / "Truth
 | tod-18 | | Câu cửa miệng nào của người kia đã lây sang mỗi người? | Which of the other's pet phrases has rubbed off on each of you? | Đập tay theo một nhịp tự nghĩ ra, người kia phải vỗ lại cho đúng. Rồi đổi lượt. | Clap out a rhythm you make up, and the other has to clap it back exactly. Then swap. |
 | tod-19 | | Hồi nhỏ mỗi người có món đồ chơi nào không rời tay? | What toy did each of you never let go of as a kid? | Cùng kể một câu chuyện, mỗi người một câu, đến khi đủ mười câu. | Tell a story together, one sentence each, until you reach ten. |
 | tod-20 | | Nếu mai hai đứa được nghỉ một tuần, mỗi người muốn làm gì đầu tiên? | If you both had a week off from tomorrow, what would each of you want to do first? | Đan một tay vào nhau, rồi dùng hai tay còn lại vỗ vào nhau mười lần không trượt. | Lace one hand together, then clap your two free hands together ten times without missing. |
+
+### Rau răm / Spicy (free, 18+)
+
+Description: "Cay cay một chút, chỉ dành cho hai đứa." / "A little spicy, just for the two of you."
+
+Every card is of kind truth or dare (R71) and carries the "18+" badge (R74). Any dare can be refused and swapped for the card's truth (R77).
+
+| Id | Truth, Vietnamese | Truth, English | Dare, Vietnamese | Dare, English |
+|---|---|---|---|---|
+| rr-01 | Lần đầu mỗi người thấy người kia thật sự quyến rũ là lúc nào? Kể kỹ một chút. | When did each of you first find the other truly attractive? Tell it with a little detail. | Hôn nhau một nụ thật chậm, đếm thầm đến mười rồi mới rời ra. | Share one slow kiss, counting silently to ten before you part. |
+| rr-02 | Người kia mặc gì thì mỗi người thấy khó rời mắt nhất? | What does the other wear that each of you finds hardest to look away from? | Mỗi người cởi bớt một món đồ đang mặc, món nào tùy mình. | Each take off one thing you're wearing, your choice which. |
+| rr-03 | Nụ hôn nào của hai đứa mà mỗi người nhớ nhất, và vì sao? | Which of your kisses does each of you remember most, and why? | Một người nhắm mắt, người kia hôn ba chỗ bất kỳ trên mặt và cổ, rồi đoán chỗ nào là đầu tiên. Rồi đổi lượt. | One closes their eyes while the other kisses three spots on their face and neck, then guess which came first. Then swap. |
+| rr-04 | Có kiểu chạm nào mỗi người rất thích mà chưa từng nói ra? | Is there a kind of touch each of you loves but has never said out loud? | Xoa vai và lưng cho nhau thật chậm, mỗi người hai phút. Người được xoa chỉ cần nói "chỗ đó" hay "nhẹ thôi". | Give each other a slow shoulder and back massage, two minutes each. The one receiving just says "right there" or "gentler". |
+| rr-05 | Có giấc mơ nào về người kia mà mỗi người hơi ngại kể không? Kể bản đã kiểm duyệt cũng được. | Has either of you had a dream about the other you'd be a bit shy to tell? The censored version counts. | Ghé sát tai người kia, thì thầm một điều mình muốn hai đứa làm tối nay. Rồi đổi lượt. | Lean close and whisper in the other's ear one thing you'd like the two of you to do tonight. Then swap. |
+| rr-06 | Mỗi người thấy mình quyến rũ nhất vào lúc nào? | When does each of you feel at your most attractive? | Ngồi thật gần, mỗi người hôn dọc cánh tay người kia, từ đầu ngón tay lên đến vai, thật chậm. | Sit close and each kiss along the other's arm, from fingertips to shoulder, slowly. |
+| rr-07 | Ông bà bảo rau răm làm bớt "nóng". Theo mỗi người, hai đứa nên ăn thêm hay ăn bớt? | Folk wisdom says rau răm cools you down. Should the two of you eat more of it, or less? | Ôm sát nhau nhảy chậm hết một bài, không cần nhạc, một người ngân nga là đủ. | Slow dance close together for one song; no music needed, one of you can hum. |
+| rr-08 | Người kia làm gì, dù rất nhỏ, mà mỗi người "đổ" ngay tại chỗ? | What does the other do, however small, that makes each of you melt on the spot? | Một người nhắm mắt, người kia dùng đầu ngón tay vẽ chậm một hình lên lưng. Đoán sai thì bị hôn một cái. Rồi đổi lượt. | One closes their eyes while the other slowly traces a shape on their back with a fingertip. A wrong guess earns a kiss. Then swap. |
+| rr-09 | Một buổi tối chỉ có hai đứa, mỗi người muốn nó bắt đầu thế nào và kết thúc ra sao? | An evening with just the two of you: how would each of you like it to start, and to end? | Cởi một cúc áo hay một món đồ của người kia, chỉ khi người kia gật đầu. Rồi đổi lượt. | Undo one button or take off one piece of the other's clothing, only once they nod. Then swap. |
+| rr-10 | Có điều gì mỗi người muốn hai đứa thử cùng nhau mà chưa dám nói? Nói một nửa thôi cũng được. | Is there something each of you would like to try together but hasn't dared to say? Half of it is enough. | Nằm cạnh nhau, nhìn vào mắt nhau một phút, rồi hôn khi cả hai cùng thấy muốn. | Lie side by side and look into each other's eyes for a minute, then kiss when you both feel like it. |
