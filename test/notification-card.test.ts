@@ -46,12 +46,12 @@ async function setup(options: { installed?: boolean; permission?: string; subscr
 it.each([
   { installed: false }, { permission: "granted" }, { permission: "denied" }, { subscribed: true },
   { dismissed: true }, { publicKey: null }, { registered: false }, { supported: false },
-])("AC1, AC17, R23: hides the invitation for %s without asking permission", async (options) => {
+])("notifications AC1, AC17, R23: hides the invitation for %s without asking permission", async (options) => {
   const { registration } = await setup(options);
   expect(render()).toHaveLength(0); expect(registration.pushManager.subscribe).not.toHaveBeenCalled();
 });
 
-it.each(["allowed", "denied"])("AC1, AC17, R24: a tap asks once and dismisses permanently when %s", async (outcome) => {
+it.each(["allowed", "denied"])("notifications AC1, AC17, R24: a tap asks once and dismisses permanently when %s", async (outcome) => {
   const { registration, store } = await setup();
   const save = vi.spyOn(api, "savePush").mockResolvedValue({ ok: true, data: { device: { endpoint: "device", journal: true, reminders: true } } });
   if (outcome === "denied") registration.pushManager.subscribe.mockRejectedValue(new Error("denied"));
@@ -65,7 +65,7 @@ it.each(["allowed", "denied"])("AC1, AC17, R24: a tap asks once and dismisses pe
   hooks.values = []; expect(render()).toHaveLength(0);
 });
 
-it("AC17, R25: closing stores dismissal, restores focus and never asks permission", async () => {
+it("notifications AC17, R25: closing stores dismissal, restores focus and never asks permission", async () => {
   const { registration, store, focus } = await setup();
   render().find((n) => n.props["aria-label"] === "push.card.dismiss")!.props.onClick!();
   expect(store.get("bisou.push.card")).toBe("1"); expect(render()).toHaveLength(0);
@@ -73,7 +73,7 @@ it("AC17, R25: closing stores dismissal, restores focus and never asks permissio
   expect(registration.pushManager.subscribe).not.toHaveBeenCalled();
 });
 
-it("R1, R24: offline invitation cannot start a subscription", async () => {
+it("notifications R1, R24: offline invitation cannot start a subscription", async () => {
   const { registration, store } = await setup({ online: false });
   const button = render().find((n) => n.props.children === "push.card.button")!;
   expect(button.props.disabled).toBe(true); await button.props.onClick!();

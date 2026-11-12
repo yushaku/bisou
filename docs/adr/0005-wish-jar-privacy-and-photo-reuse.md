@@ -1,6 +1,6 @@
 # ADR 0005: Wish claims stay invisible to the owner, and wish photos reuse the journal photo table
 
-Status: proposed (November 2026)
+Status: accepted (November 2026)
 
 ## Context
 Each partner keeps a wish jar the other can spin and claim in secret ([wish jar spec](../product/wishes.md)); nothing the owner sees may show a spin or claim (R17), spins are kept only to count a limit (R24), and a wish has one square photo kept like journal photos (R6). Wish photos reuse the journal's upload first flow ([ADR 0004](0004-photos-upload-first-private-r2.md)).

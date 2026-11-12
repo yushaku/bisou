@@ -100,7 +100,6 @@ export const en: Messages = {
   "garden.stageLockedHint": "This stage is not open yet. Return to Journey to choose it together.",
 
   "push.notes.one": "{name} left you a kind note",
-  "push.notes.many": "{name} left you {n} kind notes",
   "push.notes.reminder": "{name}'s kind note is still here",
   "push.notes.reminders": "{n} kind notes from {name} are still here",
   "home.notes": "Kind notes",
@@ -142,7 +141,6 @@ export const en: Messages = {
   "notes.scheduled": "Scheduled for {time}",
   "notes.scheduleHint": "Your note will send automatically at the chosen time, even with the app closed.",
   "notes.scheduleError": "Choose a date and time in the future.",
-  "notes.cooling": "Can be sent from {time}",
   "notes.ready": "Reread and send",
   "notes.reread": "If a friend who cares about you both read this note, what would they see?",
   "notes.send": "Send to {partner}",
@@ -167,7 +165,6 @@ export const en: Messages = {
   "notes.loadError": "Could not load notes",
   "notes.stale": "Could not refresh notes. Previously loaded notes are still here.",
   "notes.errors.opened": "{partner} has opened this note, so it can no longer be changed",
-  "notes.errors.cooling": "This note has not waited 8 hours yet",
   "notes.errors.sent": "This note has already been sent",
   "notes.saveError": "Could not save the note. Your words are still here. Please try again.",
   "notes.deleteError": "Could not delete the note. Please try again.",

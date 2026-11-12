@@ -42,7 +42,7 @@ function otherCode(code: string): string {
 const count = (table: string) => env.DB.prepare(`SELECT COUNT(*) AS n FROM ${table}`).first<number>("n");
 
 describe("POST /api/couple (create)", () => {
-  it("R4: rejects a nameless user without creating a couple or code", async () => {
+  it("pairing R4: rejects a nameless user without creating a couple or code", async () => {
     const { cookie } = await login("nameless@example.com");
     const res = await call("POST", "/api/couple", { cookie });
     expect(res.status).toBe(400);
@@ -143,7 +143,7 @@ describe("DELETE /api/couple", () => {
 });
 
 describe("POST /api/couple/join", () => {
-  it("R4: rejects a nameless user without joining or consuming the code", async () => {
+  it("pairing R4: rejects a nameless user without joining or consuming the code", async () => {
     const a = await user("An");
     const created = await create(a);
     const { cookie } = await login("nameless@example.com");

@@ -4,7 +4,7 @@ import { beforeEach, expect, it } from "vitest";
 import { call, explain, paired, resetDb, user } from "./helpers";
 import type { CardBoxDetail, CardBoxSummary } from "../src/shared/cardBox";
 beforeEach(resetDb);
-it("AC25: paid detail sends exactly flagged preview cards to both partners", async () => {
+it("card-box-unlock AC25: paid detail sends exactly flagged preview cards to both partners", async () => {
   const { a, b } = await paired();
   for (const person of [a, b]) {
     const res = await call("GET", "/api/boxes/deep-connection", { cookie: person.cookie });
@@ -16,12 +16,12 @@ it("AC25: paid detail sends exactly flagged preview cards to both partners", asy
   }
 });
 
-it("AC1: anonymous and unpaired people cannot read boxes", async () => {
+it("card-box AC1: anonymous and unpaired people cannot read boxes", async () => {
   expect((await call("GET", "/api/boxes")).status).toBe(401);
   const person = await user("Solo");
   for (const path of ["/api/boxes", "/api/boxes/lam-quen-lai", "/api/boxes/deep-connection", "/api/boxes/truth-or-dare", "/api/boxes/rau-ram"]) expect((await call("GET", path, { cookie: person.cookie })).status).toBe(404);
 });
-it("AC1 AC3 AC6: shared catalogue is ordered and free detail contains bilingual launch cards", async () => {
+it("card-box AC1 AC3 AC6: shared catalogue is ordered and free detail contains bilingual launch cards", async () => {
   const { a, b } = await paired();
   const list = await (await call("GET", "/api/boxes", { cookie: a.cookie })).json();
   expect(list).toEqual(await (await call("GET", "/api/boxes", { cookie: b.cookie })).json());
@@ -31,7 +31,7 @@ it("AC1 AC3 AC6: shared catalogue is ordered and free detail contains bilingual 
   expect(detail.cards[0]).toMatchObject({ text: { vi: "Món ăn nào mỗi lần ăn là thấy nhớ nhà? Kể cho nhau nghe.", en: "Which food tastes like home to you? Tell each other about it." } });
   expect((await call("GET", "/api/boxes/missing", { cookie: a.cookie })).status).toBe(404);
 });
-it("AC4 AC30: browsing twenty times leaves garden and push unchanged and stores no play records", async () => {
+it("card-box AC4 AC30: browsing twenty times leaves garden and push unchanged and stores no play records", async () => {
   const { a } = await paired();
   const snapshot = async () => Promise.all(["garden_days", "garden_answers", "garden_growth", "garden_levels", "push_subscriptions"].map(table => env.DB.prepare(`SELECT * FROM ${table}`).all()));
   const before = await snapshot();
@@ -42,7 +42,7 @@ it("AC4 AC30: browsing twenty times leaves garden and push unchanged and stores 
   expect((await env.DB.prepare("SELECT * FROM card_box_unlocks").all()).results).toEqual([]);
   expect((await call("POST", "/api/boxes/deep-connection", { cookie: a.cookie, body: { answer: "hello" } })).status).toBe(404);
 });
-it("AC25 AC28: launch content has unique bilingual cards, safe wording and playable previews", () => {
+it("card-box-unlock AC25, card-box-content AC28: launch content has unique bilingual cards, safe wording and playable previews", () => {
   const ids = CARD_BOXES.flatMap(box => box.cards.map(card => card.id));
   expect(new Set(ids).size).toBe(ids.length);
   for (const box of CARD_BOXES) {
@@ -55,7 +55,7 @@ it("AC25 AC28: launch content has unique bilingual cards, safe wording and playa
   }
 });
 
-it("AC34: Truth or Dare has twenty bilingual paired cards and exactly three previews", () => {
+it("card-box-content AC34: Truth or Dare has twenty bilingual paired cards and exactly three previews", () => {
   const box = CARD_BOXES.find(box => box.id === "truth-or-dare");
   expect(box).toMatchObject({ free: false, price: 49000, cover: "/card-boxes/truth-or-dare.jpg", name: { vi: "Thật hay thử thách", en: "Truth or Dare" }, description: { vi: "Câu hỏi thật lòng và thử thách nho nhỏ, để hai đứa cười cùng nhau.", en: "Honest questions and little dares, to laugh about together." } });
   expect(box?.cards).toHaveLength(20);
@@ -70,7 +70,7 @@ it("AC34: Truth or Dare has twenty bilingual paired cards and exactly three prev
   }
 });
 
-it("AC34 AC25: both partners receive only Truth or Dare previews with bilingual sides", async () => {
+it("card-box-content AC34, card-box-unlock AC25: both partners receive only Truth or Dare previews with bilingual sides", async () => {
   const { a, b } = await paired();
   for (const person of [a, b]) {
     const res = await call("GET", "/api/boxes/truth-or-dare", { cookie: person.cookie });
@@ -90,7 +90,7 @@ it("AC34 AC25: both partners receive only Truth or Dare previews with bilingual 
   }
 });
 
-it("AC37 AC39: Rau răm has ten unique bilingual truth/dare cards with the approved copy", () => {
+it("card-box-content AC37 AC39: Rau răm has ten unique bilingual truth/dare cards with the approved copy", () => {
   const box = CARD_BOXES.find(box => box.id === "rau-ram");
   expect(box).toMatchObject({ free: false, adult: true, price: 49000, cover: "/card-boxes/rau-ram.jpg", name: { vi: "Rau răm", en: "Spicy" }, description: { vi: "Cay cay một chút, chỉ dành cho hai đứa.", en: "A little spicy, just for the two of you." } });
   expect(box?.cards.filter(card => card.preview).map(card => card.id)).toEqual(["rr-04", "rr-07", "rr-08"]);
@@ -105,7 +105,7 @@ it("AC37 AC39: Rau răm has ten unique bilingual truth/dare cards with the appro
   }
 });
 
-it("AC37 AC40: both partners receive only Rau răm previews until gift unlock and cannot record a choice", async () => {
+it("card-box-content AC37 AC40: both partners receive only Rau răm previews until gift unlock and cannot record a choice", async () => {
   const { a, b } = await paired();
   for (const person of [a, b]) {
     const res = await call("GET", "/api/boxes/rau-ram", { cookie: person.cookie });
@@ -128,7 +128,7 @@ it("AC37 AC40: both partners receive only Rau răm previews until gift unlock an
   }
 });
 
-it("AC2 AC23 AC44: gift unlock returns every card, repeats harmlessly and opens the box for both partners only", async () => {
+it("card-box-unlock AC2 AC23 AC44: gift unlock returns every card, repeats harmlessly and opens the box for both partners only", async () => {
   const { a, b } = await paired();
   const outsider = await user("Other");
   await call("POST", "/api/couple", { cookie: outsider.cookie });
@@ -155,7 +155,7 @@ it("AC2 AC23 AC44: gift unlock returns every card, repeats harmlessly and opens 
   }
   expect((await call("POST", "/api/boxes/deep-connection/unlock", { cookie: outsider.cookie })).status).toBe(404);
 });
-it("AC44: gift unlock rejects free, unknown, unpaired, anonymous and foreign-origin requests", async () => {
+it("card-box-unlock AC44: gift unlock rejects free, unknown, unpaired, anonymous and foreign-origin requests", async () => {
   const { a } = await paired(); const solo = await user("Solo");
   for (const id of ["missing", "lam-quen-lai"]) expect((await call("POST", `/api/boxes/${id}/unlock`, { cookie: a.cookie })).status).toBe(404);
   expect((await call("POST", "/api/boxes/deep-connection/unlock", { cookie: solo.cookie })).status).toBe(404);
@@ -163,7 +163,7 @@ it("AC44: gift unlock rejects free, unknown, unpaired, anonymous and foreign-ori
   for (const origin of [null, "https://other.example"]) expect((await call("POST", "/api/boxes/deep-connection/unlock", { cookie: a.cookie, origin })).status).toBe(403);
 });
 
-it("AC25 AC44: gift unlock stays within the caller's couple and uses the couple index", async () => {
+it("card-box-unlock AC25 AC44: gift unlock stays within the caller's couple and uses the couple index", async () => {
   const { a } = await paired();
   await call("POST", "/api/boxes/deep-connection/unlock", { cookie: a.cookie });
   const c = await user("Third"); const d = await user("Fourth");
@@ -176,7 +176,7 @@ it("AC25 AC44: gift unlock stays within the caller's couple and uses the couple 
 });
 
 
-it("R12: summaries expose total card counts for free, locked and unlocked boxes without card text", async () => {
+it("card-box R12: summaries expose total card counts for free, locked and unlocked boxes without card text", async () => {
   const { a } = await paired();
   const list = async () => (await (await call("GET", "/api/boxes", { cookie: a.cookie })).json<{ boxes: CardBoxSummary[] }>()).boxes;
   const locked = await list();

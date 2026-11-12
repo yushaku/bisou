@@ -9,7 +9,7 @@ export interface Photo {
 }
 
 /*
- * Layouts for 1 to 4 photos, every tile square (R18); more than 4 shows the first 4 with a
+ * Layouts for 1 to 4 photos, every tile square (journal R18); more than 4 shows the first 4 with a
  * "+n" on the last. Three photos: one large square beside two stacked squares, so the right
  * column is (100% - two gaps) / 3 and the left square is exactly two tiles plus a gap tall.
  */

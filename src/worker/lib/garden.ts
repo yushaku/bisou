@@ -9,7 +9,7 @@ export function cardAccess(card: { id: string; levelId: typeof LEVEL_IDS[number]
 }
 interface LevelRow {
   initial_level: number | null; selected_level: number | null; furthest_level: number | null; revision: number;
-  proposal_kind: "placement" | "target" | "revisit" | null; proposal_level: number | null;
+  proposal_kind: "placement" | "target" | null; proposal_level: number | null;
   proposer_id: string | null; target_agreed: number;
 }
 export async function ensureLevels(db: D1Database, couple: string, user: string) {
@@ -41,21 +41,19 @@ export async function changeLevels(db: D1Database, couple: string, user: string,
   let values: unknown[];
   if (action.action === "propose") {
     const rank = levelRank(action.levelId);
-    const eligible = action.kind === "placement" ? "0" : action.kind === "revisit"
-      ? `? <= COALESCE(furthest_level, ${FIRST_LEVEL})` : `COALESCE(furthest_level, ${FIRST_LEVEL}) < 4 AND ? > COALESCE(furthest_level, ${FIRST_LEVEL})`;
+    const eligible = action.kind === "placement" ? "0" : `COALESCE(furthest_level, ${FIRST_LEVEL}) < 4 AND ? > COALESCE(furthest_level, ${FIRST_LEVEL})`;
     sql = `UPDATE garden_levels SET proposal_kind = ?, proposal_level = ?, proposer_id = ?, target_agreed = 0, revision = revision + 1
       WHERE couple_id = ? AND revision = ? AND (proposal_kind IS NULL OR proposer_id = ? OR (initial_level IS NULL AND proposal_kind = 'placement')) AND ${eligible} AND ${memberGuard}`;
     values = [action.kind, rank, user, couple, action.revision, user, ...(action.kind !== "placement" ? [rank] : []), couple, user, couple];
   } else if (action.action === "accept") {
-    sql = `WITH choice AS (SELECT *, (proposal_kind = 'target') AS opens
+    sql = `WITH choice AS (SELECT *
       FROM garden_levels WHERE couple_id = ? AND revision = ? AND proposer_id <> ?
-      AND ((proposal_kind = 'revisit' AND proposal_level <= COALESCE(furthest_level, ${FIRST_LEVEL}))
-        OR (proposal_kind = 'target' AND proposal_level > COALESCE(furthest_level, ${FIRST_LEVEL}) AND COALESCE(furthest_level, ${FIRST_LEVEL}) < 4))
+      AND proposal_kind = 'target' AND proposal_level > COALESCE(furthest_level, ${FIRST_LEVEL}) AND COALESCE(furthest_level, ${FIRST_LEVEL}) < 4
       AND ${memberGuard})
       UPDATE garden_levels SET
         initial_level = COALESCE(choice.initial_level, ${FIRST_LEVEL}),
-        furthest_level = CASE WHEN choice.opens THEN choice.proposal_level ELSE COALESCE(choice.furthest_level, ${FIRST_LEVEL}) END,
-        selected_level = CASE WHEN choice.opens OR choice.proposal_kind = 'revisit' THEN choice.proposal_level ELSE COALESCE(choice.selected_level, ${FIRST_LEVEL}) END,
+        furthest_level = choice.proposal_level,
+        selected_level = choice.proposal_level,
         proposal_kind = NULL, proposal_level = NULL, proposer_id = NULL, target_agreed = 0,
         revision = garden_levels.revision + 1
       FROM choice WHERE garden_levels.couple_id = choice.couple_id`;

@@ -13,7 +13,7 @@ async function create(owner: TestUser) {
 const receive = (owner: TestUser, id: string, body: unknown = input) => call("POST", `/api/wishes/${id}/received`, { cookie: owner.cookie, body });
 
 describe("wish receipt", () => {
-  it.each(["en", "vi", "fr", null, 42, undefined])("R20: uses the app locale %s when valid, otherwise the stored locale", async (locale) => {
+  it.each(["en", "vi", "fr", null, 42, undefined])("wishes R20: uses the app locale %s when valid, otherwise the stored locale", async (locale) => {
     const { b } = await paired();
     const wish = await create(b);
     const res = await receive(b, wish.id, { ...input, locale });
@@ -22,7 +22,7 @@ describe("wish receipt", () => {
       .toBe(`${locale === "en" ? "Received" : "Đã nhận"}: Linen scarf. ${input.note}`);
   });
 
-  it("AC11 (R18, R19, R22): only the owner receives, for a valid day, permanently; the claim follows", async () => {
+  it("wishes AC11 (R18, R19, R22): only the owner receives, for a valid day, permanently; the claim follows", async () => {
     const { a, b } = await paired();
     const wish = await create(b);
     await call("POST", `/api/wishes/${wish.id}/claim`, { cookie: a.cookie });
@@ -48,7 +48,7 @@ describe("wish receipt", () => {
     expect((await (await call("GET", "/api/wishes/claims", { cookie: a.cookie })).json<{ claims: Claim[] }>()).claims).toEqual([]);
   });
 
-  it.each(["vi", "en"] as const)("AC12 (R20, R21): creates one ordinary journal entry with 4 photos in %s", async (locale) => {
+  it.each(["vi", "en"] as const)("wishes AC12 (R20, R21): creates one ordinary journal entry with 4 photos in %s", async (locale) => {
     const { a, b } = await paired();
     await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale } });
     const wish = await create(b);
@@ -69,7 +69,7 @@ describe("wish receipt", () => {
     expect(await env.DB.prepare("SELECT status FROM wishes WHERE id = ?").bind(wish.id).first("status")).toBe("received");
   });
 
-  it("AC11, AC12 (R18-R20): simultaneous receipt submissions create exactly one entry", async () => {
+  it("wishes AC11, AC12 (R18-R20): simultaneous receipt submissions create exactly one entry", async () => {
     const { b } = await paired();
     const wish = await create(b);
     const results = await Promise.all([receive(b, wish.id), receive(b, wish.id)]);
@@ -77,7 +77,7 @@ describe("wish receipt", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(1);
   });
 
-  it("AC12, AC13 (R6, R18, R20): invalid or raced photos save neither receipt nor entry", async () => {
+  it("wishes AC12, AC13 (R6, R18, R20): invalid or raced photos save neither receipt nor entry", async () => {
     const { a, b } = await paired();
     const wish = await create(b);
     const theirs = await upload(a);
@@ -101,7 +101,7 @@ describe("wish receipt", () => {
     expect(await env.DB.prepare("SELECT status FROM wishes WHERE id = ?").bind(wish.id).first("status")).toBe("open");
   });
 
-  it("AC11 (R18): accepts the latest journal day and an empty note", async () => {
+  it("wishes AC11 (R18): accepts the latest journal day and an empty note", async () => {
     const { b } = await paired();
     const wish = await create(b);
     const res = await receive(b, wish.id, { date: latestDay(Date.now()), note: "  ", photoIds: [] });

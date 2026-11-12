@@ -1,6 +1,6 @@
 # ADR 0004: Journal photos are uploaded first as two square renditions and kept in private R2 under the couple
 
-Status: proposed (November 2026)
+Status: accepted (November 2026)
 
 ## Context
 Journal entries carry up to 4 photos, each a square the author frames ([journal spec](../product/journal.md), R18). The Worker has 10 ms CPU per request and cannot decode images; the client crops and compresses. Phones upload slowly and often fail midway, and the compose sheet must show progress and retry per photo. Feed cards need small images, the viewer a large one. Photos are private to the couple and deleted for good with their entry.

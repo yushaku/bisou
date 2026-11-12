@@ -139,7 +139,7 @@ describe("profile photos", () => {
     expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key)).toEqual([key(a, current)]);
   });
 
-  it("AC1 R1: changing a target id still changes only the session owner", async () => {
+  it("avatar AC1 R1: changing a target id still changes only the session owner", async () => {
     const { a, b } = await paired();
     const id = await save(a);
     const data = form();
@@ -151,7 +151,7 @@ describe("profile photos", () => {
     expect((await call("PUT", `/api/me/avatar/${a.id}`, { cookie: b.cookie, form: form() })).status).toBe(404);
   });
 
-  it("AC2 AC5 R2 R6: saves one 512 square without EXIF and exposes the current user", async () => {
+  it("avatar AC2 AC5 R2 R6: saves one 512 square without EXIF and exposes the current user", async () => {
     const a = await user("An");
     const id = await save(a, form(jpeg({ width: 512, height: 512, exif: true })));
     expect(await (await call("GET", "/api/me", { cookie: a.cookie })).json()).toMatchObject({ user: { avatarId: id } });
@@ -162,28 +162,28 @@ describe("profile photos", () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(jpeg({ width: 512, height: 512 }));
   });
 
-  it("AC3 R4: refuses a PDF and malformed multipart", async () => {
+  it("avatar AC3 R4: refuses a PDF and malformed multipart", async () => {
     const a = await user("An");
     expect((await put(a, form(new Uint8Array([1]), "application/pdf"))).status).toBe(415);
     expect((await put(a, new FormData())).status).toBe(400);
     expect((await call("PUT", "/api/me/avatar", { cookie: a.cookie, body: {} })).status).toBe(415);
   });
 
-  it.each([[1024, 1024], [511, 511], [512, 511]])("AC5 R6: refuses dimensions %i x %i", async (width, height) => {
+  it.each([[1024, 1024], [511, 511], [512, 511]])("avatar AC5 R6: refuses dimensions %i x %i", async (width, height) => {
     expect((await put(await user("An"), form(jpeg({ width, height })))).status).toBe(400);
   });
 
-  it("AC5 R6: accepts WebP and refuses its metadata", async () => {
+  it("avatar AC5 R6: accepts WebP and refuses its metadata", async () => {
     const a = await user("An");
     await save(a, form(webp({ width: 512, height: 512, kind: "VP8" }), "image/webp"));
     expect((await put(a, form(webp({ width: 512, height: 512, kind: "VP8X", exif: true }), "image/webp"))).status).toBe(400);
   });
 
-  it.each([262_145, 300_000])("AC5 R6: refuses %i bytes at file or request limit", async (size) => {
+  it.each([262_145, 300_000])("avatar AC5 R6: refuses %i bytes at file or request limit", async (size) => {
     expect((await put(await user("An"), form(new Uint8Array(size)))).status).toBe(413);
   });
 
-  it("AC6 R7: replacement deletes the old object and orphan and denies both old URLs", async () => {
+  it("avatar AC6 R7: replacement deletes the old object and orphan and denies both old URLs", async () => {
     const { a, b } = await paired();
     const old = await save(a);
     await env.PHOTOS.put(key(a, "orphan"), "orphan");
@@ -193,7 +193,7 @@ describe("profile photos", () => {
     expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key)).toEqual([key(a, current)]);
   });
 
-  it("AC7 AC12 R8 R15: removal is idempotent, clears storage and returns the letter state", async () => {
+  it("avatar AC7 AC12 R8 R15: removal is idempotent, clears storage and returns the letter state", async () => {
     const a = await user("An");
     const old = await save(a);
     for (let i = 0; i < 2; i++) {
@@ -205,7 +205,7 @@ describe("profile photos", () => {
     expect((await get(a, a, old)).status).toBe(404);
   });
 
-  it("AC8 AC10 R10 R13: partner refresh includes the photo and permits reading it", async () => {
+  it("avatar AC8 AC10 R10 R13: partner refresh includes the photo and permits reading it", async () => {
     const { a, b } = await paired();
     const id = await save(a);
     const res = await call("GET", "/api/couple", { cookie: b.cookie });
@@ -214,7 +214,7 @@ describe("profile photos", () => {
     expect((await get(b, a, id)).status).toBe(200);
   });
 
-  it("AC9 R11 R12: unpaired owners can save, outsiders cannot read, and Origin and session are required", async () => {
+  it("avatar AC9 R11 R12: unpaired owners can save, outsiders cannot read, and Origin and session are required", async () => {
     const a = await user("An");
     const outsider = await user("Chi");
     for (const alone of [false, true]) {
@@ -230,7 +230,7 @@ describe("profile photos", () => {
     }
   });
 
-  it("AC11 R14: D1 failure preserves the old photo and removes the new object", async () => {
+  it("avatar AC11 R14: D1 failure preserves the old photo and removes the new object", async () => {
     const a = await user("An");
     const old = await save(a);
     const prepare = env.DB.prepare.bind(env.DB);
@@ -245,7 +245,7 @@ describe("profile photos", () => {
     log.mockRestore();
   });
 
-  it("AC9 R11: avatar queries retain indexed lookups", async () => {
+  it("avatar AC9 R11: avatar queries retain indexed lookups", async () => {
     const plans = await Promise.all([
       explain(`SELECT 1 FROM users u WHERE u.id = ?1 AND u.avatar_id = ?2
         AND (u.id = ?3 OR EXISTS (SELECT 1 FROM couple_members a JOIN couple_members b ON b.couple_id = a.couple_id

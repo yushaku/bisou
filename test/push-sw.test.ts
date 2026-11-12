@@ -17,14 +17,14 @@ function worker() {
   return { dispatch, showNotification, clients };
 }
 
-it("R15: opens a new window when existing client navigation rejects", async () => {
+it("notifications R15: opens a new window when existing client navigation rejects", async () => {
   const sw = worker();
   sw.clients.matchAll.mockResolvedValue([{ focus: vi.fn().mockResolvedValue(undefined), navigate: vi.fn().mockRejectedValue(new Error("closed")) }]);
   await sw.dispatch("notificationclick", { notification: { close: vi.fn(), data: { url: "/events" } } });
   expect(sw.clients.openWindow).toHaveBeenCalledWith("/events");
 });
 
-it("AC3, R19: shows the title and replacement tag with a journal destination", async () => {
+it("notifications AC3, R19: shows the title and replacement tag with a journal destination", async () => {
   const sw = worker();
   await sw.dispatch("push", { data: { json: () => ({ title: "An vừa viết nhật ký", tag: "journal", url: "/journal" }) } });
   expect(sw.showNotification).toHaveBeenCalledWith("An vừa viết nhật ký", { tag: "journal", renotify: true, icon: "/icons/icon-192.png", data: { url: "/journal" } });
@@ -41,12 +41,12 @@ it("garden R32 AC9: shows a private garden notification and opens its route", as
   await sw.dispatch("notificationclick", { notification: { close: vi.fn(), data: { url: "/garden" } } });
   expect(sw.clients.openWindow).toHaveBeenCalledWith("/garden");
 });
-it.each(["https://evil.test", "//evil.test", "/\\evil.test", "javascript:alert(1)", null])("AC3, R15: rejects unsafe click URL %s", async (url) => {
+it.each(["https://evil.test", "//evil.test", "/\\evil.test", "javascript:alert(1)", null])("notifications AC3, R15: rejects unsafe click URL %s", async (url) => {
   const sw = worker(); const close = vi.fn();
   await sw.dispatch("notificationclick", { notification: { close, data: { url } } });
   expect(close).toHaveBeenCalledOnce(); expect(sw.clients.openWindow).toHaveBeenCalledWith("/");
 });
-it("AC3, R15: focuses and navigates an existing window", async () => {
+it("notifications AC3, R15: focuses and navigates an existing window", async () => {
   const sw = worker(); const window = { focus: vi.fn().mockResolvedValue(undefined), navigate: vi.fn().mockResolvedValue(undefined) };
   sw.clients.matchAll.mockResolvedValue([window]);
   await sw.dispatch("notificationclick", { notification: { close: vi.fn(), data: { url: "/events" } } });

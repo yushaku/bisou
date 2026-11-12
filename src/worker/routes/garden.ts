@@ -28,7 +28,7 @@ garden.post("/levels", limitBody, async (c) => {
   const body = await c.req.json().catch(() => null);
   if (!body || !Number.isSafeInteger(body.revision) || body.revision < 0
     || !["propose", "accept", "decline", "withdraw"].includes(body.action)
-    || (body.action === "propose" && (!["placement", "revisit", "target"].includes(body.kind) || !LEVEL_IDS.includes(body.levelId)))
+    || (body.action === "propose" && (!["placement", "target"].includes(body.kind) || !LEVEL_IDS.includes(body.levelId)))
     || Object.keys(body).some((key) => !(body.action === "propose" ? ["action", "kind", "levelId", "revision"] : ["action", "revision"]).includes(key))) return c.json({ error: "invalid_body" }, 400);
   const couple = c.get("gardenCoupleId"), user = c.get("user").id;
   if (!await changeLevels(c.env.DB, couple, user, body as LevelAction)) return c.json({ error: "stale_levels" }, 409);

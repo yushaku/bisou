@@ -1,5 +1,5 @@
 // Turns a picked photo into the two square renditions the server stores, and uploads them.
-// Only the chosen square leaves the phone, re-encoded; the server strips JPEG metadata (R16, R18).
+// Only the chosen square leaves the phone, re-encoded; the server strips JPEG metadata (journal R16, R18).
 import { PHOTO_SIZES } from "../../shared/journal";
 import { AVATAR_MAX_BYTES, AVATAR_PICK_MAX_BYTES, AVATAR_PICK_TYPES, AVATAR_SIDE } from "../../shared/avatar";
 import type { ApiError, Locale, PhotoUploadResponse } from "../../shared/types";

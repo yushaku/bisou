@@ -41,7 +41,7 @@ function render(screen: ReactNode) {
 
 afterEach(() => { vi.clearAllMocks(); vi.mocked(useHistoryState).mockReturnValue(null); vi.unstubAllGlobals(); buttons.clear(); });
 
-it.each([0, 1])("R25: puts my jar on the left for partner %i", (index) => {
+it.each([0, 1])("wishes R25: puts my jar on the left for partner %i", (index) => {
   const user = { ...session.user, ...members[index]! };
   const html = render(h(Wishes, { ...session, user, couple } satisfies ComponentProps<typeof Wishes>));
   const labels = [...html.matchAll(/<button[^>]*aria-label="(Hũ[^\"]+)"/g)].map((match) => match[1]);
@@ -59,7 +59,7 @@ it("returns to my jar from a spin opened by a link", () => {
   expect(html).not.toContain("Hũ của An, mở hũ của mình");
 });
 
-it("R25: leaves both jars off Home", () => {
+it("wishes R25: leaves both jars off Home", () => {
   const html = render(h(Home, { ...session, couple, onCouple: () => {}, celebrate: false, onCelebrated: () => {} }));
   expect(html).not.toContain("Hũ của");
 });
@@ -81,7 +81,7 @@ it("notes AC12 AC13: Home shows only waiting notes with a mailbox and count", ()
   memory.notes.toMe = [{ id: "one", state: "opened", happened: "h", feel: "f", need: "n", hope: "r" }];
   expect(page()).not.toContain("mailbox-wait");
 });
-it("notes AC19 journal AC22: feed keeps writer name/time and recipient above pick/line with a badge", () => {
+it("notes-journal AC19 journal AC22: feed keeps writer name/time and recipient above pick/line with a badge", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const memory = createTabMemory(); memory.journal = { entries: [{ id: "e", authorId: "an", date: "2026-11-13", text: "", source: "partner", photoIds: [], createdAt: 1794556500000, updatedAt: 1794556500000, note: { id: "n", recipientId: "binh", happened: "What happened", feel: "Feelings", need: "Need", hope: "Hope", pick: "talk", line: "I understand" } }], nextCursor: null };
   const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, couple }))) }));
@@ -90,7 +90,7 @@ it("notes AC19 journal AC22: feed keeps writer name/time and recipient above pic
   expect(html).toContain("I understand");
 });
 
-it.each([0, 1])("notes AC20 journal AC22: note-entry actions show for both partners, normal-entry actions stay author-only: %i", (index) => {
+it.each([0, 1])("notes-journal AC20 journal AC22: note-entry actions show for both partners, normal-entry actions stay author-only: %i", (index) => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const user = { ...session.user, ...members[index]! };
   const base = { id: "normal", authorId: "an", date: "2026-11-13", text: "Normal", source: "partner" as const, photoIds: [], createdAt: 1794556500000, updatedAt: 1794556500000 };
@@ -107,7 +107,7 @@ it.each([[1, "1 note is waiting"], [2, "2 notes are waiting"]])("notes AC12: Eng
   expect(html).toContain(text);
 });
 
-it("card box AC5: Home puts the box section directly after DailyQuestion and before notes", () => {
+it("card-box AC5: Home puts the box section directly after DailyQuestion and before notes", () => {
   const html = render(h(Home, { ...session, couple, onCouple() {}, celebrate: false, onCelebrated() {} }));
   expect(html).toContain("Deep talk");
   const source = readFileSync("src/client/screens/Home.tsx", "utf8");

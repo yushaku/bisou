@@ -20,7 +20,7 @@ beforeEach(async () => { await resetDb(); vi.spyOn(Date, "now").mockReturnValue(
 afterEach(() => vi.restoreAllMocks());
 
 describe("Garden daily cards", () => {
-  it("R11 AC19: an exhausted garden has no new daily card and its freshness stays fresh", async () => {
+  it("garden R11 AC19: an exhausted garden has no new daily card and its freshness stays fresh", async () => {
     const { a, b, couple } = await paired();
     await env.DB.batch(CARDS.flatMap((card) => [a, b].map((who) => env.DB.prepare(`INSERT INTO garden_answers
       (couple_id, card_id, user_id, body, created_at, updated_at, flipped_day) VALUES (?, ?, ?, 'played', ?, ?, '2026-10-01')`)
@@ -29,7 +29,7 @@ describe("Garden daily cards", () => {
     expect(state.today).toBeNull();
     expect(state.freshness).toBe("fresh");
   });
-  it("R5 R6 AC3: a phone already in tomorrow still shares the Vietnam daily card", async () => {
+  it("garden R5 R6 AC3: a phone already in tomorrow still shares the Vietnam daily card", async () => {
     const { a, b } = await paired();
     vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-10T00:30:00+09:00"));
     expect((await garden(a)).day).toBe("2026-11-09");
@@ -37,7 +37,7 @@ describe("Garden daily cards", () => {
     vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-10T00:00:00+07:00"));
     expect((await garden(b)).day).toBe("2026-11-10");
   });
-  it("R10 AC5: concurrent swaps advance once, share the new card and put the old one at the back", async () => {
+  it("garden R10 AC5: concurrent swaps advance once, share the new card and put the old one at the back", async () => {
     const { a, b, couple } = await paired();
     const old = (await garden(a)).today!.cardId;
     const swap = (who: TestUser) => call("POST", "/api/garden/today/swap", { cookie: who.cookie, body: { cardId: old } });
@@ -51,7 +51,7 @@ describe("Garden daily cards", () => {
     expect((await deck.json<GardenDeckState>()).active!.cardId).toBe(`${old.split("-")[0]}-02`);
   });
 
-  it("R10 R13 AC6: either answer locks swaps for both without naming who answered", async () => {
+  it("garden R10 R13 AC6: either answer locks swaps for both without naming who answered", async () => {
     const { a, b } = await paired();
     const id = (await garden(a)).today!.cardId;
     await answer(a, id, "LOCKED SECRET");
@@ -62,7 +62,7 @@ describe("Garden daily cards", () => {
     expect((await call("POST", "/api/garden/today/swap", { cookie: b.cookie, body: { cardId: id } })).status).toBe(200);
   });
 
-  it("R10 R13: racing a swap with an answer cannot discard or expose the answer", async () => {
+  it("garden R10 R13: racing a swap with an answer cannot discard or expose the answer", async () => {
     const { a, b, couple } = await paired();
     const id = (await garden(a)).today!.cardId;
     const [saved, swapped] = await Promise.all([answer(a, id, "RACING SECRET"), call("POST", "/api/garden/today/swap", { cookie: b.cookie, body: { cardId: id } })]);
@@ -74,7 +74,7 @@ describe("Garden daily cards", () => {
     expect(await deck.text()).not.toContain("RACING SECRET");
   });
 
-  it("R7 R13 R20 AC8 AC12 AC18: a waiting old daily answer stays private in deck play until both answer", async () => {
+  it("garden R7 R13 R20 AC8 AC12 AC18: a waiting old daily answer stays private in deck play until both answer", async () => {
     const { a, b } = await paired();
     const old = (await garden(a)).today!.cardId;
     const path = `/api/garden/decks/${old.split("-")[0]}`;
@@ -95,7 +95,7 @@ describe("Garden daily cards", () => {
     expect(state.history[0]).toMatchObject({ cardId: old, partner: "YESTERDAY SECRET" });
   });
 
-  it("R13 R20 R21 AC18: deck extra play hides all first-answer metadata and shows newest flips first", async () => {
+  it("garden R13 R20 R21 AC18: deck extra play hides all first-answer metadata and shows newest flips first", async () => {
     const { a, b } = await paired();
     const path = "/api/garden/decks/money";
     const before = await call("GET", path, { cookie: b.cookie });
@@ -111,7 +111,7 @@ describe("Garden daily cards", () => {
     expect(state.active?.cardId).toBe("money-03");
     expect(state.history.map((c) => c.cardId)).toEqual(["money-02", "money-01"]);
   });
-  it("R13 R31: historical deck ordering never reveals a partner's first answer", async () => {
+  it("garden R13 R31: historical deck ordering never reveals a partner's first answer", async () => {
     const { a, b, couple } = await paired();
     for (const [day, id, created] of [["2026-11-07", "money-01", NOW - 2000], ["2026-11-08", "money-02", NOW - 1000], ["2026-11-09", "money-03", NOW]] as const) {
       await env.DB.prepare("INSERT INTO garden_days(couple_id, day, card_id, deck_id, created_at) VALUES (?, ?, ?, 'money', ?)").bind(couple.id, day, id, created).run();
@@ -122,7 +122,7 @@ describe("Garden daily cards", () => {
     expect(await (await call("GET", path, { cookie: b.cookie })).json()).toEqual(before);
   });
 
-  it("R1 R10 R12: decks and swap validate ids and every route is scoped to paired membership", async () => {
+  it("garden R1 R10 R12: decks and swap validate ids and every route is scoped to paired membership", async () => {
     const { a } = await paired();
     const outsider = await user("Out");
     expect((await call("GET", "/api/garden/decks/unknown", { cookie: a.cookie })).status).toBe(404);
@@ -131,7 +131,7 @@ describe("Garden daily cards", () => {
       expect((await call(method!, path!, { cookie: outsider.cookie, body: method === "GET" ? undefined : { cardId: "money-01" } })).status).toBe(404);
     }
   });
-  it("R22 R24 R25 AC11: flips grow a plant once per day, edits and deletions never shrink or regrow it", async () => {
+  it("garden R22 R24 R25 AC11: flips grow a plant once per day, edits and deletions never shrink or regrow it", async () => {
     const { a, b } = await paired();
     const id = (await garden(a)).today!.cardId;
     const deck = id.split("-")[0]!;
@@ -150,7 +150,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).plants.find((p) => p.deckId === deck)?.stage).toBe(2);
   });
 
-  it("R22 R26 R27 R29 AC14 AC15: only a current daily flip refreshes the shared garden", async () => {
+  it("garden R22 R26 R27 R29 AC14 AC15: only a current daily flip refreshes the shared garden", async () => {
     const { a, b } = await paired();
     const old = (await garden(a)).today!.cardId;
     await answer(a, old);
@@ -165,7 +165,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).freshness).toBe("fresh");
     expect((await garden(a)).plants).toEqual((await garden(b)).plants);
   });
-  it("R5 R6 AC3: concurrent first opens store the same Vietnam-day card for both", async () => {
+  it("garden R5 R6 AC3: concurrent first opens store the same Vietnam-day card for both", async () => {
     const { a, b, couple } = await paired();
     const [first, second] = await Promise.all([garden(a), garden(b)]);
     expect(first).toEqual(second);
@@ -174,7 +174,7 @@ describe("Garden daily cards", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_days WHERE couple_id = ?").bind(couple.id).first("n")).toBe(1);
   });
 
-  it("R13 R14 R31 AC8: partner answered flag is visible without response content or metadata", async () => {
+  it("garden R13 R14 R31 AC8: partner answered flag is visible without response content or metadata", async () => {
     const { a, b } = await paired();
     const before = await call("GET", "/api/garden", { cookie: b.cookie });
     const state = await before.clone().json<GardenState>();
@@ -193,7 +193,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).today?.mine).toBe("SECRET one");
   });
 
-  it("R15 AC9: the second answer reveals both, own first, with only the flip day", async () => {
+  it("garden R15 AC9: the second answer reveals both, own first, with only the flip day", async () => {
     const { a, b } = await paired();
     const id = (await garden(a)).today!.cardId;
     await answer(a, id, "An's words");
@@ -203,7 +203,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).today).toMatchObject({ mine: "An's words", partner: "Minh's words" });
   });
 
-  it("R15: concurrent answers flip once and duplicate creation cannot overwrite", async () => {
+  it("garden R15: concurrent answers flip once and duplicate creation cannot overwrite", async () => {
     const { a, b, couple } = await paired();
     const id = (await garden(a)).today!.cardId;
     const responses = await Promise.all([answer(a, id, "A"), answer(b, id, "B")]);
@@ -213,7 +213,7 @@ describe("Garden daily cards", () => {
     expect(await env.DB.prepare("SELECT flipped FROM garden_days WHERE couple_id = ?").bind(couple.id).first("flipped")).toBe(1);
   });
 
-  it("R7 R9 AC12: midnight moves on while a waiting answer stays on its original card", async () => {
+  it("garden R7 R9 AC12: midnight moves on while a waiting answer stays on its original card", async () => {
     const { a, b, couple } = await paired();
     const old = (await garden(a)).today!.cardId;
     await answer(a, old, "Waiting across midnight");
@@ -224,7 +224,7 @@ describe("Garden daily cards", () => {
     expect(await env.DB.prepare("SELECT body FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ?").bind(couple.id, old, a.id).first("body")).toBe("Waiting across midnight");
   });
 
-  it("R18 R19 AC16 AC17: only the author edits; before-flip edits stay hidden and after-flip edits are marked", async () => {
+  it("garden R18 R19 AC16 AC17: only the author edits; before-flip edits stay hidden and after-flip edits are marked", async () => {
     const { a, b } = await paired();
     const id = (await garden(a)).today!.cardId;
     await answer(a, id, "original");
@@ -238,7 +238,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).today?.mineEdited).toBe(true);
   });
 
-  it("R18 R19 R38: deleting before flip removes the answer; deleting after flip leaves a tombstone", async () => {
+  it("garden R18 R19 R38: deleting before flip removes the answer; deleting after flip leaves a tombstone", async () => {
     const { a, b } = await paired();
     const id = (await garden(a)).today!.cardId;
     await answer(a, id);
@@ -254,7 +254,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).today).toMatchObject({ mine: "revive", mineEdited: true, mineDeleted: false, partner: "a private answer", flippedDay: "2026-11-09" });
   });
 
-  it("R10a: daily draws and swaps avoid waiting answers when that deck has another card", async () => {
+  it("garden R10a: daily draws and swaps avoid waiting answers when that deck has another card", async () => {
     const { a, b, couple } = await paired();
     const input = await drawInput(env.DB, couple.id, "2026-11-09");
     const candidate = drawCard(input, await drawSeed(couple.id, "2026-11-09", 0))!;
@@ -271,11 +271,11 @@ describe("Garden daily cards", () => {
     expect(swapped.swapLocked).toBe(false);
   });
 
-  it("R10a: waiting cards remain drawable when their deck has no alternative", () => {
+  it("garden R10a: waiting cards remain drawable when their deck has no alternative", () => {
     expect(drawCard({ played: CARDS.filter((c) => c.id !== "money-01").map((c) => c.id), waiting: ["money-01"] }, 0)?.id).toBe("money-01");
   });
 
-  it("R12: DELETE rejects oversized request bodies", async () => {
+  it("garden R12: DELETE rejects oversized request bodies", async () => {
     const { a } = await paired();
     const id = (await garden(a)).today!.cardId;
     await answer(a, id);
@@ -283,7 +283,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).today?.mine).toBe("a private answer");
   });
 
-  it("R6: drawing retries a lost insertion only once", async () => {
+  it("garden R6: drawing retries a lost insertion only once", async () => {
     const { a, couple } = await paired();
     const original = env.DB.batch.bind(env.DB);
     const batch = vi.spyOn(env.DB, "batch");
@@ -303,7 +303,7 @@ describe("Garden daily cards", () => {
     expect(await env.DB.prepare("SELECT round FROM garden_answers WHERE couple_id = ?").bind(couple.id).first("round")).toBe(2);
   });
 
-  it("R12: line breaks save and CRLF is normalized, while NUL and bidi controls are rejected", async () => {
+  it("garden R12: line breaks save and CRLF is normalized, while NUL and bidi controls are rejected", async () => {
     const { a } = await paired();
     const id = (await garden(a)).today!.cardId;
     for (const text of ["a\u0000b", "a\u202eb", "a\rb"]) expect((await answer(a, id, text)).status).toBe(400);
@@ -312,7 +312,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).today?.mine).toBe("a\nb");
   });
 
-  it("R3 R21 D8: only today's card or a deck's active card accepts POST", async () => {
+  it("garden R3 R21 D8: only today's card or a deck's active card accepts POST", async () => {
     const { a, b, couple } = await paired();
     await garden(a);
     expect((await answer(a, "money-10")).status).toBe(404);
@@ -322,7 +322,7 @@ describe("Garden daily cards", () => {
     expect((await answer(a, "money-09")).status).toBe(404);
   });
 
-  it("R13: POST to an unavailable card does not reveal a partner waiting answer", async () => {
+  it("garden R13: POST to an unavailable card does not reveal a partner waiting answer", async () => {
     const { a, b, couple } = await paired();
     const today = (await garden(a)).today!.cardId;
     const deck = await (await call("GET", "/api/garden/decks/money", { cookie: a.cookie })).json<GardenDeckState>();
@@ -337,7 +337,7 @@ describe("Garden daily cards", () => {
     expect(await waiting.json()).toEqual(body);
   });
 
-  it("R38: retired cards still allow authors to edit and delete existing answers", async () => {
+  it("garden R38: retired cards still allow authors to edit and delete existing answers", async () => {
     const { a } = await paired();
     const id = (await garden(a)).today!.cardId;
     await answer(a, id);
@@ -350,7 +350,7 @@ describe("Garden daily cards", () => {
     } finally { delete card.retired; }
   });
 
-  it("R12 AC7: validation trims, counts code points, rejects controls, bidi and oversized bodies", async () => {
+  it("garden R12 AC7: validation trims, counts code points, rejects controls, bidi and oversized bodies", async () => {
     const { a } = await paired();
     const id = (await garden(a)).today!.cardId;
     for (const text of ["", "   ", "bad\u202etext", "bad\u2066text", 3, null]) {
@@ -363,7 +363,7 @@ describe("Garden daily cards", () => {
     expect((await garden(a)).today?.mine).toBe("💚".repeat(1000));
   });
 
-  it("R1 AC1: every route rejects unpaired users and foreign origins", async () => {
+  it("garden R1 AC1: every route rejects unpaired users and foreign origins", async () => {
     const outsider = await user("Outsider");
     for (const [method, path] of [["GET", "/api/garden"], ["POST", "/api/garden/cards/money-01/answer"], ["PUT", "/api/garden/cards/money-01/answer"], ["DELETE", "/api/garden/cards/money-01/answer"]]) {
       const res = await call(method!, path!, { cookie: outsider.cookie, body: method === "GET" ? undefined : { text: "foreign" } });
@@ -375,7 +375,7 @@ describe("Garden daily cards", () => {
     expect((await call("POST", "/api/garden/cards/money-01/answer", { cookie: a.cookie, origin: "https://evil.example", body: { text: "x" } })).status).toBe(403);
   });
 
-  it("R1 R36 R37 AC1: another couple using the same card id cannot read or change our answers", async () => {
+  it("garden R1 R36 R37 AC1: another couple using the same card id cannot read or change our answers", async () => {
     const { a, couple } = await paired();
     await answer(a, "money-01", "OUR SECRET");
     const x = await user("X");
@@ -391,7 +391,7 @@ describe("Garden daily cards", () => {
     expect(await env.DB.prepare("SELECT body FROM garden_answers WHERE couple_id = ? AND user_id = ?").bind(couple.id, a.id).first("body")).toBe("OUR SECRET");
   });
 
-  it("R36 R39: answer foreign keys cascade with the user and all garden data with the couple", async () => {
+  it("garden R36 R39: answer foreign keys cascade with the user and all garden data with the couple", async () => {
     const { a, couple } = await paired();
     await garden(a);
     await answer(a, "money-01");
@@ -403,7 +403,7 @@ describe("Garden daily cards", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_growth WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
   });
 
-  it("R1 R37: couple-scoped day, answer and growth lookups use indexes", async () => {
+  it("garden R1 R37: couple-scoped day, answer and growth lookups use indexes", async () => {
     for (const sql of ["SELECT * FROM garden_days WHERE couple_id = ? AND day = '2026-11-09'", "SELECT * FROM garden_answers WHERE couple_id = ? AND card_id = 'money-01' AND round = 1", "SELECT * FROM garden_growth WHERE couple_id = ? GROUP BY deck_id"]) {
       expect((await explain(sql, "couple")).join(" ")).not.toMatch(/SCAN garden_/);
     }
@@ -412,7 +412,7 @@ describe("Garden daily cards", () => {
 
 
 describe("Relationship placement", () => {
-  it("R45 R46 AC26: new couples start at Làm quen and legacy empty placement reads as Làm quen", async () => {
+  it("garden-stages R45 R46 AC26: new couples start at Làm quen and legacy empty placement reads as Làm quen", async () => {
     const { a, b, couple } = await paired();
     const expected = { initialLevelId: "acquainted", selectedLevelId: "acquainted", furthestLevelId: "acquainted", placementComplete: true };
     expect((await garden(a)).levels).toMatchObject(expected);
@@ -424,7 +424,7 @@ describe("Relationship placement", () => {
     expect((await act(b, { action: "accept", revision: 1 })).status).toBe(200);
     expect((await garden(a)).levels).toMatchObject({ ...expected, selectedLevelId: "in_love", furthestLevelId: "in_love" });
   });
-  it("R45 R47 AC33: default placement cannot be replaced and later stage choices stay mutual", async () => {
+  it("garden-stages R45 R47 AC33: default placement cannot be replaced and later stage choices stay mutual", async () => {
     const { a, b, couple } = await paired();
     const initial = await garden(a);
     const action = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
@@ -439,7 +439,7 @@ describe("Relationship placement", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
     expect((await action(a, { action: "propose", kind: "target", levelId: "married", revision: 2 })).status).toBe(409);
   });
-  it("R45 R56 AC36: Làm quen is open and later ordinary content stays locked", async () => {
+  it("garden-stages R45 R79 AC36: Làm quen is open and later ordinary content stays locked", async () => {
     const { a } = await paired();
     expect((await answer(a, "L1-02")).status).toBe(201);
     expect((await answer(a, "L2-02")).status).toBe(404);
@@ -447,7 +447,7 @@ describe("Relationship placement", () => {
   });
 });
 
-it("R45 R47 R51 R52 AC30 AC31: legacy default and mutual stage changes preserve waiting cards and growth", async () => {
+it("garden-stages R45 R47 R51 R52 AC30 AC31: legacy default and mutual stage changes preserve waiting cards and growth", async () => {
   const { a, b, couple } = await paired();
   const before = await garden(a);
   await answer(a, before.today!.cardId);
@@ -460,12 +460,26 @@ it("R45 R47 R51 R52 AC30 AC31: legacy default and mutual stage changes preserve 
   expect(state.today!.cardId).toBe(before.today!.cardId);
   expect(state.plants.find((p) => p.deckId === "money")!.stage).toBe(1);
   expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
-  expect((await act(a, { action: "propose", kind: "revisit", levelId: "in_love", revision: 2 })).status).toBe(200);
-  expect((await act(b, { action: "accept", revision: 3 })).status).toBe(200);
-  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "in_love", furthestLevelId: "married", initialLevelId: "acquainted" });
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "married", furthestLevelId: "married", initialLevelId: "acquainted" });
   expect((await answer(b, before.today!.cardId)).status).toBe(201);
 });
-it("R1 R47 AC33: only current paired members mutate levels; pending proposals require decline before counterproposal", async () => {
+it("garden-stages R47: a stage choice only opens a later stage, so a revisit proposal is refused and changes nothing", async () => {
+  const { a, b } = await paired(); await place(a, b, "married");
+  const before = (await garden(a)).levels;
+  const res = await levelAction(a, { action: "propose", kind: "revisit", levelId: "acquainted", revision: before.revision });
+  expect(res.status).toBe(400); expect(await res.json()).toEqual({ error: "invalid_body" });
+  expect((await garden(b)).levels).toEqual(before);
+});
+it("garden-stages R47 AC33: a stored revisit proposal can no longer be accepted, only declined or withdrawn", async () => {
+  const { a, b, couple } = await paired(); await place(a, b, "married");
+  const { revision } = (await garden(a)).levels;
+  await env.DB.prepare("UPDATE garden_levels SET proposal_kind = 'revisit', proposal_level = 0, proposer_id = ? WHERE couple_id = ?").bind(a.id, couple.id).run();
+  expect((await levelAction(b, { action: "accept", revision })).status).toBe(409);
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "married" });
+  expect((await levelAction(a, { action: "withdraw", revision })).status).toBe(200);
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "married", proposal: null });
+});
+it("garden R1, garden-stages R47 AC33: only current paired members mutate levels; pending proposals require decline before counterproposal", async () => {
   const { a, b, couple } = await paired(); const outsider = await user("Outside");
   const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
   expect((await act(outsider, { action: "accept", revision: 1 })).status).toBe(404);
@@ -482,7 +496,7 @@ async function place(a: TestUser, b: TestUser, levelId = "in_love") {
   expect((await call("POST", "/api/garden/levels", { cookie: a.cookie, body: { action: "propose", kind: "target", levelId, revision: 0 } })).status).toBe(200);
   expect((await call("POST", "/api/garden/levels", { cookie: b.cookie, body: { action: "accept", revision: 1 } })).status).toBe(200);
 }
-it.each(["no_details", "later_not_applicable"])("R42 R43 R44 AC24 AC25 AC32: %s reveals text only on paired submission and retains completion on deletion", async (choice) => {
+it.each(["no_details", "later_not_applicable"])("garden-stages R42 R43 R44 AC24 AC25 AC32: %s reveals text only on paired submission and retains completion on deletion", async (choice) => {
   const { a, b, couple } = await paired(); await place(a, b);
   expect((await answer(a, "L2-01", "PRIVATE RENT TEXT")).status).toBe(201);
   let res = await call("GET", "/api/garden/decks/money", { cookie: b.cookie });
@@ -498,7 +512,7 @@ it.each(["no_details", "later_not_applicable"])("R42 R43 R44 AC24 AC25 AC32: %s 
   expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_growth WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
 });
 
-it("R43 R57 AC25 AC32: invalid alternatives reject; edits switch response type and pre-reveal deletion clears submission", async () => {
+it("garden-stages R43 R57 AC25 AC32: invalid alternatives reject; edits switch response type and pre-reveal deletion clears submission", async () => {
   const { a, b } = await paired(); await place(a, b);
   const post = (id: string, body: unknown) => call("POST", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body });
   for (const body of [{}, { text: "x", choice: "no_details" }, { choice: "unknown" }, { choice: null }, { text: "x", userId: b.id }]) expect((await post("L2-01", body)).status).toBe(400);
@@ -516,7 +530,7 @@ it("R43 R57 AC25 AC32: invalid alternatives reject; edits switch response type a
   const edited = await call("PUT", "/api/garden/cards/L2-01/answer", { cookie: a.cookie, body: { text: "changed after" } });
   expect((await edited.json<{card: GardenCardState}>()).card).toMatchObject({ mine: "changed after", mineChoice: null, mineEdited: true, partner: "partner words" });
 });
-it("R42 R58 AC24 AC32: different texts and paired choices complete equally; delete racing reveal never leaks an orphan", async () => {
+it("garden-stages R42 R58 AC24 AC32: different texts and paired choices complete equally; delete racing reveal never leaks an orphan", async () => {
   const { a, b } = await paired(); await place(a, b);
   await answer(a, "L2-01", "yes"); expect((await answer(b, "L2-01", "no")).status).toBe(201);
   for (const who of [a, b]) expect((await call("POST", "/api/garden/cards/L2-03/answer", { cookie: who.cookie, body: { choice: "no_details" } })).status).toBe(201);
@@ -529,7 +543,7 @@ it("R42 R58 AC24 AC32: different texts and paired choices complete equally; dele
 });
 
 const levelAction = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
-it("R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: mutual choice opens a skipped target before decision answers, without cascade or growth", async () => {
+it("garden-stages R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: mutual choice opens a skipped target before decision answers, without cascade or growth", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "living_together");
   const before = await garden(a);
   expect((await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 2 })).status).toBe(200);
@@ -551,7 +565,7 @@ it("R47 R48 R49 R55 R59 AC27 AC28 AC31 AC33: mutual choice opens a skipped targe
   expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ? AND card_id LIKE 'L4-%'").bind(couple.id).first("n")).toBe(0);
 });
 
-it("R48 R58 R59 AC27 AC32 AC33: answers and post-reveal deletions do not affect opening once on acceptance", async () => {
+it("garden-stages R48 R58 R59 AC27 AC32 AC33: answers and post-reveal deletions do not affect opening once on acceptance", async () => {
   const { a, b } = await paired(); await place(a, b, "acquainted");
   for (const id of gateIds(0)) { await answer(a, id); await answer(b, id, "different"); }
   await call("DELETE", `/api/garden/cards/${gateIds(0)[0]}/answer`, { cookie: a.cookie });
@@ -564,7 +578,7 @@ it("R48 R58 R59 AC27 AC32 AC33: answers and post-reveal deletions do not affect 
   await call("DELETE", `/api/garden/cards/${gateIds(0)[1]}/answer`, { cookie: b.cookie });
   expect((await garden(b)).levels.furthestLevelId).toBe("in_love");
 });
-it("R47 R59 AC33: stale acceptance after replacement or decline saves nothing and accepted choice is consumed", async () => {
+it("garden-stages R47 R59 AC33: stale acceptance after replacement or decline saves nothing and accepted choice is consumed", async () => {
   const { a, b } = await paired(); await place(a, b);
   await levelAction(a, { action: "propose", kind: "target", levelId: "living_together", revision: 2 });
   await levelAction(a, { action: "propose", kind: "target", levelId: "married", revision: 3 });
@@ -576,7 +590,7 @@ it("R47 R59 AC33: stale acceptance after replacement or decline saves nothing an
   expect((await garden(a)).levels).toMatchObject({ revision: 7, furthestLevelId: "living_together", proposal: null });
   expect((await levelAction(b, { action: "decline", revision: 7 })).status).toBe(409);
 });
-it("R48 R59 AC27 AC33: concurrent responses after acceptance cannot reopen a stage or mutate its revision", async () => {
+it("garden-stages R48 R59 AC27 AC33: concurrent responses after acceptance cannot reopen a stage or mutate its revision", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "acquainted");
   await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
   await levelAction(b, { action: "accept", revision: 1 });
@@ -588,16 +602,14 @@ it("R48 R59 AC27 AC33: concurrent responses after acceptance cannot reopen a sta
   expect(await env.DB.prepare("SELECT revision FROM garden_levels WHERE couple_id = ?").bind(couple.id).first("revision")).toBe(2);
   expect((await garden(b)).levels).toEqual((await garden(a)).levels);
 });
-it("R50 R51 R54 AC29 AC30: earlier decisions stay usable and a fresh mutual choice opens beyond the furthest stage", async () => {
+it("garden-stages R50 R51 R54 AC29 AC30: earlier decisions stay usable and a fresh mutual choice opens beyond the furthest stage", async () => {
   const { a, b } = await paired(); await place(a, b, "married");
-  await levelAction(a, { action: "propose", kind: "revisit", levelId: "acquainted", revision: 2 });
-  await levelAction(b, { action: "accept", revision: 3 });
   for (const id of gateIds(0)) { await answer(a, id); await answer(b, id); }
-  const state = await garden(a); expect(state.levels.selectedLevelId).toBe("acquainted");
+  const state = await garden(a); expect(state.levels).toMatchObject({ selectedLevelId: "married", furthestLevelId: "married" });
   expect((await answer(a, state.today!.cardId)).status).toBe(201);
   expect((await answer(b, state.today!.cardId)).status).toBe(201);
-  await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 4 });
-  await levelAction(b, { action: "accept", revision: 5 });
+  await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 2 });
+  await levelAction(b, { action: "accept", revision: 3 });
   expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
   for (const id of gateIds(3)) { await answer(a, id); await answer(b, id); }
   expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
@@ -623,7 +635,7 @@ it("stage answers list only the caller's answered cards in that stage and hide l
   expect(listed.cards.find((card) => card.cardId === "L2-01")).toMatchObject({ mine: "partner in-love answer", partner: "my in-love answer" });
   expect((await decisions(a, "living_together")).status).toBe(404);
 });
-it("R1 R57 AC32: cross-couple and unpaired callers cannot read or mutate decision responses", async () => {
+it("garden R1, garden-stages R57 AC32: cross-couple and unpaired callers cannot read or mutate decision responses", async () => {
   const { a, b, couple } = await paired(); await place(a, b);
   await answer(a, "L2-01", "OUR SECRET");
   const x = await user("OtherA"), y = await user("OtherB");
@@ -636,7 +648,7 @@ it("R1 R57 AC32: cross-couple and unpaired callers cannot read or mutate decisio
   expect(await env.DB.prepare("SELECT body FROM garden_answers WHERE couple_id = ? AND user_id = ? AND card_id = 'L2-01'").bind(couple.id, a.id).first("body")).toBe("OUR SECRET");
   const lone = await user("Alone"); expect((await answer(lone, "L2-01")).status).toBe(404);
 });
-it("R1 R59 AC33: removal between middleware and decision batch prevents insertion, completion and advancement", async () => {
+it("garden R1, garden-stages R59 AC33: removal between middleware and decision batch prevents insertion, completion and advancement", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "acquainted");
   await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
   await levelAction(b, { action: "accept", revision: 1 });
@@ -652,7 +664,7 @@ it("R1 R59 AC33: removal between middleware and decision batch prevents insertio
   expect(await env.DB.prepare("SELECT COUNT(*) n FROM garden_answers WHERE couple_id = ? AND card_id = ? AND user_id = ?").bind(couple.id, gateIds(0).at(-1)!, b.id).first("n")).toBe(0);
 });
 
-it("R52 AC26 AC31: additive 0012 preserves populated legacy waiting/flipped/edited/deleted/swapped records", async () => {
+it("garden-stages R52 AC26 AC31: additive 0012 preserves populated legacy waiting/flipped/edited/deleted/swapped records", async () => {
   const { a, b, couple } = await paired();
   const old = env.TEST_MIGRATIONS.find((m) => m.name.startsWith("0011"))!;
   const added = env.TEST_MIGRATIONS.find((m) => m.name.startsWith("0012"))!;
@@ -675,7 +687,7 @@ it("R52 AC26 AC31: additive 0012 preserves populated legacy waiting/flipped/edit
   expect(await env.DB.prepare("SELECT COUNT(*) n FROM legacy_garden_levels").first("n")).toBe(0);
   await env.DB.batch(["levels", "answers", "growth", "days"].map((name) => env.DB.prepare(`DROP TABLE legacy_garden_${name}`)));
 });
-it("R56 AC36: opened ordinary exhaustion remains fresh with locked and decision cards still unanswered", async () => {
+it("garden-stages R79 AC36: opened ordinary exhaustion remains fresh with locked and decision cards still unanswered", async () => {
   const { a, b, couple } = await paired(); await place(a, b, "acquainted");
   const ordinary = CARDS.filter((card) => card.kind === "ordinary" && card.levelId === "acquainted");
   await env.DB.batch(ordinary.flatMap((card) => [a,b].map((who) => env.DB.prepare(`INSERT INTO garden_answers
@@ -684,7 +696,7 @@ it("R56 AC36: opened ordinary exhaustion remains fresh with locked and decision 
   expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
 });
 
-it("R48 R59 AC27 AC33: target acceptance racing both final answers has one serial outcome", async () => {
+it("garden-stages R48 R59 AC27 AC33: target acceptance racing both final answers has one serial outcome", async () => {
   const { a, b } = await paired(); await place(a, b, "acquainted");
   const ids = gateIds(0); for (const id of ids.slice(0, -1)) { await answer(a, id); await answer(b, id); }
   await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
@@ -694,7 +706,7 @@ it("R48 R59 AC27 AC33: target acceptance racing both final answers has one seria
   expect(state.levels.revision).toBe(2);
 });
 
-it("R48 R59 AC27 AC33: mutual choice opens immediately with no decision responses and cannot cascade", async () => {
+it("garden-stages R48 R59 AC27 AC33: mutual choice opens immediately with no decision responses and cannot cascade", async () => {
   const { a, b } = await paired(); await place(a, b, "acquainted");
   await levelAction(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
   expect((await levelAction(b, { action: "accept", revision: 1 })).status).toBe(200);
@@ -706,7 +718,7 @@ it("R48 R59 AC27 AC33: mutual choice opens immediately with no decision response
   expect((await levelAction(b, { action: "accept", revision: 1 })).status).toBe(409);
 });
 
-it("R15 R19 AC9 AC17: restored history stays face up in the API after the day changes", async () => {
+it("garden R15 R19 AC9 AC17: restored history stays face up in the API after the day changes", async () => {
   const { a, b } = await paired(); await place(a, b, "in_love");
   const id = (await garden(a)).today!.cardId;
   await answer(a, id, "original"); await answer(b, id, "partner kept");
@@ -716,7 +728,7 @@ it("R15 R19 AC9 AC17: restored history stays face up in the API after the day ch
   const deck = await (await call("GET", `/api/garden/decks/${id.split("-")[0]}`, { cookie: a.cookie })).json<GardenDeckState>();
   expect(deck.history.find((card) => card.cardId === id)).toMatchObject({ mine: "rewritten", mineEdited: true, mineDeleted: false, partner: "partner kept", flippedDay: "2026-11-09" });
 });
-it("R6 R15 AC9: today's flipped card appears under the selected stage regardless of its catalog stage", async () => {
+it("garden R6 R15 AC9: today's flipped card appears under the selected stage regardless of its catalog stage", async () => {
   const { a, b } = await paired();
   const id = (await garden(a)).today!.cardId;
   await place(a, b, "in_love");
@@ -726,7 +738,7 @@ it("R6 R15 AC9: today's flipped card appears under the selected stage regardless
 });
 
 describe("Important questions", () => {
-  it.each([null, "no_details", "later_not_applicable"] as const)("R13 R67 AC39: decision card answered by both can be starred with choice %s", async (choice) => {
+  it.each([null, "no_details", "later_not_applicable"] as const)("garden R13, garden-stars R67 AC39: decision card answered by both can be starred with choice %s", async (choice) => {
     const { a, b } = await paired();
     const path = "/api/garden/cards/L2-01/star";
     for (const method of ["PUT", "DELETE"]) {
@@ -759,7 +771,7 @@ describe("Important questions", () => {
     expect(await (await call("GET", "/api/garden/stars", { cookie: a.cookie })).json()).toEqual({ cards: [] });
   });
 
-  it("R67 R68 AC39: decision stars retain shared ordering, today exclusion and deleted-answer rules", async () => {
+  it("garden-stars R67 R68 AC39: decision stars retain shared ordering, today exclusion and deleted-answer rules", async () => {
     const { a, b, couple } = await paired();
     await answer(a, "money-01"); await answer(b, "money-01");
     await call("PUT", "/api/garden/cards/money-01/star", { cookie: a.cookie });
@@ -784,7 +796,7 @@ describe("Important questions", () => {
     expect((await call("DELETE", "/api/garden/cards/L2-01/star", { cookie: b.cookie })).status).toBe(200);
   });
 
-  it("AC44 AC45: stars show current edits and deletion notices, hide two tombstones and restore the same order", async () => {
+  it("garden-stars AC44 AC45: stars show current edits and deletion notices, hide two tombstones and restore the same order", async () => {
     const { a, b } = await paired();
     for (const id of ["money-01", "dreams-01"]) {
       await answer(a, id); await answer(b, id);
@@ -807,7 +819,7 @@ describe("Important questions", () => {
     expect(await list()).toMatchObject([{ cardId: "dreams-01", mine: "replacement", mineEdited: true, partnerDeleted: true }, { cardId: "money-01" }]);
   });
 
-  it("R1 R13 R67: stars never list waiting or unknown cards and stay private to the couple", async () => {
+  it("garden R1 R13, garden-stars R67: stars never list waiting or unknown cards and stay private to the couple", async () => {
     const { a, b, couple } = await paired();
     await answer(a, "money-01");
     for (const id of ["money-01", "unknown", "L2-01"]) {
@@ -825,7 +837,7 @@ describe("Important questions", () => {
     await call("POST", "/api/couple/join", { cookie: partner.cookie, body: { code: created.couple.pendingCode.code } });
     expect(await (await call("GET", "/api/garden/stars", { cookie: other.cookie })).json()).toEqual({ cards: [] });
   });
-  it("AC37 AC38 AC41 AC42: shared stars list newest first, excludes today without drawing, and removes unstarred cards", async () => {
+  it("garden-stars AC37 AC38 AC41 AC42: shared stars list newest first, excludes today without drawing, and removes unstarred cards", async () => {
     const { a, b, couple } = await paired();
     const list = async (who = a) => {
       const res = await call("GET", "/api/garden/stars", { cookie: who.cookie });
@@ -853,7 +865,7 @@ describe("Important questions", () => {
     await call("DELETE", "/api/garden/cards/money-01/star", { cookie: b.cookie });
     for (const who of [a, b]) expect((await list(who)).map(c => c.cardId)).toEqual(["families-01", "money-02", "dreams-01"]);
   });
-  it("AC37 AC38: either partner stars and unstars the shared flipped card", async () => {
+  it("garden-stars AC37 AC38: either partner stars and unstars the shared flipped card", async () => {
     const { a, b } = await paired();
     await answer(a, "money-01");
     await answer(b, "money-01");
@@ -872,7 +884,7 @@ describe("Important questions", () => {
   });
 });
 
-it("AC37 R75 R76: today's shared star exposes no author or star time and changes no growth, days, freshness or push", async () => {
+it("garden-stars AC37 R75 R76: today's shared star exposes no author or star time and changes no growth, days, freshness or push", async () => {
   const { a, b, couple } = await paired();
   const id = (await garden(a)).today!.cardId;
   await subscribe(a, await device("star-a")); await subscribe(b, await device("star-b"));
@@ -897,7 +909,7 @@ it("AC37 R75 R76: today's shared star exposes no author or star time and changes
   expect(push.sent).toHaveLength(0); expect(push.queued).toHaveLength(0);
 });
 
-it("AC39 R1 R13: unflipped, one-answer and unknown cards share a 404; other couples cannot star this card", async () => {
+it("garden-stars AC39, garden R1 R13: unflipped, one-answer and unknown cards share a 404; other couples cannot star this card", async () => {
   const { a, b, couple } = await paired();
   const path = (id: string) => `/api/garden/cards/${id}/star`;
   for (const id of ["money-01", "unknown"]) {
@@ -921,7 +933,7 @@ it("AC39 R1 R13: unflipped, one-answer and unknown cards share a 404; other coup
   expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM garden_stars WHERE couple_id = ?").bind(couple.id).first("n")).toBe(0);
 });
 
-it("AC46 R77: concurrent stars make one row, repeats keep its time, and the last applied action wins", async () => {
+it("garden-stars AC46 R77: concurrent stars make one row, repeats keep its time, and the last applied action wins", async () => {
   const { a, b, couple } = await paired();
   await answer(a, "money-01"); await answer(b, "money-01");
   const path = "/api/garden/cards/money-01/star";
@@ -942,7 +954,7 @@ it("AC46 R77: concurrent stars make one row, repeats keep its time, and the last
   expect(await env.DB.prepare("SELECT starred_at FROM garden_stars WHERE couple_id = ?").bind(couple.id).first("starred_at")).toBe(NOW + 1000);
 });
 
-it("R67 R74: both deleted answers preserve the deck flip and allow star and unstar", async () => {
+it("garden-stars R67 R74: both deleted answers preserve the deck flip and allow star and unstar", async () => {
   const { a, b } = await paired();
   await answer(a, "money-01"); await answer(b, "money-01");
   for (const who of [a, b]) await call("DELETE", "/api/garden/cards/money-01/answer", { cookie: who.cookie });
@@ -953,7 +965,7 @@ it("R67 R74: both deleted answers preserve the deck flip and allow star and unst
   }
 });
 
-it("AC47: stars cascade with the couple and store no author; export and leaving are not implemented", async () => {
+it("garden-stars AC47: stars cascade with the couple and store no author; export and leaving are not implemented", async () => {
   const { a, b, couple } = await paired();
   await answer(a, "money-01"); await answer(b, "money-01");
   await call("PUT", "/api/garden/cards/money-01/star", { cookie: a.cookie });
@@ -963,7 +975,7 @@ it("AC47: stars cascade with the couple and store no author; export and leaving 
   expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM garden_stars").first("n")).toBe(0);
 });
 
-it("R77: failed star and unstar writes leave the shared state unchanged", async () => {
+it("garden-stars R77: failed star and unstar writes leave the shared state unchanged", async () => {
   const { a, b } = await paired();
   await answer(a, "money-01"); await answer(b, "money-01");
   const path = "/api/garden/cards/money-01/star";

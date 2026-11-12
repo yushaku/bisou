@@ -30,7 +30,7 @@ beforeEach(async () => {
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe("private photo upload and serving", () => {
-  it("AC1 (R1, R2): requires a session, same origin, and two partners for upload", async () => {
+  it("journal AC1 (R1, R2): requires a session, same origin, and two partners for upload", async () => {
     await error(await call("POST", "/api/photos", { form: photoForm(full(), thumb()) }), 401, "unauthorized");
     await error(await call("GET", "/api/photos/unknown/full"), 401, "unauthorized");
     const lone = await user("Lan");
@@ -42,7 +42,7 @@ describe("private photo upload and serving", () => {
     await error(await call("POST", "/api/photos", { cookie: a.cookie, origin: "https://outsider.example", form: photoForm(full(), thumb()) }), 403, "forbidden_origin");
   });
 
-  it("R20: serves exact bytes privately to either partner with at most one day of cache freshness (AC12, R1, R16, R17)", async () => {
+  it("journal R20: serves exact bytes privately to either partner with at most one day of cache freshness (AC12, R1, R16, R17)", async () => {
     const { a, b, couple } = await paired();
     const id = await upload(a);
     const outsider = await user("Lan");
@@ -76,7 +76,7 @@ describe("private photo upload and serving", () => {
     await error(await call("GET", `/api/photos/${id}/full`, { cookie: b.cookie }), 404, "not_found");
   });
 
-  it.each(["VP8", "VP8L", "VP8X"] as const)("AC13 (R16, R18): accepts square %s headers including a small crop", async (kind) => {
+  it.each(["VP8", "VP8L", "VP8X"] as const)("journal AC13 (R16, R18): accepts square %s headers including a small crop", async (kind) => {
     const { a, b, couple } = await paired();
     const bytes = webp({ width: 300, height: 300, kind });
     const id = await upload(a, photoForm(bytes, bytes, { full: "image/webp", thumb: "image/webp" }));
@@ -86,7 +86,7 @@ describe("private photo upload and serving", () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(bytes);
   });
 
-  it("AC12 (R16): refuses WebP EXIF or XMP in either rendition", async () => {
+  it("journal AC12 (R16): refuses WebP EXIF or XMP in either rendition", async () => {
     const { a } = await paired();
     for (const size of ["full", "thumb"] as const) {
       for (const kind of ["VP8", "VP8L", "VP8X"] as const) {
@@ -102,7 +102,7 @@ describe("private photo upload and serving", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(0);
   });
 
-  it("AC12 (R16): strips every Exif GPS and XMP APP1 segment from both stored JPEG renditions", async () => {
+  it("journal AC12 (R16): strips every Exif GPS and XMP APP1 segment from both stored JPEG renditions", async () => {
     const { a, couple } = await paired();
     // Little-endian TIFF: IFD0 points to a GPS IFD with a north latitude reference.
     const exif = new Uint8Array([69, 120, 105, 102, 0, 0, 73, 73, 42, 0, 8, 0, 0, 0,
@@ -123,7 +123,7 @@ describe("private photo upload and serving", () => {
     }
   });
 
-  it("AC12 (R16): refuses JPEGs truncated in APP1, scan headers, or before the end marker", async () => {
+  it("journal AC12 (R16): refuses JPEGs truncated in APP1, scan headers, or before the end marker", async () => {
     const { a } = await paired();
     const bytes = jpeg({ width: 300, height: 300, exif: true });
     for (const truncated of [full().subarray(0, -2), bytes.subarray(0, 8), bytes.subarray(0, -5), bytes.subarray(0, -2), bytes.subarray(0, -1)]) {
@@ -134,12 +134,12 @@ describe("private photo upload and serving", () => {
   it.each([
     [1440, 1000, 480, 480], [1440, 1440, 480, 479], [1441, 1441, 480, 480],
     [1440, 1440, 481, 481], [500, 500, 600, 600], [300, 300, 400, 400], [0, 0, 0, 0],
-  ])("AC13 (R16, R18): refuses invalid full %ix%i and thumb %ix%i dimensions", async (fw, fh, tw, th) => {
+  ])("journal AC13 (R16, R18): refuses invalid full %ix%i and thumb %ix%i dimensions", async (fw, fh, tw, th) => {
     const { a } = await paired();
     await error(await call("POST", "/api/photos", { cookie: a.cookie, form: photoForm(jpeg({ width: fw, height: fh }), jpeg({ width: tw, height: th })) }), 400, "photo_invalid");
   });
 
-  it("AC12, AC13 (R16, R18): rejects malformed, missing, empty, non-file and mismatched parts", async () => {
+  it("journal AC12, AC13 (R16, R18): rejects malformed, missing, empty, non-file and mismatched parts", async () => {
     const { a } = await paired();
     for (const part of [null, "text", new File([], "empty", { type: "image/jpeg" }), new File(["bad"], "bad", { type: "image/jpeg" }), new File([full()], "wrong", { type: "image/webp" })]) {
       const form = photoForm(full(), thumb());
@@ -150,7 +150,7 @@ describe("private photo upload and serving", () => {
     await error(await app.request("/api/photos", { method: "POST", headers: { Cookie: a.cookie, Origin: "http://localhost", "Content-Type": "multipart/form-data" }, body: "broken" }, env), 400, "photo_invalid");
   });
 
-  it("AC12 (R16, R17): enforces body and part types and byte limits", async () => {
+  it("journal AC12 (R16, R17): enforces body and part types and byte limits", async () => {
     const { a } = await paired();
     await error(await app.request(`${ORIGIN}/api/photos`, { method: "POST", headers: { Cookie: a.cookie, Origin: ORIGIN, "Content-Type": "image/jpeg" }, body: full() }, env), 415, "unsupported_photo_type");
     await error(await call("POST", "/api/photos", { cookie: a.cookie, form: photoForm(full(), thumb(), { thumb: "image/png" }) }), 415, "unsupported_photo_type");
@@ -165,7 +165,7 @@ describe("private photo upload and serving", () => {
     await error(await call("POST", "/api/photos", { cookie: a.cookie, form }), 413, "photo_too_large");
   });
 
-  it("AC12 (R17): caps pending photos per uploader at twelve", async () => {
+  it("journal AC12 (R17): caps pending photos per uploader at twelve", async () => {
     const { a, b, couple } = await paired();
     const ids = [];
     for (let i = 0; i < 12; i++) ids.push(await upload(a));
@@ -175,7 +175,7 @@ describe("private photo upload and serving", () => {
     await upload(a);
   });
 
-  it.each(["expired", "boundary", "purge"])("AC12 (R17): twelve %s rows do not use live pending slots", async (kind) => {
+  it.each(["expired", "boundary", "purge"])("journal AC12 (R17): twelve %s rows do not use live pending slots", async (kind) => {
     const { a } = await paired();
     for (let i = 0; i < 12; i++) await upload(a);
     const createdAt = kind === "purge" ? 0 : Date.now() - PENDING_PHOTO_TTL - (kind === "expired" ? 1 : 0);
@@ -205,7 +205,7 @@ describe("private photo upload and serving", () => {
     expect(await env.PHOTOS.head(key(couple.id, attached, "full"))).not.toBeNull();
   });
 
-  it("expires a removed photo before R2 deletion so a racing save cannot attach it", async () => {
+  it("expires a removed photo before journal R2 deletion so a racing save cannot attach it", async () => {
     const { a } = await paired();
     const id = await upload(a);
     const batch = env.DB.batch.bind(env.DB);
@@ -234,7 +234,7 @@ describe("private photo upload and serving", () => {
     expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(id).first()).toBeNull();
   });
 
-  it("AC12 (R17): concurrent uploads cannot exceed the pending cap or leave extra objects", async () => {
+  it("journal AC12 (R17): concurrent uploads cannot exceed the pending cap or leave extra objects", async () => {
     const { a, couple } = await paired();
     for (let i = 0; i < 11; i++) await upload(a);
     const responses = await Promise.all(Array.from({ length: 3 }, () => call("POST", "/api/photos", { cookie: a.cookie, form: photoForm(full(), thumb()) })));
@@ -243,7 +243,7 @@ describe("private photo upload and serving", () => {
     expect((await env.PHOTOS.list({ prefix: `couples/${couple.id}/` })).objects).toHaveLength(24);
   });
 
-  it.each(["put", "insert"])("AC12 (R17): a failed %s removes both objects without a pending row", async (failure) => {
+  it.each(["put", "insert"])("journal AC12 (R17): a failed %s removes both objects without a pending row", async (failure) => {
     const { a, couple } = await paired();
     vi.spyOn(console, "error").mockImplementation(() => {});
     if (failure === "put") {
@@ -264,7 +264,7 @@ describe("private photo upload and serving", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(0);
   });
 
-  it("AC10, AC12 (R11, R17): purges both renditions and pending rows, retaining failed purges for the sweep", async () => {
+  it("journal AC10, AC12 (R11, R17): purges both renditions and pending rows, retaining failed purges for the sweep", async () => {
     const { a, couple } = await paired();
     const id = await upload(a);
     const rows = [{ id, couple_id: couple.id }];
@@ -290,7 +290,7 @@ describe("photo header bounds", () => {
     return [0xff, marker, (payload.length + 2) >> 8, (payload.length + 2) & 255, ...payload];
   };
 
-  it("R16: refuses APPn or COM between progressive scans, including Exif APP1 (AC12)", async () => {
+  it("journal R16: refuses APPn or COM between progressive scans, including Exif APP1 (AC12)", async () => {
     const { a } = await paired();
     expect(checkPhotoBytes(progressive, "image/jpeg")).toEqual({ side: 8, bytes: progressive });
     const firstScan = progressive.findIndex((byte, i) => byte === 0xff && progressive[i + 1] === 0xda);
@@ -304,14 +304,14 @@ describe("photo header bounds", () => {
     }
   });
 
-  it("R16: refuses an appended second JPEG even when the last bytes are EOI (AC12)", async () => {
+  it("journal R16: refuses an appended second JPEG even when the last bytes are EOI (AC12)", async () => {
     const { a } = await paired();
     const bytes = new Uint8Array([...baseline, ...baseline]);
     expect(checkPhotoBytes(bytes, "image/jpeg")).toBeNull();
     await error(await call("POST", "/api/photos", { cookie: a.cookie, form: photoForm(bytes, bytes) }), 400, "photo_invalid");
   });
 
-  it("R16: drops APP13 IPTC, COM, MPF and every other unapproved APPn before scans (AC12)", () => {
+  it("journal R16: drops APP13 IPTC, COM, MPF and every other unapproved APPn before scans (AC12)", () => {
     for (const marker of [...Array.from({ length: 16 }, (_, i) => 0xe0 + i).filter((m) => m !== 0xe0 && m !== 0xee), 0xfe]) {
       const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(marker, "MPF\0private location"), ...baseline.subarray(2)]);
       expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
@@ -326,7 +326,7 @@ describe("photo header bounds", () => {
     expect(checkPhotoBytes(overLimit, "image/jpeg")).toBeNull();
   });
 
-  it("R16: keeps JFIF, ICC APP2 and Adobe with fill bytes in an APP0, APP1 and APP2 mix (AC12)", () => {
+  it("journal R16: keeps JFIF, ICC APP2 and Adobe with fill bytes in an APP0, APP1 and APP2 mix (AC12)", () => {
     const jfif = segment(0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0");
     const icc = segment(0xe2, "ICC_PROFILE\0\x01\x01color profile");
     const adobe = segment(0xee, "Adobe\0\x64\0\0\0\0\0");
@@ -337,12 +337,12 @@ describe("photo header bounds", () => {
     expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: clean });
   });
 
-  it.each([0xe0, 0xee])("R16: strips text hidden in an unrecognized APP marker %i", (marker) => {
+  it.each([0xe0, 0xee])("journal R16: strips text hidden in an unrecognized APP marker %i", (marker) => {
     const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(marker, "GPS location and camera serial"), ...baseline.subarray(2)]);
     expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
   });
 
-  it("R16: strips the JFXX APP0 extension", () => {
+  it("journal R16: strips the JFXX APP0 extension", () => {
     const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(0xe0, "JFXX\0\x13thumbnail"), ...baseline.subarray(2)]);
     expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
   });
@@ -350,12 +350,12 @@ describe("photo header bounds", () => {
   it.each([
     [0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0private location"],
     [0xee, "Adobe\0\x64\0\0\0\0\0private location"],
-  ])("R16: strips extra payload after recognized APP marker %i", (marker, data) => {
+  ])("journal R16: strips extra payload after recognized APP marker %i", (marker, data) => {
     const bytes = new Uint8Array([...baseline.subarray(0, 2), ...segment(marker, data), ...baseline.subarray(2)]);
     expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: baseline });
   });
 
-  it("R16: accepts a canvas-like baseline JPEG byte-identically apart from removed metadata (AC12)", () => {
+  it("journal R16: accepts a canvas-like baseline JPEG byte-identically apart from removed metadata (AC12)", () => {
     const clean = new Uint8Array([...baseline.subarray(0, 2), ...segment(0xe0, "JFIF\0\x01\x01\0\0\x01\0\x01\0\0"), ...baseline.subarray(2)]);
     expect(new DataView(clean.buffer).getUint16(4)).toBe(16);
     expect(checkPhotoBytes(clean, "image/jpeg")).toEqual({ side: 8, bytes: clean });
@@ -364,7 +364,7 @@ describe("photo header bounds", () => {
     expect(checkPhotoBytes(bytes, "image/jpeg")).toEqual({ side: 8, bytes: clean });
   });
 
-  it("AC12, AC13 (R16, R18): rejects truncated JPEG and WebP headers without throwing", () => {
+  it("journal AC12, AC13 (R16, R18): rejects truncated JPEG and WebP headers without throwing", () => {
     for (const [bytes, type, headerEnd] of [
       [full(), "image/jpeg", 25],
       ...(["VP8", "VP8L", "VP8X"] as const).map((kind) => [webp({ width: 300, height: 300, kind }), "image/webp", kind === "VP8L" ? 26 : 30] as const),
@@ -373,7 +373,7 @@ describe("photo header bounds", () => {
     }
   });
 
-  it("AC12 (R16): strips APP1 after JPEG dimensions and rejects metadata after WebP image data", () => {
+  it("journal AC12 (R16): strips APP1 after JPEG dimensions and rejects metadata after WebP image data", () => {
     const clean = full();
     const app1 = jpeg({ width: 300, height: 300, exif: true }).subarray(2, 12);
     const bytes = new Uint8Array([...clean.subarray(0, 15), ...app1, ...clean.subarray(15)]);
@@ -385,7 +385,7 @@ describe("photo header bounds", () => {
     }
   });
 
-  it("AC13 (R18): rejects nonsquare WebP and invalid chunk lengths or signatures", () => {
+  it("journal AC13 (R18): rejects nonsquare WebP and invalid chunk lengths or signatures", () => {
     for (const kind of ["VP8", "VP8L", "VP8X"] as const) {
       expect(checkPhotoBytes(webp({ width: 300, height: 299, kind }), "image/webp")).toBeNull();
       const bytes = webp({ width: 300, height: 300, kind });
@@ -401,7 +401,7 @@ describe("photo header bounds", () => {
 });
 
 describe("photo mutation query plans", () => {
-  it("AC12 (R17): the atomic pending cap uses the uploader index", async () => {
+  it("journal AC12 (R17): the atomic pending cap uses the uploader index", async () => {
     const plan = await explain(`INSERT INTO photos (id, couple_id, uploader_id, created_at)
       SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM photos WHERE uploader_id = ? AND entry_id IS NULL AND created_at > ?) < ?`,
     "photo", "couple", "user", 1, "user", 0, 12);
@@ -416,7 +416,7 @@ describe("photo mutation query plans", () => {
     expect(deletion).toEqual(["SEARCH photos USING INDEX sqlite_autoindex_photos_1 (id=?)"]);
   });
 
-  it("AC10, AC12 (R11, R17): purge deletes pending rows by primary key", async () => {
+  it("journal AC10, AC12 (R11, R17): purge deletes pending rows by primary key", async () => {
     const plan = (await explain("DELETE FROM photos WHERE id IN (?, ?) AND entry_id IS NULL", "photo-1", "photo-2")).join("\n");
     expect(plan).toContain("SEARCH photos USING INDEX sqlite_autoindex_photos_1 (id=?)");
     expect(plan).not.toMatch(/SCAN|TEMP B-TREE/);

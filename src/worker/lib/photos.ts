@@ -74,7 +74,7 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
       if (length < 2 || offset + length > bytes.length) return null;
       if (marker === 0xda) {
         if (length < 6 || offset + length > bytes.length - 2) return null;
-        // Refuse metadata between scans and appended images without decoding pixels (R16).
+        // Refuse metadata between scans and appended images without decoding pixels (journal R16).
         for (let i = offset + length; i < bytes.length - 2; i++) {
           if (bytes[i] !== 0xff) continue;
           const next = bytes[i + 1]!;

@@ -2,7 +2,7 @@
 
 ## Commands
 
-`pnpm dev`: run locally; without `RESEND_API_KEY`, OTP codes appear in the log.
+`pnpm dev`: local seed, sign in with `111111` at http://127.0.0.1:5191.
 `pnpm dev:phone`: open on a phone through a cloudflared tunnel.
 Verify: `pnpm run typecheck`, `pnpm test`, `pnpm run build`.
 Migrations are additive only.

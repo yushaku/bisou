@@ -14,7 +14,7 @@ export function defaultDay(nowMs: number): string {
   return local < max ? local : max;
 }
 
-/** Characters as the server counts them: code points after trimming outer spaces (R4). */
+/** Characters as the server counts them: code points after trimming outer spaces (journal R4). */
 export function textLength(raw: string): number {
   return Array.from(entryText(raw)).length;
 }
@@ -34,7 +34,7 @@ export function saveBlock(
   return null;
 }
 
-/** How many of the picked files fit beside the photos already there (R5). */
+/** How many of the picked files fit beside the photos already there (journal R5). */
 export function takeRoom(have: number, picked: number, max = ENTRY_PHOTOS_MAX): { take: number; refused: boolean } {
   const take = Math.max(0, Math.min(picked, max - have));
   return { take, refused: take < picked };
@@ -47,7 +47,7 @@ interface Rect {
   height: number;
 }
 
-/** The cropper's area in whole pixels, made exactly square and inside the photo (R18). */
+/** The cropper's area in whole pixels, made exactly square and inside the photo (journal R18). */
 export function fitSquare(area: Rect, photo: { width: number; height: number }): Rect {
   const side = Math.max(1, Math.min(Math.round(area.width), Math.round(area.height), photo.width, photo.height));
   const clamp = (v: number, room: number) => Math.min(Math.max(Math.round(v), 0), room - side);
@@ -68,7 +68,6 @@ export function startable(items: { localId: string; state: PhotoState }[]): stri
 const SAVE_ERRORS: Partial<Record<ApiErrorCode, MessageKey>> = {
   note_empty: "notes.emptyHint",
   note_text_too_long: "notes.tooLong",
-  note_cooling: "notes.errors.cooling",
   invalid_note_schedule: "notes.scheduleError",
   note_sent: "notes.errors.sent",
   note_opened: "notes.errors.opened",

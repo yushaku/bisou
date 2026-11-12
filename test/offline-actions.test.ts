@@ -93,7 +93,7 @@ it("ComposeSheet keeps a valid draft but refuses submission offline", async () =
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(false);
 });
 
-it("AC11 R11: a new journal entry is not sent offline and its save button stays disabled", async () => {
+it("pwa AC11 R11: a new journal entry is not sent offline and its save button stays disabled", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const create = vi.spyOn(api, "createEntry");
   const sheet = ComposeSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", onSaved: vi.fn(), onSignedOut: vi.fn() });
@@ -107,7 +107,7 @@ it("AC11 R11: a new journal entry is not sent offline and its save button stays 
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(false);
 });
 
-it("AC11 R11: a new wish is not sent offline and its save button is disabled with the offline note", async () => {
+it("pwa AC11 R11: a new wish is not sent offline and its save button is disabled with the offline note", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const create = vi.spyOn(api, "createWish");
   state.push("A book");
@@ -129,7 +129,7 @@ it("describes disabled entry deletion with plain offline text", () => {
   expect(hint?.props.role).toBeUndefined();
 });
 
-it("R26: sign out sends this endpoint before unsubscribing", async () => {
+it("notifications R26: sign out sends this endpoint before unsubscribing", async () => {
   const unsubscribe = vi.fn().mockResolvedValue(true);
   vi.stubGlobal("navigator", { onLine: true, serviceWorker: { getRegistration: async () => ({ pushManager: { getSubscription: async () => ({ endpoint: "device", unsubscribe }) } }) } });
   const logout = vi.spyOn(api, "logout").mockImplementation(async () => { expect(unsubscribe).not.toHaveBeenCalled(); return { ok: true, data: { ok: true } }; });
@@ -139,27 +139,27 @@ it("R26: sign out sends this endpoint before unsubscribing", async () => {
   await vi.waitFor(() => expect(unsubscribe).toHaveBeenCalledOnce());
   expect(logout).toHaveBeenCalledWith("device");
 });
-it("AC19: Home hides the invitation for an unpaired user", () => {
+it("notifications AC19: Home hides the invitation for an unpaired user", () => {
   vi.stubGlobal("navigator", { onLine: true });
   const nodes = elements(Home({ user, onUser: vi.fn(), onSignedOut: vi.fn(), couple: { id: "c", members: [user], events: [], startDate: null } as never, onCouple: vi.fn(), celebrate: false, onCelebrated: vi.fn() }));
   expect(nodes.some(n => n.type === NotificationCard)).toBe(false);
 });
 
-it("notes AC33 AC40: an offline draft cannot save or send", async () => {
+it("notes AC33 AC40: an offline draft cannot save", async () => {
   vi.stubGlobal("navigator", { onLine: false });
-  const create = vi.spyOn(api, "createNote"), update = vi.spyOn(api, "updateNote"), send = vi.spyOn(api, "sendNote");
+  const create = vi.spyOn(api, "createNote"), update = vi.spyOn(api, "updateNote");
   const sheet = NoteSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", onRefresh: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   const form = sheet.props.children[0].props.children;
   state.push({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" });
   const nodes = elements(form.type(form.props));
   nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
   await Promise.resolve();
-  expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled();
+  expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled();
   expect(nodes.find(n => n.props.children === "notes.send")!.props.disabled).toBe(true);
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
 });
 
-it("notes AC20 AC40: closed-note editing keeps fields but cannot submit offline", async () => {
+it("notes-journal AC20, notes AC40: closed-note editing keeps fields but cannot submit offline", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const save = vi.spyOn(api, "updateClosedNote");
   const noteEntry = { ...entry, note: { id: "note", recipientId: "binh", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", pick: "try" as const, line: "Understood" } };
@@ -170,8 +170,8 @@ it("notes AC20 AC40: closed-note editing keeps fields but cannot submit offline"
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
 });
 
-it.each(["draft", "sent"] as const)("R13 R15: %s has its own deletion label and consequence", (status) => {
-  const note = { id: "n", state: status, happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", createdAt: 0, sendableAt: 1 };
+it.each(["draft", "sent"] as const)("notes R13 R15: %s has its own deletion label and consequence", (status) => {
+  const note = { id: "n", state: status, happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", createdAt: 0 };
   const sheet = NoteSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", entry: note, onRefresh: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   const form = sheet.props.children[0].props.children;
   const nodes = elements(form.type(form.props));
@@ -180,7 +180,7 @@ it.each(["draft", "sent"] as const)("R13 R15: %s has its own deletion label and 
   expect(nodes.some(n => n.props.children === (status === "draft" ? "notes.deleteBody" : "notes.withdrawBody"))).toBe(true);
 });
 
-it("card box R61: successful logout clears box text and seen ids before signing out", async () => {
+it("card-box R61: successful logout clears box text and seen ids before signing out", async () => {
   vi.stubGlobal("navigator", { onLine: true });
   const keys = new Map([["bisou.cardBox.v1:c:u:box:sample", "text"], ["bisou.cardBox.v1:c:u:seen:sample", "ids"], ["bisou.locale", "en"]]);
   vi.stubGlobal("localStorage", { get length() { return keys.size; }, key: (index: number) => [...keys.keys()][index] ?? null, removeItem: (key: string) => keys.delete(key) });

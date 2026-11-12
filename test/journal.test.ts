@@ -31,7 +31,7 @@ beforeEach(async () => {
 });
 
 describe("journal edit and delete", () => {
-  it("AC9 (R10): only the author can edit and changing the day preserves creation time and origin", async () => {
+  it("journal AC9 (R10): only the author can edit and changing the day preserves creation time and origin", async () => {
     const { a, b } = await paired();
     const entry = await create(a);
     vi.setSystemTime(NOW + HOUR);
@@ -44,7 +44,7 @@ describe("journal edit and delete", () => {
     expect((await page(b)).entries[0]).toEqual(changed);
   });
 
-  it("AC1, AC9, AC10 (R1, R10, R11): foreign and unknown entry ids reveal nothing", async () => {
+  it("journal AC1, AC9, AC10 (R1, R10, R11): foreign and unknown entry ids reveal nothing", async () => {
     const { a } = await paired();
     const entry = await create(a);
     const outsider = await user("Lan");
@@ -58,7 +58,7 @@ describe("journal edit and delete", () => {
     expect((await page(a)).entries[0]).toEqual(entry);
   });
 
-  it("AC7, AC9 (R3, R4, R7, R8, R10): edits enforce the same shape, date, text and empty rules", async () => {
+  it("journal AC7, AC9 (R3, R4, R7, R8, R10): edits enforce the same shape, date, text and empty rules", async () => {
     const { a } = await paired();
     const entry = await create(a);
     for (const [body, code] of [
@@ -75,7 +75,7 @@ describe("journal edit and delete", () => {
     }
   });
 
-  it("AC9, AC12 (R10, R17): keeps, reorders, adds and removes photos with both removed objects purged", async () => {
+  it("journal AC9, AC12 (R10, R17): keeps, reorders, adds and removes photos with both removed objects purged", async () => {
     const { a, b, couple } = await paired();
     const first = await upload(a);
     const second = await upload(a);
@@ -96,7 +96,7 @@ describe("journal edit and delete", () => {
     expect((await page(b)).entries[0]?.photoIds).toEqual([]);
   });
 
-  it("AC1, AC9, AC12 (R1, R10, R17): rejects another entry's photos, partner pending photos and expired uploads on edit", async () => {
+  it("journal AC1, AC9, AC12 (R1, R10, R17): rejects another entry's photos, partner pending photos and expired uploads on edit", async () => {
     const { a, b } = await paired();
     const partner = await upload(b);
     const attached = await upload(a);
@@ -110,7 +110,7 @@ describe("journal edit and delete", () => {
     expect((await page(a)).entries.find((row) => row.id === entry.id)).toEqual(entry);
   });
 
-  it("AC10 (R11, R20): only the author deletes the entry, both renditions and all photo rows", async () => {
+  it("journal AC10 (R11, R20): only the author deletes the entry, both renditions and all photo rows", async () => {
     const { a, b, couple } = await paired();
     const photoIds = [await upload(a), await upload(a)];
     const entry = await create(a, input({ photoIds }));
@@ -129,7 +129,7 @@ describe("journal edit and delete", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos").first("n")).toBe(0);
   });
 
-  it("AC10 (R11, R17): a failed R2 purge never leaves deleted photos readable", async () => {
+  it("journal AC10 (R11, R17): a failed R2 purge never leaves deleted photos readable", async () => {
     const { a, b } = await paired();
     const photoId = await upload(a);
     const entry = await create(a, input({ photoIds: [photoId] }));
@@ -142,7 +142,7 @@ describe("journal edit and delete", () => {
       .toEqual({ entry_id: null, position: null, created_at: 0 });
   });
 
-  it("AC9, AC10 (R10, R11): a concurrent delete and edit cannot resurrect the entry or attach a new photo to it", async () => {
+  it("journal AC9, AC10 (R10, R11): a concurrent delete and edit cannot resurrect the entry or attach a new photo to it", async () => {
     const { a } = await paired();
     const entry = await create(a);
     const photoId = await upload(a);
@@ -159,7 +159,7 @@ describe("journal edit and delete", () => {
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 describe("journal create and feed", () => {
-  it.each(["POST", "PUT"])("R4: %s accepts 16 KB JSON and rejects larger bodies before saving", async (method) => {
+  it.each(["POST", "PUT"])("journal R4: %s accepts 16 KB JSON and rejects larger bodies before saving", async (method) => {
     const { a } = await paired();
     const entry = await create(a);
     const path = method === "POST" ? "/api/journal" : `/api/journal/${entry.id}`;
@@ -188,7 +188,7 @@ describe("journal create and feed", () => {
     expect(entries.find((row) => row.id === entry.id)?.text).toBe(method === "POST" ? entry.text : "😀".repeat(2000));
   });
 
-  it("AC1 (R1, R2): requires a session and a paired couple, isolating another couple's feed", async () => {
+  it("journal AC1 (R1, R2): requires a session and a paired couple, isolating another couple's feed", async () => {
     await error(await call("GET", "/api/journal"), 401, "unauthorized");
     const lone = await user("Lan");
     for (const waiting of [false, true]) {
@@ -206,12 +206,12 @@ describe("journal create and feed", () => {
     await error(await call("POST", "/api/journal", { cookie: a.cookie, origin: "https://elsewhere.example", body: input() }), 403, "forbidden_origin");
   });
 
-  it("AC2 (R3): refuses empty and whitespace-only entries", async () => {
+  it("journal AC2 (R3): refuses empty and whitespace-only entries", async () => {
     const { a } = await paired();
     for (const text of ["", " \n\t "]) await error(await post(a, input({ text })), 400, "entry_empty");
   });
 
-  it("AC3 (R3, R5): saves four photos without text in the requested order and refuses five", async () => {
+  it("journal AC3 (R3, R5): saves four photos without text in the requested order and refuses five", async () => {
     const { a } = await paired();
     const ids = [];
     for (let i = 0; i < 5; i++) ids.push(await upload(a));
@@ -221,14 +221,14 @@ describe("journal create and feed", () => {
     expect((await page(a)).entries[0]?.photoIds).toEqual(photoIds);
   });
 
-  it("AC4 (R4): trims text and counts code points, including emoji", async () => {
+  it("journal AC4 (R4): trims text and counts code points, including emoji", async () => {
     const { a } = await paired();
     await error(await post(a, input({ text: "x".repeat(2001) })), 400, "entry_text_too_long");
     expect((await create(a, input({ text: `  ${"x".repeat(2000)} \n` }))).text).toBe("x".repeat(2000));
     expect((await create(a, input({ text: "😘".repeat(2000) }))).text).toBe("😘".repeat(2000));
   });
 
-  it("AC5, AC6, AC8, AC11 (R7, R9, R12, R13, R15): shares partner entries newest first by day then creation time", async () => {
+  it("journal AC5, AC6, AC8, AC11 (R7, R9, R12, R13, R15): shares partner entries newest first by day then creation time", async () => {
     const { a, b } = await paired();
     vi.setSystemTime(Date.parse("2026-11-06T12:30:00Z"));
     const lunch = await create(b, input({ date: "2026-11-06", text: "Lunch call" }));
@@ -241,7 +241,7 @@ describe("journal create and feed", () => {
     expect(evening).toEqual({ id: evening.id, authorId: b.id, date: "2026-11-06", text: "Rain", source: "partner", photoIds: [], createdAt: Date.now(), updatedAt: Date.now() });
   });
 
-  it("AC7 (R7, R8): accepts the date boundaries and refuses future or invalid calendar days", async () => {
+  it("journal AC7 (R7, R8): accepts the date boundaries and refuses future or invalid calendar days", async () => {
     const { a } = await paired();
     for (const date of ["2026-11-08", "1899-12-31", "2026-02-29", "2026-11-31", "2026-1-1"]) {
       await error(await post(a, input({ date })), 400, "invalid_entry_date");
@@ -251,14 +251,14 @@ describe("journal create and feed", () => {
     expect((await create(a, input({ date: "2026-11-08" }))).date).toBe("2026-11-08");
   });
 
-  it("AC2, AC3, AC4 (R3, R4, R5): validates JSON shape before entry values", async () => {
+  it("journal AC2, AC3, AC4 (R3, R4, R5): validates JSON shape before entry values", async () => {
     const { a } = await paired();
     for (const body of [null, [], {}, { ...input(), date: 1 }, { ...input(), text: null }, { ...input(), photoIds: "id" }, { ...input(), photoIds: [1] }, input({ photoIds: ["id", "id"] })]) {
       await error(await post(a, body), 400, "invalid_body");
     }
   });
 
-  it("AC1, AC12 (R1, R17): refuses unknown, partner-owned, expired and already attached photo ids", async () => {
+  it("journal AC1, AC12 (R1, R17): refuses unknown, partner-owned, expired and already attached photo ids", async () => {
     const { a, b } = await paired();
     const partner = await upload(b);
     const expired = await upload(a);
@@ -271,7 +271,7 @@ describe("journal create and feed", () => {
     expect((await page(a)).entries).toHaveLength(1);
   });
 
-  it("AC3 (R3, R5): concurrent saves of one pending photo leave only the successful entry", async () => {
+  it("journal AC3 (R3, R5): concurrent saves of one pending photo leave only the successful entry", async () => {
     const { a } = await paired();
     const photoId = await upload(a);
     const responses = await Promise.all([post(a, input({ text: "", photoIds: [photoId] })), post(a, input({ text: "", photoIds: [photoId] }))]);
@@ -280,7 +280,7 @@ describe("journal create and feed", () => {
     expect((await page(a)).entries[0]?.photoIds).toEqual([photoId]);
   });
 
-  it("AC15 (R12, R13, R21): pages a split day with tied timestamps without duplicates or gaps", async () => {
+  it("journal AC15 (R12, R13, R21): pages a split day with tied timestamps without duplicates or gaps", async () => {
     const { a, couple } = await paired();
     const ids = Array.from({ length: 25 }, (_, i) => `entry-${String(i).padStart(2, "0")}`);
     await env.DB.batch(ids.map((id) => env.DB.prepare(`INSERT INTO journal_entries (id, couple_id, author_id, entry_date, created_at, updated_at)
@@ -294,7 +294,7 @@ describe("journal create and feed", () => {
     expect([...first.entries, ...second.entries].map((entry) => entry.id)).toEqual(ids.reverse());
   });
 
-  it("AC15 (R21): rejects malformed cursors", async () => {
+  it("journal AC15 (R21): rejects malformed cursors", async () => {
     const { a } = await paired();
     for (const cursor of ["", "bad!", btoa("{}"), btoa('["2026-02-30",1,"id"]'), btoa('["2026-11-05",1.5,"id"]'), btoa('["2026-11-05",1,2]'), btoa('["2026-11-05",1,"id",4]')]) {
       await error(await call("GET", `/api/journal?cursor=${encodeURIComponent(cursor)}`, { cookie: a.cookie }), 400, "invalid_body");

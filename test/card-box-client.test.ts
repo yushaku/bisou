@@ -21,7 +21,7 @@ vi.mock("../src/client/components/ui/dialog", async original => ({
   DialogContent: ({ children }: { children: import("react").ReactNode }) => h("div", { role: "dialog" }, children),
 }));
 const detail: CardBoxDetail = { box: { id: "sample", name: { vi: "Hộp", en: "Box" }, description: { vi: "", en: "" }, open: true, cardCount: 4, cover: "/card-boxes/sample.jpg", price: null }, cards: ["a", "b", "c", "d"].map(id => ({ id, kind: "question", text: { vi: id, en: id } })) };
-it("AC26 AC27: load failures stay hidden with cached content and uncached offline content needs a connection", () => {
+it("card-box AC26 AC27: load failures stay hidden with cached content and uncached offline content needs a connection", () => {
   expect(cardBoxLoadMessage(true, false, "loadError")).toBeNull();
   expect(cardBoxLoadMessage(true, true, "loadError")).toBeNull();
   expect(cardBoxLoadMessage(false, false, "loadError")).toBe("needsConnection");
@@ -30,11 +30,11 @@ it("AC26 AC27: load failures stay hidden with cached content and uncached offlin
   expect(cardBoxLoadMessage(false, true, "notFound")).toBe("notFound");
   expect(cardBoxLoadMessage(false, true, null)).toBeNull();
 });
-it("AC9 AC14: a completed open box starts over and a completed preview explains the rest opens later", () => {
+it("card-box AC9, card-box-unlock AC14: a completed open box starts over and a completed preview explains the rest opens later", () => {
   expect(cardBoxEndMessage(true)).toBe("cardBox.startOver");
   expect(cardBoxEndMessage(false)).toBe("cardBox.previewEnd");
 });
-it("AC7 AC8 AC10: unseen draws and complete stack replay before drawing again", () => {
+it("card-box AC7 AC8 AC10: unseen draws and complete stack replay before drawing again", () => {
   let play: Play = { stack: [], index: -1, startedOver: false }; let seen: string[] = [];
   for (let i = 0; i < 3; i++) ({ play, seen } = nextCard(detail, play, seen, () => 0));
   expect(play.stack).toEqual(["a", "b", "c"]);
@@ -45,7 +45,7 @@ it("AC7 AC8 AC10: unseen draws and complete stack replay before drawing again", 
   ({ play, seen } = nextCard(detail, play, seen, () => 0)); expect(play.stack).toEqual(["a", "b", "c", "d"]);
 });
 
-it("AC9 AC14 AC15 AC17: preview uses only supplied cards, persists seen and ends without resetting", () => {
+it("card-box AC9, card-box-unlock AC14 AC15 AC17: preview uses only supplied cards, persists seen and ends without resetting", () => {
   const preview = { ...detail, box: { ...detail.box, open: false }, cards: detail.cards.slice(0, 3) };
   let play: Play = { stack: [], index: -1, startedOver: false }; let seen = ["a", "obsolete"];
   ({ play, seen } = nextCard(preview, play, seen, () => 0)); expect(play.stack).toEqual(["b"]); expect(seen).toEqual(["a", "b"]);
@@ -63,7 +63,7 @@ it("empty and single-card boxes remain usable", () => {
 });
 
 afterEach(() => vi.unstubAllGlobals());
-it.each(["vi", "en"])("AC11 AC12 AC13: five kinds are readable without response controls in %s", locale => {
+it.each(["vi", "en"])("card-box AC11 AC12 AC13: five kinds are readable without response controls in %s", locale => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const text = { vi: "Mẫu", en: "Sample" };
   const cards: CardBoxDetail["cards"] = [
@@ -94,14 +94,14 @@ it.each(["vi", "en"] as const)("product grid shows background covers, descriptio
   expect(html).not.toMatch(/<input|Liên hệ|Mã mở/);
 });
 
-it.each(["vi", "en"] as const)("AC47: an unlocked paid box tile shows no price in %s", (locale) => {
+it.each(["vi", "en"] as const)("card-box-unlock AC47: an unlocked paid box tile shows no price in %s", (locale) => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const owned = { ...detail.box, id: "owned", open: true, price: 49000 };
   const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [owned], from: "/boxes" })) }));
   expect(html).not.toContain(locale === "vi" ? "49.000đ" : "49,000₫");
   expect(html).not.toContain('data-slot="badge"');
 });
-it("AC25: client and shared sources have no runtime imports from Worker", () => {
+it("card-box-unlock AC25: client and shared sources have no runtime imports from Worker", () => {
   const visit = (dir: string): void => { for (const item of readdirSync(dir, { withFileTypes: true })) {
     const path = `${dir}/${item.name}`;
     if (item.isDirectory()) visit(path);
@@ -110,12 +110,12 @@ it("AC25: client and shared sources have no runtime imports from Worker", () => 
   visit("src/client"); visit("src/shared");
 });
 
-it("AC9 AC14: reopening a completed box avoids the last card from its previous opening", () => {
+it("card-box AC9, card-box-unlock AC14: reopening a completed box avoids the last card from its previous opening", () => {
   const next = nextCard(detail, { stack: [], index: -1, startedOver: false }, ["b", "c", "d", "a"], () => 0);
   expect(next.play.stack).toEqual(["b"]); expect(next.play.startedOver).toBe(true);
 });
 
-it("AC7 AC8 AC15: thirty draws have no limit and seen history survives reopening only on this phone", () => {
+it("card-box AC7 AC8, card-box-unlock AC15: thirty draws have no limit and seen history survives reopening only on this phone", () => {
   const values = new Map<string, string>();
   vi.stubGlobal("localStorage", { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) });
   let play: Play = { stack: [], index: -1, startedOver: false };
@@ -128,7 +128,7 @@ it("AC7 AC8 AC15: thirty draws have no limit and seen history survives reopening
   expect(nextCard(detail, { stack: [], index: -1, startedOver: false }, [], () => 0).play.stack).toEqual(["a"]);
 });
 
-it("AC5 AC6 AC16: Home block and box list share ordered preview-only rows and the four tabs", () => {
+it("card-box AC5 AC6, card-box-unlock AC48: Home block and box list share ordered preview-only rows and the four tabs", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const memory = createTabMemory();
   memory.boxes = [{ ...detail.box, name: { vi: "Làm quen lại", en: "Free" } }, { ...detail.box, id: "paid", name: { vi: "Deep Connection", en: "Deep Connection" }, open: false }];
@@ -152,7 +152,7 @@ function storage() {
   vi.stubGlobal("localStorage", { get length() { return values.size; }, key: (index: number) => [...values.keys()][index] ?? null, getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value), removeItem: (key: string) => values.delete(key) });
   return values;
 }
-it("AC26: cached list and box survive reopening, keep both languages and play a complete offline cycle", () => {
+it("card-box AC26: cached list and box survive reopening, keep both languages and play a complete offline cycle", () => {
   storage();
   writeCache("c:u", "list", [detail.box]);
   writeCache("c:u", "box:sample", detail);
@@ -166,7 +166,7 @@ it("AC26: cached list and box survive reopening, keep both languages and play a 
   expect(previousCard(play).index).toBe(3);
 });
 
-it("AC26: server detail replaces a longer cached box and storage failures do not stop play", () => {
+it("card-box AC26: server detail replaces a longer cached box and storage failures do not stop play", () => {
   const values = storage();
   writeCache("c:u", "box:sample", detail);
   const preview = { ...detail, box: { ...detail.box, open: false }, cards: detail.cards.slice(0, 1) };
@@ -179,7 +179,7 @@ it("AC26: server detail replaces a longer cached box and storage failures do not
   expect(() => writeCache("c:u", "box:sample", detail)).not.toThrow();
   expect(nextCard(detail, { stack: [], index: -1, startedOver: false }, [], () => 0).play.stack).toEqual(["a"]);
 });
-it("R61: logout clears every account and version of box cache and seen history only", () => {
+it("card-box R61: logout clears every account and version of box cache and seen history only", () => {
   const values = storage();
   writeCache("c:u", "list", [detail.box]); writeCache("c:v", "box:sample", detail); writeSeen("c:u", "sample", ["a"]);
   values.set("bisou.cardBox.v0:old", "old"); values.set("bisou.locale", "en");
@@ -188,14 +188,14 @@ it("R61: logout clears every account and version of box cache and seen history o
   expect(readSeen("c:u", "sample")).toEqual([]);
 });
 
-it("AC27: an uncached offline player asks for a connection without displaying a card", () => {
+it("card-box AC27: an uncached offline player asks for a connection without displaying a card", () => {
   storage(); vi.stubGlobal("navigator", { onLine: false });
   const user = { id: "u", displayName: "U", email: "u@example.com", locale: "vi" as const, createdAt: 1, birthDate: null, avatarId: null };
   const html = renderToString(h(Router, { ssrPath: "/boxes/sample", children: h(I18nProvider, null, h(CardBoxPlayer, { user, couple: { id: "c", members: [], startDate: null, events: [] }, boxId: "sample", onUser() {}, onSignedOut() {} })) }));
   expect(html).toContain("Connect to open this box for the first time");
   expect(html).not.toContain("Next card");
 });
-it("AC26: failed fetch leaves the cached detail playable and cached list visible", async () => {
+it("card-box AC26: failed fetch leaves the cached detail playable and cached list visible", async () => {
   storage(); writeCache("c:u", "box:sample", detail); writeCache("c:u", "list", [detail.box]);
   vi.stubGlobal("fetch", () => Promise.reject(new Error("offline")));
   expect((await api.box("sample")).ok).toBe(false);
@@ -270,7 +270,7 @@ it.each(["vi", "en"])("PO18: player deck provides previous, labelled random and 
   expect(html).toContain('disabled=""');
 });
 
-it.each(["vi", "en"] as const)("AC35 AC36: truth and dare are labelled static blocks in the deck in %s", locale => {
+it.each(["vi", "en"] as const)("card-box AC35 AC36: truth and dare are labelled static blocks in the deck in %s", locale => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const card: CardBoxDetail["cards"][number] = { id: "tod-04", kind: "truthDare", truth: { vi: "Mỗi người có món gì hay lén ăn một mình mà chưa từng mời người kia không?", en: "Is there a snack each of you sneaks alone and has never offered the other?" }, dare: { vi: "Mỗi người diễn không lời món ăn mình thích nhất, người kia đoán.", en: "Each act out your favourite food without a word while the other guesses." } };
   const html = renderToString(h(I18nProvider, null, h(CardBoxCard, { card, boxId: "truth-or-dare" })));
@@ -290,7 +290,7 @@ it.each(["vi", "en"] as const)("AC35 AC36: truth and dare are labelled static bl
   expect(cardSwipe(80, 0, 400)).toBe("previous"); expect(cardSwipe(-80, 0, 400)).toBe("next");
 });
 
-it.each(["vi", "en"] as const)("AC37 AC38 AC40: adult badges appear on Home, boxes and every Spicy card only in %s", locale => {
+it.each(["vi", "en"] as const)("card-box-content AC37 AC38 AC40: adult badges appear on Home, boxes and every Spicy card only in %s", locale => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const adultBox = { ...detail.box, id: "rau-ram", adult: true as const, name: { vi: "Rau răm", en: "Spicy" } };
   const memory = createTabMemory(); memory.boxes = [detail.box, adultBox];
@@ -316,7 +316,7 @@ it.each(["vi", "en"] as const)("AC37 AC38 AC40: adult badges appear on Home, box
   expect(nextCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["rr-09", "rr-04"]);
 });
 
-it("AC41 AC43 AC46: the last preview card leads to the buy view, keeps seen cards, and unlocking draws an unseen card", () => {
+it("card-box-unlock AC41 AC43 AC46: the last preview card leads to the buy view, keeps seen cards, and unlocking draws an unseen card", () => {
   const preview = { ...detail, box: { ...detail.box, open: false }, cards: detail.cards.slice(0, 3) };
   const play = { stack: ["a", "b", "c"], index: 2, startedOver: false };
   const end = nextCard(preview, play, ["a", "b", "c"], () => 0);
@@ -327,7 +327,7 @@ it("AC41 AC43 AC46: the last preview card leads to the buy view, keeps seen card
   expect(reopened.play.startedOver).toBe(true); expect(reopened.seen).toEqual(end.seen);
 });
 
-it.each(["vi", "en"] as const)("AC41 AC42 AC45: buy view and gift dialog show the approved copy, offline and error states in %s", locale => {
+it.each(["vi", "en"] as const)("card-box-unlock AC41 AC42 AC45: buy view and gift dialog show the approved copy, offline and error states in %s", locale => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const box = { ...detail.box, price: 49000, open: false };
   const render = (dialogOpen: boolean, online = true, failed = false) => renderToString(h(I18nProvider, null, h(CardBoxGift, { box, dialogOpen, online, failed, pending: false, onDialogChange() {}, onConfirm() {}, onPrevious() {} })));
@@ -346,7 +346,7 @@ it.each(["vi", "en"] as const)("AC41 AC42 AC45: buy view and gift dialog show th
 });
 
 
-it("R12: distinct playable seen counts follow next, previous, random, start over and preview", () => {
+it("card-box R12: distinct playable seen counts follow next, previous, random, start over and preview", () => {
   let state = { play: { stack: [], index: -1, startedOver: false } as Play, seen: [] as string[] };
   expect(seenCardCount(detail, state.seen)).toBe(0);
   state = nextCard(detail, state.play, state.seen, () => 0);
@@ -371,7 +371,7 @@ it("R12: distinct playable seen counts follow next, previous, random, start over
   expect(seenCardCount(preview, end.seen)).toBe(3);
 });
 
-it.each(["vi", "en"] as const)("R12: tiles show total counts with a single-line title and singular-safe copy in %s", locale => {
+it.each(["vi", "en"] as const)("card-box R12: tiles show total counts with a single-line title and singular-safe copy in %s", locale => {
   storage().set("bisou.locale", locale);
   for (const count of [0, 1, 4]) {
     const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [{ ...detail.box, cardCount: count, open: false }], from: "/boxes" })) }));
@@ -380,7 +380,7 @@ it.each(["vi", "en"] as const)("R12: tiles show total counts with a single-line 
   }
 });
 
-it.each(["vi", "en"] as const)("R12: player renders quiet seen and preview counters from phone history in %s", locale => {
+it.each(["vi", "en"] as const)("card-box R12: player renders quiet seen and preview counters from phone history in %s", locale => {
   const values = storage(); values.set("bisou.locale", locale);
   vi.stubGlobal("navigator", { onLine: true });
   const user = { id: "u", displayName: "U", email: "u@example.com", locale, createdAt: 1, birthDate: null, avatarId: null };

@@ -1,19 +1,8 @@
 # Installed app
 
-## Decided at Gate 1
-
-- Splash: the felt heart logo on the linen background, light or dark, instead of a white flash.
-- Install guide: a small card on Home in a browser tab only; 3 steps on iPhone Safari, the browser's own prompt on Android; closing it hides it for good on that device.
-- New deploy: unchanged; the app reloads itself at once. The PO accepts that an unsaved draft can be lost.
-- Offline: one offline toast for every tab; loaded data stays visible; saving needs a connection, nothing is queued.
-- Errors: a friendly screen with a Reload button instead of a white page.
-- Status bar: follows the chosen theme.
-- Android shortcuts: Write in the journal, Spin.
-- Out: offline writes, update prompt; push notifications are in [notifications](notifications.md).
-
 ## Purpose
 
-A couple opens Bisou from the home screen many times a day. It should open, look and fail like an app, not a web page. It covers every screen; visuals follow [DESIGN.md](../../DESIGN.md).
+A couple opens Bisou from the home screen many times a day. It should open, look and fail like an app, not a web page. It covers every part of Bisou; visuals follow [DESIGN.md](../../DESIGN.md).
 
 ## Actors
 
@@ -21,20 +10,27 @@ A couple opens Bisou from the home screen many times a day. It should open, look
 - **Installed app**: Bisou opened from its home screen icon.
 - **Browser tab**: Bisou opened in a browser, not installed.
 
+## User stories
+
+- US1 (partner): open Bisou from the home screen without a white flash and with the theme I chose, so that it feels like an app. AC1, AC2, AC3
+- US2 (partner): be shown how to install Bisou when I use it in a browser, so that I can put it on my home screen. AC4, AC5, AC6, AC7
+- US3 (partner): keep reading what I already loaded when the connection drops, so that a bad signal does not lose my place. AC9, AC10, AC11
+- US4 (partner): get new versions and recover from errors without fuss, so that the app never leaves me on a broken page. AC8, AC12
+
 ## Business rules
 
 Opening
 
-- R1. Opening the installed app on iPhone shows the felt heart logo on the linen background, light or dark following the phone's mode, never a white flash.
-- R2. The iPhone status bar and the browser bar take the colour of the theme the person chose.
-- R3. On Android, a long press on the icon offers two shortcuts: Write in the journal and Spin.
+- R1. Opening the installed app shows the felt heart logo on the linen background, light or dark following the device's mode, never a white flash, on devices that support a splash.
+- R2. The status bar and the browser bar take the colour of the theme the person chose.
+- R3. Where the device supports app shortcuts, a long press on the icon offers two: write in the journal and spin.
 
 Install guide
 
-- R4. Home shows a small install card only in a browser tab; the installed app never shows it.
-- R5. On iPhone Safari the card shows 3 steps: Share, Add to Home Screen, Add.
-- R6. On Android the card shows an install button that opens the browser's own install prompt, only when the browser offers one.
-- R7. A close button hides the card for good on that device.
+- R4. A small install card shows only in a browser tab, never in the installed app, and only when a way to install exists (R5, R6).
+- R5. Where the browser has no install prompt of its own, the card shows the steps to add Bisou to the home screen by hand.
+- R6. Where the browser offers its own install prompt, the card shows an install action that opens it; when the browser offers none, there is no such action.
+- R7. A close action hides the card for good on that device.
 
 Updates
 
@@ -42,42 +38,40 @@ Updates
 
 Offline
 
-- R9. Without a connection, one offline toast shows at the top of every tab and stays while offline: a title, a line saying loaded data is still here, Retry (reloads once the connection is back) and close; a newer toast can temporarily replace it, and it goes away when the connection returns.
-- R10. Home and Wishes keep showing data already loaded.
-- R11. While offline, save buttons say plainly that they need a connection; nothing is saved later on its own.
+- R9. Without a connection, one offline notice shows on every tab and stays while offline: a title, a line saying loaded data is still here, a retry that reloads once the connection is back, and a close action; a newer notice can temporarily replace it, and it goes away when the connection returns.
+- R10. Data already loaded keeps showing while offline.
+- R11. While offline, save actions say plainly that they need a connection; nothing is saved later on its own.
 
 Errors
 
-- R12. An unexpected screen error shows a friendly screen with a Reload button, never a white page.
+- R12. An unexpected failure shows a friendly message with a way to reload, never a blank page.
 
-## Running example
+## Main flows and exceptions
 
-An uses an iPhone in dark mode with a light Bisou theme; Binh uses Android. Both first open Bisou in a browser tab, then install it.
-
-## Main flows
-
-Open Bisou in a tab, follow the card to install, open from the icon, use it on a train without signal, get a new version.
+- Flow for US2: a partner opens Bisou in a browser, follows the install card, then opens it from the icon.
+- Flow for US3: a partner loses signal, keeps reading what is loaded, and sees the offline notice. Exception: saving is refused with a message that a connection is needed, and nothing is queued.
+- Flow for US4: a new version is deployed and the app reloads itself; an unexpected failure shows the friendly message.
 
 ## Acceptance criteria
 
-- AC1 (R1). Given An's iPhone is in dark mode, when An opens the installed app, then the dark linen splash with the felt heart shows and no white frame appears; in light mode the splash is light.
-- AC2 (R2). Given An chose a light theme, then the status bar and browser bar match it; when An switches theme, they follow.
-- AC3 (R3). Given Binh installed Bisou, when Binh long presses the icon, then Write in the journal and Spin show; Write in the journal opens the journal composer, Spin opens the wish jar spin.
-- AC4 (R4, R5). Given An opens Bisou in Safari, then Home shows the card with Share, Add to Home Screen, Add; other tabs do not show it.
-- AC5 (R4, R6). Given Binh opens Bisou in Chrome and Chrome offers install, when Binh taps the button, then Chrome's own install prompt opens; if Chrome offers none, no button shows.
-- AC6 (R7). Given An closes the card, when An reloads or comes back days later in Safari on that iPhone, then it stays hidden; on another device it shows again.
-- AC7 (R4). Given An opens the installed app, then the card never shows.
-- AC8 (R8). Given Binh has the app open and a new version is deployed, when it takes over, then the app reloads at once without asking.
-- AC9 (R9). Given An loses signal, then one offline toast shows on Home, Journal and Wishes alike; when signal returns, it goes away.
-- AC10 (R10). Given An loaded Home and Wishes before losing signal, then both still show their data offline.
-- AC11 (R11). Given An is offline, when An tries to save a journal entry or a wish, then the save button says it needs a connection and nothing is sent later on its own.
-- AC12 (R12). Given a screen fails unexpectedly, then Binh sees a friendly screen with a Reload button; tapping it reloads the app.
+- AC1 (R1). Given the device is in dark mode, when A opens the installed app, then the dark linen splash with the felt heart shows and no white frame appears; in light mode the splash is light.
+- AC2 (R2). Given A chose a light theme, then the status bar and browser bar match it; when A switches theme, they follow.
+- AC3 (R3). Given B installed Bisou on a device that supports shortcuts, when B long presses the icon, then "write in the journal" and "spin" show; the first opens the journal composer, the second the wish jar spin.
+- AC4 (R4, R5). Given A opens Bisou in a browser with no install prompt of its own, then the install card shows the steps to add it by hand; other tabs do not show it.
+- AC5 (R4, R6). Given B opens Bisou in a browser that offers install, when B uses the install action, then the browser's own prompt opens; if the browser offers none, no action shows.
+- AC6 (R7). Given A closes the card, when A reloads or comes back days later on that device, then it stays hidden; on another device it shows again.
+- AC7 (R4). Given A opens the installed app, then the card never shows.
+- AC8 (R8). Given B has the app open and a new version is deployed, when it takes over, then the app reloads at once without asking.
+- AC9 (R9). Given A loses signal, then one offline notice shows on every tab alike; when signal returns, it goes away.
+- AC10 (R10). Given A loaded data before losing signal, then it still shows offline.
+- AC11 (R11). Given A is offline, when A tries to save a journal entry or a wish, then the save action says it needs a connection and nothing is sent later on its own.
+- AC12 (R12). Given the app fails unexpectedly, then B sees a friendly message with a way to reload, and using it reloads the app.
 
 ## Glossary
 
 - **Installed app** (ứng dụng đã cài): Bisou added to the home screen.
 - **Install card** (thẻ hướng dẫn cài): the card in R4 to R7.
-- **Offline toast** (thông báo ngoại tuyến): the toast in R9.
+- **Offline notice** (thông báo ngoại tuyến): the notice in R9.
 
 ## Out of scope
 
@@ -88,3 +82,5 @@ Open Bisou in a tab, follow the card to install, open from the icon, use it on a
 ## Open questions
 
 None.
+
+Retired: none

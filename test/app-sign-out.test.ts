@@ -33,7 +33,7 @@ function signedIn() {
   return { values, onSignedOut: screen.props.onSignedOut };
 }
 
-it("R61: child 401 sign-out clears cached boxes and seen history before showing login", () => {
+it("card-box R61: child 401 sign-out clears cached boxes and seen history before showing login", () => {
   const { values, onSignedOut } = signedIn();
   onSignedOut();
   expect(readCache("c:u", "list")).toBeNull();
@@ -42,7 +42,7 @@ it("R61: child 401 sign-out clears cached boxes and seen history before showing 
   expect(hooks.setAuth).toHaveBeenCalledWith({ status: "signedOut" });
 });
 
-it("R61: an expired session on app startup clears cached boxes and seen history", async () => {
+it("card-box R61: an expired session on app startup clears cached boxes and seen history", async () => {
   const { values } = signedIn();
   vi.spyOn(api, "me").mockResolvedValue({ ok: false, status: 401, error: null });
   hooks.effects[0]!();
@@ -50,7 +50,7 @@ it("R61: an expired session on app startup clears cached boxes and seen history"
   expect([...values]).toEqual([["bisou.locale", "vi"]]);
 });
 
-it("R44: a network failure on app startup keeps cached boxes and seen history", async () => {
+it("card-box R44: a network failure on app startup keeps cached boxes and seen history", async () => {
   const { values } = signedIn();
   vi.spyOn(api, "me").mockResolvedValue({ ok: false, status: 0, error: null });
   hooks.effects[0]!();

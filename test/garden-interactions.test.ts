@@ -62,7 +62,7 @@ const state: GardenState = { day: "2026-11-09", today: null, swapLocked: false, 
   proposal: { kind: "target", levelId: "living_together", agreed: false, proposedByMe: false }, decisions: [],
 } };
 
-it("R43 R44 AC25 AC35: chips hide the text box, cancel submits nothing and place down sends the chosen response", async () => {
+it("garden-stages R43 R44 AC25 AC35: chips hide the text box, cancel submits nothing and place down sends the chosen response", async () => {
   setup();
   const changed = vi.fn();
   const save = vi.spyOn(api, "answerGarden").mockResolvedValue({ ok: true, data: { card } });
@@ -84,7 +84,7 @@ it("R43 R44 AC25 AC35: chips hide the text box, cancel submits nothing and place
   expect(changed).toHaveBeenCalledOnce();
 });
 
-it("R15 AC9: repeated clicks and remounts never replay flip or watering", async () => {
+it("garden R15 AC9: repeated clicks and remounts never replay flip or watering", async () => {
   setup(); const flip = vi.fn();
   const flipped = { ...card, mine: "own", partner: "other", flippedDay: "2026-11-09" };
   const component = () => GardenCard({ card: flipped, myName: "An", partnerName: "Bình", memoryScope: "flip-click-test", onChanged: vi.fn(), onSignedOut: vi.fn(), onFlip: flip });
@@ -95,7 +95,7 @@ it("R15 AC9: repeated clicks and remounts never replay flip or watering", async 
   expect(render(component).some((node) => Array.isArray(node.props.children) && node.props.children.includes("Lật thẻ"))).toBe(false);
 });
 
-it("R48 R50 R59 AC27 AC33: named banner accepts the displayed revision and opened stage celebrates only once", async () => {
+it("garden-stages R48 R50 R59 AC27 AC33: named banner accepts the displayed revision and opened stage celebrates only once", async () => {
   setup(); const changed = vi.fn();
   const accept = vi.spyOn(api, "gardenLevels").mockResolvedValue({ ok: true, data: { levels: state.levels } });
   const component = () => GardenStageNotice({ state, partnerName: "An", memoryScope: "banner-test", onChanged: changed, onSignedOut: vi.fn() });
@@ -109,7 +109,7 @@ it("R48 R50 R59 AC27 AC33: named banner accepts the displayed revision and opene
   expect(render(component).find((node) => node.type === GardenScene)!.props.open).toBe(false);
 });
 
-it("R48 R54 AC27: the stage sheet has no checklist and never disables the next-stage choice", () => {
+it("garden-stages R48 R54 AC27: the stage sheet has no checklist and never disables the next-stage choice", () => {
   setup();
   const nodes = render(() => GardenStageSheet({ levels: { ...state.levels, proposal: null }, levelId: "living_together", partnerName: "Bình", open: true, onClose: vi.fn(), onChanged: vi.fn(), onSignedOut: vi.fn(), onViewStage: vi.fn() }));
   expect(nodes.some((node) => node.props.children === "Điều cần bàn trước khi Sống chung")).toBe(false);
@@ -117,7 +117,7 @@ it("R48 R54 AC27: the stage sheet has no checklist and never disables the next-s
   expect((button.props as { disabled?: boolean }).disabled).toBe(false);
 });
 
-it("R54: the Garden lists the furthest stage's decisions, my turn first, three at a time", () => {
+it("garden-stages R54: the Garden lists the furthest stage's decisions, my turn first, three at a time", () => {
   setup();
   vi.spyOn(api, "gardenStageDecisions").mockResolvedValue({ ok: true, data: { cards: [] } });
   const props = { myName: "An", partnerName: "Bình", memoryScope: "decisions-test", onChanged: vi.fn(), onSignedOut: vi.fn() };
@@ -138,7 +138,7 @@ it("R54: the Garden lists the furthest stage's decisions, my turn first, three a
   expect(GardenStageDecisions({ ...props, stageId: "with_children" })).toBeNull();
 });
 
-it("R67 AC39: the stage answered list shows a star toggle on a revealed decision card", () => {
+it("garden-stars R67 AC39: the stage answered list shows a star toggle on a revealed decision card", () => {
   const store = setup();
   const answered = { ...card, mine: "An's answer", partner: "Bình's answer", flippedDay: "2026-11-09" };
   store.set(flipKey("stage-stars", answered), "1");
@@ -155,7 +155,7 @@ it.each([
   { starred: true, status: 200 },
   { starred: false, status: 500 },
   { starred: false, status: 401 },
-])("AC37 AC38: star click handles starred=$starred and status=$status", async ({ starred, status }) => {
+])("garden-stars AC37 AC38: star click handles starred=$starred and status=$status", async ({ starred, status }) => {
   const store = setup();
   const flipped = { ...card, cardId: "money-01", mine: "own", partner: "other", flippedDay: "2026-11-09", starred };
   store.set(flipKey("star-click", flipped), "1");
@@ -199,7 +199,7 @@ it.each([
   { count: 4, expected: ["money-01", "money-02", "money-03"], seeAll: true },
   { count: 3, expected: ["money-01", "money-02", "money-03"], seeAll: false },
   { count: 0, expected: [], seeAll: false },
-])("AC41 AC42 R70 R71: Home with $count seen stars shows the preview and link threshold", async ({ count, expected, seeAll }) => {
+])("garden-stars AC41 AC42 R70 R71: Home with $count seen stars shows the preview and link threshold", async ({ count, expected, seeAll }) => {
   const component = () => StarredBlock(starredProps);
   const nodes = await loadStars(starredCards.slice(0, count), component);
   expect(nodes.filter(node => node.type === StarredCard).map(node => node.key)).toEqual(expected);
@@ -209,7 +209,7 @@ it.each([
   if (!count) expect(nodes).toEqual([]);
 });
 
-it.each([{ cards: [] }, { cards: [starredCards[0]!] }])("AC42: full stars shows an empty state when no loaded cards are visible ($cards)", async ({ cards }) => {
+it.each([{ cards: [] }, { cards: [starredCards[0]!] }])("garden-stars AC42: full stars shows an empty state when no loaded cards are visible ($cards)", async ({ cards }) => {
   const component = () => StarredBlock({ ...starredProps, full: true });
   const nodes = await loadStars([], component);
   // A server result can also contain a card this device has never revealed.
@@ -222,7 +222,7 @@ it.each([{ cards: [] }, { cards: [starredCards[0]!] }])("AC42: full stars shows 
   expect(nodes.find(node => node.type === EmptyState)).toBeDefined();
 });
 
-it.each(["drawer", "partner"])("AC42: full stars becomes empty after the last star is removed by %s", async source => {
+it.each(["drawer", "partner"])("garden-stars AC42: full stars becomes empty after the last star is removed by %s", async source => {
   const component = () => StarredBlock({ ...starredProps, full: true });
   const nodes = await loadStars([starredCards[0]!], component);
   expect(nodes.some(node => node.type === EmptyState)).toBe(false);
@@ -244,7 +244,7 @@ it.each(["drawer", "partner"])("AC42: full stars becomes empty after the last st
 });
 
 
-it("AC42: full stars keeps loading and failure distinct from an empty result", async () => {
+it("garden-stars AC42: full stars keeps loading and failure distinct from an empty result", async () => {
   setup();
   vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
   vi.spyOn(api, "gardenStars").mockResolvedValue({ ok: false, status: 500, error: null });

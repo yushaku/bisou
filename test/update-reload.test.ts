@@ -6,7 +6,7 @@ function worker(controller: unknown) {
   return Object.assign(target, { controller }) as unknown as ServiceWorkerContainer;
 }
 
-it("AC8 R8: reloads at once, without asking, when a new version takes control", () => {
+it("pwa AC8 R8: reloads at once, without asking, when a new version takes control", () => {
   const sw = worker({});
   const reload = vi.fn();
   reloadOnNewVersion(sw, reload);
@@ -14,7 +14,7 @@ it("AC8 R8: reloads at once, without asking, when a new version takes control", 
   expect(reload).toHaveBeenCalledOnce();
 });
 
-it("AC8 R8: reloads only once however many takeovers fire", () => {
+it("pwa AC8 R8: reloads only once however many takeovers fire", () => {
   const sw = worker({});
   const reload = vi.fn();
   reloadOnNewVersion(sw, reload);
@@ -23,7 +23,7 @@ it("AC8 R8: reloads only once however many takeovers fire", () => {
   expect(reload).toHaveBeenCalledOnce();
 });
 
-it("AC8 R8: the first install, with no previous controller, does not reload", () => {
+it("pwa AC8 R8: the first install, with no previous controller, does not reload", () => {
   const sw = worker(null);
   const reload = vi.fn();
   reloadOnNewVersion(sw, reload);

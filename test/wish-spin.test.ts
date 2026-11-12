@@ -41,7 +41,7 @@ describe("secret spins and claims", () => {
     expect(await (await spin(a, 5_000_000_000)).json()).toEqual({ wish: null });
   });
 
-  it("AC3, AC6 (R7-R9, R12): only eligible partner wishes and only the landed fields reach the spinner", async () => {
+  it("wishes AC3, AC6 (R7-R9, R12): only eligible partner wishes and only the landed fields reach the spinner", async () => {
     const { a, b } = await paired();
     const photoId = await upload(b);
     const scarf = await create(b, { photoId });
@@ -58,7 +58,7 @@ describe("secret spins and claims", () => {
     expect(image.headers.get("Cache-Control")).toBe("private, max-age=86400");
   });
 
-  it("AC4 (R10): nothing fits and an empty jar return identical bodies", async () => {
+  it("wishes AC4 (R10): nothing fits and an empty jar return identical bodies", async () => {
     const { a, b } = await paired();
     const empty = await (await spin(a)).text();
     await create(b);
@@ -66,7 +66,7 @@ describe("secret spins and claims", () => {
     expect(JSON.parse(empty)).toEqual({ wish: null });
   });
 
-  it("AC5 (R11): rolling 24 hour limit counts empty spins and expires at the exact cutoff", async () => {
+  it("wishes AC5 (R11): rolling 24 hour limit counts empty spins and expires at the exact cutoff", async () => {
     const { a } = await paired();
     const start = Date.now();
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -81,7 +81,7 @@ describe("secret spins and claims", () => {
     expect((await spin(a)).status).toBe(200);
   });
 
-  it("AC7, AC8 (R13-R16): one persistent claim, live edits, release and re-spin", async () => {
+  it("wishes AC7, AC8 (R13-R16): one persistent claim, live edits, release and re-spin", async () => {
     const { a, b } = await paired();
     const wish = await create(b);
     const first = await claim(a, wish.id);
@@ -99,7 +99,7 @@ describe("secret spins and claims", () => {
     expect((await (await spin(a)).json<{ wish: SpinWish }>()).wish.id).toBe(wish.id);
   });
 
-  it("AC9 (R16, R23): GET preserves notices until an owned notice is acknowledged by POST", async () => {
+  it("wishes AC9 (R16, R23): GET preserves notices until an owned notice is acknowledged by POST", async () => {
     const { a, b } = await paired();
     const wish = await create(b);
     await claim(a, wish.id);
@@ -118,7 +118,7 @@ describe("secret spins and claims", () => {
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM wish_claims").first("n")).toBe(0);
   });
 
-  it("AC10 (R17, R24): owner body and headers never change with spin, claim or release", async () => {
+  it("wishes AC10 (R17, R24): owner body and headers never change with spin, claim or release", async () => {
     const { a, b } = await paired();
     const wish = await create(b);
     const before = await call("GET", "/api/wishes", { cookie: b.cookie });
@@ -136,7 +136,7 @@ describe("secret spins and claims", () => {
     expect((await env.DB.prepare("PRAGMA table_info(wish_spins)").all<{ name: string }>()).results.map((c) => c.name)).toEqual(["id", "user_id", "created_at"]);
   });
 
-  it("AC1, AC7 (R1, R12, R13): only the partner can claim an open wish", async () => {
+  it("wishes AC1, AC7 (R1, R12, R13): only the partner can claim an open wish", async () => {
     const { a, b } = await paired();
     const outsider = await user("Outside");
     const wish = await create(b);
@@ -148,7 +148,7 @@ describe("secret spins and claims", () => {
     expect(await claims(a)).toHaveLength(1);
   });
 
-  it("R16, R22: acknowledging a notice cannot remove an open or received claim", async () => {
+  it("wishes R16, R22: acknowledging a notice cannot remove an open or received claim", async () => {
     const { a, b } = await paired();
     const wish = await create(b);
     const { claim: mine } = await (await claim(a, wish.id)).json<{ claim: Claim }>();
@@ -160,7 +160,7 @@ describe("secret spins and claims", () => {
     expect(await claims(a)).toEqual([expect.objectContaining({ id: mine.id, status: "received" })]);
   });
 
-  it("AC3 (R7): refuses invalid budgets without consuming a spin", async () => {
+  it("wishes AC3 (R7): refuses invalid budgets without consuming a spin", async () => {
     const { a } = await paired();
     for (const budget of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
       const res = await spin(a, budget);
@@ -172,14 +172,14 @@ describe("secret spins and claims", () => {
 });
 
 
-it("AC3 (R9): enumerates exact 1:2:2 weights without sampling", () => {
+it("wishes AC3 (R9): enumerates exact 1:2:2 weights without sampling", () => {
   const rows = [{ title: "Candle", priority: 1 }, { title: "Scarf", priority: 2 }, { title: "Mug", priority: 2 }];
   expect(Array.from({ length: 5 }, (_, r) => pickWeighted(rows, (total) => { expect(total).toBe(5); return r; })?.title))
     .toEqual(["Candle", "Scarf", "Scarf", "Mug", "Mug"]);
   expect(pickWeighted([], () => { throw new Error("no random draw for an empty jar"); })).toBeNull();
 });
 
-it("AC3 (R9): rejects the biased tail of random integers", () => {
+it("wishes AC3 (R9): rejects the biased tail of random integers", () => {
   const getRandom = vi.spyOn(crypto, "getRandomValues");
   getRandom.mockImplementationOnce((array) => { (array as Uint32Array)[0] = 0xffffffff; return array; });
   getRandom.mockImplementationOnce((array) => { (array as Uint32Array)[0] = 7; return array; });
@@ -188,7 +188,7 @@ it("AC3 (R9): rejects the biased tail of random integers", () => {
 });
 
 
-it("AC5, AC7 (R11, R13): simultaneous requests cannot exceed the spin quota or duplicate a claim", async () => {
+it("wishes AC5, AC7 (R11, R13): simultaneous requests cannot exceed the spin quota or duplicate a claim", async () => {
   const { a, b } = await paired();
   const wish = await create(b);
   const claimed = await Promise.all([claim(a, wish.id), claim(a, wish.id)]);
