@@ -20,7 +20,7 @@ export function CardBoxRows({ boxes, from }: { boxes: CardBoxSummary[]; from: st
       <span className="relative h-1/2 shrink-0">
         {(box.price != null || box.open) && <Badge variant="secondary" className="absolute top-2 left-2 bg-card text-card-foreground tabular-nums">{box.price != null ? formatBoxPrice(box.price, locale) : t("cardBox.free")}</Badge>}
       </span>
-      <span className="flex h-1/2 flex-col gap-2 bg-card/80 p-3 backdrop-blur-md">
+      <span className="liquid-glass flex h-1/2 flex-col gap-2 rounded-t-xl border-x-0 border-b-0 p-3">
         <span className="line-clamp-2 font-heading text-base leading-snug">{box.name[locale]}</span>
         <span className="line-clamp-2 min-h-10 text-sm text-card-foreground">{box.description[locale]}</span>
       </span>
