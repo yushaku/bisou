@@ -1,5 +1,9 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "cardBox.buy": "Mua hộp",
+  "cardBox.gift": "Bạn tính mua thật à? Đùa thôi, cái này tôi tặng bạn.",
+  "cardBox.getGift": "Nhận hộp",
+  "cardBox.unlockError": "Chưa nhận được hộp. Thử lại nhé.",
   "cardBox.title": "Deep talk",
   "cardBox.seeAll": "Xem tất cả",
   "cardBox.adult": "18+",

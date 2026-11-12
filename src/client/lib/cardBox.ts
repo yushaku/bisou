@@ -20,6 +20,7 @@ export function randomCard(detail: CardBoxDetail, play: Play, seen: string[], ra
   const current = play.stack[play.index] ?? validSeen.at(-1);
   let available = ids.filter(id => !validSeen.includes(id) && id !== current);
   const startedOver = available.length === 0;
+  if (startedOver && !detail.box.open) return { play: { ...play, startedOver: true }, seen: validSeen };
   if (startedOver) { validSeen = []; available = ids.filter(id => id !== current); }
   const id = available[Math.floor(random() * available.length)] ?? ids[0]!;
   return { play: { stack: [...play.stack.slice(0, play.index + 1), id], index: play.index + 1, startedOver }, seen: [...validSeen, id] };

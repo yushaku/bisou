@@ -48,6 +48,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
 }
 
 export const api = {
+  unlockBox: (id: string) => call<CardBoxDetail>("POST", `/api/boxes/${encodeURIComponent(id)}/unlock`),
   boxes: () => call<{ boxes: CardBoxSummary[] }>("GET", "/api/boxes"),
   box: (id: string) => call<CardBoxDetail>("GET", `/api/boxes/${encodeURIComponent(id)}`),
   gardenLevels: (body: LevelAction) => call<{ levels: GardenLevels }>("POST", "/api/garden/levels", body),

@@ -18,7 +18,7 @@ export function CardBoxRows({ boxes, from }: { boxes: CardBoxSummary[]; from: st
     <Link id={`card-box-${box.id}`} href={`/boxes/${box.id}`} state={{ from }} onClick={() => { if (memory && from === "/") { memory.scroll.set("home", window.scrollY); memory.returnFocus = `card-box-${box.id}`; } }} className="relative isolate flex h-64 min-h-11 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground focus-visible:outline-2 focus-visible:outline-ring">
       <img src={box.cover} alt="" width={800} height={1024} loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover" onError={event => { event.currentTarget.style.visibility = "hidden"; }} />
       <span className="relative h-1/2 shrink-0">
-        {(box.price != null || box.open) && <Badge variant="secondary" className="absolute top-2 left-2 bg-card text-card-foreground tabular-nums">{box.price != null ? formatBoxPrice(box.price, locale) : t("cardBox.free")}</Badge>}
+        {(box.price == null ? box.open : !box.open) && <Badge variant="secondary" className="absolute top-2 left-2 bg-card text-card-foreground tabular-nums">{box.price != null ? formatBoxPrice(box.price, locale) : t("cardBox.free")}</Badge>}
         {box.adult && <Badge variant="secondary" className="absolute top-2 right-2 bg-card text-card-foreground">{t("cardBox.adult")}</Badge>}
       </span>
       <span className="liquid-glass mt-auto flex shrink-0 flex-col gap-2 rounded-t-xl border-x-0 border-b-0 p-3">

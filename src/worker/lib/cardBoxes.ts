@@ -127,10 +127,10 @@ export const CARD_BOXES: Box[] = [
       "vi": "Cay cay một chút, chỉ dành cho hai đứa.",
       "en": "A little spicy, just for the two of you."
     },
-    "free": true,
+    "free": false,
     "adult": true,
     "cover": "/card-boxes/rau-ram.jpg",
-    "price": null,
+    "price": 49000,
     "cards": [
       {
         "id": "rr-01",
@@ -170,6 +170,7 @@ export const CARD_BOXES: Box[] = [
       },
       {
         "id": "rr-04",
+        "preview": true,
         "kind": "truthDare",
         "truth": {
           "vi": "Có kiểu chạm nào mỗi người rất thích mà chưa từng nói ra?",
@@ -206,6 +207,7 @@ export const CARD_BOXES: Box[] = [
       },
       {
         "id": "rr-07",
+        "preview": true,
         "kind": "truthDare",
         "truth": {
           "vi": "Ông bà bảo rau răm làm bớt \"nóng\". Theo mỗi người, hai đứa nên ăn thêm hay ăn bớt?",
@@ -218,6 +220,7 @@ export const CARD_BOXES: Box[] = [
       },
       {
         "id": "rr-08",
+        "preview": true,
         "kind": "truthDare",
         "truth": {
           "vi": "Người kia làm gì, dù rất nhỏ, mà mỗi người \"đổ\" ngay tại chỗ?",
@@ -635,10 +638,10 @@ export const CARD_BOXES: Box[] = [
     ]
   }
 ];
-function isOpen(box: Box): boolean { return box.free; }
-function summary(box: Box): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box), ...(box.adult ? { adult: box.adult } : {}), cover: box.cover, price: box.price }; }
-export function boxList(): CardBoxSummary[] { return [...CARD_BOXES].sort((a, b) => Number(isOpen(b)) - Number(isOpen(a))).map(summary); }
-export function boxDetail(boxId: string): CardBoxDetail | null {
+function isOpen(box: Box, unlocked: Set<string>): boolean { return box.free || unlocked.has(box.id); }
+function summary(box: Box, unlocked: Set<string>): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box, unlocked), ...(box.adult ? { adult: box.adult } : {}), cover: box.cover, price: box.price }; }
+export function boxList(unlocked = new Set<string>()): CardBoxSummary[] { return [...CARD_BOXES].sort((a, b) => Number(isOpen(b, unlocked)) - Number(isOpen(a, unlocked))).map(box => summary(box, unlocked)); }
+export function boxDetail(boxId: string, unlocked = new Set<string>()): CardBoxDetail | null {
   const box = CARD_BOXES.find(box => box.id === boxId);
-  return box ? { box: summary(box), cards: isOpen(box) ? box.cards : box.cards.filter(card => card.preview) } : null;
+  return box ? { box: summary(box, unlocked), cards: isOpen(box, unlocked) ? box.cards : box.cards.filter(card => card.preview) } : null;
 }
