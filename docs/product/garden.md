@@ -54,7 +54,7 @@ Answering and flipping
 - R13. Until both have answered, neither sees the other's answer content, choices or edit metadata; a boolean shows that the partner has answered and the unanswered partner sees "{partner} đã úp thẻ, tới lượt mình" with a prominent "Viết" action. (revised 10 Nov 2026)
 - R14. A partner who has answered sees their own card face down and "Đợi {partner} nhé"; real display names appear before and after the flip, falling back to "Mình" and "Người ấy" only when missing, without times or durations. (revised 10 Nov 2026)
 - R15. Once both have answered, each partner taps "Lật thẻ" once per card and flip day on their device; the flip and daily watering scene play once, then both answers stay face up across reloads, Home, Garden and deck history, own answer first with author names and no answer-order indicator. (revised 10 Nov 2026)
-- R16. Answers get no reply, reaction, rating or comment; the couple talks about them in person.
+- R16. Answers get no reply, reaction, rating or comment; the couple talks about them in person, and a star marks a whole flipped card, never one answer (R66). (revised 12 Nov 2026)
 - R17. No card asks a partner to guess the other's answer.
 - R18. Before the flip, the author may change or delete their answer at any time; a deleted answer puts the card back to unanswered for them, and with no answer left it may be swapped again.
 - R19. After the flip, the author may change their answer with an "đã sửa" / "edited" marker or confirm deletion leaving "Câu trả lời này đã được xoá"; they may write a replacement on that same card, marked edited, while the partner's answer and the face-up state stay visible without new growth, freshness or notifications. (revised 10 Nov 2026)
@@ -102,12 +102,17 @@ An and Bình, together since 12 February 2023. Their garden opens on 9 November 
 3. 21:40: Bình answers; An gets the same notification. Each flips and reads both answers. Tiền bạc grows to size 2.
 4. 22:15: An taps Tiền bạc and answers money-02 as extra play; Bình answers at 22:50; it flips, nothing is sent, Tiền bạc stays size 2.
 5. 10 November: today's card is memories-01; Bình swaps it before anyone answers and both get dreams-01. An answers it and Bình's phone gets "Người ấy vừa trả lời thẻ hôm nay"; Bình does not answer.
-6. 11 November: the day's new card is family-01; dreams-01 with An's answer stays in Ước mơ's deck. At 23:20 Bình opens Ước mơ and answers dreams-01; it flips and An gets "Người ấy vừa trả lời thẻ hôm nay" at once. Ước mơ grew on 11 November.
+6. 11 November: the day's new card is families-01; dreams-01 with An's answer stays in Ước mơ's deck. At 23:20 Bình opens Ước mơ and answers dreams-01; it flips and An gets "Người ấy vừa trả lời thẻ hôm nay" at once. Ước mơ grew on 11 November.
 7. Nobody plays from 12 November: the garden turns yellow on 14 November and droops on 25 November. On 26 November they flip today's card and the whole garden is fresh again; no plant lost a size.
+8. Thursday 12 November, 20:00: An opens Tiền bạc and stars money-01. Both Homes show it in the starred cards with An's and Bình's answers; Bình's phone gets nothing, and the garden still turns yellow on 14 November.
+9. Friday 13 November: Bình stars dreams-01 at 21:00 and money-02 at 21:05; both Homes show money-02, dreams-01, money-01.
+10. Saturday 14 November: Bình edits the money-01 answer and An deletes the dreams-01 answer; Home shows Bình's new text with "đã sửa", and "Câu trả lời này đã được xoá" in place of An's dreams-01 answer next to Bình's.
+11. Sunday 15 November: Bình unstars money-01, which An starred; both Homes show money-02 and dreams-01.
+12. Thursday 26 November: today's card is families-01; after they flip it, An stars it, and Home shows it once, as today's card with its star. Friday 27 November: families-01 heads the starred cards; An stars money-01 again, and Home shows money-01, families-01, money-02 with "Xem tất cả", which lists those then dreams-01.
 
 ## Main flows
 
-Answer today's card, wait face down, flip and read; swap today's card; open a plant and play extra; change or delete one's own answer. Anything breaking a rule is refused with a reason, saving nothing.
+Answer today's card, wait face down, flip and read; swap today's card; open a plant and play extra; change or delete one's own answer; star or unstar a flipped card. Anything breaking a rule is refused with a reason, saving nothing.
 
 ## Acceptance criteria
 
@@ -120,7 +125,7 @@ Answer today's card, wait face down, flip and read; swap today's card; open a pl
 - AC7 (R12). Given An saves an empty answer or one of 1001 characters, then it is refused; 1000 characters save.
 - AC8 (R13, R14, R31). Given An answered and Bình has not, when Bình opens the card, then Bình sees An's name and answered state with "Viết" but no answer text, choice or edit metadata; An sees a face-down card and "Đợi Bình nhé". (revised 10 Nov 2026)
 - AC9 (R15, R27). Given both answered, when a partner first flips on their device, then both named answers appear and daily watering plays once; after reload or visiting Garden or history, the card stays face up with no flip prompt or replay. (revised 10 Nov 2026)
-- AC10 (R16, R17). Given a flipped card, then neither can reply, react, rate or comment on an answer, and no card asks to guess the other's answer.
+- AC10 (R16, R17, R66). Given a flipped card, then neither can reply, react, rate, comment on or star one answer, and no card asks to guess the other's answer; a star applies only to the whole card. (revised 12 Nov 2026)
 - AC11 (R22, R24). Given step 4, then Tiền bạc stays size 2, nothing is sent and freshness is unchanged; when they flip money-03 on 10 November, Tiền bạc grows to size 3.
 - AC12 (R7). Given step 5 (An answered dreams-01, Bình did not), when 11 November starts, then a new daily card is drawn, and dreams-01 stays in Ước mơ's deck. When Bình opens Ước mơ and answers dreams-01, it flips.
 - AC13 (R32, R24). Given step 6, when Bình answers at 23:20, An gets the notification at once, as at any hour; Ước mơ grew on 11 November.
@@ -146,13 +151,15 @@ Answer today's card, wait face down, flip and read; swap today's card; open a pl
 - **Swap** (đổi thẻ khác) and **extra play** (chơi thêm).
 - **Size** (cỡ cây), from **sprout** (mầm) to **full tree** (cây lớn).
 - **Fresh** (tươi), **yellow** (ngả vàng), **drooping** (rũ lá).
+- **Star** (gắn sao) and **important question** (câu hỏi quan trọng): the couple's one shared mark on a flipped card, which puts it on Home with both answers.
 
 ## Out of scope
 
 - Life stage cards, a shared closing line, returning cards, a monthly self rating, a weekly good news card (Gate 1).
 - Writing or picking one's own questions, more decks, cards beyond the first 60 (they come later under the same rules).
 - Reminders to answer, notifications for extra play.
-- The garden's plants on Home; today's card and pending mutual stage choice live there. (revised 10 Nov 2026) Showing the garden to anyone else.
+- The garden's plants on Home; today's card, pending mutual stage choice and starred cards live there. (revised 12 Nov 2026) Showing the garden to anyone else.
+- Starring one answer, a personal star per partner, a note or reason on a star, sorting or grouping starred cards, sharing them outside the couple.
 
 ## Relationship-stage levels
 
@@ -261,3 +268,60 @@ Discussion confirmations, shared agreement text, abstract depth levels separate 
 ### Open questions
 
 None blocking the authorized build; the core decisions are confirmed by the PO and the defaults above were selected by the coordinator under the user's direction to proceed.
+
+## Starred cards
+
+### Purpose
+
+A few flipped cards hold answers the couple wants to read again, and finding them means opening six decks. Either partner can star such a card, and starred cards stay on Home with both answers. The running example steps 8 to 12 show these rules.
+
+### Confirmed PO decisions (12 Nov 2026)
+
+- One star per card, shared by the couple: either partner stars a card, both see it starred and on Home, either partner can unstar it (R65).
+- Every card both partners have answered and that is visible to both can be starred, decision questions included; a card with fewer than two answers cannot (R67).
+- Home shows both answers of a starred card, not only the question (R70, R72).
+- The star marks the question card, never an answer; R16 still forbids any reaction to an answer (R16, R66).
+
+### Business rules
+
+- R65. A card has at most one star, shared by the couple: when either partner stars it ("Gắn sao" / "Star"), both see it starred, and either partner may unstar it ("Bỏ sao" / "Unstar"), whoever starred it.
+- R66. The star marks the whole question card with both answers, never one answer, and carries no rating, reply or comment.
+- R67. Every card both partners have answered and that is visible to both under the rules that govern its kind can be starred: an ordinary card once flipped under R15, a decision question (R41) once both partners have submitted a response (R42) and the paired reveal under R57 shows both responses; a card in play and any card with fewer than two answers show no star. (revised 12 Nov 2026)
+- R68. A partner stars or unstars a card on the flipped today's card, on a flipped card in a deck's "Những thẻ đã gặp" ("Cards we have met"), which shows each card's star, on a card both partners have answered, decision questions included, in the relationship stage view's list of answered questions, and on a starred card on Home. (revised 12 Nov 2026)
+- R69. A starred card shows among a partner's starred cards only once that partner has flipped it, so a star never reveals answers before the partner's own flip.
+- R70. Home shows the important questions block ("Các câu hỏi quan trọng mà chúng ta đã thống nhất" / "Important questions we agreed on") with the 3 most recently starred cards, newest star first; with more than 3, "Xem tất cả" ("See all") opens every starred card in the same order; when the full list is empty while open, it shows "Chưa có câu hỏi quan trọng nào." / "No important questions yet.".
+- R71. The block sits under "Bài viết hôm nay" ("Today's posts") and above "Sắp tới" ("Coming up"); it is absent when no starred card shows, and a card that is still today's card shows only as today's card, joining the block from the next day in its star order.
+- R72. Each starred card shows its deck, its question in the reader's app language (R4) and both answers as written, own answer first with author names (R15); a decision answer that is a neutral or deferred choice (R43) shows that choice's label, as in the stage view, in place of text; a long answer is shortened on Home and tapping the card shows it in full.
+- R73. An answer changed after the flip shows its current text with "đã sửa" / "edited", a deleted one shows "Câu trả lời này đã được xoá" ("This answer was deleted") in its place, a neutral or deferred choice keeps showing its label in the full list as on Home, and the card keeps its star (R19).
+- R74. While both answers of a starred card are deleted, it leaves the block and the full list but keeps its star in its deck, and it comes back in its star order as soon as either author writes a replacement.
+- R75. Neither the star nor the block shows who starred a card or when; the order is the only trace of time.
+- R76. Starring and unstarring send no notification, add no plant growth, and leave freshness unchanged.
+- R77. Any number of cards can be starred; starring a starred card or unstarring an unstarred one changes nothing, when both partners act at once the later action counts, and a failed save changes nothing.
+- R78. Which cards are starred belongs to the couple like R37, is kept only to show starred cards while the couple exists, is not in a partner's own download (R38), and ends with the garden when a partner leaves (R39).
+
+### Acceptance criteria
+
+- AC37 (R65, R75, R76). Given step 8, when An stars money-01, then both see it starred and on Home, nothing names An or a time, Bình's phone gets nothing, and the garden still turns yellow on 14 November.
+- AC38 (R65, R68). Given step 11, when Bình unstars money-01, which An starred, then it leaves both Homes and shows no star in Tiền bạc's "Những thẻ đã gặp".
+- AC39 (R67). Given An answered dreams-01 on 10 November and Bình had not, then dreams-01 shows no star until it is flipped on 11 November; given both partners responded to a decision question such as L2-01, then it can be starred; given only one responded, then it shows no star.
+- AC40 (R69). Given Bình answers an extra card second and An has not flipped it yet, when Bình stars it, then An's Home does not show it until An flips it.
+- AC41 (R70). Given step 12 on 27 November, then Home shows money-01, families-01 and money-02 with "Xem tất cả", which lists those three then dreams-01.
+- AC42 (R71). Given step 12 on 26 November, then families-01 shows once on Home, as today's card with its star; given no starred card, then Home shows no block.
+- AC43 (R72). Given An's app is in English, then An reads "Growing up, how did your family talk about money?" with An's answer first and Bình's answer as Bình wrote it.
+- AC44 (R73). Given step 10, then both see Bình's new money-01 text with "đã sửa", and on dreams-01 "Câu trả lời này đã được xoá" in place of An's answer next to Bình's answer.
+- AC45 (R74). Given step 10, when Bình also deletes the dreams-01 answer, then dreams-01 leaves the block and the list but stays starred in Ước mơ; when An writes a new answer, it comes back in its star order with "đã sửa".
+- AC46 (R77). Given An and Bình star money-02 at the same moment, then it has one star; given An stars a card while Bình unstars it, then both see the later action's result.
+- AC47 (R78). Given export and leaving exist, when An downloads their data, then it holds no star; when Bình leaves, the stars end with the garden.
+- AC48 (R67, R68, R72). Given on Thursday 12 November 2026 An wrote 50:50 on L2-01 (rent split) and Bình chose the deferred option, when An stars L2-01 in the stage view's list, then it shows in "Các câu hỏi quan trọng mà chúng ta đã thống nhất" on both Homes with An's 50:50 and Bình's deferred choice shown by its label, not text.
+
+### Decided at Gate 1
+
+- PO: Home shows the 3 most recently starred cards and "Xem tất cả"; the block sits under "Bài viết hôm nay", above "Sắp tới", and is absent when empty (R70, R71).
+- PO: long answers are shortened on Home and tapping the card shows it in full (R72).
+- PO: edits show "đã sửa" / "edited", a deleted answer shows the deletion notice, and cards with both answers deleted leave the block but keep their star in their deck (R19, R73, R74).
+- PO: the star never shows who starred a card or when; the order is the only trace of time (R75).
+- PO: starring and unstarring send no notification, add no plant growth, and leave freshness unchanged (R76).
+- PO: starred cards belong to the couple, kept only while it exists, never in a partner's own download, and end with the garden when a partner leaves (R78).
+- PO: the question shows in the reader's app language, answers show as written (R4, R72).
+- PO (changed during Gate 2, 12 Nov 2026): stars apply to every card both partners have answered, decision questions included, and a neutral or deferred choice shows its label in place of text; a card with fewer than two answers cannot be starred (R67, R68, R72, R73).
+- PO: the labels are "Gắn sao" / "Bỏ sao" / "Các câu hỏi quan trọng mà chúng ta đã thống nhất" ("Star" / "Unstar" / "Important questions we agreed on") (12 Nov 2026).

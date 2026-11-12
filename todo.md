@@ -85,6 +85,7 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: a daily question card both answer privately and flip together; topic decks, each one a plant in one shared garden; relationship-status questions and mutually chosen progression. Rules: [Garden](docs/product/garden.md); the brainstorm below is historical.
   - [x] v1: daily card, 6 decks of 10 cards as plants, swap, deck play, notification on flip ([docs/product/garden.md](docs/product/garden.md)).
   - [x] Relationship statuses: mutual starting placement, 35 bilingual questions, private decision responses with neutral/deferred choices, and mutual target unlocks.
+  - [x] Starred cards: a shared star on flipped cards, the three newest on Home under "Các câu hỏi quan trọng mà chúng ta đã thống nhất" with "Xem tất cả" ([docs/product/garden.md](docs/product/garden.md)).
   - [ ] Later: shared closing lines, returning cards, further catalog additions.
 - [x] **Kind feedback**
   - Goal: say what bothers you, small or big, without blame.
