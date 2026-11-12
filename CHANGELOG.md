@@ -4,6 +4,8 @@
 
 ### Added
 
+- Box tiles show total card counts, and the player shows cards seen on this phone for full boxes and previews.
+
 - Kind notes can send now, automatically in eight hours, or at a chosen date and time. Scheduled notes can be edited, rescheduled or deleted before delivery; existing drafts stay private until the writer sends or schedules them.
 
 - A card box opened once plays offline; signing out removes box text and seen cards from the phone.

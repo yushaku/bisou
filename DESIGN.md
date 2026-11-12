@@ -31,7 +31,7 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 
 - Deep talk nằm ngay dưới Câu hỏi hôm nay trên Home, dùng cùng mẫu tiêu đề ngoài thẻ và “Xem tất cả”. Player hiển thị một thẻ với nhãn loại; hai lựa chọn và thang từ 1 đến 10 là nội dung tĩnh, không ghi câu trả lời.
 
-Deep talk dùng lưới sản phẩm hai cột, các thẻ cao bằng nhau; ảnh nền chữ nhật dọc phủ toàn thẻ, biểu tượng nằm trọn trong nửa trên. Tên thật và mô tả nằm trên bề mặt `.liquid-glass` chung sát đáy, cao theo nội dung, bo hai góc trên, có viền sáng và bóng mềm. Nhãn giá/Miễn phí nằm ở góc trên trái ảnh, dùng nền card đặc; không hiện nhãn xem thử. Ảnh lỗi thì giữ nền card.
+Deep talk dùng lưới sản phẩm hai cột, các thẻ cao bằng nhau; ảnh nền chữ nhật dọc phủ toàn thẻ, biểu tượng nằm trọn trong nửa trên. Tên hộp giữ một dòng; tổng số thẻ nằm trong panel kính, chữ nhỏ và nhẹ. Gần thẻ chơi có bộ đếm đã xem trên điện thoại này; hộp xem thử chỉ đếm thẻ xem thử. Bộ đếm không có aria-live, vùng thông báo vẫn nằm trên thẻ. Tên thật và mô tả nằm trên bề mặt `.liquid-glass` chung sát đáy, cao theo nội dung, bo hai góc trên, có viền sáng và bóng mềm. Nhãn giá/Miễn phí nằm ở góc trên trái ảnh, dùng nền card đặc; không hiện nhãn xem thử. Ảnh lỗi thì giữ nền card.
 Thẻ chơi có tỷ lệ 5:7, mặt màu hộp, cạnh chồng phía sau và tên hộp Lora nghiêng ở góc dưới; vuốt hoặc nút đổi thẻ cùng chuyển động, giảm chuyển động dùng mờ chéo.
 
 Thanh điều khiển hộp thẻ: Thẻ trước bên trái, nút biểu tượng rút ngẫu nhiên ở giữa (vùng chạm 44px), Thẻ tiếp là nút chính bên phải.
