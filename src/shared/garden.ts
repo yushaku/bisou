@@ -5,7 +5,7 @@ import { daysBetween } from "./days";
 export const GARDEN_ANSWER_MAX = 1000;
 export const LEVEL_IDS = ["acquainted", "in_love", "living_together", "married", "with_children"] as const;
 export type RelationshipLevel = typeof LEVEL_IDS[number];
-export type LevelKind = "placement" | "target" | "revisit";
+export type LevelKind = "placement" | "target";
 export type LevelAction = { action: "propose"; kind: LevelKind; levelId: RelationshipLevel; revision: number }
   | { action: "accept" | "decline" | "withdraw"; revision: number };
 export interface GardenLevels {

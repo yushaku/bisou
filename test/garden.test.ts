@@ -460,10 +460,24 @@ it("garden-stages R45 R47 R51 R52 AC30 AC31: legacy default and mutual stage cha
   expect(state.today!.cardId).toBe(before.today!.cardId);
   expect(state.plants.find((p) => p.deckId === "money")!.stage).toBe(1);
   expect(state.levels.decisions.every((d) => !d.complete)).toBe(true);
-  expect((await act(a, { action: "propose", kind: "revisit", levelId: "in_love", revision: 2 })).status).toBe(200);
-  expect((await act(b, { action: "accept", revision: 3 })).status).toBe(200);
-  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "in_love", furthestLevelId: "married", initialLevelId: "acquainted" });
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "married", furthestLevelId: "married", initialLevelId: "acquainted" });
   expect((await answer(b, before.today!.cardId)).status).toBe(201);
+});
+it("garden-stages R47: a stage choice only opens a later stage, so a revisit proposal is refused and changes nothing", async () => {
+  const { a, b } = await paired(); await place(a, b, "married");
+  const before = (await garden(a)).levels;
+  const res = await levelAction(a, { action: "propose", kind: "revisit", levelId: "acquainted", revision: before.revision });
+  expect(res.status).toBe(400); expect(await res.json()).toEqual({ error: "invalid_body" });
+  expect((await garden(b)).levels).toEqual(before);
+});
+it("garden-stages R47 AC33: a stored revisit proposal can no longer be accepted, only declined or withdrawn", async () => {
+  const { a, b, couple } = await paired(); await place(a, b, "married");
+  const { revision } = (await garden(a)).levels;
+  await env.DB.prepare("UPDATE garden_levels SET proposal_kind = 'revisit', proposal_level = 0, proposer_id = ? WHERE couple_id = ?").bind(a.id, couple.id).run();
+  expect((await levelAction(b, { action: "accept", revision })).status).toBe(409);
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "married" });
+  expect((await levelAction(a, { action: "withdraw", revision })).status).toBe(200);
+  expect((await garden(a)).levels).toMatchObject({ selectedLevelId: "married", proposal: null });
 });
 it("garden R1, garden-stages R47 AC33: only current paired members mutate levels; pending proposals require decline before counterproposal", async () => {
   const { a, b, couple } = await paired(); const outsider = await user("Outside");
@@ -590,14 +604,12 @@ it("garden-stages R48 R59 AC27 AC33: concurrent responses after acceptance canno
 });
 it("garden-stages R50 R51 R54 AC29 AC30: earlier decisions stay usable and a fresh mutual choice opens beyond the furthest stage", async () => {
   const { a, b } = await paired(); await place(a, b, "married");
-  await levelAction(a, { action: "propose", kind: "revisit", levelId: "acquainted", revision: 2 });
-  await levelAction(b, { action: "accept", revision: 3 });
   for (const id of gateIds(0)) { await answer(a, id); await answer(b, id); }
-  const state = await garden(a); expect(state.levels.selectedLevelId).toBe("acquainted");
+  const state = await garden(a); expect(state.levels).toMatchObject({ selectedLevelId: "married", furthestLevelId: "married" });
   expect((await answer(a, state.today!.cardId)).status).toBe(201);
   expect((await answer(b, state.today!.cardId)).status).toBe(201);
-  await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 4 });
-  await levelAction(b, { action: "accept", revision: 5 });
+  await levelAction(a, { action: "propose", kind: "target", levelId: "with_children", revision: 2 });
+  await levelAction(b, { action: "accept", revision: 3 });
   expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
   for (const id of gateIds(3)) { await answer(a, id); await answer(b, id); }
   expect((await garden(a)).levels.furthestLevelId).toBe("with_children");
