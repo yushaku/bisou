@@ -90,10 +90,10 @@ it("ComposeSheet keeps a valid draft but refuses submission offline", async () =
   await Promise.resolve();
   expect(save).not.toHaveBeenCalled();
   expect(nodes.find((node) => node.props.children === "compose.save")!.props.disabled).toBe(true);
-  expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
+  expect(nodes.some((node) => node.props.children === "offline.save")).toBe(false);
 });
 
-it("AC11 R11: a new journal entry is not sent offline and its save button is disabled with the offline note", async () => {
+it("AC11 R11: a new journal entry is not sent offline and its save button stays disabled", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const create = vi.spyOn(api, "createEntry");
   const sheet = ComposeSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", onSaved: vi.fn(), onSignedOut: vi.fn() });
@@ -104,7 +104,7 @@ it("AC11 R11: a new journal entry is not sent offline and its save button is dis
   await Promise.resolve();
   expect(create).not.toHaveBeenCalled();
   expect(nodes.find((node) => node.props.children === "compose.save")!.props.disabled).toBe(true);
-  expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
+  expect(nodes.some((node) => node.props.children === "offline.save")).toBe(false);
 });
 
 it("AC11 R11: a new wish is not sent offline and its save button is disabled with the offline note", async () => {

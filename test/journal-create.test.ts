@@ -2,9 +2,9 @@ import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { Journal } from "../src/client/screens/Journal";
 import { NotesSection } from "../src/client/components/bisou/NotesSection";
-import { NoteSheet } from "../src/client/components/bisou/NoteSheet";
+import { NoteForm, NoteSheet } from "../src/client/components/bisou/NoteSheet";
 import { BottomBar } from "../src/client/components/bisou/AppShell";
-import { DrawerContent } from "../src/client/components/ui/drawer";
+import { DrawerContent, DrawerHeader, DrawerTitle } from "../src/client/components/ui/drawer";
 import { vi as vietnamese } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
 import { JournalComposeSheet } from "../src/client/components/bisou/JournalComposeSheet";
@@ -38,7 +38,7 @@ vi.mock("../src/client/lib/useTabNavigation", async (original) => ({ ...await or
 
 vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
 
-type Props = { initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
+type Props = { className?: string; id?: string; "aria-describedby"?: string; initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -182,4 +182,18 @@ it("editing an entry and receiving a wish keep the single-form sheet", () => {
   hooks.index = 0;
   const wish = { id: "w", title: "A book", price: null, link: null, priority: 2 as const, photoId: null, status: "open" as const, receivedOn: null, note: null, createdAt: 1, updatedAt: 1 };
   expect(nodes(ComposeSheet({ ...props, receiving: wish })).some(n => n.type === Tabs)).toBe(false);
+});
+
+it.each(["vi", "en"])("shared composer forms keep only screen reader titles in %s", (locale) => {
+  hooks.locale = locale;
+  const props = { partnerName: "Linh", onSaved: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
+  const journal = nodes(ComposeForm(props));
+  expect(journal.find(n => n.type === DrawerTitle)?.props).toMatchObject({ className: "sr-only", children: (locale === "vi" ? vietnamese : english)["compose.new"] });
+  expect(journal.some(n => n.type === DrawerHeader)).toBe(false);
+  expect(journal.some(n => n.props.id === "test-hint" || n.props.id === "test-counter")).toBe(false);
+  expect(journal.some(n => n.props["aria-describedby"]?.includes("test-hint") || n.props["aria-describedby"]?.includes("test-counter"))).toBe(false);
+  hooks.values = []; hooks.index = 0;
+  const note = nodes(NoteForm({ ...props, onRefresh: vi.fn() }));
+  expect(note.find(n => n.type === DrawerTitle)?.props.className).toBe("sr-only");
+  expect(note.some(n => n.type === DrawerHeader)).toBe(false);
 });

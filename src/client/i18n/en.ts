@@ -525,7 +525,6 @@ export const en: Messages = {
   "compose.preparing": "Preparing photos...",
   "compose.save": "Save to our journal",
   "compose.saving": "Saving...",
-  "compose.shared": "Once saved, {partner} can see it too.",
   "compose.emptyHint": "Add some words or a photo to save.",
   "compose.tooLong": "Entries can contain up to 2000 characters.",
   "compose.dateError": "Choose a date from 01/01/1900 to {max}.",

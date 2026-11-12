@@ -1,20 +1,16 @@
-import { X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
-import { latestDay } from "../../../shared/days";
 import { ENTRY_PHOTOS_MAX, ENTRY_TEXT_MAX, entryText } from "../../../shared/journal";
 import { receivedText } from "../../../shared/wishes";
 import type { JournalEntry, Wish } from "../../../shared/types";
 import { api } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
-import { useI18n, type MessageKey } from "@/i18n";
-import { defaultDay, saveBlock, saveErrorKey, textLength, type SaveBlock } from "@/lib/compose";
-import { formatDay } from "@/lib/format";
+import { useI18n } from "@/i18n";
+import { defaultDay, saveBlock, saveErrorKey, textLength } from "@/lib/compose";
 import { focusCreateButton } from "@/lib/useTabNavigation";
 import { useOnline } from "@/lib/useOnline";
-import { cn } from "@/lib/utils";
 import { DayField } from "./DayField";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
@@ -33,15 +29,6 @@ interface ComposeSheetProps {
 
 /* Changed: closing asks first. Saving: closing waits. */
 export type Lock = "dirty" | "saving" | null;
-
-const COUNTER_FROM = 1800;
-
-const HINTS: Record<SaveBlock, MessageKey> = {
-  tooLong: "compose.tooLong",
-  date: "compose.dateError",
-  photos: "compose.waitPhotos",
-  empty: "compose.emptyHint",
-};
 
 /*
  * Bottom sheet to write an entry. Nothing is kept after it closes (no drafts, R9), so a
@@ -97,12 +84,11 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 }
 
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
-export function ComposeForm({ partnerName, entry, receiving, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
+export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const ids = useId();
   const [now] = useState(Date.now);
-  const max = latestDay(now);
   const [date, setDate] = useState(() => entry?.date ?? defaultDay(now));
   const [text, setText] = useState(entry?.text ?? "");
   const [dirty, setDirty] = useState(false);
@@ -119,7 +105,6 @@ export function ComposeForm({ partnerName, entry, receiving, onSaved, onSignedOu
   const journalText = receiving ? receivedText(locale, receiving.title, text) : text;
   const length = textLength(journalText);
   const block = preparing ? "photos" : saveBlock({ date, text: journalText, photos: queue.items }, now);
-  const hint = !online ? t("offline.save") : block ? t(HINTS[block], { max: formatDay(max, locale, "numeric") }) : t("compose.shared", { partner: partnerName });
 
   const change = () => {
     setDirty(true);
@@ -149,12 +134,7 @@ export function ComposeForm({ partnerName, entry, receiving, onSaved, onSignedOu
   return (
     <>
       <form onSubmit={(e) => { e.preventDefault(); if (!online) return; if (receiving) setConfirmReceiving(true); else void save(); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
-        <DrawerHeader className="flex-row items-center gap-2 px-5 pt-2 pb-3 text-left">
-          <DrawerTitle className="min-w-0 flex-1 font-heading text-2xl">{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
-          <Button type="button" variant="ghost" size="icon" aria-label={t("common.close")} disabled={saving} onClick={onClose}>
-            <X aria-hidden="true" />
-          </Button>
-        </DrawerHeader>
+        <DrawerTitle className="sr-only">{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
 
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 pb-4">
           {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
@@ -170,19 +150,12 @@ export function ComposeForm({ partnerName, entry, receiving, onSaved, onSignedOu
               value={text}
               placeholder={t("compose.placeholder")}
               aria-invalid={length > ENTRY_TEXT_MAX}
-              aria-describedby={`${ids}-counter`}
               className="min-h-32"
               onChange={(e) => {
                 setText(e.target.value);
                 change();
               }}
             />
-            <p
-              id={`${ids}-counter`}
-              className={cn("min-h-5 text-right text-sm tabular-nums", length > ENTRY_TEXT_MAX ? "text-destructive" : "text-muted-foreground")}
-            >
-              {length >= COUNTER_FROM ? t("compose.count", { count: length, max: ENTRY_TEXT_MAX }) : ""}
-            </p>
           </div>
 
           {receiving && <p className="rounded-lg bg-muted p-3 text-sm whitespace-pre-line">{journalText}</p>}
@@ -194,10 +167,7 @@ export function ComposeForm({ partnerName, entry, receiving, onSaved, onSignedOu
         </div>
 
         <div className="flex flex-col gap-2 border-t bg-popover px-5 pt-3 pb-5">
-          <p id={`${ids}-hint`} aria-live="polite" className="text-center text-sm text-muted-foreground">
-            {hint}
-          </p>
-          <Button type="submit" size="lg" loading={saving} disabled={!online || !!block} aria-describedby={`${ids}-hint`}>
+          <Button type="submit" size="lg" loading={saving} disabled={!online || !!block}>
             {saving ? t("compose.saving") : t(receiving ? "received.action" : "compose.save")}
           </Button>
         </div>

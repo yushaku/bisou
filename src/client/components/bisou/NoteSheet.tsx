@@ -9,7 +9,7 @@ import { noteBlock } from "@/lib/notes";
 import { saveErrorKey } from "@/lib/compose";
 import { formatTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { NoteFields } from "./NoteFields";
 interface Props { fromMenu?: boolean; open: boolean; onOpenChange: (open: boolean) => void; partnerName: string; entry?: WrittenNote; onSaved: (note: WrittenNote) => void; onRefresh: () => void; onSignedOut: () => void }
@@ -52,7 +52,7 @@ export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, 
     else setError(t("notes.deleteError"));
   }
   return <form onSubmit={(e) => { e.preventDefault(); void save(!!ready); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
-    <DrawerHeader><DrawerTitle>{t(entry ? "notes.edit" : "notes.write", { partner: partnerName })}</DrawerTitle></DrawerHeader>
+    <DrawerTitle className="sr-only">{t(entry ? "notes.edit" : "notes.write", { partner: partnerName })}</DrawerTitle>
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-3">
       {ready && <p>{t("notes.reread")}</p>}
       <NoteFields value={value} disabled={saving} onChange={(next) => { setValue(next); setDirty(true); if (!locked) setError(null); }} />

@@ -525,7 +525,6 @@ export const vi = {
   "compose.preparing": "Đang chuẩn bị ảnh...",
   "compose.save": "Lưu vào nhật ký",
   "compose.saving": "Đang lưu...",
-  "compose.shared": "Lưu xong, {partner} cũng thấy.",
   "compose.emptyHint": "Thêm vài dòng hoặc một tấm ảnh để lưu.",
   "compose.tooLong": "Bài viết chỉ được tối đa 2000 ký tự.",
   "compose.dateError": "Chọn ngày từ 01/01/1900 đến {max}.",
