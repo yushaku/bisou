@@ -9,6 +9,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-box-peach: var(--box-peach);
+  --color-box-peach-foreground: var(--box-peach-foreground);
+  --color-box-blue: var(--box-blue);
+  --color-box-blue-foreground: var(--box-blue-foreground);
+  --font-serif: "Lora Variable", ui-serif, Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -723,4 +728,72 @@ body .tst-viewport {
   --tst-warning: var(--warning-foreground);
   --tst-info: var(--info-foreground);
   --tst-error: var(--destructive);
+}
+
+.card-box-colour {
+  --box-paper: var(--box-peach);
+  --box-ink: var(--box-peach-foreground);
+}
+.card-box-colour[data-box="deep-connection"] {
+  --box-paper: var(--box-blue);
+  --box-ink: var(--box-blue-foreground);
+}
+.card-box-face {
+  background: var(--box-paper);
+  color: var(--box-ink);
+  border: 1px solid color-mix(in oklab, var(--box-ink) 18%, var(--box-paper));
+  box-shadow: 0 var(--spacing) calc(var(--spacing) * 4) color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+.card-box-deck { position: relative; isolation: isolate; margin: calc(var(--spacing) * 2); }
+.card-box-deck::before, .card-box-deck::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--radius-2xl);
+  background: color-mix(in oklab, var(--box-paper) 90%, var(--box-ink));
+  border: 1px solid color-mix(in oklab, var(--box-ink) 18%, var(--box-paper));
+  transform: translateY(calc(var(--spacing) * 2)) rotate(2deg) scale(.98);
+}
+.card-box-deck::before { transform: translateY(calc(var(--spacing) * 3)) rotate(-2deg) scale(.96); }
+.card-box-leaving { position: absolute; inset: 0; z-index: 2; pointer-events: none; animation: box-leave 240ms var(--ease) both; }
+.card-box-entering { animation: box-enter 280ms var(--ease) both; }
+.card-box-back-preview { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.card-box-returning { position: relative; z-index: 3; animation: box-return 280ms var(--ease) both; }
+.card-box-leaving-previous { z-index: 1; animation: box-sink 280ms var(--ease) both; }
+.card-box-leaving-random { animation: box-fade-out 280ms var(--ease) both; }
+.card-box-shuffling { animation: box-shuffle 320ms var(--ease) both; }
+.card-box-shuffle-deck::before { animation: box-fan-left 320ms var(--ease) both; }
+.card-box-shuffle-deck::after { animation: box-fan-right 320ms var(--ease) both; }
+@keyframes box-return {
+  from { transform: translateX(calc(-100% + var(--return-x))) rotate(calc(-14deg + var(--return-rotation))); }
+  to { transform: translateX(0) rotate(0); }
+}
+@keyframes box-sink {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: translateY(calc(var(--spacing) * 3)) scale(.94); opacity: 0; }
+}
+@keyframes box-shuffle {
+  50% { transform: translateX(calc(var(--spacing) * 3)) rotate(5deg); }
+}
+@keyframes box-fan-left {
+  50% { transform: translateX(calc(var(--spacing) * -3)) translateY(calc(var(--spacing) * 3)) rotate(-7deg) scale(.96); }
+}
+@keyframes box-fan-right {
+  50% { transform: translateX(calc(var(--spacing) * 2)) translateY(calc(var(--spacing) * 2)) rotate(7deg) scale(.98); }
+}
+@keyframes box-leave {
+  from { transform: translateX(var(--drag-x)) rotate(var(--drag-rotation)); }
+  to { transform: translateX(var(--fly-x)) rotate(var(--fly-rotation)); opacity: 0; }
+}
+@keyframes box-enter {
+  from { transform: translateY(calc(var(--spacing) * 3)) scale(.94); opacity: .4; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes box-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes box-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .card-box-shuffling, .card-box-shuffle-deck::before, .card-box-shuffle-deck::after { animation: box-fade-out 100ms linear both !important; }
+  .card-box-leaving { animation: box-fade-out 100ms linear both !important; }
+  .card-box-returning, .card-box-entering { animation: box-fade-in 100ms linear both !important; }
 }

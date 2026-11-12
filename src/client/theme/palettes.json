@@ -31,7 +31,11 @@
       "warning": "#f0d7a0",
       "warning-foreground": "#634617",
       "info": "#d5e3e6",
-      "info-foreground": "#344e59"
+      "info-foreground": "#344e59",
+      "box-peach": "#f1c8b5",
+      "box-peach-foreground": "#633c30",
+      "box-blue": "#bdd9e8",
+      "box-blue-foreground": "#244b63"
     }
   },
   "cocoa": {
@@ -66,7 +70,11 @@
       "warning": "#e8c580",
       "warning-foreground": "#49320e",
       "info": "#a6c4cf",
-      "info-foreground": "#253c45"
+      "info-foreground": "#253c45",
+      "box-peach": "#f1c8b5",
+      "box-peach-foreground": "#633c30",
+      "box-blue": "#bdd9e8",
+      "box-blue-foreground": "#244b63"
     }
   },
   "latte": {
@@ -101,7 +109,11 @@
       "warning": "#df8e1d",
       "warning-foreground": "#1e1e2e",
       "info": "#209fb5",
-      "info-foreground": "#1e1e2e"
+      "info-foreground": "#1e1e2e",
+      "box-peach": "#f1c8b5",
+      "box-peach-foreground": "#633c30",
+      "box-blue": "#bdd9e8",
+      "box-blue-foreground": "#244b63"
     }
   },
   "frappe": {
@@ -136,7 +148,11 @@
       "warning": "#e5c890",
       "warning-foreground": "#232634",
       "info": "#85c1dc",
-      "info-foreground": "#232634"
+      "info-foreground": "#232634",
+      "box-peach": "#f1c8b5",
+      "box-peach-foreground": "#633c30",
+      "box-blue": "#bdd9e8",
+      "box-blue-foreground": "#244b63"
     }
   },
   "macchiato": {
@@ -171,7 +187,11 @@
       "warning": "#eed49f",
       "warning-foreground": "#181926",
       "info": "#7dc4e4",
-      "info-foreground": "#181926"
+      "info-foreground": "#181926",
+      "box-peach": "#f1c8b5",
+      "box-peach-foreground": "#633c30",
+      "box-blue": "#bdd9e8",
+      "box-blue-foreground": "#244b63"
     }
   },
   "mocha": {
@@ -206,7 +226,11 @@
       "warning": "#f9e2af",
       "warning-foreground": "#11111b",
       "info": "#74c7ec",
-      "info-foreground": "#11111b"
+      "info-foreground": "#11111b",
+      "box-peach": "#f1c8b5",
+      "box-peach-foreground": "#633c30",
+      "box-blue": "#bdd9e8",
+      "box-blue-foreground": "#244b63"
     }
   }
 }

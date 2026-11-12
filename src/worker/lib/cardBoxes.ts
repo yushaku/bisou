@@ -1,5 +1,5 @@
 import type { CardBoxCard, CardBoxSummary, CardBoxDetail, CardBoxText } from "../../shared/cardBox";
-interface Box { id: string; name: CardBoxText; description: CardBoxText; free: boolean; cards: CardBoxCard[] }
+interface Box { id: string; name: CardBoxText; description: CardBoxText; free: boolean; cover: string; price: number | null; cards: CardBoxCard[] }
 export const CARD_BOXES: Box[] = [
   {
     "id": "lam-quen-lai",
@@ -12,6 +12,8 @@ export const CARD_BOXES: Box[] = [
       "en": "Light cards to see each other anew."
     },
     "free": true,
+    "cover": "/card-boxes/lam-quen-lai.jpg",
+    "price": null,
     "cards": [
       {
         "id": "lql-01",
@@ -126,6 +128,8 @@ export const CARD_BOXES: Box[] = [
       "en": "Slower cards, to understand each other more deeply."
     },
     "free": false,
+    "cover": "/card-boxes/deep-connection.jpg",
+    "price": 49000,
     "cards": [
       {
         "id": "dc-01",
@@ -236,7 +240,7 @@ export const CARD_BOXES: Box[] = [
   }
 ];
 function isOpen(box: Box): boolean { return box.free; }
-function summary(box: Box): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box) }; }
+function summary(box: Box): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box), cover: box.cover, price: box.price }; }
 export function boxList(): CardBoxSummary[] { return [...CARD_BOXES].sort((a, b) => Number(isOpen(b)) - Number(isOpen(a))).map(summary); }
 export function boxDetail(boxId: string): CardBoxDetail | null {
   const box = CARD_BOXES.find(box => box.id === boxId);

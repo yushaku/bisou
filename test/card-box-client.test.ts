@@ -2,19 +2,20 @@ import { createElement as h } from "react";
 import { renderToString } from "react-dom/server";
 import { readdirSync, readFileSync } from "node:fs";
 import { I18nProvider } from "../src/client/i18n";
+import { CardBoxDeck } from "../src/client/components/bisou/CardBoxDeck";
 import { CardBoxCard } from "../src/client/components/bisou/CardBoxCard";
 import { CardBoxRows, CardBoxBlock, CardBoxList } from "../src/client/components/bisou/CardBoxBlock";
 import { Router } from "wouter";
 import { vi, afterEach } from "vitest";
 import { expect, it } from "vitest";
-import { cardBoxEndMessage, cardBoxLoadMessage, nextCard, previousCard, readSeen, writeSeen, readCache, writeCache, clearCardBoxCache, type Play } from "../src/client/lib/cardBox";
+import { formatBoxPrice, cardSwipe, cardBoxEndMessage, cardBoxLoadMessage, nextCard, randomCard, previousCard, readSeen, writeSeen, readCache, writeCache, clearCardBoxCache, type Play } from "../src/client/lib/cardBox";
 import type { CardBoxDetail } from "../src/shared/cardBox";
 import { CardBoxPlayer } from "../src/client/screens/CardBoxPlayer";
 import { api } from "../src/client/api";
 import { CardBoxes } from "../src/client/screens/CardBoxes";
 import { createTabMemory, TabMemory } from "../src/client/lib/tabMemory";
 import { TABS } from "../src/client/components/bisou/AppShell";
-const detail: CardBoxDetail = { box: { id: "sample", name: { vi: "Hộp", en: "Box" }, description: { vi: "", en: "" }, open: true }, cards: ["a", "b", "c", "d"].map(id => ({ id, kind: "question", text: { vi: id, en: id } })) };
+const detail: CardBoxDetail = { box: { id: "sample", name: { vi: "Hộp", en: "Box" }, description: { vi: "", en: "" }, open: true, cover: "/card-boxes/sample.jpg", price: null }, cards: ["a", "b", "c", "d"].map(id => ({ id, kind: "question", text: { vi: id, en: id } })) };
 it("AC26 AC27: load failures stay hidden with cached content and uncached offline content needs a connection", () => {
   expect(cardBoxLoadMessage(true, false, "loadError")).toBeNull();
   expect(cardBoxLoadMessage(true, true, "loadError")).toBeNull();
@@ -68,10 +69,21 @@ it.each(["vi", "en"])("AC11 AC12 AC13: five kinds are readable without response 
   expect(html).not.toMatch(/<button|<input|<select|role="radio|role="slider/);
   for (const label of locale === "vi" ? ["Câu hỏi", "Thử", "Ai hơn?", "Chọn một", "Từ 1 đến 10", "1: Ít 10: Nhiều"] : ["Question", "Try it", "Who’s more?", "Pick one", "1 to 10", "1: Low 10: High"]) expect(html).toContain(label);
 });
-it("AC6 AC16: rows show preview without counts, payment or unlock controls", () => {
-  vi.stubGlobal("localStorage", { getItem: () => "vi" });
-  const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [detail.box, { ...detail.box, id: "paid", open: false }], from: "/boxes" })) }));
-  expect(html).toContain("Xem thử"); expect(html).not.toMatch(/<input|49.000|Liên hệ|Mã mở|[0-9]\/[0-9]/);
+it.each(["vi", "en"] as const)("product grid shows covers, descriptions, free and preview prices in %s", locale => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const free = { ...detail.box, description: { vi: "Câu nhẹ nhàng", en: "Light cards" } };
+  const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [free, { ...free, id: "paid", open: false, price: 49000 }], from: "/boxes" })) }));
+  expect(html).toContain('grid-cols-2');
+  expect(html).toContain('border border-border bg-card p-3 text-card-foreground');
+  expect(html).toContain('block truncate font-heading text-base');
+  expect(html).toContain('loading="lazy"');
+  expect(html).toContain('width="640" height="640"');
+  expect(html).toContain('alt="' + free.name[locale] + '"');
+  expect(html).toContain(free.description[locale]);
+  expect(html).toContain(locale === "vi" ? "Miễn phí" : "Free");
+  expect(html).toContain(locale === "vi" ? "49.000đ" : "49,000₫");
+  expect(html).toContain(locale === "vi" ? "Xem thử" : "Preview");
+  expect(html).not.toMatch(/<input|Liên hệ|Mã mở/);
 });
 it("AC25: client and shared sources have no runtime imports from Worker", () => {
   const visit = (dir: string): void => { for (const item of readdirSync(dir, { withFileTypes: true })) {
@@ -110,7 +122,7 @@ it("AC5 AC6 AC16: Home block and box list share ordered preview-only rows and th
     const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, screen)) }));
     expect(html.indexOf("Làm quen lại")).toBeLessThan(html.indexOf("Deep Connection"));
     expect(html).toContain("Xem thử");
-    expect(html).not.toMatch(/<input|Liên hệ|Mã mở|49.000|[0-9]\/[0-9]/);
+    expect(html).not.toMatch(/<input|Liên hệ|Mã mở|[0-9]\/[0-9]/);
   }
   expect(TABS).toEqual(["home", "journal", "wishes", "garden"]);
 });
@@ -195,4 +207,45 @@ it.each(["vi", "en"])("list states use house loading, empty and error patterns i
   const offline = render(null, true);
   expect(offline).toContain(locale === "vi" ? "Kết nối mạng để mở hộp này lần đầu" : "Connect to open");
   expect(offline).not.toContain(locale === "vi" ? "Chưa tải" : "Couldn");
+});
+
+it("box prices keep VND and locale grouping", () => {
+  expect(formatBoxPrice(49000, "vi")).toBe("49.000đ");
+  expect(formatBoxPrice(49000, "en")).toBe("49,000₫");
+  expect(formatBoxPrice(0, "vi")).toBe("0đ");
+});
+it("card swipe follows the photo threshold and ignores vertical movement", () => {
+  expect(cardSwipe(-60, 10, 400)).toBe("next");
+  expect(cardSwipe(60, 10, 400)).toBe("previous");
+  expect(cardSwipe(-59, 0, 400)).toBeNull();
+  expect(cardSwipe(100, 120, 400)).toBeNull();
+  expect(cardSwipe(90, -90, 400)).toBeNull();
+});
+
+it("PO18: random draw discards forward replay, uses unseen cards and preserves the return card", () => {
+  let seed = 17;
+  const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const play: Play = { stack: ["a", "b", "c"], index: 0, startedOver: false };
+  const drawn = randomCard(detail, play, ["a", "b", "c"], rng);
+  expect(drawn.play.stack).toEqual(["a", "d"]);
+  expect(drawn.seen).toEqual(["a", "b", "c", "d"]);
+  expect(drawn.play.stack[previousCard(drawn.play).index]).toBe("a");
+  const reset = randomCard(detail, play, ["a", "b", "c", "d"], rng);
+  expect(reset.play.stack.at(-1)).not.toBe("a");
+  expect(reset.play.startedOver).toBe(true);
+  expect(play.stack).toEqual(["a", "b", "c"]);
+});
+
+it.each(["vi", "en"])("PO18: player deck provides previous, labelled random and primary next controls in %s", locale => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const html = renderToString(h(I18nProvider, null, h(CardBoxDeck, {
+    card: detail.cards[0]!, boxId: "sample", boxName: "Box", onNext() {}, onPrevious() {}, onRandom() {},
+  })));
+  expect(html).toContain(locale === "vi" ? "Thẻ trước" : "Previous card");
+  expect(html).toContain(locale === "vi" ? "Thẻ tiếp" : "Next card");
+  expect(html).toContain(`aria-label="${locale === "vi" ? "Rút ngẫu nhiên" : "Random card"}"`);
+  expect(html).toContain('data-size="icon"');
+  expect(html).toContain('size-11');
+  expect(html).toContain('data-variant="default"');
+  expect(html).toContain('disabled=""');
 });

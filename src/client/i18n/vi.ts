@@ -2,8 +2,10 @@
 export const vi = {
   "cardBox.title": "Hộp thẻ",
   "cardBox.seeAll": "Xem tất cả",
+  "cardBox.free": "Miễn phí",
   "cardBox.preview": "Xem thử",
   "cardBox.next": "Thẻ tiếp",
+  "cardBox.random": "Rút ngẫu nhiên",
   "cardBox.previous": "Thẻ trước",
   "cardBox.startOver": "Hai đứa đã xem hết hộp này, mình bắt đầu lại nhé",
   "cardBox.previewEnd": "Hết thẻ xem thử. Phần còn lại của hộp sẽ mở sau.",

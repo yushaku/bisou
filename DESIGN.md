@@ -28,3 +28,8 @@ Bisou là góc riêng của hai người. Cảm giác cần giữ: ấm, gần g
 - Mỗi lời nhắn nhỏ là một phong bì màu nước vẽ tay, xếp hai cột: giấy kem, mực nâu, nắp gập hình chữ V ở mặt sau. Chưa mở thì có dấu sáp đỏ hình trái tim; đã mở thì nắp hé và dấu sáp vỡ. Tem hình bông hoa (không dùng trái tim), dấu bưu điện lượn sóng chỉ hiện khi đã gửi, ghi "Gửi {partner}" hoặc "Từ {partner}" trên phong bì. Trạng thái và một dòng xem trước nằm ở chú thích bên dưới; lời nhắn đang chờ mở thì không có xem trước và không có ngày.
 
 - Hộp thẻ nằm ngay dưới Thẻ hôm nay trên Home, dùng cùng mẫu tiêu đề ngoài thẻ và “Xem tất cả”. Player hiển thị một thẻ với nhãn loại; hai lựa chọn và thang từ 1 đến 10 là nội dung tĩnh, không ghi câu trả lời.
+
+Hộp thẻ dùng lưới sản phẩm hai cột với ảnh vuông, tên thật, mô tả và giá; mỗi hộp giữ màu đào hoặc xanh bột qua token sáng và mực tối.
+Thẻ chơi có tỷ lệ 5:7, mặt màu hộp, cạnh chồng phía sau và tên hộp Lora nghiêng ở góc dưới; vuốt hoặc nút đổi thẻ cùng chuyển động, giảm chuyển động dùng mờ chéo.
+
+Thanh điều khiển hộp thẻ: Thẻ trước bên trái, nút biểu tượng rút ngẫu nhiên ở giữa (vùng chạm 44px), Thẻ tiếp là nút chính bên phải.

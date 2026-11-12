@@ -10,6 +10,7 @@ it("AC25: paid detail sends exactly flagged preview cards to both partners", asy
     const res = await call("GET", "/api/boxes/deep-connection", { cookie: person.cookie });
     expect(res.status).toBe(200);
     const detail = await res.json<CardBoxDetail>();
+    expect(detail.box).toMatchObject({ cover: "/card-boxes/deep-connection.jpg", price: 49000 });
     expect(detail.cards.map(c => c.id)).toEqual(["dc-02", "dc-05", "dc-07"]);
     expect(JSON.stringify(detail)).not.toContain("truly understood");
   }
@@ -24,7 +25,7 @@ it("AC1 AC3 AC6: shared catalogue is ordered and free detail contains bilingual 
   const { a, b } = await paired();
   const list = await (await call("GET", "/api/boxes", { cookie: a.cookie })).json();
   expect(list).toEqual(await (await call("GET", "/api/boxes", { cookie: b.cookie })).json());
-  expect(list).toMatchObject({ boxes: [{ id: "lam-quen-lai", open: true }, { id: "deep-connection", open: false }] });
+  expect(list).toMatchObject({ boxes: [{ id: "lam-quen-lai", open: true, cover: "/card-boxes/lam-quen-lai.jpg", price: null }, { id: "deep-connection", open: false, cover: "/card-boxes/deep-connection.jpg", price: 49000 }] });
   const detail = await (await call("GET", "/api/boxes/lam-quen-lai", { cookie: a.cookie })).json<CardBoxDetail>();
   expect(detail.cards).toHaveLength(10);
   expect(detail.cards[0]).toMatchObject({ text: { vi: "Món ăn nào mỗi lần ăn là thấy nhớ nhà? Kể cho nhau nghe.", en: "Which food tastes like home to you? Tell each other about it." } });

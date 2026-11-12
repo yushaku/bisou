@@ -60,7 +60,7 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         // App shell only (fonts included, for offline): never cache the API.
-        globPatterns: ["**/*.{js,css,html,svg,png,webp,webmanifest,woff2}"],
+        globPatterns: ["**/*.{js,css,html,svg,png,jpg,webp,webmanifest,woff2}"],
         globIgnores: ["splash/**"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
