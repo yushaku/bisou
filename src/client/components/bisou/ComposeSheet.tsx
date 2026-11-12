@@ -14,6 +14,7 @@ import { useOnline } from "@/lib/useOnline";
 import { DayField } from "./DayField";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
+import { ComposeBody, ComposeFooter } from "./ComposeLayout";
 
 interface ComposeSheetProps {
   fromMenu?: boolean;
@@ -137,7 +138,7 @@ export function ComposeForm({ expandedPhotos = false, entry, receiving, onSaved,
       <form onSubmit={(e) => { e.preventDefault(); if (!online) return; if (receiving) setConfirmReceiving(true); else void save(); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
         <DrawerTitle className="sr-only">{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 pb-4">
+        <ComposeBody>
           {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
           <DayField value={date} now={now} disabled={saving} label={receiving ? "received.day" : "compose.day"} onChange={(value) => { setDate(value); change(); }} />
 
@@ -165,13 +166,13 @@ export function ComposeForm({ expandedPhotos = false, entry, receiving, onSaved,
           <p role="alert" className="text-base text-destructive empty:hidden">
             {formError}
           </p>
-        </div>
+        </ComposeBody>
 
-        <div className="flex flex-col gap-2 border-t bg-popover px-5 pt-3 pb-5">
+        <ComposeFooter>
           <Button type="submit" size="lg" loading={saving} disabled={!online || !!block}>
             {saving ? t("compose.saving") : t(receiving ? "received.action" : "compose.save")}
           </Button>
-        </div>
+        </ComposeFooter>
       </form>
       <Dialog open={confirmReceiving} onOpenChange={(open) => { if (!saving) setConfirmReceiving(open); }}>
         <DialogContent showCloseButton={!saving}>

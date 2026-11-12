@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { NoteFields } from "./NoteFields";
+import { ComposeBody, ComposeFooter } from "./ComposeLayout";
 interface Props { fromMenu?: boolean; open: boolean; onOpenChange: (open: boolean) => void; partnerName: string; entry?: WrittenNote; onSaved: (note: WrittenNote) => void; onRefresh: () => void; onSignedOut: () => void }
 export function NoteSheet({ open, onOpenChange, fromMenu, ...props }: Props) {
   const { t } = useI18n();
@@ -23,7 +24,7 @@ export function NoteSheet({ open, onOpenChange, fromMenu, ...props }: Props) {
     <Dialog open={confirm} onOpenChange={setConfirm}><DialogContent><DialogHeader><DialogTitle>{t("compose.discardTitle")}</DialogTitle><DialogDescription>{t("compose.discardBody")}</DialogDescription></DialogHeader><DialogFooter><Button variant="destructive" onClick={() => { setConfirm(false); onOpenChange(false); }}>{t("compose.discard")}</Button><Button onClick={() => setConfirm(false)}>{t("compose.keep")}</Button></DialogFooter></DialogContent></Dialog>
   </Drawer>;
 }
-export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, onLock, onClose, onDone }: Omit<Props, "open" | "onOpenChange"> & { onLock: (lock: "saving" | "dirty" | null) => void; onClose: () => void; onDone: () => void }) {
+export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, onLock, onDone }: Omit<Props, "open" | "onOpenChange"> & { onLock: (lock: "saving" | "dirty" | null) => void; onClose: () => void; onDone: () => void }) {
   const { t, locale } = useI18n(), online = useOnline();
   const [value, setValue] = useState<NoteInput>(entry ?? { happened: "", feel: "", need: "", hope: "" });
   const [dirty, setDirty] = useState(false), [saving, setSaving] = useState(false), [error, setError] = useState<string | null>(null), [locked, setLocked] = useState(false), [withdraw, setWithdraw] = useState(false);
@@ -53,18 +54,17 @@ export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, 
   }
   return <form onSubmit={(e) => { e.preventDefault(); void save(!!ready); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
     <DrawerTitle className="sr-only">{t(entry ? "notes.edit" : "notes.write", { partner: partnerName })}</DrawerTitle>
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-3">
+    <ComposeBody>
       {ready && <p>{t("notes.reread")}</p>}
       <NoteFields value={value} disabled={saving} onChange={(next) => { setValue(next); setDirty(true); if (!locked) setError(null); }} />
       <p className="text-sm text-muted-foreground">{!online ? t("offline.save") : block ? t(block === "tooLong" ? "notes.tooLong" : "notes.emptyHint") : entry?.state === "draft" && !ready ? t("notes.cooling", { time: formatTime(entry.sendableAt, locale) }) : !entry ? t("notes.saveHint") : ""}</p>
       {error && <p role="alert" className="text-destructive">{error}</p>}
-    </div>
-    <div className="flex shrink-0 flex-col gap-2 border-t px-5 pt-3 pb-5">
+    </ComposeBody>
+    <ComposeFooter>
       <Button type="submit" size="lg" loading={saving} disabled={!online || !!block || locked}>{t(ready ? "notes.send" : "notes.save", { partner: partnerName })}</Button>
       {ready && <Button type="button" variant="outline" disabled={!online || saving || !!block || locked} onClick={() => void save()}>{t("notes.saveLater")}</Button>}
       {entry && entry.state !== "opened" && <Button type="button" variant="ghost" disabled={!online || saving || locked} onClick={() => setWithdraw(true)}>{t(entry?.state === "draft" ? "notes.delete" : "notes.withdraw")}</Button>}
-      <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>{t("common.close")}</Button>
-    </div>
+    </ComposeFooter>
     <Dialog open={withdraw} onOpenChange={setWithdraw}><DialogContent><DialogHeader><DialogTitle>{t(entry?.state === "draft" ? "notes.deleteTitle" : "notes.withdrawTitle")}</DialogTitle><DialogDescription>{t(entry?.state === "draft" ? "notes.deleteBody" : "notes.withdrawBody")}</DialogDescription></DialogHeader><DialogFooter><Button variant="destructive" disabled={!online || saving} onClick={() => void remove()}>{t(entry?.state === "draft" ? "notes.delete" : "notes.withdraw")}</Button><Button variant="outline" disabled={saving} onClick={() => setWithdraw(false)}>{t("entry.cancel")}</Button></DialogFooter></DialogContent></Dialog>
   </form>;
 }

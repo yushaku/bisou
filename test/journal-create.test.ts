@@ -9,6 +9,7 @@ import { vi as vietnamese } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
 import { JournalComposeSheet } from "../src/client/components/bisou/JournalComposeSheet";
 import { ComposeForm, ComposeSheet } from "../src/client/components/bisou/ComposeSheet";
+import { ComposeBody, ComposeFooter } from "../src/client/components/bisou/ComposeLayout";
 import { PhotoPicker } from "../src/client/components/bisou/PhotoPicker";
 import { PersonAvatar } from "../src/client/components/bisou/CoupleAvatars";
 import { DayField } from "../src/client/components/bisou/DayField";
@@ -205,4 +206,10 @@ it.each(["vi", "en"])("shared composer forms keep only screen reader titles in %
   const note = nodes(NoteForm({ ...props, onRefresh: vi.fn() }));
   expect(note.find(n => n.type === DrawerTitle)?.props.className).toBe("sr-only");
   expect(note.some(n => n.type === DrawerHeader)).toBe(false);
+  expect(note.some(n => n.props.children === (locale === "vi" ? vietnamese : english)["common.close"])).toBe(false);
+  expect(note.find(n => n.type === "form")?.props.className).toBe(journal.find(n => n.type === "form")?.props.className);
+  for (const form of [journal, note]) {
+    expect(form.filter(n => n.type === ComposeBody)).toHaveLength(1);
+    expect(form.filter(n => n.type === ComposeFooter)).toHaveLength(1);
+  }
 });
