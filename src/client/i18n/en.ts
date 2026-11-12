@@ -10,6 +10,7 @@ export const en: Messages = {
   "cardBox.previewEnd": "That's all the preview cards. The rest of the box opens later.",
   "cardBox.notFound": "Box not found",
   "cardBox.loadError": "Couldn't load the box. Try again.",
+  "cardBox.listLoadError": "Couldn't load the boxes. Try again.",
   "cardBox.opening": "Opening box…",
   "cardBox.needsConnection": "Connect to open this box for the first time",
   "cardBox.retry": "Try again",

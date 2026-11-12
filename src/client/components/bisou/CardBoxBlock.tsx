@@ -4,8 +4,12 @@ import type { CardBoxSummary } from "../../../shared/cardBox";
 import { useI18n } from "../../i18n";
 import { TabMemory } from "../../lib/tabMemory";
 import { useCardBoxes } from "../../lib/useCardBoxes";
+import { cardBoxLoadMessage } from "../../lib/cardBox";
+import { useOnline } from "../../lib/useOnline";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
+import { EmptyState } from "./EmptyState";
 export function CardBoxRows({ boxes, from }: { boxes: CardBoxSummary[]; from: string }) {
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
@@ -18,13 +22,15 @@ export function CardBoxRows({ boxes, from }: { boxes: CardBoxSummary[]; from: st
 }
 export function CardBoxList({ boxes, failed, refresh, from }: ReturnType<typeof useCardBoxes> & { from: string }) {
   const { t } = useI18n();
+  const online = useOnline();
+  const message = cardBoxLoadMessage(!!boxes, online, failed ? "loadError" : null);
   return <>
-    {failed && <div role="status"><p>{t("cardBox.loadError")}</p><Button variant="ghost" onClick={() => void refresh()}>{t("cardBox.retry")}</Button></div>}
-    {boxes ? boxes.length ? <CardBoxRows boxes={boxes} from={from} /> : <p>{t("cardBox.empty")}</p> : !failed && <Card aria-busy="true" className="p-6"><p>{t("cardBox.opening")}</p></Card>}
+    {message && <div role="alert" className="flex flex-col items-start gap-2"><p>{t(message === "loadError" ? "cardBox.listLoadError" : `cardBox.${message}`)}</p><Button variant="outline" onClick={() => void refresh()}>{t("cardBox.retry")}</Button></div>}
+    {boxes ? boxes.length ? <CardBoxRows boxes={boxes} from={from} /> : <EmptyState title={t("cardBox.empty")} /> : !message && <Skeleton className="h-72 w-full" aria-label={t("loading")} />}
   </>;
 }
-export function CardBoxBlock({ onSignedOut }: { onSignedOut: () => void }) {
-  const data = useCardBoxes(onSignedOut);
+export function CardBoxBlock({ onSignedOut, scope }: { onSignedOut: () => void; scope: string }) {
+  const data = useCardBoxes(onSignedOut, scope);
   const { t } = useI18n();
   const memory = useContext(TabMemory);
   return <section className="flex flex-col gap-3" aria-labelledby="card-box-title">

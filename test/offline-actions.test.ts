@@ -179,3 +179,15 @@ it.each(["draft", "sent"] as const)("R13 R15: %s has its own deletion label and 
   expect(nodes.filter(n => n.props.children === label)).toHaveLength(2);
   expect(nodes.some(n => n.props.children === (status === "draft" ? "notes.deleteBody" : "notes.withdrawBody"))).toBe(true);
 });
+
+it("card box R61: successful logout clears box text and seen ids before signing out", async () => {
+  vi.stubGlobal("navigator", { onLine: true });
+  const keys = new Map([["bisou.cardBox.v1:c:u:box:sample", "text"], ["bisou.cardBox.v1:c:u:seen:sample", "ids"], ["bisou.locale", "en"]]);
+  vi.stubGlobal("localStorage", { get length() { return keys.size; }, key: (index: number) => [...keys.keys()][index] ?? null, removeItem: (key: string) => keys.delete(key) });
+  vi.spyOn(api, "logout").mockResolvedValue({ ok: true, data: { ok: true } });
+  const onSignedOut = vi.fn(() => expect([...keys]).toEqual([["bisou.locale", "en"]]));
+  state.push(false, false, "logout");
+  const nodes = elements(Settings({ user, onUser: vi.fn(), onSignedOut, couple: null, onCouple: vi.fn() }));
+  nodes.find(n => n.props.children === "home.logout" && n.props.onClick)!.props.onClick!();
+  await vi.waitFor(() => expect(onSignedOut).toHaveBeenCalledOnce());
+});

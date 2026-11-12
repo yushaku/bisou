@@ -4,6 +4,8 @@
 
 ### Added
 
+- A card box opened once plays offline; signing out removes box text and seen cards from the phone.
+
 - Play card boxes from Home: free boxes in full, a paid box through its preview cards, with seen cards kept only on your phone.
 
 - Pull down from the top of Home, Journal, Wishes or Garden to refresh that screen’s data.

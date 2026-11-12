@@ -9,6 +9,7 @@ export const vi = {
   "cardBox.previewEnd": "Hết thẻ xem thử. Phần còn lại của hộp sẽ mở sau.",
   "cardBox.notFound": "Không tìm thấy hộp này",
   "cardBox.loadError": "Chưa tải được hộp. Thử lại nhé.",
+  "cardBox.listLoadError": "Chưa tải được các hộp. Thử lại nhé.",
   "cardBox.opening": "Đang mở hộp…",
   "cardBox.needsConnection": "Kết nối mạng để mở hộp này lần đầu",
   "cardBox.retry": "Thử lại",

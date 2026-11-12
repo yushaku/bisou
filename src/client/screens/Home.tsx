@@ -90,7 +90,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
       )}
 
       <DailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
-      <CardBoxBlock onSignedOut={session.onSignedOut} />
+      <CardBoxBlock scope={`${couple.id}:${session.user.id}`} onSignedOut={session.onSignedOut} />
 
       {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; memory.scroll.set("journal", 0); } navigation.onSelect("journal"); }} />}
       <TodayPosts couple={couple} user={session.user} today={toDayString(now)} onSignedOut={session.onSignedOut} />

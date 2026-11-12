@@ -8,6 +8,7 @@ import { api } from "./api";
 import { BrandMark } from "./components/bisou/BrandMark";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
+import { clearCardBoxCache } from "./lib/cardBox";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
 import { Appearance } from "./screens/Appearance";
 import { Notifications } from "./screens/Notifications";
@@ -63,20 +64,25 @@ function LoadingScreen() {
 
 function MainApp() {
   const [auth, setAuth] = useState<AuthState>({ status: "loading" });
+  const onSignedOut = useCallback(() => {
+    clearCardBoxCache();
+    setAuth({ status: "signedOut" });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     void api.me().then((res) => {
       if (cancelled) return;
-      setAuth(res.ok ? { status: "signedIn", user: res.data.user, coupleId: res.data.coupleId } : { status: "signedOut" });
+      if (res.ok) setAuth({ status: "signedIn", user: res.data.user, coupleId: res.data.coupleId });
+      else if (res.status === 0) setAuth({ status: "signedOut" });
+      else onSignedOut();
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [onSignedOut]);
 
   const onUser = useCallback((user: User) => setAuth((a) => (a.status === "signedIn" ? { ...a, user } : a)), []);
-  const onSignedOut = useCallback(() => setAuth({ status: "signedOut" }), []);
 
   if (auth.status === "loading") return <LoadingScreen />;
   if (auth.status === "signedOut") {
@@ -149,7 +155,7 @@ function SignedIn({
   else content = (
     <Switch location={settingsOpen ? historyState?.from ?? "/" : location}>
       <Route path="/boxes/:boxId">{params => <CardBoxPlayer key={params.boxId} {...session} couple={couple} boxId={params.boxId} />}</Route>
-      <Route path="/boxes"><CardBoxes {...session} /></Route>
+      <Route path="/boxes"><CardBoxes {...session} couple={couple} /></Route>
       <Route path="/events">
         <Events user={user} couple={couple} onCouple={onCouple} onSignedOut={onSignedOut} />
       </Route>
