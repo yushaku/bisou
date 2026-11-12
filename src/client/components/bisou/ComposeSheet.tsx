@@ -79,14 +79,13 @@ export function ComposeSheet({ open, onOpenChange, fromMenu, ...form }: ComposeS
 }
 
 interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChange" | "fromMenu"> {
-  expandedPhotos?: boolean;
   onLock: (lock: Lock) => void;
   onClose: () => void;
   onDone: () => void;
 }
 
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
-export function ComposeForm({ expandedPhotos = false, entry, receiving, onSaved, onSignedOut, onLock, onDone }: ComposeFormProps) {
+export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const ids = useId();
@@ -142,7 +141,7 @@ export function ComposeForm({ expandedPhotos = false, entry, receiving, onSaved,
           {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
           <DayField value={date} now={now} disabled={saving} label={receiving ? "received.day" : "compose.day"} onChange={(value) => { setDate(value); change(); }} />
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-1 flex-col gap-2">
             <label htmlFor={`${ids}-text`} className="font-semibold">
               {t(receiving ? "received.note" : "compose.text")}
             </label>
@@ -152,7 +151,7 @@ export function ComposeForm({ expandedPhotos = false, entry, receiving, onSaved,
               value={text}
               placeholder={t("compose.placeholder")}
               aria-invalid={length > ENTRY_TEXT_MAX}
-              className="min-h-32"
+              className="min-h-32 flex-1"
               onChange={(e) => {
                 setText(e.target.value);
                 change();
@@ -161,7 +160,7 @@ export function ComposeForm({ expandedPhotos = false, entry, receiving, onSaved,
           </div>
 
           {receiving && <p className="rounded-lg bg-muted p-3 text-sm whitespace-pre-line">{journalText}</p>}
-          <PhotoPicker expandedEmpty={expandedPhotos} queue={queue} onPreparingChange={setPreparing} max={ENTRY_PHOTOS_MAX} saving={saving} onChange={change} />
+          <PhotoPicker queue={queue} onPreparingChange={setPreparing} max={ENTRY_PHOTOS_MAX} saving={saving} onChange={change} />
 
           <p role="alert" className="text-base text-destructive empty:hidden">
             {formError}

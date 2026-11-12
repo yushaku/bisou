@@ -31,6 +31,7 @@ export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, 
   useEffect(() => onLock(saving ? "saving" : dirty ? "dirty" : null), [dirty, saving, onLock]);
   useEffect(() => () => onLock(null), [onLock]);
   const block = noteBlock(value), ready = entry?.state === "draft" && Date.now() >= entry.sendableAt;
+  const hint = !online ? t("offline.save") : block === "tooLong" ? t("notes.tooLong") : block ? "" : entry?.state === "draft" && !ready ? t("notes.cooling", { time: formatTime(entry.sendableAt, locale) }) : !entry ? t("notes.saveHint") : "";
   async function save(send = false) {
     if (!online || saving || block || locked) return;
     setSaving(true); setError(null);
@@ -57,7 +58,7 @@ export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, 
     <ComposeBody>
       {ready && <p>{t("notes.reread")}</p>}
       <NoteFields value={value} disabled={saving} onChange={(next) => { setValue(next); setDirty(true); if (!locked) setError(null); }} />
-      <p className="text-sm text-muted-foreground">{!online ? t("offline.save") : block ? t(block === "tooLong" ? "notes.tooLong" : "notes.emptyHint") : entry?.state === "draft" && !ready ? t("notes.cooling", { time: formatTime(entry.sendableAt, locale) }) : !entry ? t("notes.saveHint") : ""}</p>
+      {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
       {error && <p role="alert" className="text-destructive">{error}</p>}
     </ComposeBody>
     <ComposeFooter>
