@@ -1,6 +1,6 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
-  "cardBox.title": "Hộp thẻ",
+  "cardBox.title": "Deep talk",
   "cardBox.seeAll": "Xem tất cả",
   "cardBox.free": "Miễn phí",
   "cardBox.preview": "Xem thử",
@@ -157,7 +157,7 @@ export const vi = {
   "garden.history": "Những thẻ đã gặp",
   "garden.unknownDeck": "Bộ thẻ này chưa có",
   "garden.title": "Vườn của hai đứa",
-  "garden.today": "Thẻ hôm nay",
+  "garden.today": "Câu hỏi hôm nay",
   "garden.me": "Mình",
   "garden.partner": "Người ấy",
   "garden.myAnswer": "Câu trả lời của mình",

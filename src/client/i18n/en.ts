@@ -1,7 +1,7 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
-  "cardBox.title": "Card box",
+  "cardBox.title": "Deep talk",
   "cardBox.seeAll": "See all",
   "cardBox.free": "Free",
   "cardBox.preview": "Preview",
@@ -157,7 +157,7 @@ export const en: Messages = {
   "garden.history": "Cards we have met",
   "garden.unknownDeck": "This deck is not here",
   "garden.title": "Our garden",
-  "garden.today": "Today's card",
+  "garden.today": "Today's question",
   "garden.me": "Me",
   "garden.partner": "Your partner",
   "garden.myAnswer": "Your answer",

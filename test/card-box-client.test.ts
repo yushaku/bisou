@@ -75,7 +75,7 @@ it.each(["vi", "en"] as const)("product grid shows covers, descriptions, free an
   const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [free, { ...free, id: "paid", open: false, price: 49000 }], from: "/boxes" })) }));
   expect(html).toContain('grid-cols-2');
   expect(html).toContain('border border-border bg-card p-3 text-card-foreground');
-  expect(html).toContain('block truncate font-heading text-base');
+  expect(html).toContain('line-clamp-2 font-heading text-base');
   expect(html).toContain('loading="lazy"');
   expect(html).toContain('width="640" height="640"');
   expect(html).toContain('alt="' + free.name[locale] + '"');
@@ -122,6 +122,8 @@ it("AC5 AC6 AC16: Home block and box list share ordered preview-only rows and th
     const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, screen)) }));
     expect(html.indexOf("Làm quen lại")).toBeLessThan(html.indexOf("Deep Connection"));
     expect(html).toContain("Xem thử");
+    expect(html).toContain("Deep talk");
+    expect(html).toContain("absolute inset-0 -z-20 h-full w-full object-cover");
     expect(html).not.toMatch(/<input|Liên hệ|Mã mở|[0-9]\/[0-9]/);
   }
   expect(TABS).toEqual(["home", "journal", "wishes", "garden"]);

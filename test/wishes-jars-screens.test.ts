@@ -109,7 +109,7 @@ it.each([[1, "1 note is waiting"], [2, "2 notes are waiting"]])("notes AC12: Eng
 
 it("card box AC5: Home puts the box section directly after DailyQuestion and before notes", () => {
   const html = render(h(Home, { ...session, couple, onCouple() {}, celebrate: false, onCelebrated() {} }));
-  expect(html).toContain("Hộp thẻ");
+  expect(html).toContain("Deep talk");
   const source = readFileSync("src/client/screens/Home.tsx", "utf8");
   expect(source.indexOf("<DailyQuestion")).toBeLessThan(source.indexOf("<CardBoxBlock"));
   expect(source.indexOf("<CardBoxBlock")).toBeLessThan(source.indexOf("<NotesInbox"));
