@@ -10,101 +10,513 @@
       "url": "git@github.com:yushaku/bisou.git",
       "provider": "github",
       "link_mode": "local-only",
-      "revision": "1d781b26dcea085579279fda81cd03d3db270ab4"
+      "revision": "9b6a930f2f92e74e4b7a38a9ab473daf8be29e34"
     }
   },
   "components": [
-    { "id": "dev", "type": "external", "label": "Developer", "sublabel": "merge + push main", "pos": [40, 40], "size": [140, 60],
-      "sources": [{ "path": "README.md", "line": 56, "end_line": 58 }] },
-    { "id": "github", "type": "external", "label": "GitHub", "sublabel": "yushaku/bisou", "pos": [290, 40], "size": [150, 60],
-      "sources": [{ "path": ".github/workflows/deploy.yml", "line": 1, "end_line": 18 }] },
-    { "id": "actions", "type": "backend", "label": "GitHub Actions", "sublabel": "typecheck · test · build", "tag": "env: production", "pos": [600, 36], "size": [210, 68],
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "merge + push main",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        140,
+        60
+      ],
       "sources": [
-        { "path": ".github/workflows/deploy.yml", "line": 36, "end_line": 58, "label": "deploy job" },
-        { "path": "scripts/check-migrations.mjs", "line": 101, "end_line": 117, "label": "blocks destructive migrations" }
-      ] },
-    { "id": "user", "type": "frontend", "label": "Phone PWA", "sublabel": "iPhone / Android", "tag": "React + Vite", "pos": [40, 300], "size": [150, 64],
-      "sources": [{ "path": "vite.config.ts", "line": 25, "end_line": 45 }] },
-    { "id": "assets", "type": "cloud", "label": "Static Assets", "sublabel": "SPA + service worker", "pos": [230, 180], "size": [160, 60],
-      "sources": [{ "path": "wrangler.jsonc", "line": 10, "end_line": 13 }] },
-    { "id": "worker", "type": "backend", "label": "Worker bisou", "sublabel": "Hono · /api/*", "pos": [450, 290], "size": [200, 84],
+        {
+          "path": "README.md",
+          "line": 53,
+          "end_line": 55
+        }
+      ]
+    },
+    {
+      "id": "github",
+      "type": "external",
+      "label": "GitHub",
+      "sublabel": "yushaku/bisou",
+      "pos": [
+        290,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
       "sources": [
-        { "path": "src/worker/index.ts", "line": 10, "end_line": 18, "label": "fetch and queue handlers" },
-        { "path": "src/worker/app.ts", "line": 17, "end_line": 35 },
-        { "path": "wrangler.jsonc", "line": 1, "end_line": 7 }
-      ] },
-    { "id": "queue", "type": "messagebus", "label": "Queue bisou", "sublabel": "PUSH_QUEUE · 1 job/device", "pos": [450, 460], "size": [200, 64],
+        {
+          "path": ".github/workflows/deploy.yml",
+          "line": 3,
+          "end_line": 11,
+          "label": "push main"
+        },
+        {
+          "path": ".github/workflows/pages.yml",
+          "line": 3,
+          "end_line": 12,
+          "label": "docs paths"
+        },
+        {
+          "path": ".github/workflows/ci.yml",
+          "line": 3,
+          "end_line": 6,
+          "label": "other branches and PRs"
+        }
+      ]
+    },
+    {
+      "id": "actions",
+      "type": "backend",
+      "label": "GitHub Actions",
+      "sublabel": "typecheck · test · build",
+      "tag": "env: production",
+      "pos": [
+        600,
+        36
+      ],
+      "size": [
+        210,
+        68
+      ],
       "sources": [
-        { "path": "wrangler.jsonc", "line": 26, "end_line": 30 },
-        { "path": "src/worker/lib/pushQueue.ts", "line": 23, "end_line": 29, "label": "enqueuePush" },
-        { "path": "src/worker/lib/pushQueue.ts", "line": 42, "end_line": 65, "label": "consumePushBatch" }
-      ] },
-    { "id": "cron", "type": "cloud", "label": "Cron Trigger", "sublabel": "0 * * * * (VN hour)", "pos": [230, 450], "size": [160, 60],
+        {
+          "path": ".github/workflows/deploy.yml",
+          "line": 21,
+          "end_line": 58,
+          "label": "deploy job"
+        },
+        {
+          "path": "scripts/check-migrations.mjs",
+          "line": 101,
+          "end_line": 117,
+          "label": "blocks destructive migrations"
+        }
+      ]
+    },
+    {
+      "id": "pages",
+      "type": "external",
+      "label": "GitHub Pages",
+      "sublabel": "docs site",
+      "pos": [
+        880,
+        40
+      ],
+      "size": [
+        150,
+        60
+      ],
       "sources": [
-        { "path": "wrangler.jsonc", "line": 8, "end_line": 9 },
-        { "path": "src/worker/index.ts", "line": 20, "end_line": 47 }
-      ] },
-    { "id": "d1", "type": "database", "label": "D1 bisou", "sublabel": "binding DB", "pos": [800, 290], "size": [150, 84],
+        {
+          "path": ".github/workflows/pages.yml",
+          "line": 23,
+          "end_line": 50,
+          "label": "build and deploy"
+        }
+      ]
+    },
+    {
+      "id": "user",
+      "type": "frontend",
+      "label": "Phone PWA",
+      "sublabel": "SW precache + card cache",
+      "tag": "React + Vite",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ],
       "sources": [
-        { "path": "wrangler.jsonc", "line": 17, "end_line": 24 },
-        { "path": ".github/workflows/deploy.yml", "line": 49, "end_line": 50 }
-      ] },
-    { "id": "r2", "type": "database", "label": "R2 bisou", "sublabel": "PHOTOS · private", "pos": [800, 460], "size": [150, 64],
+        {
+          "path": "vite.config.ts",
+          "line": 30,
+          "end_line": 70,
+          "label": "PWA service worker"
+        },
+        {
+          "path": "src/client/lib/cardBox.ts",
+          "line": 40,
+          "end_line": 45,
+          "label": "readCache, writeCache"
+        }
+      ]
+    },
+    {
+      "id": "assets",
+      "type": "cloud",
+      "label": "Static Assets",
+      "sublabel": "SPA + service worker",
+      "pos": [
+        230,
+        180
+      ],
+      "size": [
+        160,
+        60
+      ],
       "sources": [
-        { "path": "wrangler.jsonc", "line": 25 },
-        { "path": "src/worker/routes/photos.ts", "line": 60, "end_line": 94 }
-      ] },
-    { "id": "resend", "type": "external", "label": "Resend", "sublabel": "OTP email", "pos": [390, 630], "size": [150, 60],
+        {
+          "path": "wrangler.jsonc",
+          "line": 10,
+          "end_line": 13
+        }
+      ]
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "Worker bisou",
+      "sublabel": "Hono · /api/* · card text",
+      "pos": [
+        450,
+        290
+      ],
+      "size": [
+        200,
+        84
+      ],
       "sources": [
-        { "path": "src/worker/lib/mail.ts", "line": 37, "end_line": 59 },
-        { "path": "src/worker/env.ts", "line": 12, "end_line": 13 }
-      ] },
-    { "id": "push", "type": "external", "label": "Push service", "sublabel": "Web Push (VAPID)", "pos": [600, 630], "size": [160, 60],
+        {
+          "path": "src/worker/index.ts",
+          "line": 11,
+          "end_line": 19,
+          "label": "fetch and queue handlers"
+        },
+        {
+          "path": "src/worker/app.ts",
+          "line": 20,
+          "end_line": 46,
+          "label": "routes"
+        },
+        {
+          "path": "src/worker/lib/cardBoxes.ts",
+          "line": 3,
+          "end_line": 3,
+          "label": "card box text"
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "type": "messagebus",
+      "label": "Queue bisou",
+      "sublabel": "PUSH_QUEUE · 1 job/device",
+      "pos": [
+        450,
+        460
+      ],
+      "size": [
+        200,
+        64
+      ],
       "sources": [
-        { "path": "src/worker/lib/webpush.ts", "line": 80, "end_line": 100, "label": "sendPush" },
-        { "path": "src/worker/env.ts", "line": 14, "end_line": 15 }
-      ] }
+        {
+          "path": "wrangler.jsonc",
+          "line": 26,
+          "end_line": 30
+        },
+        {
+          "path": "src/worker/lib/pushQueue.ts",
+          "line": 23,
+          "end_line": 29,
+          "label": "enqueuePush"
+        },
+        {
+          "path": "src/worker/lib/pushQueue.ts",
+          "line": 42,
+          "end_line": 65,
+          "label": "consumePushBatch"
+        }
+      ]
+    },
+    {
+      "id": "cron",
+      "type": "cloud",
+      "label": "Cron Trigger",
+      "sublabel": "* * * * * (every minute)",
+      "pos": [
+        230,
+        450
+      ],
+      "size": [
+        180,
+        60
+      ],
+      "sources": [
+        {
+          "path": "wrangler.jsonc",
+          "line": 8,
+          "end_line": 9
+        },
+        {
+          "path": "src/worker/index.ts",
+          "line": 21,
+          "end_line": 50,
+          "label": "scheduled"
+        }
+      ]
+    },
+    {
+      "id": "d1",
+      "type": "database",
+      "label": "D1 bisou",
+      "sublabel": "binding DB · card unlocks",
+      "pos": [
+        800,
+        290
+      ],
+      "size": [
+        170,
+        84
+      ],
+      "sources": [
+        {
+          "path": "wrangler.jsonc",
+          "line": 17,
+          "end_line": 24
+        },
+        {
+          "path": ".github/workflows/deploy.yml",
+          "line": 49,
+          "end_line": 50
+        },
+        {
+          "path": "src/worker/routes/cardBoxes.ts",
+          "line": 10,
+          "end_line": 23,
+          "label": "card_box_unlocks"
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "type": "database",
+      "label": "R2 bisou",
+      "sublabel": "PHOTOS · private",
+      "pos": [
+        800,
+        460
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "wrangler.jsonc",
+          "line": 25
+        },
+        {
+          "path": "src/worker/routes/photos.ts",
+          "line": 60,
+          "end_line": 94
+        },
+        {
+          "path": "src/worker/lib/cleanup.ts",
+          "line": 48,
+          "end_line": 55,
+          "label": "sweepPhotos"
+        }
+      ]
+    },
+    {
+      "id": "resend",
+      "type": "external",
+      "label": "Resend",
+      "sublabel": "OTP email",
+      "pos": [
+        390,
+        630
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "sources": [
+        {
+          "path": "src/worker/lib/mail.ts",
+          "line": 37,
+          "end_line": 59
+        },
+        {
+          "path": "src/worker/env.ts",
+          "line": 15,
+          "end_line": 16
+        }
+      ]
+    },
+    {
+      "id": "push",
+      "type": "external",
+      "label": "Push service",
+      "sublabel": "Web Push (VAPID)",
+      "pos": [
+        600,
+        630
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "sources": [
+        {
+          "path": "src/worker/lib/webpush.ts",
+          "line": 80,
+          "end_line": 100,
+          "label": "sendPush"
+        },
+        {
+          "path": "src/worker/env.ts",
+          "line": 17,
+          "end_line": 18
+        }
+      ]
+    }
   ],
   "boundaries": [
-    { "kind": "region", "label": "Cloudflare free plan (workers.dev)", "wraps": ["assets", "worker", "queue", "cron", "d1", "r2"], "pad": 20 }
+    {
+      "kind": "region",
+      "label": "Cloudflare free plan (workers.dev)",
+      "wraps": [
+        "assets",
+        "worker",
+        "queue",
+        "cron",
+        "d1",
+        "r2"
+      ],
+      "pad": 20
+    }
   ],
   "connections": [
-    { "from": "dev", "to": "github", "label": "git push", "variant": "emphasis" },
-    { "from": "github", "to": "actions", "label": "push main", "variant": "emphasis" },
-    { "from": "actions", "to": "d1", "label": "migrations apply", "variant": "security" },
-    { "from": "actions", "to": "worker", "label": "wrangler deploy", "variant": "emphasis" },
-    { "from": "user", "to": "assets", "label": "HTTPS /" },
-    { "from": "user", "to": "worker", "label": "HTTPS + cookie", "variant": "emphasis" },
-    { "from": "cron", "to": "worker", "label": "scheduled", "variant": "dashed" },
-    { "from": "worker", "to": "d1", "label": "SQL" },
-    { "from": "worker", "to": "r2", "label": "photos" },
-    { "from": "worker", "to": "resend", "label": "OTP mail", "variant": "dashed" },
-    { "from": "worker", "to": "queue", "label": "enqueue" },
-    { "from": "queue", "to": "worker", "label": "batch of 5", "variant": "dashed" },
-    { "from": "worker", "to": "push", "label": "Web Push", "variant": "dashed" }
+    {
+      "from": "dev",
+      "to": "github",
+      "label": "git push",
+      "variant": "emphasis"
+    },
+    {
+      "from": "github",
+      "to": "actions",
+      "label": "push main",
+      "variant": "emphasis"
+    },
+    {
+      "from": "actions",
+      "to": "pages",
+      "label": "pages.yml",
+      "variant": "dashed"
+    },
+    {
+      "from": "actions",
+      "to": "d1",
+      "label": "migrations apply",
+      "variant": "security"
+    },
+    {
+      "from": "actions",
+      "to": "worker",
+      "label": "wrangler deploy",
+      "variant": "emphasis"
+    },
+    {
+      "from": "user",
+      "to": "assets",
+      "label": "HTTPS /"
+    },
+    {
+      "from": "user",
+      "to": "worker",
+      "label": "HTTPS + cookie",
+      "variant": "emphasis"
+    },
+    {
+      "from": "cron",
+      "to": "worker",
+      "label": "scheduled",
+      "variant": "dashed"
+    },
+    {
+      "from": "worker",
+      "to": "d1",
+      "label": "SQL"
+    },
+    {
+      "from": "worker",
+      "to": "r2",
+      "label": "photos"
+    },
+    {
+      "from": "worker",
+      "to": "resend",
+      "label": "OTP mail",
+      "variant": "dashed"
+    },
+    {
+      "from": "worker",
+      "to": "queue",
+      "label": "enqueue"
+    },
+    {
+      "from": "queue",
+      "to": "worker",
+      "label": "batch of 5",
+      "variant": "dashed"
+    },
+    {
+      "from": "worker",
+      "to": "push",
+      "label": "Web Push",
+      "variant": "dashed"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Release", "items": [
-      "Pushing main runs Deploy production, unless only *.md or docs/ changed",
-      "typecheck, test and build, then check:migrations",
-      "Destructive migrations stop the release for PO review",
-      "D1 migrations apply before the Worker deploys"
-    ] },
-    { "dot": "emerald", "title": "Data", "items": [
-      "D1 holds users, sessions, couples, couple events, journal, wishes",
-      "R2 photos only via the Worker after a session and couple check",
-      "Push jobs wait in Queue bisou up to 24 hours, with no endpoint or keys",
-      "users.avatar_id names the profile photo at R2 users/<id>/avatar/"
-    ] },
-    { "dot": "rose", "title": "Secrets and auth", "items": [
-      "GitHub production env: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID",
-      "Worker secrets: RESEND_API_KEY, OTP_PEPPER, VAPID_PRIVATE_KEY",
-      "Email OTP via Resend; session cookie bisou_session, 90 days, sliding"
-    ] },
-    { "dot": "amber", "title": "Hourly cron", "items": [
-      "08:00 and 20:00: event reminders by push",
-      "07:00: kind note reminders by push",
-      "03:00: cleans D1 rows and R2 photos"
-    ] }
+    {
+      "dot": "cyan",
+      "title": "Release",
+      "items": [
+        "Pushing main runs Deploy production, unless only *.md or docs/ changed",
+        "typecheck, test and build, then check:migrations",
+        "Destructive migrations stop the release for PO review",
+        "D1 migrations apply before the Worker deploys",
+        "Docs changes publish the docs site; other branches and PRs run CI only"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Data",
+      "items": [
+        "D1 holds users, sessions, couples, events, journal, wishes, notes, card_box_unlocks",
+        "R2 photos only via the Worker after a session and couple check",
+        "Push jobs wait in Queue bisou up to 24 hours, with no endpoint or keys",
+        "Card box text ships in Worker code; the phone caches boxes for offline play"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Secrets and auth",
+      "items": [
+        "GitHub production env: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID",
+        "Worker secrets: RESEND_API_KEY, OTP_PEPPER, VAPID_PRIVATE_KEY",
+        "Email OTP via Resend; session cookie bisou_session, 90 days, sliding"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Minute cron",
+      "items": [
+        "Every minute: send due kind notes by push",
+        "07:00 note reminders; 08:00 and 20:00 event reminders",
+        "03:00: cleans D1 rows and R2 photos"
+      ]
+    }
   ]
 }

@@ -20,10 +20,16 @@
         "note": "Photos hang off a journal entry, a wish, or neither while an upload is still pending."
       },
       {
+        "id": "notes",
+        "label": "Kind notes",
+        "focus": ["users", "couples", "notes", "journal_entries"],
+        "note": "A note has a writer and a recipient in one couple, and closing it creates one journal entry that points back through note_id."
+      },
+      {
         "id": "garden",
-        "label": "Garden levels",
-        "focus": ["couples", "garden_levels", "garden_days", "garden_answers", "garden_growth"],
-        "note": "garden_levels is one row per couple; days, answers and growth are keyed by couple plus day or card."
+        "label": "Garden and card box",
+        "focus": ["couples", "garden_levels", "garden_days", "garden_answers", "garden_growth", "garden_stars", "card_box_unlocks"],
+        "note": "Garden tables are keyed by couple plus day or card; stars and box unlocks are shared by the couple."
       },
       {
         "id": "delivery",
@@ -163,12 +169,13 @@
       "id": "journal_entries",
       "label": "journal_entries",
       "tag": "journal",
-      "row": 0,
+      "row": 1,
       "col": 2,
       "attributes": [
         { "name": "id", "type": "TEXT", "key": "pk" },
         { "name": "couple_id", "type": "TEXT", "key": "fk", "references": "couples.id" },
         { "name": "author_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "note_id", "type": "TEXT", "key": ["fk", "uk"], "references": "notes.id" },
         { "name": "entry_date", "type": "TEXT · date" },
         { "name": "body", "type": "TEXT" },
         { "name": "source", "type": "TEXT · enum" },
@@ -180,7 +187,7 @@
       "id": "photos",
       "label": "photos",
       "tag": "journal",
-      "row": 1,
+      "row": 2,
       "col": 2,
       "attributes": [
         { "name": "id", "type": "TEXT", "key": "pk" },
@@ -190,6 +197,33 @@
         { "name": "wish_id", "type": "TEXT", "key": ["fk", "uk"], "references": "wishes.id" },
         { "name": "position", "type": "INTEGER · 0-3" },
         { "name": "created_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "notes",
+      "label": "notes",
+      "tag": "notes",
+      "row": 0,
+      "col": 2,
+      "attributes": [
+        { "name": "id", "type": "TEXT", "key": "pk" },
+        { "name": "couple_id", "type": "TEXT", "key": "fk", "references": "couples.id" },
+        { "name": "writer_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "recipient_id", "type": "TEXT", "key": "fk", "references": "users.id" },
+        { "name": "happened", "type": "TEXT · 1-500 chars" },
+        { "name": "feel", "type": "TEXT · 1-500 chars" },
+        { "name": "need", "type": "TEXT · 1-500 chars" },
+        { "name": "hope", "type": "TEXT · 1-500 chars" },
+        { "name": "pick", "type": "TEXT · enum" },
+        { "name": "line", "type": "TEXT · 0-500 chars" },
+        { "name": "created_at", "type": "INTEGER · epoch ms" },
+        { "name": "updated_at", "type": "INTEGER · epoch ms" },
+        { "name": "sent_at", "type": "INTEGER · epoch ms" },
+        { "name": "opened_at", "type": "INTEGER · epoch ms" },
+        { "name": "closed_at", "type": "INTEGER · epoch ms" },
+        { "name": "notified_at", "type": "INTEGER · unused" },
+        { "name": "reminded_at", "type": "INTEGER · epoch ms" },
+        { "name": "scheduled_at", "type": "INTEGER · epoch ms" }
       ]
     },
     {
@@ -308,6 +342,30 @@
       ]
     },
     {
+      "id": "garden_stars",
+      "label": "garden_stars",
+      "tag": "cards",
+      "row": 2,
+      "col": 5,
+      "attributes": [
+        { "name": "couple_id", "type": "TEXT", "key": ["pk", "fk"], "references": "couples.id" },
+        { "name": "card_id", "type": "TEXT", "key": "pk" },
+        { "name": "starred_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
+      "id": "card_box_unlocks",
+      "label": "card_box_unlocks",
+      "tag": "cards",
+      "row": 3,
+      "col": 5,
+      "attributes": [
+        { "name": "couple_id", "type": "TEXT", "key": ["pk", "fk"], "references": "couples.id" },
+        { "name": "box_id", "type": "TEXT", "key": "pk" },
+        { "name": "unlocked_at", "type": "INTEGER · epoch ms" }
+      ]
+    },
+    {
       "id": "push_subscriptions",
       "label": "push_subscriptions",
       "tag": "delivery",
@@ -321,7 +379,7 @@
         { "name": "auth", "type": "TEXT" },
         { "name": "journal", "type": "INTEGER · 0/1" },
         { "name": "reminders", "type": "INTEGER · 0/1" },
-        { "name": "journal_slot", "type": "TEXT" },
+        { "name": "journal_slot", "type": "TEXT · unused" },
         { "name": "reminder_slot", "type": "TEXT" },
         { "name": "failures", "type": "INTEGER" },
         { "name": "created_at", "type": "INTEGER · epoch ms" },
@@ -445,7 +503,8 @@
       "from": "wishes",
       "to": "couples",
       "fromCardinality": "many",
-      "toCardinality": "one"
+      "toCardinality": "one",
+      "toSide": "top"
     },
     {
       "id": "wishes_owner",
@@ -483,7 +542,8 @@
       "from": "couple_events",
       "to": "couples",
       "fromCardinality": "many",
-      "toCardinality": "one"
+      "toCardinality": "one",
+      "toSide": "top"
     },
     {
       "id": "avatar_uploads_user",
@@ -497,7 +557,9 @@
       "from": "push_subscriptions",
       "to": "users",
       "fromCardinality": "many",
-      "toCardinality": "one"
+      "toCardinality": "one",
+      "fromSide": "top",
+      "toSide": "top"
     },
     {
       "id": "garden_days_couple",
@@ -525,14 +587,17 @@
       "from": "garden_growth",
       "to": "couples",
       "fromCardinality": "many",
-      "toCardinality": "one"
+      "toCardinality": "one",
+      "toSide": "top"
     },
     {
       "id": "garden_levels_couple",
       "from": "garden_levels",
       "to": "couples",
       "fromCardinality": "one",
-      "toCardinality": "one"
+      "toCardinality": "one",
+      "fromSide": "right",
+      "toSide": "top"
     },
     {
       "id": "garden_levels_proposer",
@@ -543,44 +608,80 @@
       "fromOptional": true,
       "identifying": false,
       "variant": "dashed"
+    },
+    {
+      "id": "notes_couple",
+      "from": "notes",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "notes_writer",
+      "from": "notes",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "notes_recipient",
+      "from": "notes",
+      "to": "users",
+      "fromCardinality": "many",
+      "toCardinality": "one"
+    },
+    {
+      "id": "journal_entries_note",
+      "from": "journal_entries",
+      "to": "notes",
+      "fromCardinality": "one",
+      "toCardinality": "one",
+      "fromOptional": true,
+      "identifying": false,
+      "variant": "dashed"
+    },
+    {
+      "id": "garden_stars_couple",
+      "from": "garden_stars",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "toSide": "top"
+    },
+    {
+      "id": "card_box_unlocks_couple",
+      "from": "card_box_unlocks",
+      "to": "couples",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "toSide": "top"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
       "title": "Source of truth",
-      "items": [
-        "All 20 tables come from the additive migrations 0001–0012 on Cloudflare D1 (SQLite).",
-        "INTEGER · epoch ms columns store Unix milliseconds; date columns store YYYY-MM-DD text with a CHECK glob.",
-        "Enum values behind “TEXT · enum” are enforced with CHECK constraints, not a lookup table."
-      ]
+      "items": ["All 23 tables come from the additive migrations 0001–0016 on Cloudflare D1 (SQLite).", "INTEGER · epoch ms columns store Unix milliseconds; date columns store YYYY-MM-DD text with a CHECK glob.", "Enum values behind “TEXT · enum” are enforced with CHECK constraints, not a lookup table."]
     },
     {
       "dot": "amber",
       "title": "Links without a foreign key",
-      "items": [
-        "otp_codes.email and otp_requests.email match users.email, but the DDL declares no FK.",
-        "garden_growth.day is not an FK to garden_days because its key is the composite (couple_id, day).",
-        "At most two couple_members rows per couple is enforced by the join statement, not a constraint."
-      ]
+      "items": ["otp_codes.email and otp_requests.email match users.email, but the DDL declares no FK.", "garden_growth.day is not an FK to garden_days because its key is the composite (couple_id, day).", "At most two couple_members rows per couple is enforced by the join statement, not a constraint.", "garden_stars.card_id and card_box_unlocks.box_id name cards and boxes defined in code, so they have no FK."]
     },
     {
       "dot": "emerald",
       "title": "One-to-one and optional ends",
-      "items": [
-        "Unique FKs make pair_codes, wish_claims, photos.wish_id and garden_levels one-to-one; couple_members.user_id is unique too.",
-        "Dashed links are optional: photos may be unattached, a claim survives its wish deletion, and proposer_id can be NULL.",
-        "couples.created_by uses ON DELETE SET NULL, so the creator link can disappear while the couple remains."
-      ]
+      "items": ["Unique FKs make pair_codes, wish_claims, photos.wish_id, journal_entries.note_id and garden_levels one-to-one; couple_members.user_id is unique too.", "Dashed links are optional: photos may be unattached, a claim survives its wish deletion, an entry may have no note, and proposer_id can be NULL.", "couples.created_by uses ON DELETE SET NULL, so the creator link can disappear while the couple remains."]
     },
     {
       "dot": "violet",
       "title": "Cleanup and partial indexes",
-      "items": [
-        "otp_codes, sessions, otp_requests, join_attempts and wish_spins are swept daily by expires_at or created_at indexes.",
-        "Photos are split by attachment with partial indexes: photos_entry, photos_wish and photos_pending.",
-        "garden_days_flipped and wish_claims_gone cover only the rows the pending work queries."
-      ]
+      "items": ["otp_codes, sessions, otp_requests, join_attempts and wish_spins are swept daily by expires_at or created_at indexes.", "Photos are split by attachment with partial indexes: photos_entry, photos_wish and photos_pending.", "garden_days_flipped and wish_claims_gone cover only the rows the pending work queries.", "notes_writer and notes_recipient cover open notes only; notes_scheduled and notes_unopened serve the send and reminder jobs."]
+    },
+    {
+      "dot": "rose",
+      "title": "Unused leftovers",
+      "items": ["notes.notified_at, push_subscriptions.journal_slot and the index journal_entries_created still exist but no code reads them.", "Migrations are additive, so the columns and index stay; the quiet-hours and journal-slot features that used them were removed."]
     }
   ]
 }
