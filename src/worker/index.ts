@@ -1,6 +1,7 @@
 import type { Env } from "./env";
 import { app } from "./app";
 import { runCleanup, sweepPhotos } from "./lib/cleanup";
+import { sendScheduledNotes } from "./lib/notes";
 import { vnHour } from "../shared/days";
 import { notifyNotes, remindEvents } from "./lib/notify";
 import { consumePushBatch, type PushJob } from "./lib/pushQueue";
@@ -17,8 +18,10 @@ export default {
     await consumePushBatch(batch, env);
   },
 
-  // One hourly trigger dispatches jobs using Vietnam time.
+  // Check scheduled notes every minute; other jobs keep their hourly Vietnam slots.
   scheduled(controller, env, ctx) {
+    ctx.waitUntil(sendScheduledNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] scheduled notes failed")));
+    if (new Date(controller.scheduledTime).getUTCMinutes() !== 0) return;
     switch (vnHour(controller.scheduledTime)) {
       case 8:
       case 20:

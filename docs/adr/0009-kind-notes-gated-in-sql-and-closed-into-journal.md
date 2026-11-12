@@ -1,5 +1,7 @@
 # ADR 0009: Kind notes are gated in SQL, cool for 8 hours, and close into a journal entry both partners own
 
+Delivery timing was updated on 12 November 2026: [current product rules](../product/notes.md#delivery-update-12-november-2026). `scheduled_at` is nullable, so existing drafts keep manual delivery. A minute cron atomically claims due notes with `sent_at IS NULL`, records actual delivery in `sent_at`, and queues the arrival push. Other hourly jobs run only at minute zero; reminders keep their 07:00 Vietnam slot.
+
 Status: proposed (November 2026). Replaces the unreleased "letters gated in SQL and photo reuse" version of this ADR; time capsule letters never shipped.
 
 ## Context

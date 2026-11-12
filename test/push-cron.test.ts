@@ -34,11 +34,14 @@ it("Vietnam helpers use UTC+7 across calendar boundaries", () => {
   expect(vnDay(Date.parse("2026-12-31T17:00:00Z"))).toBe("2027-01-01");
 });
 
-it("other hours return before touching D1 or fetch", async () => {
+it("other hours and off-hour minutes only check scheduled notes", async () => {
   const prepare = vi.spyOn(env.DB, "prepare"); const batch = vi.spyOn(env.DB, "batch"); const send = mockPush();
   for (let hour = 0; hour < 24; hour++) {
     if ([3, 7, 8, 20].includes(hour)) continue;
     await runPushCron(`2026-11-08T${String(hour).padStart(2, "0")}:00:00+07:00`);
   }
-  expect(prepare).not.toHaveBeenCalled(); expect(batch).not.toHaveBeenCalled(); expect(send.sent).toHaveLength(0);
+  for (const hour of [3, 7, 8, 20]) await runPushCron(`2026-11-08T${String(hour).padStart(2, "0")}:01:00+07:00`);
+  expect(prepare).toHaveBeenCalledTimes(24);
+  for (const [sql] of prepare.mock.calls) expect(sql).toContain("sent_at IS NULL AND scheduled_at <= ?");
+  expect(batch).not.toHaveBeenCalled(); expect(send.sent).toHaveLength(0);
 });

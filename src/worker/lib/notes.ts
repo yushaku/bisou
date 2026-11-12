@@ -1,14 +1,16 @@
+import type { Env } from "../env";
+import { notifyNote } from "./notify";
 import { NOTE_COOLDOWN } from "../../shared/notes";
 import type { NoteInput, NoteLists, NotePick, ReceivedNote, WrittenNote } from "../../shared/types";
 export interface NoteRow extends NoteInput {
   id: string; couple_id: string; writer_id: string; recipient_id: string;
-  created_at: number; updated_at: number; sent_at: number | null; opened_at: number | null;
+  scheduled_at: number | null; created_at: number; updated_at: number; sent_at: number | null; opened_at: number | null;
   closed_at: number | null; notified_at: number | null; reminded_at: number | null;
   pick: NotePick | null; line: string;
 }
 const parts = (row: NoteInput): NoteInput => ({ happened: row.happened, feel: row.feel, need: row.need, hope: row.hope });
 export function toWritten(row: NoteRow): WrittenNote {
-  return { id: row.id, ...parts(row), state: row.opened_at !== null ? "opened" : row.sent_at !== null ? "sent" : "draft", sendableAt: row.created_at + NOTE_COOLDOWN };
+  return { id: row.id, ...parts(row), state: row.opened_at !== null ? "opened" : row.sent_at !== null ? "sent" : "draft", sendableAt: row.scheduled_at ?? row.created_at + NOTE_COOLDOWN, ...(row.scheduled_at !== null ? { scheduledAt: row.scheduled_at } : {}) };
 }
 export function toReceived(row: NoteRow): ReceivedNote {
   return row.opened_at === null ? { id: row.id, state: "waiting" } : { id: row.id, state: "opened", ...parts(row) };
@@ -27,4 +29,14 @@ export async function noteLists(db: D1Database, user: string, couple: string): P
   return { fromMe: written!.results.map(toWritten), toMe: received!.results.sort((a, b) =>
     Number(a.opened_at !== null) - Number(b.opened_at !== null) ||
     (a.opened_at !== null && b.opened_at !== null ? a.opened_at - b.opened_at : 0) || 0).map(toReceived) };
+}
+
+export async function sendScheduledNotes(env: Env, now: number): Promise<void> {
+  const { results } = await env.DB.prepare(`UPDATE notes SET sent_at = ?, updated_at = ?, notified_at = ?
+    WHERE sent_at IS NULL AND scheduled_at <= ? RETURNING writer_id, recipient_id`).bind(now, now, now, now)
+    .all<{ writer_id: string; recipient_id: string }>();
+  for (const row of results) {
+    try { await notifyNote(env, row.writer_id, row.recipient_id); }
+    catch { console.error("[bisou] scheduled note push failed"); }
+  }
 }

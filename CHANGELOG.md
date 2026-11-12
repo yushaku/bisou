@@ -4,6 +4,8 @@
 
 ### Added
 
+- Kind notes can send now, automatically in eight hours, or at a chosen date and time. Scheduled notes can be edited, rescheduled or deleted before delivery; existing drafts stay private until the writer sends or schedules them.
+
 - A card box opened once plays offline; signing out removes box text and seen cards from the phone.
 
 - Play card boxes from Home: free boxes in full, a paid box through its preview cards, with seen cards kept only on your phone.

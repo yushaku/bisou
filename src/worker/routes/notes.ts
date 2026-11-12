@@ -3,7 +3,7 @@ import { notifyNote } from "../lib/notify";
 import { entriesWithPhotos, findEntry } from "../lib/journal";
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import { NOTE_COOLDOWN, validateClose, validateClosedNote, validateNote } from "../../shared/notes";
+import { NOTE_COOLDOWN, validateClose, validateClosedNote, validateNote, validateNoteDelivery } from "../../shared/notes";
 import type { AppEnv } from "../env";
 import { noteLists, toWritten, type NoteRow } from "../lib/notes";
 type NoteEnv = AppEnv & { Variables: { noteCouple: string; notePartner: string } };
@@ -26,21 +26,26 @@ const save: Handler<NoteEnv> = async (c) => {
   // Check ownership before validation so a hidden id behaves like a missing id even with invalid input.
   const current = updating || sending ? await db.prepare("SELECT * FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL").bind(id, user, couple).first<NoteRow>() : null;
   if ((updating || sending) && !current) return c.json({ error: "not_found" }, 404);
-  const parsed = validateNote(await c.req.json().catch(() => null));
+  const raw = await c.req.json().catch(() => null);
+  const parsed = validateNote(raw);
   if ("error" in parsed) return c.json(parsed, 400);
+  const delivery = validateNoteDelivery(raw, now);
+  if ("error" in delivery) return c.json(delivery, 400);
+  const changingDelivery = delivery.immediate || delivery.scheduledAt !== undefined;
+  if (current?.sent_at != null && changingDelivery) return c.json({ error: "note_sent" }, 409);
   const { happened, feel, need, hope } = parsed.input;
   const statement = sending
-    ? db.prepare(`UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND created_at <= ? RETURNING *`).bind(happened, feel, need, hope, now, now, now, id, user, couple, now - NOTE_COOLDOWN)
+    ? db.prepare(`UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, sent_at = ?, notified_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND sent_at IS NULL AND scheduled_at IS NULL AND created_at <= ? RETURNING *`).bind(happened, feel, need, hope, now, now, now, id, user, couple, now - NOTE_COOLDOWN)
     : updating
-    ? db.prepare(`UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ? WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL RETURNING *`).bind(happened, feel, need, hope, now, id, user, couple)
-    : db.prepare(`INSERT INTO notes (id, couple_id, writer_id, recipient_id, happened, feel, need, hope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`).bind(id, couple, user, c.get("notePartner"), happened, feel, need, hope, now, now);
+    ? db.prepare(`UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, updated_at = ?, scheduled_at = CASE WHEN ? THEN ? ELSE scheduled_at END, sent_at = COALESCE(sent_at, ?), notified_at = COALESCE(notified_at, ?) WHERE id = ? AND writer_id = ? AND couple_id = ? AND opened_at IS NULL AND (? = 0 OR sent_at IS NULL) RETURNING *`).bind(happened, feel, need, hope, now, Number(changingDelivery), delivery.scheduledAt ?? null, delivery.immediate ? now : null, delivery.immediate ? now : null, id, user, couple, Number(changingDelivery))
+    : db.prepare(`INSERT INTO notes (id, couple_id, writer_id, recipient_id, happened, feel, need, hope, created_at, updated_at, scheduled_at, sent_at, notified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`).bind(id, couple, user, c.get("notePartner"), happened, feel, need, hope, now, now, delivery.scheduledAt ?? null, delivery.immediate ? now : null, delivery.immediate ? now : null);
   const row = await statement.first<NoteRow>();
   if (!row) {
     const latest = await db.prepare("SELECT * FROM notes WHERE id = ? AND writer_id = ? AND couple_id = ? AND closed_at IS NULL").bind(id, user, couple).first<NoteRow>();
     if (!latest) return c.json({ error: "not_found" }, 404);
-    return c.json({ error: sending ? latest.sent_at !== null ? "note_sent" : "note_cooling" : "note_opened" }, 409);
+    return c.json({ error: sending || changingDelivery ? latest.sent_at !== null ? "note_sent" : "note_cooling" : "note_opened" }, 409);
   }
-  if (sending) c.executionCtx.waitUntil(notifyNote(c.env, user, row.recipient_id).catch(() => console.error("[bisou] note push failed")));
+  if (sending || delivery.immediate) c.executionCtx.waitUntil(notifyNote(c.env, user, row.recipient_id).catch(() => console.error("[bisou] note push failed")));
   return c.json({ note: toWritten(row) }, updating || sending ? 200 : 201);
 };
 notes.post("/", limitBody, save);

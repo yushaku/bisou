@@ -21,7 +21,7 @@ export function useNotes(onSignedOut: () => void) {
   }, [refresh]);
   useEffect(() => {
     const now = Date.now();
-    const next = Math.min(...(lists?.fromMe.filter((n) => n.state === "draft" && n.sendableAt > now).map((n) => n.sendableAt) ?? []));
+    const next = Math.min(...(lists?.fromMe.filter((n) => n.state === "draft" && (n.sendableAt > now || n.scheduledAt !== undefined)).map((n) => n.scheduledAt !== undefined ? Math.max(n.sendableAt + 1_000, now + 60_000) : n.sendableAt) ?? []));
     if (!Number.isFinite(next)) return;
     const timer = setTimeout(() => { tick((v) => v + 1); void refresh(); }, Math.min(next - now + 100, 2_147_483_647));
     return () => clearTimeout(timer);

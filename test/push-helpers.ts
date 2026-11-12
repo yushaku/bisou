@@ -8,7 +8,7 @@ import type { PushJob } from "../src/worker/lib/pushQueue";
 export async function runPushCron(time: string) {
   const pending: Promise<unknown>[] = [];
   const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); }, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
-  worker.scheduled({ scheduledTime: Date.parse(time), cron: "0 * * * *", noRetry: () => {} } as ScheduledController, env, ctx);
+  worker.scheduled({ scheduledTime: Date.parse(time), cron: "* * * * *", noRetry: () => {} } as ScheduledController, env, ctx);
   await Promise.all(pending);
 }
 

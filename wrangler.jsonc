@@ -6,7 +6,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   // One hourly trigger; jobs dispatch by Vietnam hour in src/worker/index.ts.
-  "triggers": { "crons": ["0 * * * *"] },
+  "triggers": { "crons": ["* * * * *"] },
   "assets": {
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
