@@ -34,14 +34,14 @@ export function JournalComposeSheet({ open, onOpenChange, initialTab, partnerNam
   };
   const guard = (event: Event) => { event.preventDefault(); close(); };
   return <Drawer open={open} onOpenChange={(value) => value ? onOpenChange(true) : close()} dismissible={!journalLock && !noteLock}>
-    <DrawerContent aria-label={t(tab === "notes" ? "compose.kindNote" : "journal.sectionFeed")} aria-labelledby={undefined} aria-describedby={undefined} onEscapeKeyDown={guard} onPointerDownOutside={guard} onCloseAutoFocus={(event) => { event.preventDefault(); focusCreateButton(); }}>
+    <DrawerContent className="h-[80dvh]" aria-label={t(tab === "notes" ? "compose.kindNote" : "journal.sectionFeed")} aria-labelledby={undefined} aria-describedby={undefined} onEscapeKeyDown={guard} onPointerDownOutside={guard} onCloseAutoFocus={(event) => { event.preventDefault(); focusCreateButton(); }}>
       <Tabs value={tab} onValueChange={(value) => setTab(value === "notes" ? "notes" : "feed")} className="mx-auto min-h-0 w-full max-w-md flex-1">
         <TabsList aria-label={t("nav.create")} className="mx-5 mt-2 w-auto shrink-0">
           <TabsTrigger value="feed" disabled={saving}>{t("journal.sectionFeed")}</TabsTrigger>
           <TabsTrigger value="notes" disabled={saving}>{t("compose.kindNote")}</TabsTrigger>
         </TabsList>
         <TabsContent value="feed" forceMount hidden={tab !== "feed"} className="min-h-0 flex flex-col hidden:hidden">
-          <ComposeForm partnerName={partnerName} onSaved={onSaved} onSignedOut={onSignedOut} onLock={setJournalLock} onClose={() => close()} onDone={() => { setJournalLock(null); close([noteLock]); }} />
+          <ComposeForm expandedPhotos partnerName={partnerName} onSaved={onSaved} onSignedOut={onSignedOut} onLock={setJournalLock} onClose={() => close()} onDone={() => { setJournalLock(null); close([noteLock]); }} />
         </TabsContent>
         <TabsContent value="notes" forceMount hidden={tab !== "notes"} className="min-h-0 flex flex-col hidden:hidden">
           <NoteForm partnerName={partnerName} onSaved={onNoteSaved} onRefresh={() => {}} onSignedOut={onSignedOut} onLock={setNoteLock} onClose={() => close()} onDone={() => { setNoteLock(null); close([journalLock]); }} />

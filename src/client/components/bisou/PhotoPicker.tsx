@@ -7,7 +7,8 @@ import { decodePhoto, renderSquare, type Area } from "@/lib/photo";
 import { PhotoCropDialog, type CropRequest } from "./PhotoCropDialog";
 import type { useUploadQueue } from "./useUploadQueue";
 
-export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingChange }: {
+export function PhotoPicker({ expandedEmpty = false, queue, max, saving, onChange: change, onPreparingChange }: {
+  expandedEmpty?: boolean;
   queue: ReturnType<typeof useUploadQueue>;
   max: number;
   saving: boolean;
@@ -15,6 +16,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
   onPreparingChange?: (preparing: boolean) => void;
 }) {
   const { t } = useI18n();
+  const expanded = expandedEmpty && queue.items.length === 0;
   const [preparing, setPreparing] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [cropping, setCropping] = useState<CropRequest | null>(null);
@@ -78,7 +80,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
   }
 
   return <>
-          <div className="flex flex-col gap-3">
+          <div className={`flex flex-col gap-3${expanded ? " flex-1" : ""}`}>
             <p className="flex items-center justify-between">
               <span className="font-semibold">{t("compose.photos")}</span>
               <span className="text-sm text-muted-foreground tabular-nums">
@@ -137,7 +139,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
             <Button
               type="button"
               variant="outline"
-              className="h-12"
+              className={expanded ? "h-auto min-h-40 flex-1 flex-col rounded-(--photo-radius) edge bg-card text-muted-foreground" : "h-12"}
               loading={preparing}
               disabled={saving}
               onClick={() => {
@@ -145,7 +147,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
                 else fileInput.current?.click();
               }}
             >
-              {!preparing && <ImagePlus aria-hidden="true" />}
+              {!preparing && <ImagePlus aria-hidden="true" className={expanded ? "size-8" : undefined} />}
               {preparing ? t("compose.preparing") : t("compose.add")}
             </Button>
             {/* image/* lets iOS hand over a JPEG for a HEIC photo. */}

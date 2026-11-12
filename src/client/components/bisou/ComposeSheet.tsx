@@ -78,13 +78,14 @@ export function ComposeSheet({ open, onOpenChange, fromMenu, ...form }: ComposeS
 }
 
 interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChange" | "fromMenu"> {
+  expandedPhotos?: boolean;
   onLock: (lock: Lock) => void;
   onClose: () => void;
   onDone: () => void;
 }
 
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
-export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, onDone }: ComposeFormProps) {
+export function ComposeForm({ expandedPhotos = false, entry, receiving, onSaved, onSignedOut, onLock, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const ids = useId();
@@ -159,7 +160,7 @@ export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, on
           </div>
 
           {receiving && <p className="rounded-lg bg-muted p-3 text-sm whitespace-pre-line">{journalText}</p>}
-          <PhotoPicker queue={queue} onPreparingChange={setPreparing} max={ENTRY_PHOTOS_MAX} saving={saving} onChange={change} />
+          <PhotoPicker expandedEmpty={expandedPhotos} queue={queue} onPreparingChange={setPreparing} max={ENTRY_PHOTOS_MAX} saving={saving} onChange={change} />
 
           <p role="alert" className="text-base text-destructive empty:hidden">
             {formError}

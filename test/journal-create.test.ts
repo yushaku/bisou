@@ -9,6 +9,7 @@ import { vi as vietnamese } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
 import { JournalComposeSheet } from "../src/client/components/bisou/JournalComposeSheet";
 import { ComposeForm, ComposeSheet } from "../src/client/components/bisou/ComposeSheet";
+import { PhotoPicker } from "../src/client/components/bisou/PhotoPicker";
 import { PersonAvatar } from "../src/client/components/bisou/CoupleAvatars";
 import { DayField } from "../src/client/components/bisou/DayField";
 import { Tabs, TabsContent, TabsTrigger } from "../src/client/components/ui/tabs";
@@ -38,7 +39,7 @@ vi.mock("../src/client/lib/useTabNavigation", async (original) => ({ ...await or
 
 vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
 
-type Props = { className?: string; id?: string; "aria-describedby"?: string; initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
+type Props = { expandedPhotos?: boolean; expandedEmpty?: boolean; className?: string; id?: string; "aria-describedby"?: string; initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -128,6 +129,14 @@ it.each(["vi", "en"])("the compose sheet has both mounted tabs in %s", (locale) 
   expect(after.map(n => n.props.forceMount)).toEqual([true, true]);
   expect(after.map(n => n.props.hidden)).toEqual([true, false]);
   expect(after.map(n => (n.props.children as ReactElement).type)).toEqual(before.map(n => (n.props.children as ReactElement).type));
+});
+it("only the tabbed journal opts into the expanded photo picker", () => {
+  expect(composer().find(n => n.type === ComposeForm)?.props.expandedPhotos).toBe(true);
+  const props = { partnerName: "Linh", onSaved: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
+  hooks.values = []; hooks.index = 0;
+  expect(nodes(ComposeForm({ ...props, expandedPhotos: true })).find(n => n.type === PhotoPicker)?.props.expandedEmpty).toBe(true);
+  hooks.values = []; hooks.index = 0;
+  expect(nodes(ComposeForm(props)).find(n => n.type === PhotoPicker)?.props.expandedEmpty).toBe(false);
 });
 it.each([0, 1])("closing checks unsaved form %s, including the hidden tab", (index) => {
   composer().filter(n => n.props.onLock)[index]!.props.onLock!("dirty");
