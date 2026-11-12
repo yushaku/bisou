@@ -6,8 +6,8 @@ import { Button } from "../ui/button";
 import { useI18n } from "../../i18n";
 import { CardBoxCard } from "./CardBoxCard";
 
-export function CardBoxDeck({ card, boxId, boxName, previous, onNext, onPrevious, onRandom }: {
-  card: BoxCard; boxId: string; boxName: string; previous?: BoxCard;
+export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onPrevious, onRandom }: {
+  card: BoxCard; boxId: string; boxName: string; previous?: BoxCard; adult?: true;
   onNext: () => void; onPrevious: () => void; onRandom: () => void;
 }) {
   const { t } = useI18n();
@@ -69,17 +69,17 @@ export function CardBoxDeck({ card, boxId, boxName, previous, onNext, onPrevious
           setShuffling(false); change("random");
         }}>
         <div style={{ transform: backDrag ? `translateY(${Math.min(offset / 12, 12)}px) scale(${1 - Math.min(offset / 4000, .06)})` : offset ? `translateX(${offset}px) rotate(${offset / 24}deg)` : undefined, transition: drag.current ? "none" : "transform 180ms var(--ease)" }}>
-          <CardBoxCard card={card} boxId={boxId} boxName={boxName} />
+          <CardBoxCard card={card} boxId={boxId} boxName={boxName} adult={adult} />
         </div>
       </div></div>
       {backDrag && <div aria-hidden="true" className="card-box-back-preview" style={{ transform: `translateX(calc(-100% + ${offset}px)) rotate(${-14 + Math.min(offset / 24, 14)}deg)` }}>
-        <CardBoxCard card={previous!} boxId={boxId} boxName={boxName} />
+        <CardBoxCard card={previous!} boxId={boxId} boxName={boxName} adult={adult} />
       </div>}
       {leaving && <div aria-hidden="true" className={`card-box-leaving card-box-leaving-${leaving.direction}`} style={{
         "--drag-x": `${leaving.direction === "next" ? leaving.offset : 0}px`, "--drag-rotation": `${leaving.direction === "next" ? leaving.offset / 24 : 0}deg`,
         "--fly-x": "-130%", "--fly-rotation": "-14deg",
       } as CSSProperties} onAnimationEnd={() => { setLeaving(null); busy.current = false; }}>
-        <CardBoxCard card={leaving.card} boxId={boxId} boxName={boxName} />
+        <CardBoxCard card={leaving.card} boxId={boxId} boxName={boxName} adult={adult} />
       </div>}
     </div>
     <div className="flex gap-3">

@@ -37,7 +37,9 @@
       "box-blue": "#bdd9e8",
       "box-blue-foreground": "#244b63",
       "box-lilac": "#d9c9e8",
-      "box-lilac-foreground": "#503563"
+      "box-lilac-foreground": "#503563",
+      "box-rose": "#94475e",
+      "box-rose-foreground": "#fff1f3"
     }
   },
   "cocoa": {
@@ -78,7 +80,9 @@
       "box-blue": "#bdd9e8",
       "box-blue-foreground": "#244b63",
       "box-lilac": "#d9c9e8",
-      "box-lilac-foreground": "#503563"
+      "box-lilac-foreground": "#503563",
+      "box-rose": "#94475e",
+      "box-rose-foreground": "#fff1f3"
     }
   },
   "latte": {
@@ -119,7 +123,9 @@
       "box-blue": "#bdd9e8",
       "box-blue-foreground": "#244b63",
       "box-lilac": "#d9c9e8",
-      "box-lilac-foreground": "#503563"
+      "box-lilac-foreground": "#503563",
+      "box-rose": "#94475e",
+      "box-rose-foreground": "#fff1f3"
     }
   },
   "frappe": {
@@ -160,7 +166,9 @@
       "box-blue": "#bdd9e8",
       "box-blue-foreground": "#244b63",
       "box-lilac": "#d9c9e8",
-      "box-lilac-foreground": "#503563"
+      "box-lilac-foreground": "#503563",
+      "box-rose": "#94475e",
+      "box-rose-foreground": "#fff1f3"
     }
   },
   "macchiato": {
@@ -201,7 +209,9 @@
       "box-blue": "#bdd9e8",
       "box-blue-foreground": "#244b63",
       "box-lilac": "#d9c9e8",
-      "box-lilac-foreground": "#503563"
+      "box-lilac-foreground": "#503563",
+      "box-rose": "#94475e",
+      "box-rose-foreground": "#fff1f3"
     }
   },
   "mocha": {
@@ -242,7 +252,9 @@
       "box-blue": "#bdd9e8",
       "box-blue-foreground": "#244b63",
       "box-lilac": "#d9c9e8",
-      "box-lilac-foreground": "#503563"
+      "box-lilac-foreground": "#503563",
+      "box-rose": "#94475e",
+      "box-rose-foreground": "#fff1f3"
     }
   }
 }

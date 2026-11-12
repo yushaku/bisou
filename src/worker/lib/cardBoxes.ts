@@ -1,5 +1,5 @@
 import type { CardBoxCard, CardBoxSummary, CardBoxDetail, CardBoxText } from "../../shared/cardBox";
-interface Box { id: string; name: CardBoxText; description: CardBoxText; free: boolean; cover: string; price: number | null; cards: CardBoxCard[] }
+interface Box { id: string; name: CardBoxText; description: CardBoxText; free: boolean; adult?: true; cover: string; price: number | null; cards: CardBoxCard[] }
 export const CARD_BOXES: Box[] = [
   {
     "id": "lam-quen-lai",
@@ -113,6 +113,143 @@ export const CARD_BOXES: Box[] = [
         "text": {
           "vi": "Hồi mới quen, có khoảnh khắc nhỏ nào mà đến giờ mỗi người vẫn nhớ?",
           "en": "From when you first met, what small moment does each of you still remember?"
+        }
+      }
+    ]
+  },
+  {
+    "id": "rau-ram",
+    "name": {
+      "vi": "Rau răm",
+      "en": "Spicy"
+    },
+    "description": {
+      "vi": "Cay cay một chút, chỉ dành cho hai đứa.",
+      "en": "A little spicy, just for the two of you."
+    },
+    "free": true,
+    "adult": true,
+    "cover": "/card-boxes/rau-ram.jpg",
+    "price": null,
+    "cards": [
+      {
+        "id": "rr-01",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Lần đầu mỗi người thấy người kia thật sự quyến rũ là lúc nào? Kể kỹ một chút.",
+          "en": "When did each of you first find the other truly attractive? Tell it with a little detail."
+        },
+        "dare": {
+          "vi": "Hôn nhau một nụ thật chậm, đếm thầm đến mười rồi mới rời ra.",
+          "en": "Share one slow kiss, counting silently to ten before you part."
+        }
+      },
+      {
+        "id": "rr-02",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Người kia mặc gì thì mỗi người thấy khó rời mắt nhất?",
+          "en": "What does the other wear that each of you finds hardest to look away from?"
+        },
+        "dare": {
+          "vi": "Mỗi người cởi bớt một món đồ đang mặc, món nào tùy mình.",
+          "en": "Each take off one thing you're wearing, your choice which."
+        }
+      },
+      {
+        "id": "rr-03",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Nụ hôn nào của hai đứa mà mỗi người nhớ nhất, và vì sao?",
+          "en": "Which of your kisses does each of you remember most, and why?"
+        },
+        "dare": {
+          "vi": "Một người nhắm mắt, người kia hôn ba chỗ bất kỳ trên mặt và cổ, rồi đoán chỗ nào là đầu tiên. Rồi đổi lượt.",
+          "en": "One closes their eyes while the other kisses three spots on their face and neck, then guess which came first. Then swap."
+        }
+      },
+      {
+        "id": "rr-04",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Có kiểu chạm nào mỗi người rất thích mà chưa từng nói ra?",
+          "en": "Is there a kind of touch each of you loves but has never said out loud?"
+        },
+        "dare": {
+          "vi": "Xoa vai và lưng cho nhau thật chậm, mỗi người hai phút. Người được xoa chỉ cần nói \"chỗ đó\" hay \"nhẹ thôi\".",
+          "en": "Give each other a slow shoulder and back massage, two minutes each. The one receiving just says \"right there\" or \"gentler\"."
+        }
+      },
+      {
+        "id": "rr-05",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Có giấc mơ nào về người kia mà mỗi người hơi ngại kể không? Kể bản đã kiểm duyệt cũng được.",
+          "en": "Has either of you had a dream about the other you'd be a bit shy to tell? The censored version counts."
+        },
+        "dare": {
+          "vi": "Ghé sát tai người kia, thì thầm một điều mình muốn hai đứa làm tối nay. Rồi đổi lượt.",
+          "en": "Lean close and whisper in the other's ear one thing you'd like the two of you to do tonight. Then swap."
+        }
+      },
+      {
+        "id": "rr-06",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Mỗi người thấy mình quyến rũ nhất vào lúc nào?",
+          "en": "When does each of you feel at your most attractive?"
+        },
+        "dare": {
+          "vi": "Ngồi thật gần, mỗi người hôn dọc cánh tay người kia, từ đầu ngón tay lên đến vai, thật chậm.",
+          "en": "Sit close and each kiss along the other's arm, from fingertips to shoulder, slowly."
+        }
+      },
+      {
+        "id": "rr-07",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Ông bà bảo rau răm làm bớt \"nóng\". Theo mỗi người, hai đứa nên ăn thêm hay ăn bớt?",
+          "en": "Folk wisdom says rau răm cools you down. Should the two of you eat more of it, or less?"
+        },
+        "dare": {
+          "vi": "Ôm sát nhau nhảy chậm hết một bài, không cần nhạc, một người ngân nga là đủ.",
+          "en": "Slow dance close together for one song; no music needed, one of you can hum."
+        }
+      },
+      {
+        "id": "rr-08",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Người kia làm gì, dù rất nhỏ, mà mỗi người \"đổ\" ngay tại chỗ?",
+          "en": "What does the other do, however small, that makes each of you melt on the spot?"
+        },
+        "dare": {
+          "vi": "Một người nhắm mắt, người kia dùng đầu ngón tay vẽ chậm một hình lên lưng. Đoán sai thì bị hôn một cái. Rồi đổi lượt.",
+          "en": "One closes their eyes while the other slowly traces a shape on their back with a fingertip. A wrong guess earns a kiss. Then swap."
+        }
+      },
+      {
+        "id": "rr-09",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Một buổi tối chỉ có hai đứa, mỗi người muốn nó bắt đầu thế nào và kết thúc ra sao?",
+          "en": "An evening with just the two of you: how would each of you like it to start, and to end?"
+        },
+        "dare": {
+          "vi": "Cởi một cúc áo hay một món đồ của người kia, chỉ khi người kia gật đầu. Rồi đổi lượt.",
+          "en": "Undo one button or take off one piece of the other's clothing, only once they nod. Then swap."
+        }
+      },
+      {
+        "id": "rr-10",
+        "kind": "truthDare",
+        "truth": {
+          "vi": "Có điều gì mỗi người muốn hai đứa thử cùng nhau mà chưa dám nói? Nói một nửa thôi cũng được.",
+          "en": "Is there something each of you would like to try together but hasn't dared to say? Half of it is enough."
+        },
+        "dare": {
+          "vi": "Nằm cạnh nhau, nhìn vào mắt nhau một phút, rồi hôn khi cả hai cùng thấy muốn.",
+          "en": "Lie side by side and look into each other's eyes for a minute, then kiss when you both feel like it."
         }
       }
     ]
@@ -499,7 +636,7 @@ export const CARD_BOXES: Box[] = [
   }
 ];
 function isOpen(box: Box): boolean { return box.free; }
-function summary(box: Box): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box), cover: box.cover, price: box.price }; }
+function summary(box: Box): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box), ...(box.adult ? { adult: box.adult } : {}), cover: box.cover, price: box.price }; }
 export function boxList(): CardBoxSummary[] { return [...CARD_BOXES].sort((a, b) => Number(isOpen(b)) - Number(isOpen(a))).map(summary); }
 export function boxDetail(boxId: string): CardBoxDetail | null {
   const box = CARD_BOXES.find(box => box.id === boxId);

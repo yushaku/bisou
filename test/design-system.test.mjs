@@ -81,7 +81,7 @@ test("every palette supplies the same semantic tokens with readable text pairs",
     return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
   };
   const pairs = [
-    ["box-peach-foreground", "box-peach"], ["box-blue-foreground", "box-blue"], ["box-lilac-foreground", "box-lilac"],
+    ["box-peach-foreground", "box-peach"], ["box-blue-foreground", "box-blue"], ["box-lilac-foreground", "box-lilac"], ["box-rose-foreground", "box-rose"],
     ["foreground", "background"], ["card-foreground", "card"], ["popover-foreground", "popover"],
     ["muted-foreground", "muted"], ["primary-foreground", "primary"], ["secondary-foreground", "secondary"],
     ["destructive", "card"], ["success-foreground", "success"], ["warning-foreground", "warning"], ["info-foreground", "info"],

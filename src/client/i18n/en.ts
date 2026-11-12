@@ -3,6 +3,7 @@ import type { Messages } from "./vi";
 export const en: Messages = {
   "cardBox.title": "Deep talk",
   "cardBox.seeAll": "See all",
+  "cardBox.adult": "18+",
   "cardBox.free": "Free",
   "cardBox.preview": "Preview",
   "cardBox.next": "Next card",

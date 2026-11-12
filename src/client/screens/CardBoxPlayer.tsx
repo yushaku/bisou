@@ -51,7 +51,7 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
       {detail && !detail.box.open && <p className="text-sm text-muted-foreground">{t("cardBox.preview")}</p>}
       {message && <div role="status"><p>{t(`cardBox.${message}`)}</p><Button variant="ghost" onClick={() => void refresh()}>{t("cardBox.retry")}</Button></div>}
       {card ? <>
-        <CardBoxDeck card={card} boxId={boxId} boxName={detail!.box.name[locale]} previous={detail!.cards.find(card => card.id === play.stack[play.index - 1])} onNext={() => draw()} onRandom={() => draw(true)} onPrevious={() => setPlay(previousCard(play))} />
+        <CardBoxDeck card={card} boxId={boxId} boxName={detail!.box.name[locale]} adult={detail!.box.adult} previous={detail!.cards.find(card => card.id === play.stack[play.index - 1])} onNext={() => draw()} onRandom={() => draw(true)} onPrevious={() => setPlay(previousCard(play))} />
         {play.startedOver && <p role="status">{t(cardBoxEndMessage(detail!.box.open))}</p>}
       </> : !message && <p>{t(detail ? "cardBox.notFound" : "cardBox.opening")}</p>}
     </main><BottomBar active="home" {...navigation} />

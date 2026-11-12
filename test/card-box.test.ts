@@ -19,13 +19,13 @@ it("AC25: paid detail sends exactly flagged preview cards to both partners", asy
 it("AC1: anonymous and unpaired people cannot read boxes", async () => {
   expect((await call("GET", "/api/boxes")).status).toBe(401);
   const person = await user("Solo");
-  for (const path of ["/api/boxes", "/api/boxes/lam-quen-lai", "/api/boxes/deep-connection", "/api/boxes/truth-or-dare"]) expect((await call("GET", path, { cookie: person.cookie })).status).toBe(404);
+  for (const path of ["/api/boxes", "/api/boxes/lam-quen-lai", "/api/boxes/deep-connection", "/api/boxes/truth-or-dare", "/api/boxes/rau-ram"]) expect((await call("GET", path, { cookie: person.cookie })).status).toBe(404);
 });
 it("AC1 AC3 AC6: shared catalogue is ordered and free detail contains bilingual launch cards", async () => {
   const { a, b } = await paired();
   const list = await (await call("GET", "/api/boxes", { cookie: a.cookie })).json();
   expect(list).toEqual(await (await call("GET", "/api/boxes", { cookie: b.cookie })).json());
-  expect(list).toMatchObject({ boxes: [{ id: "lam-quen-lai", open: true, cover: "/card-boxes/lam-quen-lai.jpg", price: null }, { id: "deep-connection", open: false, cover: "/card-boxes/deep-connection.jpg", price: 49000 }, { id: "truth-or-dare", open: false, cover: "/card-boxes/truth-or-dare.jpg", price: 49000 }] });
+  expect(list).toMatchObject({ boxes: [{ id: "lam-quen-lai", open: true, cover: "/card-boxes/lam-quen-lai.jpg", price: null }, { id: "rau-ram", open: true, adult: true, cover: "/card-boxes/rau-ram.jpg", price: null }, { id: "deep-connection", open: false, cover: "/card-boxes/deep-connection.jpg", price: 49000 }, { id: "truth-or-dare", open: false, cover: "/card-boxes/truth-or-dare.jpg", price: 49000 }] });
   const detail = await (await call("GET", "/api/boxes/lam-quen-lai", { cookie: a.cookie })).json<CardBoxDetail>();
   expect(detail.cards).toHaveLength(10);
   expect(detail.cards[0]).toMatchObject({ text: { vi: "Món ăn nào mỗi lần ăn là thấy nhớ nhà? Kể cho nhau nghe.", en: "Which food tastes like home to you? Tell each other about it." } });
@@ -86,5 +86,32 @@ it("AC34 AC25: both partners receive only Truth or Dare previews with bilingual 
     }
     expect(JSON.stringify(detail)).not.toContain("childhood nicknames");
     expect((await call("POST", "/api/boxes/truth-or-dare", { cookie: person.cookie, body: { choice: "truth" } })).status).toBe(404);
+  }
+});
+
+it("AC37 AC39: Rau răm has ten unique bilingual truth/dare cards with the approved copy", () => {
+  const box = CARD_BOXES.find(box => box.id === "rau-ram");
+  expect(box).toMatchObject({ free: true, adult: true, price: null, cover: "/card-boxes/rau-ram.jpg", name: { vi: "Rau răm", en: "Spicy" }, description: { vi: "Cay cay một chút, chỉ dành cho hai đứa.", en: "A little spicy, just for the two of you." } });
+  expect(box?.cards.map(card => card.id)).toEqual(["rr-01", "rr-02", "rr-03", "rr-04", "rr-05", "rr-06", "rr-07", "rr-08", "rr-09", "rr-10"]);
+  for (const card of box!.cards) {
+    expect(card.kind).toBe("truthDare");
+    if (card.kind !== "truthDare") throw new Error("Expected a truth and a dare");
+    for (const text of [card.truth, card.dare]) {
+      expect(text.vi).toBeTruthy(); expect(text.en).toBeTruthy();
+      expect(text.vi).not.toMatch(/\b(anh|em|phải)\b|không được từ chối/i);
+    }
+  }
+});
+
+it("AC37 AC40: both partners receive all ten Rau răm cards and cannot record a choice", async () => {
+  const { a, b } = await paired();
+  for (const person of [a, b]) {
+    const res = await call("GET", "/api/boxes/rau-ram", { cookie: person.cookie });
+    expect(res.status).toBe(200);
+    const detail = await res.json<CardBoxDetail>();
+    expect(detail.box).toMatchObject({ id: "rau-ram", open: true, adult: true, cover: "/card-boxes/rau-ram.jpg", price: null });
+    expect(detail.cards.map(card => card.id)).toEqual(["rr-01", "rr-02", "rr-03", "rr-04", "rr-05", "rr-06", "rr-07", "rr-08", "rr-09", "rr-10"]);
+    expect(detail.cards[8]).toMatchObject({ dare: { vi: "Cởi một cúc áo hay một món đồ của người kia, chỉ khi người kia gật đầu. Rồi đổi lượt.", en: "Undo one button or take off one piece of the other's clothing, only once they nod. Then swap." } });
+    expect((await call("POST", "/api/boxes/rau-ram", { cookie: person.cookie, body: { choice: "truth" } })).status).toBe(404);
   }
 });

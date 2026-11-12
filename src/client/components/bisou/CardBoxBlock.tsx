@@ -19,6 +19,7 @@ export function CardBoxRows({ boxes, from }: { boxes: CardBoxSummary[]; from: st
       <img src={box.cover} alt="" width={800} height={1024} loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover" onError={event => { event.currentTarget.style.visibility = "hidden"; }} />
       <span className="relative h-1/2 shrink-0">
         {(box.price != null || box.open) && <Badge variant="secondary" className="absolute top-2 left-2 bg-card text-card-foreground tabular-nums">{box.price != null ? formatBoxPrice(box.price, locale) : t("cardBox.free")}</Badge>}
+        {box.adult && <Badge variant="secondary" className="absolute top-2 right-2 bg-card text-card-foreground">{t("cardBox.adult")}</Badge>}
       </span>
       <span className="liquid-glass mt-auto flex shrink-0 flex-col gap-2 rounded-t-xl border-x-0 border-b-0 p-3">
         <span className="line-clamp-2 font-heading text-base leading-snug">{box.name[locale]}</span>

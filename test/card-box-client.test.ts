@@ -276,3 +276,29 @@ it.each(["vi", "en"] as const)("AC35 AC36: truth and dare are labelled static bl
   expect(randomCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["tod-04", "tod-09"]);
   expect(cardSwipe(80, 0, 400)).toBe("previous"); expect(cardSwipe(-80, 0, 400)).toBe("next");
 });
+
+it.each(["vi", "en"] as const)("AC37 AC38 AC40: adult badges appear on Home, boxes and every Spicy card only in %s", locale => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const adultBox = { ...detail.box, id: "rau-ram", adult: true as const, name: { vi: "Rau răm", en: "Spicy" } };
+  const memory = createTabMemory(); memory.boxes = [detail.box, adultBox];
+  const user = { id: "u", displayName: "U", email: "u@example.com", locale, createdAt: 1, birthDate: null, avatarId: null };
+  for (const screen of [h(CardBoxBlock, { onSignedOut() {}, scope: "c:u" }), h(CardBoxes, { user, onUser() {}, onSignedOut() {}, couple: { id: "c", members: [], events: [], startDate: null } })]) {
+    const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, screen)) }));
+    expect(html.match(/18\+/g)).toHaveLength(1);
+    expect(html).toContain(adultBox.name[locale]);
+    expect(html).toContain(locale === "vi" ? "Miễn phí" : "Free");
+  }
+  const card: CardBoxDetail["cards"][number] = { id: "rr-04", kind: "truthDare", truth: { vi: "Câu thật", en: "A truth" }, dare: { vi: "Thử thách nhỏ", en: "A dare" } };
+  const renderCard = (adult?: true) => renderToString(h(I18nProvider, null, h(CardBoxCard, { card, boxId: adult ? "rau-ram" : "truth-or-dare", adult })));
+  const html = renderCard(true);
+  expect(html).toContain('data-slot="badge"'); expect(html).toContain("18+");
+  for (const label of locale === "vi" ? ["Thật hay thử thách", ">Thật<", ">Thử thách<"] : ["Truth or dare", ">Truth<", ">Dare<"]) expect(html).toContain(label);
+  expect(html).not.toMatch(/<button|<input|<select|aria-pressed|aria-selected/);
+  expect(renderCard()).not.toContain("18+");
+  const deck = renderToString(h(I18nProvider, null, h(CardBoxDeck, { card, previous: { ...card, id: "rr-09" }, boxId: "rau-ram", boxName: adultBox.name[locale], adult: true, onNext() {}, onPrevious() {}, onRandom() {} })));
+  expect(deck).toContain("18+"); expect(deck).toContain(locale === "vi" ? "Thẻ tiếp" : "Next card");
+  expect(deck.match(/<button/g)).toHaveLength(3);
+  const box = { box: adultBox, cards: [{ ...card, id: "rr-09" }, card] };
+  const first = nextCard(box, { stack: [], index: -1, startedOver: false }, [], () => 0);
+  expect(nextCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["rr-09", "rr-04"]);
+});

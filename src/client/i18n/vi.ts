@@ -2,6 +2,7 @@
 export const vi = {
   "cardBox.title": "Deep talk",
   "cardBox.seeAll": "Xem tất cả",
+  "cardBox.adult": "18+",
   "cardBox.free": "Miễn phí",
   "cardBox.preview": "Xem thử",
   "cardBox.next": "Thẻ tiếp",
