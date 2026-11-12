@@ -1,10 +1,13 @@
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
+import { StarredBlock, StarredCard } from "../src/client/components/bisou/StarredCards";
+import { EmptyState } from "../src/client/components/bisou/EmptyState";
 import { GardenCard } from "../src/client/components/bisou/GardenCard";
 import { GardenStageNotice } from "../src/client/components/bisou/GardenStageNotice";
+import { GardenStageView } from "../src/client/components/bisou/GardenStageView";
 import { GardenStageSheet } from "../src/client/components/bisou/GardenStageSheet";
 import { GardenStageDecisions } from "../src/client/components/bisou/GardenStageDecisions";
-import { decisionStatus } from "../src/client/lib/garden";
+import { decisionStatus, flipKey } from "../src/client/lib/garden";
 import { GardenScene } from "../src/client/components/bisou/GardenScene";
 import { Textarea } from "../src/client/components/ui/textarea";
 import { ToggleGroup } from "../src/client/components/ui/toggle-group";
@@ -19,9 +22,15 @@ vi.mock("react", async (original) => ({
   useState: (initial: unknown) => {
     const index = hooks.index++;
     if (!(index in hooks.values)) hooks.values[index] = typeof initial === "function" ? initial() : initial;
-    return [hooks.values[index], (value: unknown) => { hooks.values[index] = value; }];
+    return [hooks.values[index], (value: unknown) => { hooks.values[index] = typeof value === "function" ? value(hooks.values[index]) : value; }];
   },
   useEffect: (effect: () => unknown) => { hooks.effects.push(effect); },
+  useContext: () => null,
+  useRef: (initial: unknown) => {
+    const index = hooks.index++;
+    if (!(index in hooks.values)) hooks.values[index] = { current: initial };
+    return hooks.values[index];
+  },
   useCallback: <T,>(callback: T) => callback,
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
@@ -127,4 +136,123 @@ it("R54: the Garden lists the furthest stage's decisions, my turn first, three a
   expect(decisionStatus({ ...card, partnerAnswered: true })).toBe("turn");
   hooks.values = [];
   expect(GardenStageDecisions({ ...props, stageId: "with_children" })).toBeNull();
+});
+
+it("R67 AC39: the stage answered list shows a star toggle on a revealed decision card", () => {
+  const store = setup();
+  const answered = { ...card, mine: "An's answer", partner: "Bình's answer", flippedDay: "2026-11-09" };
+  store.set(flipKey("stage-stars", answered), "1");
+  hooks.values[0] = [answered];
+  const nodes = render(() => GardenStageView({ levels: state.levels, plants: [], freshness: "fresh", stageId: "in_love", myName: "An", partnerName: "Bình", memoryScope: "stage-stars", onOpenMap: vi.fn(), onSelectStage: vi.fn(), onOpenDeck: vi.fn(), onChanged: vi.fn(), onSignedOut: vi.fn() }));
+  const listed = nodes.find(node => node.type === GardenCard)!;
+  hooks.values = [];
+  const rendered = render(() => GardenCard(listed.props as Parameters<typeof GardenCard>[0]));
+  expect(rendered.some(node => Array.isArray(node.props.children) && node.props.children.includes("Gắn sao"))).toBe(true);
+});
+
+it.each([
+  { starred: false, status: 200 },
+  { starred: true, status: 200 },
+  { starred: false, status: 500 },
+  { starred: false, status: 401 },
+])("AC37 AC38: star click handles starred=$starred and status=$status", async ({ starred, status }) => {
+  const store = setup();
+  const flipped = { ...card, cardId: "money-01", mine: "own", partner: "other", flippedDay: "2026-11-09", starred };
+  store.set(flipKey("star-click", flipped), "1");
+  const changed = vi.fn();
+  const signedOut = vi.fn();
+  const result = status === 200 ? { ok: true as const, data: { card: { ...flipped, starred: !starred } } } : { ok: false as const, status, error: null };
+  const star = vi.spyOn(api, "starGarden").mockResolvedValue(result);
+  const unstar = vi.spyOn(api, "unstarGarden").mockResolvedValue(result);
+  const component = () => GardenCard({ card: flipped, myName: "An", partnerName: "Bình", memoryScope: "star-click", onChanged: changed, onSignedOut: signedOut });
+  const label = starred ? "Bỏ sao" : "Gắn sao";
+  render(component).find(node => Array.isArray(node.props.children) && node.props.children.includes(label))!.props.onClick!();
+  await Promise.resolve();
+  expect(starred ? unstar : star).toHaveBeenCalledExactlyOnceWith("money-01");
+  expect(starred ? star : unstar).not.toHaveBeenCalled();
+  expect(changed).toHaveBeenCalledTimes(status === 200 ? 1 : 0);
+  expect(signedOut).toHaveBeenCalledTimes(status === 401 ? 1 : 0);
+  const alerts = render(component).filter(node => (node.props as { role?: string }).role === "alert");
+  expect(alerts.some(node => node.props.children === messages["error.generic"])).toBe(status === 500);
+});
+
+const starredProps = {
+  couple: { id: "stars-couple", members: [], events: [], startDate: null },
+  user: { id: "stars-user", email: "an@example.com", displayName: "An", birthDate: null, avatarId: null, locale: "vi" as const, createdAt: 0 },
+  onSignedOut: () => {},
+};
+const starredCards = ["money-01", "money-02", "money-03", "money-04"].map(cardId => ({
+  ...card, cardId, mine: "own", partner: "other", flippedDay: "2026-11-09", starred: true,
+}));
+async function loadStars(cards: GardenCardState[], component: () => ReactNode) {
+  const store = setup();
+  vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
+  for (const card of cards) store.set(flipKey("stars-couple:stars-user", card), "1");
+  vi.spyOn(api, "gardenStars").mockResolvedValue({ ok: true, data: { cards } });
+  render(component);
+  for (const effect of hooks.effects.splice(0)) effect();
+  await Promise.resolve();
+  return render(component);
+}
+
+it.each([
+  { count: 4, expected: ["money-01", "money-02", "money-03"], seeAll: true },
+  { count: 3, expected: ["money-01", "money-02", "money-03"], seeAll: false },
+  { count: 0, expected: [], seeAll: false },
+])("AC41 AC42 R70 R71: Home with $count seen stars shows the preview and link threshold", async ({ count, expected, seeAll }) => {
+  const component = () => StarredBlock(starredProps);
+  const nodes = await loadStars(starredCards.slice(0, count), component);
+  expect(nodes.filter(node => node.type === StarredCard).map(node => node.key)).toEqual(expected);
+  const links = nodes.filter(node => node.props.children === messages["home.seeAll"]);
+  expect(links).toHaveLength(seeAll ? 1 : 0);
+  if (seeAll) expect(links[0]!.props).toMatchObject({ href: "/stars" });
+  if (!count) expect(nodes).toEqual([]);
+});
+
+it.each([{ cards: [] }, { cards: [starredCards[0]!] }])("AC42: full stars shows an empty state when no loaded cards are visible ($cards)", async ({ cards }) => {
+  const component = () => StarredBlock({ ...starredProps, full: true });
+  const nodes = await loadStars([], component);
+  // A server result can also contain a card this device has never revealed.
+  vi.mocked(api.gardenStars).mockResolvedValue({ ok: true, data: { cards } });
+  document.dispatchEvent(new Event("visibilitychange"));
+  await Promise.resolve();
+  const loaded = render(component);
+  expect(loaded.filter(node => node.type === StarredCard)).toHaveLength(0);
+  expect(loaded.find(node => node.type === EmptyState)?.props).toMatchObject({ title: "Chưa có câu hỏi quan trọng nào." });
+  expect(nodes.find(node => node.type === EmptyState)).toBeDefined();
+});
+
+it.each(["drawer", "partner"])("AC42: full stars becomes empty after the last star is removed by %s", async source => {
+  const component = () => StarredBlock({ ...starredProps, full: true });
+  const nodes = await loadStars([starredCards[0]!], component);
+  expect(nodes.some(node => node.type === EmptyState)).toBe(false);
+  expect(nodes.filter(node => node.type === StarredCard)).toHaveLength(1);
+  vi.mocked(api.gardenStars).mockResolvedValue({ ok: true, data: { cards: [] } });
+  if (source === "drawer") {
+    const preview = nodes.find(node => node.type === StarredCard)!;
+    (preview.props as { onOpen: () => void }).onOpen();
+    const drawerCard = render(component).find(node => node.type === GardenCard)!;
+    (drawerCard.props as { onChanged: () => void }).onChanged();
+  } else {
+    document.dispatchEvent(new Event("visibilitychange"));
+  }
+  await Promise.resolve();
+  const refreshed = render(component);
+  expect(refreshed.filter(node => node.type === StarredCard)).toHaveLength(0);
+  expect(refreshed.find(node => node.type === EmptyState)?.props).toMatchObject({ title: "Chưa có câu hỏi quan trọng nào." });
+  expect(refreshed.some(node => node.type === GardenCard)).toBe(false);
+});
+
+
+it("AC42: full stars keeps loading and failure distinct from an empty result", async () => {
+  setup();
+  vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
+  vi.spyOn(api, "gardenStars").mockResolvedValue({ ok: false, status: 500, error: null });
+  const component = () => StarredBlock({ ...starredProps, full: true });
+  expect(render(component).some(node => node.type === EmptyState)).toBe(false);
+  for (const effect of hooks.effects.splice(0)) effect();
+  await Promise.resolve();
+  const failed = render(component);
+  expect(failed.some(node => node.type === EmptyState)).toBe(false);
+  expect(failed.some(node => (node.props as { role?: string }).role === "alert")).toBe(true);
 });

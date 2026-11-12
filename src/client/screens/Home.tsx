@@ -18,6 +18,7 @@ import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, toPeople, type Person } from "../components/bisou/CoupleAvatars";
 import { DailyQuestion } from "../components/bisou/DailyQuestion";
 import { DaysCounter } from "../components/bisou/DaysCounter";
+import { StarredBlock } from "../components/bisou/StarredCards";
 import { TodayPosts } from "../components/bisou/TodayPosts";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { NotesInbox } from "../components/bisou/NotesInbox";
@@ -94,6 +95,8 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
 
       {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; memory.scroll.set("journal", 0); } navigation.onSelect("journal"); }} />}
       <TodayPosts couple={couple} user={session.user} today={toDayString(now)} onSignedOut={session.onSignedOut} />
+
+      <StarredBlock couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
 
       <InstallCard />
 

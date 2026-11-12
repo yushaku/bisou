@@ -60,6 +60,7 @@ export const api = {
   updateClosedNote: (id: string, input: ClosedNoteInput) => call<{ entry: JournalEntry }>("PUT", `/api/notes/${encodeURIComponent(id)}/closed`, input),
   closeNote: (id: string, input: CloseInput) => call<{ entry: JournalEntry }>("POST", `/api/notes/${encodeURIComponent(id)}/close`, input),
   openNote: (id: string) => call<{ note: ReceivedNote }>("POST", `/api/notes/${encodeURIComponent(id)}/open`),
+  gardenStars: () => call<{ cards: GardenCardState[] }>("GET", "/api/garden/stars"),
   garden: () => call<GardenState>("GET", "/api/garden"),
   gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
   gardenStage: (levelId: RelationshipLevel) => call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}`),

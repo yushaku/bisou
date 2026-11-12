@@ -98,26 +98,40 @@ garden.post("/today/swap", limitBody, async (c) => {
   return c.json(await state());
 });
 
+garden.get("/stars", async (c) => {
+  const db = c.env.DB, couple = c.get("gardenCoupleId"), user = c.get("user").id;
+  const rows = await db.prepare(`SELECT card_id FROM garden_stars WHERE couple_id = ? AND ${memberGuard}
+    AND card_id NOT IN (SELECT card_id FROM garden_days WHERE couple_id = ? AND day = ?)
+    ORDER BY starred_at DESC, card_id`).bind(couple, couple, user, couple, couple, vnDay(Date.now())).all<{ card_id: string }>();
+  const cards = await cardStates(db, couple, user, rows.results.map(row => row.card_id));
+  return c.json({ cards: cards.filter(card => card.flippedDay && !(card.mineDeleted && card.partnerDeleted)
+    && cardById(card.cardId)) });
+});
+
 garden.put("/cards/:cardId/star", async (c) => {
   const card = cardById(c.req.param("cardId"));
-  if (!card || card.kind !== "ordinary") return c.json({ error: "not_found" }, 404);
+  if (!card) return c.json({ error: "not_found" }, 404);
   const db = c.env.DB, couple = c.get("gardenCoupleId"), user = c.get("user").id;
   const access = cardAccess(card);
   const result = await db.prepare(`INSERT INTO garden_stars(couple_id, card_id, starred_at) SELECT ?, ?, ?
     WHERE ${access} AND ${memberGuard}
     AND (SELECT COUNT(*) FROM garden_answers WHERE couple_id = ? AND card_id = ? AND round = 1
       AND flipped_day IS NOT NULL AND user_id IN (SELECT user_id FROM couple_members WHERE couple_id = ?)) = 2
-    ON CONFLICT(couple_id, card_id) DO NOTHING`)
+    ON CONFLICT(couple_id, card_id) DO UPDATE SET card_id = excluded.card_id`)
     .bind(couple, card.id, Date.now(), ...(access === "1" ? [] : [couple]), couple, user, couple, couple, card.id, couple).run();
   const state = (await cardStates(db, couple, user, [card.id]))[0]!;
-  if (!result.meta.changes && !state.starred) return c.json({ error: "not_found" }, 404);
+  if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
   return c.json({ card: state });
 });
 
 garden.delete("/cards/:cardId/star", async (c) => {
   const card = cardById(c.req.param("cardId"));
-  if (!card || card.kind !== "ordinary") return c.json({ error: "not_found" }, 404);
+  if (!card) return c.json({ error: "not_found" }, 404);
   const db = c.env.DB, couple = c.get("gardenCoupleId"), user = c.get("user").id;
+  if (card.kind === "decision") {
+    const state = (await cardStates(db, couple, user, [card.id]))[0]!;
+    if (!state.flippedDay || !await db.prepare(`SELECT 1 WHERE ${cardAccess(card)}`).bind(couple).first()) return c.json({ error: "not_found" }, 404);
+  }
   await db.prepare(`DELETE FROM garden_stars WHERE couple_id = ? AND card_id = ? AND ${memberGuard}`)
     .bind(couple, card.id, couple, user, couple).run();
   return c.json({ card: (await cardStates(db, couple, user, [card.id]))[0]! });

@@ -316,6 +316,8 @@ export const vi = {
   "wishes.jarMine": "Hũ của {name}, mở hũ của mình",
   "wishes.jarPartner": "Hũ của {name}, quay quà",
   "wishes.jarEmpty": "Chưa bỏ điều ước nào",
+  "home.starred": "Các câu hỏi quan trọng mà chúng ta đã thống nhất",
+  "home.starredEmpty": "Chưa có câu hỏi quan trọng nào.",
   "home.seeAll": "Xem tất cả",
   "nav.label": "Điều hướng chính",
   "nav.home": "Nhà",

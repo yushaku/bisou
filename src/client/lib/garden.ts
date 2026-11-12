@@ -31,3 +31,7 @@ export function rememberGarden(key: string): void {
   try { localStorage.setItem(key, "1"); } catch { /* Keep the scene seen for this session. */ }
   window.dispatchEvent(new Event("bisou:garden-seen"));
 }
+
+export function starredHere(cards: GardenCardState[], scope: string): GardenCardState[] {
+  return cards.filter(card => gardenSeen(flipKey(scope, card)));
+}

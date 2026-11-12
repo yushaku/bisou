@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { call, explain, paired, resetDb, user, waitForBackground, type TestUser } from "./helpers";
 import { drawInput, drawSeed, loadToday } from "../src/worker/lib/garden";
 import { drawCard, CARDS, gateIds, type GardenState, type GardenCardState, type GardenDeckState } from "../src/shared/garden";
-
 import { device, mockPush, subscribe } from "./push-helpers";
 
 const NOW = Date.parse("2026-11-09T08:00:00+07:00");
@@ -726,8 +725,134 @@ it("R6 R15 AC9: today's flipped card appears under the selected stage regardless
   expect(cards.cards.find((card) => card.cardId === id)).toMatchObject({ mine: "own face up", partner: "partner face up", flippedDay: "2026-11-09" });
 });
 
+describe("Important questions", () => {
+  it.each([null, "no_details", "later_not_applicable"] as const)("R13 R67 AC39: decision card answered by both can be starred with choice %s", async (choice) => {
+    const { a, b } = await paired();
+    const path = "/api/garden/cards/L2-01/star";
+    for (const method of ["PUT", "DELETE"]) {
+      const res = await call(method, path, { cookie: a.cookie });
+      expect(res.status).toBe(404); expect(await res.json()).toEqual({ error: "not_found" });
+    }
+    await call("POST", "/api/garden/levels", { cookie: a.cookie, body: { action: "propose", kind: "target", levelId: "in_love", revision: 0 } });
+    await call("POST", "/api/garden/levels", { cookie: b.cookie, body: { action: "accept", revision: 1 } });
+    expect((await answer(a, "L2-01", "An's written response")).status).toBe(201);
+    for (const who of [a, b]) {
+      for (const method of ["PUT", "DELETE"]) {
+        const res = await call(method, path, { cookie: who.cookie });
+        expect(res.status).toBe(404); expect(await res.json()).toEqual({ error: "not_found" });
+      }
+    }
+    expect((await call("POST", "/api/garden/cards/L2-01/answer", { cookie: b.cookie, body: choice ? { choice } : { text: "Bình's written response" } })).status).toBe(201);
+    expect((await call("PUT", path, { cookie: a.cookie })).status).toBe(200);
+    for (const who of [a, b]) {
+      const stage = await (await call("GET", "/api/garden/stages/in_love", { cookie: who.cookie })).json<{ cards: GardenCardState[] }>();
+      expect(stage.cards.find(c => c.cardId === "L2-01")?.starred).toBe(true);
+      const res = await call("GET", "/api/garden/stars", { cookie: who.cookie });
+      const { cards } = await res.json<{ cards: GardenCardState[] }>();
+      expect(cards).toHaveLength(1);
+      expect(cards[0]).toMatchObject({ cardId: "L2-01", starred: true,
+        mine: who === a ? "An's written response" : choice ? null : "Bình's written response",
+        mineChoice: who === a ? null : choice, partnerChoice: who === a ? choice : null });
+      expect(Object.keys(cards[0]!).sort()).toEqual(["cardId", "starred", "mine", "partner", "mineChoice", "partnerChoice", "partnerAnswered", "mineEdited", "partnerEdited", "mineDeleted", "partnerDeleted", "flippedDay"].sort());
+    }
+    expect((await call("DELETE", path, { cookie: b.cookie })).status).toBe(200);
+    expect(await (await call("GET", "/api/garden/stars", { cookie: a.cookie })).json()).toEqual({ cards: [] });
+  });
 
-describe("Starred cards", () => {
+  it("R67 R68 AC39: decision stars retain shared ordering, today exclusion and deleted-answer rules", async () => {
+    const { a, b, couple } = await paired();
+    await answer(a, "money-01"); await answer(b, "money-01");
+    await call("PUT", "/api/garden/cards/money-01/star", { cookie: a.cookie });
+    vi.mocked(Date.now).mockReturnValue(NOW + 1000);
+    await call("POST", "/api/garden/levels", { cookie: a.cookie, body: { action: "propose", kind: "target", levelId: "in_love", revision: 0 } });
+    await call("POST", "/api/garden/levels", { cookie: b.cookie, body: { action: "accept", revision: 1 } });
+    await answer(a, "L2-01"); await answer(b, "L2-01");
+    await call("PUT", "/api/garden/cards/L2-01/star", { cookie: a.cookie });
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-10T08:00:00+07:00"));
+    const list = async () => (await (await call("GET", "/api/garden/stars", { cookie: a.cookie })).json<{ cards: GardenCardState[] }>()).cards;
+    expect((await list()).map(c => c.cardId)).toEqual(["L2-01", "money-01"]);
+    await call("PUT", "/api/garden/cards/L2-01/answer", { cookie: b.cookie, body: { choice: "later_not_applicable" } });
+    await call("DELETE", "/api/garden/cards/L2-01/answer", { cookie: a.cookie });
+    expect((await list())[0]).toMatchObject({ cardId: "L2-01", mineDeleted: true, partnerChoice: "later_not_applicable", partnerEdited: true });
+    await call("DELETE", "/api/garden/cards/L2-01/answer", { cookie: b.cookie });
+    expect((await list()).map(c => c.cardId)).toEqual(["money-01"]);
+    expect((await call("PUT", "/api/garden/cards/L2-01/star", { cookie: b.cookie })).status).toBe(200);
+    await answer(a, "L2-01", "restored decision");
+    expect((await list()).map(c => c.cardId)).toEqual(["L2-01", "money-01"]);
+    await env.DB.prepare("INSERT INTO garden_days(couple_id, day, card_id, deck_id, created_at) VALUES (?, '2026-11-10', 'L2-01', 'money', ?)").bind(couple.id, NOW).run();
+    expect((await list()).map(c => c.cardId)).toEqual(["money-01"]);
+    expect((await call("DELETE", "/api/garden/cards/L2-01/star", { cookie: b.cookie })).status).toBe(200);
+  });
+
+  it("AC44 AC45: stars show current edits and deletion notices, hide two tombstones and restore the same order", async () => {
+    const { a, b } = await paired();
+    for (const id of ["money-01", "dreams-01"]) {
+      await answer(a, id); await answer(b, id);
+      await call("PUT", `/api/garden/cards/${id}/star`, { cookie: a.cookie });
+      vi.mocked(Date.now).mockReturnValue(NOW + 1000);
+    }
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-27T08:00:00+07:00"));
+    const list = async () => (await (await call("GET", "/api/garden/stars", { cookie: a.cookie })).json<{ cards: GardenCardState[] }>()).cards;
+    await call("PUT", "/api/garden/cards/money-01/answer", { cookie: b.cookie, body: { text: "Bình's current answer" } });
+    await call("DELETE", "/api/garden/cards/dreams-01/answer", { cookie: a.cookie });
+    expect(await list()).toMatchObject([
+      { cardId: "dreams-01", mine: null, mineDeleted: true, partner: "a private answer", starred: true },
+      { cardId: "money-01", partner: "Bình's current answer", partnerEdited: true },
+    ]);
+    await call("DELETE", "/api/garden/cards/dreams-01/answer", { cookie: b.cookie });
+    expect((await list()).map(c => c.cardId)).toEqual(["money-01"]);
+    const deck = await (await call("GET", "/api/garden/decks/dreams", { cookie: a.cookie })).json<GardenDeckState>();
+    expect(deck.history.find(c => c.cardId === "dreams-01")?.starred).toBe(true);
+    await answer(a, "dreams-01", "replacement");
+    expect(await list()).toMatchObject([{ cardId: "dreams-01", mine: "replacement", mineEdited: true, partnerDeleted: true }, { cardId: "money-01" }]);
+  });
+
+  it("R1 R13 R67: stars never list waiting or unknown cards and stay private to the couple", async () => {
+    const { a, b, couple } = await paired();
+    await answer(a, "money-01");
+    for (const id of ["money-01", "unknown", "L2-01"]) {
+      await env.DB.prepare("INSERT INTO garden_stars(couple_id, card_id, starred_at) VALUES (?, ?, ?)").bind(couple.id, id, NOW).run();
+    }
+    for (const who of [a, b]) {
+      const res = await call("GET", "/api/garden/stars", { cookie: who.cookie });
+      expect(res.status).toBe(200); expect(await res.json()).toEqual({ cards: [] });
+    }
+    const outsider = await user("Outsider");
+    const res = await call("GET", "/api/garden/stars", { cookie: outsider.cookie });
+    expect(res.status).toBe(404); expect(await res.json()).toEqual({ error: "not_in_couple" });
+    const other = await user("Other"), partner = await user("Partner");
+    const created = await (await call("POST", "/api/couple", { cookie: other.cookie })).json<{ couple: { pendingCode: { code: string } } }>();
+    await call("POST", "/api/couple/join", { cookie: partner.cookie, body: { code: created.couple.pendingCode.code } });
+    expect(await (await call("GET", "/api/garden/stars", { cookie: other.cookie })).json()).toEqual({ cards: [] });
+  });
+  it("AC37 AC38 AC41 AC42: shared stars list newest first, excludes today without drawing, and removes unstarred cards", async () => {
+    const { a, b, couple } = await paired();
+    const list = async (who = a) => {
+      const res = await call("GET", "/api/garden/stars", { cookie: who.cookie });
+      expect(res.status).toBe(200);
+      return (await res.json<{ cards: GardenCardState[] }>()).cards;
+    };
+    expect(await list()).toEqual([]);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM garden_days").first("n")).toBe(0);
+    for (const id of ["money-01", "money-02", "dreams-01", "families-01"]) {
+      expect((await answer(a, id)).status).toBe(201); expect((await answer(b, id)).status).toBe(201);
+    }
+    for (const [index, id] of ["dreams-01", "money-02", "families-01", "money-01"].entries()) {
+      vi.mocked(Date.now).mockReturnValue(NOW + index * 1000);
+      await call("PUT", `/api/garden/cards/${id}/star`, { cookie: a.cookie });
+    }
+    await env.DB.prepare("INSERT INTO garden_days(couple_id, day, card_id, deck_id, created_at) VALUES (?, '2026-11-26', 'families-01', 'families', ?)").bind(couple.id, NOW).run();
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-26T08:00:00+07:00"));
+    expect((await list()).map(c => c.cardId)).toEqual(["money-01", "money-02", "dreams-01"]);
+    vi.mocked(Date.now).mockReturnValue(Date.parse("2026-11-27T08:00:00+07:00"));
+    for (const who of [a, b]) {
+      const cards = await list(who);
+      expect(cards.map(c => c.cardId)).toEqual(["money-01", "families-01", "money-02", "dreams-01"]);
+      expect(JSON.stringify(cards)).not.toMatch(/starred_at|starred_by|user_id/);
+    }
+    await call("DELETE", "/api/garden/cards/money-01/star", { cookie: b.cookie });
+    for (const who of [a, b]) expect((await list(who)).map(c => c.cardId)).toEqual(["families-01", "money-02", "dreams-01"]);
+  });
   it("AC37 AC38: either partner stars and unstars the shared flipped card", async () => {
     const { a, b } = await paired();
     await answer(a, "money-01");
@@ -746,7 +871,6 @@ describe("Starred cards", () => {
     }
   });
 });
-
 
 it("AC37 R75 R76: today's shared star exposes no author or star time and changes no growth, days, freshness or push", async () => {
   const { a, b, couple } = await paired();
@@ -773,7 +897,7 @@ it("AC37 R75 R76: today's shared star exposes no author or star time and changes
   expect(push.sent).toHaveLength(0); expect(push.queued).toHaveLength(0);
 });
 
-it("AC39 R1 R13: unflipped, one-answer, flipped decision and unknown cards share a 404; other couples cannot star this card", async () => {
+it("AC39 R1 R13: unflipped, one-answer and unknown cards share a 404; other couples cannot star this card", async () => {
   const { a, b, couple } = await paired();
   const path = (id: string) => `/api/garden/cards/${id}/star`;
   for (const id of ["money-01", "unknown"]) {
@@ -784,14 +908,6 @@ it("AC39 R1 R13: unflipped, one-answer, flipped decision and unknown cards share
   expect((await call("PUT", path("money-01"), { cookie: a.cookie })).status).toBe(404);
   const deck = await (await call("GET", "/api/garden/decks/money", { cookie: b.cookie })).json<GardenDeckState>();
   expect(deck.active?.starred).toBe(false); expect(deck.active?.partner).toBeNull();
-  await call("POST", "/api/garden/levels", { cookie: a.cookie, body: { action: "propose", kind: "target", levelId: "in_love", revision: 0 } });
-  await call("POST", "/api/garden/levels", { cookie: b.cookie, body: { action: "accept", revision: 1 } });
-  expect((await answer(a, "L2-01")).status).toBe(201);
-  expect((await answer(b, "L2-01")).status).toBe(201);
-  for (const method of ["PUT", "DELETE"]) {
-    const res = await call(method, path("L2-01"), { cookie: a.cookie });
-    expect(res.status).toBe(404); expect(await res.json()).toEqual({ error: "not_found" });
-  }
   await answer(b, "money-01");
   const outsider = await user("Outsider");
   for (const method of ["PUT", "DELETE"]) {
@@ -846,7 +962,6 @@ it("AC47: stars cascade with the couple and store no author; export and leaving 
   await env.DB.prepare("DELETE FROM couples WHERE id = ?").bind(couple.id).run();
   expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM garden_stars").first("n")).toBe(0);
 });
-
 
 it("R77: failed star and unstar writes leave the shared state unchanged", async () => {
   const { a, b } = await paired();

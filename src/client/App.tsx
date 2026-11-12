@@ -1,3 +1,4 @@
+import { Starred } from "./screens/Starred";
 import { CardBoxes } from "./screens/CardBoxes";
 import { CardBoxPlayer } from "./screens/CardBoxPlayer";
 import { Activity, lazy, Suspense, useCallback, useEffect, useState } from "react";
@@ -155,6 +156,7 @@ function SignedIn({
   else content = (
     <Switch location={settingsOpen ? historyState?.from ?? "/" : location}>
       <Route path="/boxes/:boxId">{params => <CardBoxPlayer key={params.boxId} {...session} couple={couple} boxId={params.boxId} />}</Route>
+      <Route path="/stars"><Starred {...session} couple={couple} /></Route>
       <Route path="/boxes"><CardBoxes {...session} couple={couple} /></Route>
       <Route path="/events">
         <Events user={user} couple={couple} onCouple={onCouple} onSignedOut={onSignedOut} />

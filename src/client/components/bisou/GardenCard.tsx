@@ -139,7 +139,7 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
           {phase === "flipped" && !revealed && <Button size={today ? "lg" : "default"} className="mt-4 w-full" onClick={() => void flip()}>{today && <Heart aria-hidden="true" />}{t("garden.flip")}</Button>}
           {revealed && card.flippedDay && <div className={cn("mt-3 flex flex-wrap items-center justify-center gap-1.5 text-center text-muted-foreground", today ? "text-xs" : "text-sm")}>
             <Heart className={today ? "size-3.5 text-primary/70" : "hidden"} aria-hidden="true" /><time dateTime={card.flippedDay}>{formatDay(card.flippedDay, locale)}</time>
-            {definition?.kind === "ordinary" && phase === "flipped" && <Button variant="ghost" size="sm" aria-pressed={card.starred} loading={busy} disabled={!online} onClick={() => void toggleStar()}>
+            {definition && phase === "flipped" && <Button variant="ghost" size="sm" aria-pressed={card.starred} loading={busy} disabled={!online} onClick={() => void toggleStar()}>
               <Star aria-hidden="true" className={card.starred ? "fill-current text-primary" : undefined} />{t(card.starred ? "garden.unstar" : "garden.star")}
             </Button>}
           </div>}

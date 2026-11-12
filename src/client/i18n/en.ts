@@ -316,6 +316,8 @@ export const en: Messages = {
   "wishes.jarMine": "{name}'s jar, open my jar",
   "wishes.jarPartner": "{name}'s jar, spin for a gift",
   "wishes.jarEmpty": "No wishes yet",
+  "home.starred": "Important questions we agreed on",
+  "home.starredEmpty": "No important questions yet.",
   "home.seeAll": "See all",
   "nav.label": "Main navigation",
   "nav.home": "Home",
