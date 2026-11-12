@@ -15,7 +15,6 @@ import { formatDay } from "@/lib/format";
 import { focusCreateButton } from "@/lib/useTabNavigation";
 import { useOnline } from "@/lib/useOnline";
 import { cn } from "@/lib/utils";
-import { PersonAvatar, type Person } from "./CoupleAvatars";
 import { DayField } from "./DayField";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
@@ -24,7 +23,6 @@ interface ComposeSheetProps {
   fromMenu?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  author: Person;
   partnerName: string;
   /* The author's own entry to change (R10); omit to write a new one. */
   entry?: JournalEntry;
@@ -34,7 +32,7 @@ interface ComposeSheetProps {
 }
 
 /* Changed: closing asks first. Saving: closing waits. */
-type Lock = "dirty" | "saving" | null;
+export type Lock = "dirty" | "saving" | null;
 
 const COUNTER_FROM = 1800;
 
@@ -99,7 +97,7 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 }
 
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
-function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
+export function ComposeForm({ partnerName, entry, receiving, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const ids = useId();
@@ -159,11 +157,6 @@ function ComposeForm({ author, partnerName, entry, receiving, onSaved, onSignedO
         </DrawerHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 pb-4">
-          <p className="flex items-center gap-2 font-semibold">
-            <PersonAvatar person={author} size="sm" />
-            {author.name}
-          </p>
-
           {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
           <DayField value={date} now={now} disabled={saving} label={receiving ? "received.day" : "compose.day"} onChange={(value) => { setDate(value); change(); }} />
 

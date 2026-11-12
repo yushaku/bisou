@@ -23,7 +23,7 @@ export function NoteSheet({ open, onOpenChange, fromMenu, ...props }: Props) {
     <Dialog open={confirm} onOpenChange={setConfirm}><DialogContent><DialogHeader><DialogTitle>{t("compose.discardTitle")}</DialogTitle><DialogDescription>{t("compose.discardBody")}</DialogDescription></DialogHeader><DialogFooter><Button variant="destructive" onClick={() => { setConfirm(false); onOpenChange(false); }}>{t("compose.discard")}</Button><Button onClick={() => setConfirm(false)}>{t("compose.keep")}</Button></DialogFooter></DialogContent></Dialog>
   </Drawer>;
 }
-function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, onLock, onClose, onDone }: Omit<Props, "open" | "onOpenChange"> & { onLock: (lock: "saving" | "dirty" | null) => void; onClose: () => void; onDone: () => void }) {
+export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, onLock, onClose, onDone }: Omit<Props, "open" | "onOpenChange"> & { onLock: (lock: "saving" | "dirty" | null) => void; onClose: () => void; onDone: () => void }) {
   const { t, locale } = useI18n(), online = useOnline();
   const [value, setValue] = useState<NoteInput>(entry ?? { happened: "", feel: "", need: "", hope: "" });
   const [dirty, setDirty] = useState(false), [saving, setSaving] = useState(false), [error, setError] = useState<string | null>(null), [locked, setLocked] = useState(false), [withdraw, setWithdraw] = useState(false);

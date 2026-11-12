@@ -142,6 +142,7 @@ export const vi = {
   "notes.saveError": "Chưa lưu được lời nhắn. Nội dung vẫn ở đây, thử lại nhé.",
   "notes.deleteError": "Chưa xoá được lời nhắn. Thử lại nhé.",
 
+  "compose.kindNote": "Lời nhắn nhỏ",
   "journal.sectionFeed": "Nhật ký",
 
   "garden.dry": "Mấy hôm nay vườn hơi khát, lá đang ngả vàng. Một thẻ hôm nay là cây tươi lại.",
@@ -302,9 +303,6 @@ export const vi = {
   "nav.journal": "Nhật ký",
   "nav.wishes": "Điều ước",
   "nav.garden": "Vườn",
-  "nav.writeJournal": "Viết nhật ký",
-  "nav.writeNote": "Viết lời nhắn nhỏ",
-  "nav.journalCreateHint": "Viết nhật ký hoặc gửi một lời nhắn nhỏ.",
   "nav.create": "Thêm một chút",
   "nav.createHint": "Viết nhật ký hoặc thêm điều ước.",
   "settings.birthday": "Sinh nhật",
@@ -515,7 +513,6 @@ export const vi = {
   "compose.first": "Viết bài đầu tiên",
   "compose.new": "Một chuyện hôm nay",
   "compose.day": "Ngày của bài",
-  "compose.dayHelp": "Có thể chọn một ngày cũ, kể cả trước khi quen nhau.",
   "compose.text": "Bạn muốn kể gì?",
   "compose.placeholder": "Một chuyện nhỏ cũng đáng nhớ...",
   "compose.count": "{count} / {max}",

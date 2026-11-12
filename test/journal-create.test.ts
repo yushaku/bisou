@@ -4,9 +4,15 @@ import { Journal } from "../src/client/screens/Journal";
 import { NotesSection } from "../src/client/components/bisou/NotesSection";
 import { NoteSheet } from "../src/client/components/bisou/NoteSheet";
 import { BottomBar } from "../src/client/components/bisou/AppShell";
-import { DrawerContent, DrawerTitle } from "../src/client/components/ui/drawer";
+import { DrawerContent } from "../src/client/components/ui/drawer";
 import { vi as vietnamese } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
+import { JournalComposeSheet } from "../src/client/components/bisou/JournalComposeSheet";
+import { ComposeForm, ComposeSheet } from "../src/client/components/bisou/ComposeSheet";
+import { PersonAvatar } from "../src/client/components/bisou/CoupleAvatars";
+import { DayField } from "../src/client/components/bisou/DayField";
+import { Tabs, TabsContent, TabsTrigger } from "../src/client/components/ui/tabs";
+import { Dialog } from "../src/client/components/ui/dialog";
 import { api } from "../src/client/api";
 
 const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, refs: [] as { current: unknown }[], refIndex: 0, locale: "vi", effects: [] as (() => unknown)[], requests: new Map<string, () => void>() }));
@@ -16,20 +22,23 @@ vi.mock("react", async (original) => ({
   useState: (initial: unknown) => {
     const index = hooks.index++;
     if (!(index in hooks.values)) hooks.values[index] = typeof initial === "function" ? initial() : initial;
-    return [hooks.values[index], (value: unknown) => { hooks.values[index] = value; }];
+    return [hooks.values[index], (value: unknown) => { hooks.values[index] = typeof value === "function" ? value(hooks.values[index]) : value; }];
   },
   useRef: (initial: unknown) => hooks.refs[hooks.refIndex++] ?? (hooks.refs[hooks.refIndex - 1] = { current: initial }),
   useEffect: (effect: () => unknown) => { hooks.effects.push(effect); },
+  useId: () => "test",
   useLayoutEffect: vi.fn(), useContext: () => null, useCallback: <T,>(callback: T) => callback,
   useImperativeHandle: (ref: { current: unknown } | undefined, create: () => unknown) => { if (ref) ref.current = create(); },
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/lib/useNotes", () => ({ useNotes: () => ({ lists: { fromMe: [], toMe: [] }, failed: false, refresh: notesRefresh }) }));
-vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: keyof typeof vietnamese) => (hooks.locale === "vi" ? vietnamese : english)[key] }) }));
+vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: hooks.locale, t: (key: keyof typeof vietnamese) => (hooks.locale === "vi" ? vietnamese : english)[key] }) }));
 
 vi.mock("../src/client/lib/useTabNavigation", async (original) => ({ ...await original<typeof import("../src/client/lib/useTabNavigation")>(), useCreateRequest: (destination: string, onOpen: () => void) => { hooks.requests.set(destination, onOpen); } }));
 
-type Props = { ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; composeRequested?: boolean; onComposeHandled?: () => void; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
+vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
+
+type Props = { initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -40,25 +49,12 @@ function render(active: "journal" | "home" | "garden" | "wishes", onCreate = vi.
   return nodes(BottomBar({ active, onCreate, onSelect: vi.fn() }));
 }
 afterEach(() => { hooks.values = []; hooks.refs = []; hooks.locale = "vi"; hooks.effects = []; hooks.requests.clear(); vi.unstubAllGlobals(); vi.restoreAllMocks(); notesRefresh.mockReset(); });
-it.each(["vi", "en"])("Journal + opens a titled sheet with journal and kind note rows in %s", (locale) => {
+it.each(["vi", "en"])("Journal + opens the composer directly in %s", (locale) => {
   hooks.locale = locale;
   const create = vi.fn();
-  let tree = render("journal", create);
-  const plus = tree.find(n => n.props["data-create-button"] !== undefined)!;
-  expect(plus.props["aria-label"]).toBe(locale === "vi" ? "Thêm một chút" : "Add something");
-  plus.props.onClick!();
-  tree = render("journal", create);
-  expect(tree[0]!.props.open).toBe(true);
-  expect(create).not.toHaveBeenCalled();
-  expect(tree.find(n => n.type === DrawerTitle)?.props.children).toBe(plus.props["aria-label"]);
-  expect(tree.filter(n => n.props.label).map(n => n.props.label)).toEqual(locale === "vi" ? ["Viết nhật ký", "Viết lời nhắn nhỏ"] : ["Write a journal entry", "Write a kind note"]);
-});
-it.each(["journal", "notes"])("Journal row requests the %s composer after the drawer closes", (destination) => {
-  const create = vi.fn(), tree = render("journal", create);
-  tree.filter(n => n.props.label)[destination === "journal" ? 0 : 1]!.props.onClick!();
-  expect(create).not.toHaveBeenCalled();
-  tree[0]!.props.onAnimationEnd!(false);
-  expect(create).toHaveBeenCalledWith(destination);
+  render("journal", create).find(n => n.props["data-create-button"] !== undefined)!.props.onClick!();
+  expect(create).toHaveBeenCalledWith("journal");
+  expect(render("journal", create)[0]!.props.open).toBe(false);
 });
 it.each([["home", "event"], ["wishes", "wishes"]] as const)("%s + still opens %s directly", (tab, destination) => {
   const create = vi.fn();
@@ -85,7 +81,7 @@ function journal() {
 it.each(["feed", "notes"])("pulling on %s refreshes its data and waits for completion", async (section) => {
   const feedRefresh = vi.spyOn(api, "journal").mockResolvedValue({ ok: true, data: { entries: [], nextCursor: null } });
   journal();
-  if (section === "notes") hooks.requests.get("notes")!();
+  if (section === "notes") journal().find(n => n.type === Tabs)!.props.onValueChange!("notes");
   const tree = journal();
   const notes = tree.find(n => n.type === NotesSection)!;
   hooks.values = []; hooks.index = 0; hooks.refIndex = 0;
@@ -104,25 +100,72 @@ it.each(["feed", "notes"])("pulling on %s refreshes its data and waits for compl
   await pending;
   expect(done).toBe(true);
 });
-it("the journal choice opens ComposeSheet on the feed", () => {
+it.each(["feed", "notes"] as const)("+ defaults to the current %s section without changing it", (section) => {
+  journal().find(n => n.type === Tabs)!.props.onValueChange!(section);
   journal(); hooks.requests.get("journal")!();
   const tree = journal();
-  expect(tree.find(n => n.props.value === "feed")).toBeDefined();
-  expect(tree.find(n => n.props.author && n.props.open)?.props.fromMenu).toBe(true);
+  expect(tree.find(n => n.type === Tabs)?.props.value).toBe(section);
+  expect(tree.find(n => n.props.initialTab)?.props).toMatchObject({ initialTab: section, open: true });
 });
-it("the note choice selects notes and opens NoteSheet for the named partner", () => {
-  journal(); hooks.requests.get("notes")!();
-  const tree = journal();
-  expect(tree.find(n => n.props.value === "notes")).toBeDefined();
-  const section = tree.find(n => n.type === NotesSection)!;
-  expect(section.props.composeRequested).toBe(true);
-  // Mount the newly selected section, then run its composer request effect.
-  hooks.values = []; hooks.refs = []; hooks.effects = []; hooks.index = 0; hooks.refIndex = 0;
-  NotesSection({ user, couple, onSignedOut: vi.fn(), composeRequested: true, onComposeHandled: section.props.onComposeHandled });
-  for (const effect of hooks.effects.splice(0)) effect();
-  hooks.index = 0; hooks.refIndex = 0;
-  const note = nodes(NotesSection({ user, couple, onSignedOut: vi.fn() })).find(n => n.props.partnerName === "Linh" && n.props.open)!;
-  expect(note.props.fromMenu).toBe(true);
+it("saving each form selects its section", () => {
+  journal(); hooks.requests.get("journal")!();
+  journal().find(n => n.props.initialTab)!.props.onNoteSaved!({ state: "draft" } as never);
+  expect(journal().find(n => n.type === Tabs)?.props.value).toBe("notes");
+  journal().find(n => n.props.initialTab)!.props.onSaved!({ id: "entry", date: "2026-11-12", text: "hi", source: "partner", authorId: "a", createdAt: 1, updatedAt: 1, photoIds: [] } as never);
+  expect(journal().find(n => n.type === Tabs)?.props.value).toBe("feed");
+});
+const composeProps = { open: true, initialTab: "feed" as const, partnerName: "Linh", onOpenChange: vi.fn(), onSaved: vi.fn(), onNoteSaved: vi.fn(), onSignedOut: vi.fn() };
+function composer() { hooks.index = 0; return nodes(JournalComposeSheet(composeProps)); }
+it.each(["vi", "en"])("the compose sheet has both mounted tabs in %s", (locale) => {
+  hooks.locale = locale;
+  let tree = composer();
+  expect(tree.filter(n => n.type === TabsTrigger).map(n => n.props.children)).toEqual(locale === "vi" ? ["Nhật ký", "Lời nhắn nhỏ"] : ["Journal", "Kind note"]);
+  const before = tree.filter(n => n.type === TabsContent);
+  tree.find(n => n.type === Tabs)!.props.onValueChange!("notes");
+  tree = composer();
+  expect(tree.find(n => n.type === DrawerContent)?.props["aria-label"]).toBe(locale === "vi" ? "Lời nhắn nhỏ" : "Kind note");
+  const after = tree.filter(n => n.type === TabsContent);
+  expect(after.map(n => n.props.forceMount)).toEqual([true, true]);
+  expect(after.map(n => n.props.hidden)).toEqual([true, false]);
+  expect(after.map(n => (n.props.children as ReactElement).type)).toEqual(before.map(n => (n.props.children as ReactElement).type));
+});
+it.each([0, 1])("closing checks unsaved form %s, including the hidden tab", (index) => {
+  composer().filter(n => n.props.onLock)[index]!.props.onLock!("dirty");
+  let tree = composer();
+  const preventDefault = vi.fn();
+  tree.find(n => n.type === DrawerContent)!.props.onEscapeKeyDown!({ preventDefault });
+  tree = composer();
+  expect(tree.find(n => n.type === Dialog)?.props.open).toBe(true);
+  expect(composeProps.onOpenChange).not.toHaveBeenCalled();
+});
+it("saving blocks tab switching and dismissal", () => {
+  composer().find(n => n.props.onLock)!.props.onLock!("saving");
+  const tree = composer();
+  expect(tree.filter(n => n.type === TabsTrigger).every(n => n.props.disabled)).toBe(true);
+  tree.find(n => n.props.onClose)!.props.onClose!();
+  expect(composeProps.onOpenChange).not.toHaveBeenCalled();
+});
+it("saving asks before discarding a draft in the other tab", () => {
+  composer().filter(n => n.props.onLock)[1]!.props.onLock!("dirty");
+  composer().find(n => n.props.onDone)!.props.onDone!();
+  expect(composer().find(n => n.type === Dialog)?.props.open).toBe(true);
+  expect(composeProps.onOpenChange).not.toHaveBeenCalled();
+});
+it("closing the tabbed composer restores focus to +", () => {
+  const focus = vi.fn();
+  vi.stubGlobal("document", { querySelector: () => ({ focus }) });
+  composer().find(n => n.type === DrawerContent)!.props.onCloseAutoFocus!({ preventDefault: vi.fn() });
+  expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+});
+it("the entry form has no author avatar and the day field has no removed helper", () => {
+  const tree = nodes(ComposeForm({ partnerName: "Linh", onSaved: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() }));
+  expect(tree.some(n => n.type === PersonAvatar)).toBe(false);
+  expect(tree.some(n => n.props.children === "An")).toBe(false);
+  hooks.index = 0;
+  const day = nodes(DayField({ value: "2026-11-12", now: Date.now(), onChange: vi.fn() }));
+  expect(JSON.stringify(day)).not.toContain("-help");
+  expect(vietnamese).not.toHaveProperty("compose.dayHelp");
+  expect(english).not.toHaveProperty("compose.dayHelp");
 });
 it("closing a note created from + returns focus to +", () => {
   const focus = vi.fn(), preventDefault = vi.fn();
@@ -130,4 +173,13 @@ it("closing a note created from + returns focus to +", () => {
   const tree = nodes(NoteSheet({ open: true, fromMenu: true, onOpenChange: vi.fn(), partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn() }));
   tree.find(n => n.type === DrawerContent)!.props.onCloseAutoFocus!({ preventDefault });
   expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+});
+
+it("editing an entry and receiving a wish keep the single-form sheet", () => {
+  const entry = { id: "entry", authorId: "a", date: "2026-11-12", text: "hi", source: "partner" as const, photoIds: [], createdAt: 1, updatedAt: 1 };
+  const props = { open: true, onOpenChange: vi.fn(), partnerName: "Linh", onSaved: vi.fn(), onSignedOut: vi.fn() };
+  expect(nodes(ComposeSheet({ ...props, entry })).some(n => n.type === Tabs)).toBe(false);
+  hooks.index = 0;
+  const wish = { id: "w", title: "A book", price: null, link: null, priority: 2 as const, photoId: null, status: "open" as const, receivedOn: null, note: null, createdAt: 1, updatedAt: 1 };
+  expect(nodes(ComposeSheet({ ...props, receiving: wish })).some(n => n.type === Tabs)).toBe(false);
 });

@@ -83,7 +83,7 @@ it.each([false, true])("claim release respects connectivity: online=%s", async (
 it("ComposeSheet keeps a valid draft but refuses submission offline", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const save = vi.spyOn(api, "updateEntry");
-  const sheet = ComposeSheet({ open: true, onOpenChange: vi.fn(), author: { name: "An", tone: "primary" }, partnerName: "Binh", entry, onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const sheet = ComposeSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", entry, onSaved: vi.fn(), onSignedOut: vi.fn() });
   const form = sheet.props.children[0].props.children;
   const nodes = elements(form.type(form.props));
   nodes.find((node) => node.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
@@ -96,7 +96,7 @@ it("ComposeSheet keeps a valid draft but refuses submission offline", async () =
 it("AC11 R11: a new journal entry is not sent offline and its save button is disabled with the offline note", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const create = vi.spyOn(api, "createEntry");
-  const sheet = ComposeSheet({ open: true, onOpenChange: vi.fn(), author: { name: "An", tone: "primary" }, partnerName: "Binh", onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const sheet = ComposeSheet({ open: true, onOpenChange: vi.fn(), partnerName: "Binh", onSaved: vi.fn(), onSignedOut: vi.fn() });
   const form = sheet.props.children[0].props.children;
   state.push(Date.UTC(2026, 10, 6), "2026-11-06", "A new memory");
   const nodes = elements(form.type(form.props));

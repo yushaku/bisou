@@ -1,4 +1,4 @@
-import { lazy, Suspense, useContext, useEffect, useImperativeHandle, useState, type Ref } from "react";
+import { lazy, Suspense, useContext, useImperativeHandle, useState, type Ref } from "react";
 import { Mailbox } from "lucide-react";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, User, WrittenNote, ReceivedNote, JournalEntry } from "../../../shared/types";
@@ -18,7 +18,7 @@ import { NoteParts } from "./NoteParts";
 import { NoteEnvelope } from "./NoteEnvelope";
 const NoteSheet = lazy(() => import("./NoteSheet").then((m) => ({ default: m.NoteSheet })));
 const NoteCloseSheet = lazy(() => import("./NoteCloseSheet").then((m) => ({ default: m.NoteCloseSheet })));
-export function NotesSection({ ref, couple, user, onSignedOut, onClosed, composeRequested, onComposeHandled }: { ref?: Ref<{ refresh: () => Promise<void> }>; couple: Couple; user: User; onSignedOut: () => void; onClosed?: (entry: JournalEntry) => void; composeRequested?: boolean; onComposeHandled?: () => void }) {
+export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref?: Ref<{ refresh: () => Promise<void> }>; couple: Couple; user: User; onSignedOut: () => void; onClosed?: (entry: JournalEntry) => void }) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const memory = useContext(TabMemory);
@@ -27,14 +27,8 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed, compose
   useImperativeHandle(ref, () => ({ refresh }), [refresh]);
   const [editing, setEditing] = useState<WrittenNote>(), [composing, setComposing] = useState(false), [loaded, setLoaded] = useState(false), [detail, setDetail] = useState<WrittenNote | null>(null);
   const people = toPeople(couple.members, user, t), partner = people[couple.members.findIndex((m) => m.id !== user.id)];
-  const [fromMenu, setFromMenu] = useState(false);
-  useEffect(() => {
-    if (!composeRequested) return;
-    setEditing(undefined); setLoaded(true); setComposing(true); setFromMenu(true);
-    onComposeHandled?.();
-  }, [composeRequested, onComposeHandled]);
   if (couple.members.length !== 2 || !partner) return null;
-  const write = (note?: WrittenNote) => { setFromMenu(false); setEditing(note); setLoaded(true); setComposing(true); };
+  const write = (note?: WrittenNote) => { setEditing(note); setLoaded(true); setComposing(true); };
   async function open(note: ReceivedNote) {
     if (!online || opening) return;
     if (note.state === "opened") { setReceived(note); return; }
@@ -68,6 +62,6 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed, compose
     <EntryActions title={t("notes.opened")} entry={detail && { id: detail.id, date: vnDay(Date.now()), photoIds: [] }} own={false} onClose={() => setDetail(null)} onEdit={() => {}} onDeleted={() => {}} onSignedOut={onSignedOut} detail={detail && <NoteParts note={detail} />} />
     <EntryActions title={partner.name} entry={received && { id: received.id, date: vnDay(Date.now()), photoIds: [] }} own={false} onClose={() => setReceived(null)} onEdit={() => {}} onDeleted={() => {}} onSignedOut={onSignedOut} detail={received && <><NoteParts note={received} /><Button size="lg" disabled={!online} onClick={() => { setClosing(received.id); setReceived(null); }}>{t("notes.readDone")}</Button>{!online && <p className="text-sm text-muted-foreground">{t("offline.continue")}</p>}</>} />
     {closing && <Suspense fallback={null}><NoteCloseSheet id={closing} onClose={() => setClosing(null)} onSignedOut={onSignedOut} onClosed={(entry) => { if (memory?.notes) memory.notes = { fromMe: memory.notes.fromMe.filter((n) => n.id !== closing), toMe: memory.notes.toMe.filter((n) => n.id !== closing) }; setClosing(null); void refresh(); toast.success(t("notes.closed")); onClosed?.(entry); }} /></Suspense>}
-    {loaded && <Suspense fallback={null}><NoteSheet fromMenu={fromMenu} open={composing} onOpenChange={setComposing} partnerName={partner.name} entry={editing} onSignedOut={onSignedOut} onRefresh={() => void refresh()} onSaved={(note) => { toast.success(t(note.state === "sent" ? "notes.sent" : "notes.saved")); void refresh(); }} /></Suspense>}
+    {loaded && <Suspense fallback={null}><NoteSheet open={composing} onOpenChange={setComposing} partnerName={partner.name} entry={editing} onSignedOut={onSignedOut} onRefresh={() => void refresh()} onSaved={(note) => { toast.success(t(note.state === "sent" ? "notes.sent" : "notes.saved")); void refresh(); }} /></Suspense>}
   </div>;
 }

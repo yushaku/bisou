@@ -25,6 +25,7 @@ import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
 const ClosedNoteSheet = lazy(() => import("../components/bisou/ClosedNoteSheet").then((m) => ({ default: m.ClosedNoteSheet })));
+const JournalComposeSheet = lazy(() => import("../components/bisou/JournalComposeSheet").then((m) => ({ default: m.JournalComposeSheet })));
 const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
 
 interface JournalProps extends SessionProps {
@@ -59,7 +60,6 @@ export function Journal({ couple, ...session }: JournalProps) {
 
   // Creator first, as on Home, so each partner keeps one tint everywhere.
   const people = new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person]));
-  const me = people.get(user.id) ?? { name: displayName(user, t), tone: "primary" };
   const partner = couple.members.find((m) => m.id !== user.id);
   const partnerName = displayName(partner, t);
 
@@ -85,9 +85,10 @@ export function Journal({ couple, ...session }: JournalProps) {
     setComposing(true);
   };
 
-  const [noteRequested, setNoteRequested] = useState(false);
-  useCreateRequest("notes", () => { setSection("notes"); setNoteRequested(true); });
-  useCreateRequest("journal", () => write(null, true));
+  const [createTab, setCreateTab] = useState<"feed" | "notes">("feed");
+  const create = (tab: "feed" | "notes") => { setCreateTab(tab); setFromMenu(true); setEditing(null); setComposeLoaded(true); setComposing(true); };
+  useCreateRequest("notes", () => create("notes"));
+  useCreateRequest("journal", () => create(section));
 
   // Kept after closing, so focus can go back to the tile of the photo last shown.
   const [viewer, setViewer] = useState<{ entry: JournalEntry; index: number; open: boolean } | null>(null);
@@ -191,7 +192,7 @@ export function Journal({ couple, ...session }: JournalProps) {
     <SignedInShell {...session} tab="journal" onRefresh={pullRefresh}>
       <Tabs value={section} onValueChange={(value) => { const next = value === "notes" ? "notes" : "feed"; setSection(next); if (memory) memory.journalSection = next; }}>
         <TabsList className="mb-4 w-full"><TabsTrigger value="feed">{t("journal.sectionFeed")}</TabsTrigger><TabsTrigger value="notes">{t("journal.sectionNotes")}</TabsTrigger></TabsList>
-        <TabsContent value="notes"><NotesSection ref={notesRef} composeRequested={noteRequested} onComposeHandled={() => setNoteRequested(false)} onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
+        <TabsContent value="notes"><NotesSection ref={notesRef} onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
         <TabsContent value="feed">
 
       {feed && online && stale && (
@@ -313,21 +314,22 @@ export function Journal({ couple, ...session }: JournalProps) {
       <EntryActions remove={deleteItem} entry={acting} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
 
       {closedEditing && <Suspense fallback={null}><ClosedNoteSheet key={closedEditing.id} entry={closedEditing} onClose={() => setClosedEditing(null)} onSignedOut={onSignedOut} onSaved={(entry) => { onSaved(entry); setClosedEditing(null); }} /></Suspense>}
+      </TabsContent></Tabs>
       {composeLoaded && (
         <Suspense fallback={null}>
-          <ComposeSheet
+          {fromMenu && !editing ? <JournalComposeSheet open={composing} onOpenChange={setComposing} initialTab={createTab} partnerName={partnerName} onSignedOut={onSignedOut}
+            onSaved={(entry) => { onSaved(entry); setSection("feed"); }}
+            onNoteSaved={(note) => { setSection("notes"); void notesRef.current?.refresh(); toast.success(t(note.state === "sent" ? "notes.sent" : "notes.saved")); }} /> : <ComposeSheet
             fromMenu={fromMenu}
             open={composing}
             onOpenChange={setComposing}
-            author={me}
             partnerName={partnerName}
             entry={editing ?? undefined}
             onSaved={onSaved}
             onSignedOut={onSignedOut}
-          />
+          />}
         </Suspense>
       )}
-      </TabsContent></Tabs>
     </SignedInShell>
   );
 }
