@@ -1,4 +1,4 @@
-import { BookHeart, Ellipsis, Plus } from "lucide-react";
+import { Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, JournalEntry, JournalPage } from "../../shared/types";
@@ -217,6 +217,7 @@ export function Journal({ couple, ...session }: JournalProps) {
 
       {!feed && firstLoad === "error" && (
         <EmptyState
+          situation="error"
           title={t("journal.loadError")}
           description={t("journal.loadErrorBody")}
           action={{ label: t("journal.retry"), onClick: retryFirst }}
@@ -225,7 +226,6 @@ export function Journal({ couple, ...session }: JournalProps) {
 
       {feed && feed.entries.length === 0 && (
         <EmptyState
-          icon={BookHeart}
           title={t("journal.emptyTitle")}
           description={t("journal.emptyBody")}
           action={{ label: t("compose.first"), onClick: () => write(), icon: Plus }}

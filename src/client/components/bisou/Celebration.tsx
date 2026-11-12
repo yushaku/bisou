@@ -1,5 +1,5 @@
 import confetti from "canvas-confetti";
-import { PartyPopper } from "lucide-react";
+import { Mascot } from "./Mascot";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,9 +36,7 @@ export function Celebration({ open, onOpenChange, title, body }: CelebrationProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm text-center" showCloseButton={false}>
         <DialogHeader className="items-center text-center">
-          <span className="edge-ink elevate-sm flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <PartyPopper className="size-7" aria-hidden="true" />
-          </span>
+          <Mascot situation="celebrate" />
           <DialogTitle className="font-heading text-2xl leading-tight">{title ?? t("celebration.title")}</DialogTitle>
           <DialogDescription className="text-base text-balance">{body ?? t("celebration.body")}</DialogDescription>
         </DialogHeader>

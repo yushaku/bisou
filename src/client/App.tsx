@@ -6,7 +6,7 @@ import { Route, Switch, useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import type { Couple, User } from "../shared/types";
 import { api } from "./api";
-import { BrandMark } from "./components/bisou/BrandMark";
+import { Mascot } from "./components/bisou/Mascot";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
 import { clearCardBoxCache } from "./lib/cardBox";
@@ -56,7 +56,7 @@ function LoadingScreen() {
   return (
     <main className="flex min-h-dvh items-center justify-center">
       <div className="flex flex-col items-center gap-3" aria-live="polite">
-        <BrandMark className="size-12 animate-pulse motion-reduce:animate-none" />
+        <Mascot situation="waiting" />
         <span className="text-base text-muted-foreground">{t("loading")}</span>
       </div>
     </main>

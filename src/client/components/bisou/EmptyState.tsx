@@ -1,17 +1,18 @@
+import { Mascot } from "./Mascot";
+import type { MascotSituation } from "@/lib/mascots";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
   title: string;
+  situation?: MascotSituation;
   description?: string;
-  icon?: LucideIcon;
   action?: { label: string; onClick: () => void; icon?: LucideIcon };
   className?: string;
 }
 
-/* One short line and the next step, in the frame the content will fill. No illustration. */
-export function EmptyState({ title, description, icon: Icon, action, className }: EmptyStateProps) {
+export function EmptyState({ title, description, situation = "empty", action, className }: EmptyStateProps) {
   const ActionIcon = action?.icon;
   return (
     <div
@@ -21,8 +22,8 @@ export function EmptyState({ title, description, icon: Icon, action, className }
         className,
       )}
     >
-      <p className="flex items-center gap-3 text-lg text-pretty">
-        {Icon && <Icon className="size-6 shrink-0 text-muted-foreground" aria-hidden="true" />}
+      <Mascot situation={situation} />
+      <p className="text-lg text-pretty">
         {title}
       </p>
       {description && <p className="-mt-2 text-base text-pretty text-muted-foreground">{description}</p>}

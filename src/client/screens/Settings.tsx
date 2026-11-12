@@ -1,3 +1,4 @@
+import { MascotPicker } from "../components/bisou/MascotPicker";
 import { useOnline } from "../lib/useOnline";
 import { Bell, Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
 import { currentSubscription } from "../lib/push";
@@ -203,6 +204,7 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
             history.replaceState({ ...history.state, focus: "appearance-row" }, "");
             navigate("/settings/appearance", { state: { from: "/settings" } });
           }} />
+          <MascotPicker />
           {paired && <div className="overflow-hidden rounded-xl edge bg-card">
             <SettingsRow id="notifications-row" icon={Bell} label={t("push.title")} onClick={() => {
               history.replaceState({ ...history.state, focus: "notifications-row" }, "");

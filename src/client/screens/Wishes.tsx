@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Ellipsis, Gift, ListFilter, PencilLine, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Ellipsis, ListFilter, PencilLine, Plus, Trash2 } from "lucide-react";
 import { lazy, Suspense, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
@@ -123,10 +123,10 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
     {failed && <div role="alert" className="mb-4 text-destructive">{t("wishes.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!jar && !failed && <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3"><Skeleton className="h-28" /><Skeleton className="h-28" /></div>}
     {jar && (jar.open.length + jar.received.length === 0
-      ? <EmptyState icon={Gift} title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />
+      ? <EmptyState title={t("empty.wishes")} description={t("wishes.private")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />
       : <>
-        {filter === "received" && jar.received.length === 0 && <EmptyState icon={Gift} title={t("received.empty")} />}
-        {filter === "open" && jar.open.length === 0 && <EmptyState icon={Gift} title={t("empty.wishes")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />}
+        {filter === "received" && jar.received.length === 0 && <EmptyState title={t("received.empty")} />}
+        {filter === "open" && jar.open.length === 0 && <EmptyState title={t("empty.wishes")} action={{ label: t("wishes.add"), onClick: () => { setFromMenu(false); setEditing(null); }, icon: Plus }} />}
         <div className="flex flex-col gap-3 pb-6">
           {filter !== "received" && jar.open.map((wish) => <WishCard key={wish.id} wish={wish} onOpen={() => { setDetail(true); setActing(wish); setDeleting(false); setError(null); }} actions={optionsButton(wish)} />)}
           {filter !== "open" && jar.received.map((wish) => <WishCard key={wish.id} wish={wish} onOpen={() => { setDetail(true); setActing(wish); setDeleting(false); setError(null); }} actions={optionsButton(wish)}>

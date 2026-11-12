@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Check, ExternalLink, Gift } from "lucide-react";
+import { Check, ExternalLink } from "lucide-react";
 import { useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Claim } from "../../../shared/types";
@@ -63,7 +63,7 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
     {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
     {failed && <p role="alert" className="text-destructive">{t("claims.loadError")} <Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></p>}
     {!claims && !failed && <Skeleton className="h-28" aria-label={t("loading")} />}
-    {claims?.length === 0 && <EmptyState icon={Gift} title={t("claims.empty")} />}
+    {claims?.length === 0 && <EmptyState title={t("claims.empty")} />}
     <div className="flex flex-col gap-3">{claims?.map((claim) => <Card key={claim.id} className="gap-3 p-4">
       {claim.status === "gone" ? <><p>{t("claims.gone", { title: claim.title })}</p><Button variant="outline" onClick={() => setClaims((cs) => cs?.filter((c) => c.id !== claim.id) ?? null)}>{t("claims.dismiss")}</Button></> : <>
         <div className="flex items-center gap-3">

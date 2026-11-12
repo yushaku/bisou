@@ -1,5 +1,4 @@
 import { lazy, Suspense, useContext, useImperativeHandle, useState, type Ref } from "react";
-import { Mailbox } from "lucide-react";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, User, WrittenNote, ReceivedNote, JournalEntry } from "../../../shared/types";
 import { vnDay } from "../../../shared/days";
@@ -40,9 +39,9 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref
   }
   return <div className="flex flex-col gap-4">
     <p className="text-sm text-muted-foreground">{t("notes.invite")}</p>
-    {!lists && (failed ? <EmptyState title={t("notes.loadError")} action={{ label: t("journal.retry"), onClick: () => void refresh() }} /> : <><p role="status">{t("notes.loading")}</p><Skeleton className="h-44 rounded-xl" /></>)}
+    {!lists && (failed ? <EmptyState situation="error" title={t("notes.loadError")} action={{ label: t("journal.retry"), onClick: () => void refresh() }} /> : <><p role="status">{t("notes.loading")}</p><Skeleton className="h-44 rounded-xl" /></>)}
     {lists && failed && <p role="status">{t("notes.stale")} <Button variant="link" onClick={() => void refresh()}>{t("journal.retry")}</Button></p>}
-    {lists && !lists.fromMe.length && !lists.toMe.length && <EmptyState icon={Mailbox} title={t("notes.empty")} action={{ label: t("notes.write", { partner: partner.name }), onClick: () => write() }} />}
+    {lists && !lists.fromMe.length && !lists.toMe.length && <EmptyState title={t("notes.empty")} action={{ label: t("notes.write", { partner: partner.name }), onClick: () => write() }} />}
     {!!lists?.toMe.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("notes.toMe")}</h2><div className="note-envelope-grid">{lists.toMe.map((note) => {
       const address = t("notes.fromPartner", { partner: partner.name }), state = t(note.state === "opened" ? "notes.opened" : "notes.notOpened");
       return <div key={note.id} className="note-envelope">

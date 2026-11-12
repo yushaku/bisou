@@ -1,3 +1,4 @@
+import { Mascot } from "../components/bisou/Mascot";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DECKS, type GardenDeckState } from "../../shared/garden";
 import type { Couple } from "../../shared/types";
@@ -46,7 +47,7 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
           <p className="mt-1 text-sm text-muted-foreground">{deck.purpose[locale]}</p>
         </div>
       </div>}
-      {failed && <div role="alert"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
+      {failed && <div role="alert"><Mascot situation="error" /><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
       {!state && !failed && <Skeleton className="h-80" aria-label={t("loading")} />}
       {state?.active && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("garden.inPlay")}</h2>
         <GardenCard memoryScope={`${couple.id}:${user.id}`} key={state.active.cardId} card={state.active} {...names} onChanged={() => void refresh()} onSignedOut={onSignedOut} />

@@ -1,6 +1,6 @@
 import { CardBoxCard } from "@/components/bisou/CardBoxCard";
 import { demoSpin } from "./samples";
-import { BookHeart, Gift, PartyPopper } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Celebration } from "@/components/bisou/Celebration";
 import { CoupleAvatars } from "@/components/bisou/CoupleAvatars";
@@ -98,8 +98,8 @@ export function ComponentsSection() {
       </Block>
 
       <Block title="EmptyState, Celebration">
-        <EmptyState icon={BookHeart} title={t("empty.journal")} action={{ label: t("empty.journalAction"), onClick: () => undefined }} />
-        <EmptyState icon={Gift} title={t("empty.wishes")} action={{ label: t("empty.wishesAction"), onClick: () => undefined }} />
+        <EmptyState title={t("empty.journal")} action={{ label: t("empty.journalAction"), onClick: () => undefined }} />
+        <EmptyState title={t("empty.wishes")} action={{ label: t("empty.wishesAction"), onClick: () => undefined }} />
         <Button variant="secondary" className="self-start" onClick={() => setParty(true)}>
           <PartyPopper aria-hidden="true" />
           {d("celebrate")}

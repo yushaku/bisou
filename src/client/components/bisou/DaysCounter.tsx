@@ -1,3 +1,4 @@
+import { Mascot } from "./Mascot";
 import { CalendarHeart, PencilLine } from "lucide-react";
 import { daysTogether, nextMilestone, toDayString, type Milestone } from "../../../shared/days";
 import type { Locale } from "../../../shared/types";
@@ -58,7 +59,7 @@ export function DaysCounter({ startDate, people, today = new Date(), onEditStart
               )}
             </p>
           </div>
-          <img src={couple} alt="" width={640} height={466} className="absolute -right-5 bottom-0 h-36 w-[66%] max-w-56 object-contain object-bottom" />
+          {next.daysLeft === 0 ? <Mascot situation="celebrate" className="absolute right-0 bottom-0 size-36" /> : <img src={couple} alt="" width={640} height={466} className="absolute -right-5 bottom-0 h-36 w-[66%] max-w-56 object-contain object-bottom" />}
         </div>
         <p className="mt-3 flex items-start gap-2 border-t border-border/70 pt-3 text-sm text-pretty">
           <CalendarHeart className="size-5 shrink-0 text-primary" aria-hidden="true" />

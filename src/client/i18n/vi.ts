@@ -1,5 +1,13 @@
 // Vietnamese is the source dictionary: en.ts must provide exactly these keys.
 export const vi = {
+  "cardBox.giftReceived": "Đã nhận hộp",
+  "mascot.title": "Linh vật",
+  "mascot.girl": "Bạn gái",
+  "mascot.boy": "Bạn trai",
+  "mascot.empty": "Trống",
+  "mascot.waiting": "Đang đợi",
+  "mascot.error": "Lỗi",
+  "mascot.celebrate": "Ăn mừng",
   "cardBox.buy": "Mua hộp",
   "cardBox.gift": "Bạn tính mua thật à? Đùa thôi, cái này tôi tặng bạn.",
   "cardBox.getGift": "Nhận hộp",

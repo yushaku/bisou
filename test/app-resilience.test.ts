@@ -5,7 +5,7 @@ import { ErrorBoundary } from "../src/client/components/bisou/ErrorBoundary";
 import { useOnline } from "../src/client/lib/useOnline";
 
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
-vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useSyncExternalStore: vi.fn() }));
+vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useSyncExternalStore: vi.fn((_subscribe, snapshot) => snapshot()) }));
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 it("renders the friendly fallback and logs a child render error", () => {
@@ -18,6 +18,7 @@ it("renders the friendly fallback and logs a child render error", () => {
     boundary.componentDidCatch(caught as Error);
   }
   const html = renderToString(boundary.render());
+  expect(html).toContain("girl-error.webp");
   expect(html).toContain("errorScreen.title");
   expect(html).toContain("errorScreen.reload");
   expect(html).not.toContain(error.message);

@@ -4,6 +4,8 @@ import { api } from "../api";
 import { BottomBar } from "../components/bisou/AppShell";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { TabMemory } from "../lib/tabMemory";
+import { Celebration } from "../components/bisou/Celebration";
+import { Mascot } from "../components/bisou/Mascot";
 import { CardBoxGift } from "../components/bisou/CardBoxGift";
 import { CardBoxDeck } from "../components/bisou/CardBoxDeck";
 import { Button } from "../components/ui/button";
@@ -22,6 +24,7 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
   const [seen, setSeen] = useState(() => readSeen(scope, boxId));
   const [error, setError] = useState<"notFound" | "loadError" | null>(null);
   const memory = useContext(TabMemory);
+  const [celebrating, setCelebrating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unlockFailed, setUnlockFailed] = useState(false);
   const [unlockPending, setUnlockPending] = useState(false);
@@ -66,7 +69,7 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
     writeCache(scope, `box:${boxId}`, res.data);
     const boxes = (memory?.boxes ?? readCache(scope, "list"))?.map(box => box.id === boxId ? res.data.box : box);
     if (boxes) { writeCache(scope, "list", boxes); if (memory) memory.boxes = boxes; }
-    setDetail(res.data); setDialogOpen(false);
+    setDetail(res.data); setDialogOpen(false); setCelebrating(true);
     const next = nextCard(res.data, play, seen);
     setPlay(next.play); setSeen(next.seen); writeSeen(scope, boxId, next.seen);
   };
@@ -83,7 +86,8 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
       }} /> : card ? <>
         <CardBoxDeck card={card} boxId={boxId} boxName={detail!.box.name[locale]} adult={detail!.box.adult} previous={detail!.cards.find(card => card.id === play.stack[play.index - 1])} onNext={() => draw()} onRandom={() => draw(true)} onPrevious={() => setPlay(previousCard(play))} />
         {play.startedOver && <p role="status">{t(cardBoxEndMessage(detail!.box.open))}</p>}
-      </> : !message && <p>{t(detail ? "cardBox.notFound" : "cardBox.opening")}</p>}
+      </> : !message && <div role="status">{!detail && <Mascot situation="waiting" />}<p>{t(detail ? "cardBox.notFound" : "cardBox.opening")}</p></div>}
+      <Celebration open={celebrating} onOpenChange={setCelebrating} title={t("cardBox.giftReceived")} body={detail?.box.name[locale]} />
     </main><BottomBar active="home" {...navigation} />
   </div>;
 }

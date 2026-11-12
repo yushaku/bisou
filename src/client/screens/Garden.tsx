@@ -1,3 +1,4 @@
+import { Mascot } from "../components/bisou/Mascot";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Couple } from "../../shared/types";
 import { type GardenState, type RelationshipLevel } from "../../shared/garden";
@@ -46,7 +47,7 @@ export function Garden({ couple, ...session }: SessionProps & { couple: Couple }
   return <SignedInShell {...session} tab="garden" onRefresh={refresh}>
     <div className="flex flex-col gap-5 py-3">
       {state && <GardenStageNotice state={state} memoryScope={`${couple.id}:${user.id}`} partnerName={partnerName} onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
-      {failed && <div role="alert"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
+      {failed && <div role="alert"><Mascot situation="error" /><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
       {!state && !failed && <Skeleton className="h-80 w-full" aria-label={t("loading")} />}
       {state && view === "map" && <GardenMap partnerName={partnerName} levels={state.levels} viewingId={stageId}
         onClose={() => setView("garden")} onSelect={selectIsland} />}

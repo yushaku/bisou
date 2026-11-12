@@ -1,6 +1,14 @@
 import type { Messages } from "./vi";
 
 export const en: Messages = {
+  "cardBox.giftReceived": "Gift received",
+  "mascot.title": "Mascot",
+  "mascot.girl": "Girl",
+  "mascot.boy": "Boy",
+  "mascot.empty": "Empty",
+  "mascot.waiting": "Waiting",
+  "mascot.error": "Error",
+  "mascot.celebrate": "Celebrate",
   "cardBox.buy": "Buy box",
   "cardBox.gift": "You were really going to pay? Just kidding, this one's on us.",
   "cardBox.getGift": "Get the box",

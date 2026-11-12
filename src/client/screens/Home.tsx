@@ -1,5 +1,4 @@
 import { CardBoxBlock } from "../components/bisou/CardBoxBlock";
-import { CalendarHeart } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
 import { Link } from "wouter";
@@ -84,7 +83,6 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
         <DaysCounter startDate={couple.startDate} people={people} today={now} onEditStartDate={pick} />
       ) : (
         <EmptyState
-          icon={CalendarHeart}
           title={t("startDate.prompt")}
           action={{ label: t("startDate.set"), onClick: pick }}
         />

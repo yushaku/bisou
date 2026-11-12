@@ -4,6 +4,8 @@
 
 ### Added
 
+- Choose a girl or boy wool mascot on this device in Settings, with illustrations for empty, waiting, error and celebration states.
+
 - Star or unstar flipped Garden cards together; Home shows the three most recently starred cards and links to the full list.
 - Box tiles show total card counts, and the player shows cards seen on this phone for full boxes and previews.
 

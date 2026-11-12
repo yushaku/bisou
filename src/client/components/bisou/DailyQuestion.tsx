@@ -1,3 +1,4 @@
+import { Mascot } from "./Mascot";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Couple, User } from "../../../shared/types";
 import { cardById, DECKS, type GardenState } from "../../../shared/garden";
@@ -53,7 +54,7 @@ export function DailyQuestion({ couple, user, onSignedOut }: { couple: Couple; u
   return <section aria-labelledby="today-card" className="mt-5 flex flex-col gap-3">
     {state && <GardenStageNotice state={state} memoryScope={`${couple.id}:${user.id}`} partnerName={partner?.displayName?.trim() || t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
     <h2 id="today-card" className="font-heading text-xl">{t("garden.today")}</h2>
-    {failed && <div role="alert" className="flex flex-col items-start gap-2"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
+    {failed && <div role="alert" className="flex flex-col items-start gap-2"><Mascot situation="error" /><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
     {!state && !failed && <Skeleton className="h-72 w-full" aria-label={t("loading")} />}
     {state?.today ? <>
       <GardenCard memoryScope={`${couple.id}:${user.id}`} key={state.today.cardId} variant="today" card={state.today} myName={user.displayName?.trim() || t("garden.me")} partnerName={partner?.displayName?.trim() || t("garden.partner")} onChanged={() => void refresh()} onSignedOut={onSignedOut} onFlip={() => { if (state.today?.flippedDay === state.day) setScene(true); }} />

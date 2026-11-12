@@ -1,3 +1,4 @@
+import { MASCOTS } from "@/lib/mascots";
 import { useEffect, useState, type ReactNode } from "react";
 import { isLocale } from "../../shared/types";
 import { ThemeControls } from "@/components/bisou/ThemeControls";
@@ -58,6 +59,7 @@ function Section({ id, title, intro, children }: { id: string; title: string; in
 
 export default function DesignPage() {
   const d = useDesignT();
+  const { t } = useI18n();
   const screen = useUrlParams();
 
   if (screen) return <SampleApp initial={screen} />;
@@ -90,6 +92,20 @@ export default function DesignPage() {
               </figcaption>
             </figure>
           ))}
+        </div>
+      </Section>
+
+      <Section id="mascots" title={t("mascot.title")}>
+        <div className="grid gap-6 sm:grid-cols-2">
+          {MASCOTS.map(mascot => <div key={mascot.id} className="flex flex-col gap-3">
+            <h3 className="font-heading text-xl">{t(mascot.name)}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(mascot.images).map(([situation, src]) => <figure key={situation} className="flex flex-col items-center gap-2 rounded-xl edge bg-card p-3">
+                <img src={src} alt="" width={480} height={480} loading="lazy" className="size-28 object-contain" />
+                <figcaption className="text-sm text-muted-foreground">{t(`mascot.${situation as keyof typeof mascot.images}`)}</figcaption>
+              </figure>)}
+            </div>
+          </div>)}
         </div>
       </Section>
 

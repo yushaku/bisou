@@ -1,3 +1,4 @@
+import { Mascot } from "./Mascot";
 import { useContext } from "react";
 import { Link } from "wouter";
 import type { CardBoxSummary } from "../../../shared/cardBox";
@@ -34,7 +35,7 @@ export function CardBoxList({ boxes, failed, refresh, from }: ReturnType<typeof 
   const online = useOnline();
   const message = cardBoxLoadMessage(!!boxes, online, failed ? "loadError" : null);
   return <>
-    {message && <div role="alert" className="flex flex-col items-start gap-2"><p>{t(message === "loadError" ? "cardBox.listLoadError" : `cardBox.${message}`)}</p><Button variant="outline" onClick={() => void refresh()}>{t("cardBox.retry")}</Button></div>}
+    {message && <div role="alert" className="flex flex-col items-start gap-2"><Mascot situation="error" /><p>{t(message === "loadError" ? "cardBox.listLoadError" : `cardBox.${message}`)}</p><Button variant="outline" onClick={() => void refresh()}>{t("cardBox.retry")}</Button></div>}
     {boxes ? boxes.length ? <CardBoxRows boxes={boxes} from={from} /> : <EmptyState title={t("cardBox.empty")} /> : !message && <Skeleton className="h-72 w-full" aria-label={t("loading")} />}
   </>;
 }
