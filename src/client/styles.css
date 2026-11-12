@@ -13,6 +13,8 @@
   --color-box-peach-foreground: var(--box-peach-foreground);
   --color-box-blue: var(--box-blue);
   --color-box-blue-foreground: var(--box-blue-foreground);
+  --color-box-lilac: var(--box-lilac);
+  --color-box-lilac-foreground: var(--box-lilac-foreground);
   --font-serif: "Lora Variable", ui-serif, Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -737,6 +739,10 @@ body .tst-viewport {
 .card-box-colour[data-box="deep-connection"] {
   --box-paper: var(--box-blue);
   --box-ink: var(--box-blue-foreground);
+}
+.card-box-colour[data-box="truth-or-dare"] {
+  --box-paper: var(--box-lilac);
+  --box-ink: var(--box-lilac-foreground);
 }
 .card-box-face {
   background: var(--box-paper);

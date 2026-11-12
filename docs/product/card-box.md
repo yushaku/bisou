@@ -30,6 +30,10 @@ PO, 11 November 2026 (one-pager D1 to D8 and A1 to A5, Gate 1 answers G1 to G6, 
 24. Spec v2 open points, recommended options: from a past card "Thẻ tiếp" moves forward through the cards already drawn before drawing a new one (R17); the preview continues with the preview cards not yet seen on this phone across openings, as in a free box (R15, R27).
 25. UI round, item 14 (revises 22 "no price"). The box list and the Home block show boxes as a 2-column grid of product cards, each with a cover image, name, description and price: "Miễn phí" for a free box, the price (for example 49.000đ) with "Xem thử" for a paid box. Still no buy, contact or code: unlocking stays deferred (R9 to R12, R29, R43).
 26. UI round, item 15. The card in the player looks like a physical card; swipe left shows the next card, swipe right the previous one, with a visible transition when the card changes; "Thẻ trước" and "Thẻ tiếp" do the same; with reduced motion the change is a short crossfade (R65 to R69).
+27. Truth or Dare, 12 November 2026, item 1. A new paid box "Thật hay thử thách" / "Truth or Dare" at 49.000đ with 3 preview cards; unlocking stays deferred as for Deep Connection (R70).
+28. Truth or Dare, items 2 and 6. 20 cards, each holding both a truth and a dare, in Vietnamese and English, rewritten in Bisou's voice from the research sources and never copied; the first 10 truths and 10 dares are kept, 10 more of each are added, and they are paired so both sides of a card feel about equally light; card copy follows R48 to R54 (R70, Appendix).
+29. Truth or Dare, items 3 and 6 (item 6 replaces the labels of item 3). A new kind, truth or dare ("Thật hay thử thách" / "Truth or dare"), shows the truth and the dare as two blocks marked "Thật" / "Truth" and "Thử thách" / "Dare", like a rather card; whoever drew reads both and picks one aloud, with nothing to tap and nothing recorded. No box sets its own labels. Drawing is random as in every box, with no step to choose truth or dare before a card shows (R19, R71, R72).
+30. Truth or Dare, item 4. The cover is white line art of a bottle on soft lilac, and the box colour is lilac, with a light and a dark version like the other boxes (R70).
 
 ## Purpose
 
@@ -99,11 +103,11 @@ Example: at 20:05 Linh opens Làm quen lại and gets lql-04; she taps "Thẻ ti
 
 ## 4. Card kinds
 
-Every card is one of five kinds. The kind tells the couple what to do aloud; nothing is typed, picked or kept.
+Every card is one of six kinds. The kind tells the couple what to do aloud; nothing is typed, picked or kept.
 
 Example: lql-03 reads "Ai hay hát một mình trong nhà tắm hơn?"; they count to three and both point: Linh at Sơn, and Sơn at Sơn. lql-06 asks how much each likes the rainy season; Sơn says 8, Linh says 3, and Bisou shows only the question and what 1 and 10 mean.
 
-- R19. Every card is one of five kinds and shows its kind label: question ("Câu hỏi" / "Question"), dare ("Thử" / "Try it"), rather ("Chọn một" / "Pick one"), point ("Ai hơn?" / "Who's more?") or scale ("Từ 1 đến 10" / "1 to 10").
+- R19. Every card is one of six kinds and shows its kind label: question ("Câu hỏi" / "Question"), dare ("Thử" / "Try it"), rather ("Chọn một" / "Pick one"), point ("Ai hơn?" / "Who's more?"), scale ("Từ 1 đến 10" / "1 to 10") or truth or dare ("Thật hay thử thách" / "Truth or dare", R71).
 - R20. A question card shows one question; each partner answers aloud in turn.
 - R21. A dare card shows one small thing both partners do right now, together.
 - R22. A rather card shows two options as two blocks; each partner says which one they pick and why.
@@ -239,6 +243,20 @@ Example: Linh swipes left on lql-04 and the card flies off with a slight turn wh
 - AC32 (R66, R67, R68). Given Linh is on lql-08 after lql-04, when she swipes right, then lql-04 shows with the transition, as if she tapped "Thẻ trước"; when she swipes left, then lql-08 shows, as if she tapped "Thẻ tiếp"; on the first card a right swipe changes nothing.
 - AC33 (R69). Given Linh's phone asks for reduced motion, when she changes the card by swipe or button, then the cards change with a short crossfade and no flying or rotating.
 
+## 13. Truth or Dare
+
+A playful paid box where every card holds an honest question and a small dare; whoever drew reads both and picks one, aloud.
+
+Example: at 21:30 Linh opens Truth or Dare (49.000đ, "Xem thử") and gets tod-04. The "Thật" block asks about a snack each sneaks alone and the "Thử thách" block asks each to mime a favourite food. Linh says "Thử thách", and they take turns miming while the other guesses. Bisou never learns which side she picked.
+
+- R70. Bisou has the paid box "Thật hay thử thách" / "Truth or Dare" at 49.000đ, with a lilac cover of a bottle in white line art; it holds 20 cards, all of kind truth or dare, and 3 of them are preview cards (Appendix).
+- R71. A truth or dare card shows the label "Thật hay thử thách" / "Truth or dare" and two blocks: "Thật" / "Truth" with one question both partners answer aloud in turn, and "Thử thách" / "Dare" with one small thing both do right now, together. Whoever drew reads both and says aloud which one they do; like a rather card, the blocks are not buttons, nothing is selected and nothing is recorded (R25).
+- R72. Truth or Dare draws at random like every box (R13 to R17); there is no step to choose truth or dare before a card shows, and "Thẻ tiếp" never asks which side was done (R18).
+
+- AC34 (R70, R12, R27). Given the box list, then Truth or Dare shows its cover, name, description, "49.000đ" and "Xem thử"; when Linh opens it, then only tod-01, tod-04 and tod-09 come up.
+- AC35 (R71, R19, R25). Given Linh's app is in Vietnamese and tod-04 shows, then she sees the label "Thật hay thử thách" and two blocks marked "Thật" and "Thử thách"; in English they read "Truth or dare", "Truth" and "Dare"; tapping either block marks nothing and nothing is kept.
+- AC36 (R72). Given Linh opens Truth or Dare, then a card with both its truth and its dare shows right away, with nothing to pick first; when she taps "Thẻ tiếp", then the next card shows without asking what they did.
+
 ## Decisions to confirm
 
 None open.
@@ -250,7 +268,7 @@ None open.
 - **Product card** (thẻ sản phẩm): a box shown in the grid with cover image, name, description and price; **swipe** (vuốt): left for the next card, right for the previous one.
 - **Preview** (xem thử): the cards marked as preview in a paid box; a couple without the box plays only these.
 - **Draw** (rút thẻ), **next card** (thẻ tiếp), **previous card** (thẻ trước), **seen** (đã xem), **start over** (bắt đầu lại).
-- **Kinds** (loại thẻ): question (câu hỏi), dare (thử), rather (chọn một), point (ai hơn), scale (từ 1 đến 10).
+- **Kinds** (loại thẻ): question (câu hỏi), dare (thử), rather (chọn một), point (ai hơn), scale (từ 1 đến 10), truth or dare (thật hay thử thách).
 - Deferred with unlocking (see todo.md): **unlock** (mở khoá hộp), **code** (mã mở khoá), **unlock screen** (màn mở khoá), **wrong try** (lần nhập sai), **open box** (hộp đã mở) and **locked box** (hộp chưa mở) as ownership states.
 
 ## Out of scope
@@ -302,3 +320,32 @@ Description: "Những câu chậm hơn, để hiểu nhau sâu hơn." / "Slower 
 | dc-08 | | scale | Sau khi giận nhau, mỗi người cần bao lâu mới muốn nói chuyện lại? 1: Nói được ngay. 10: Cần thật nhiều thời gian. | After an argument, how long does each of you need before you want to talk again? 1: Right away. 10: A good while. |
 | dc-09 | | question | Người kia làm điều gì khiến mỗi người thấy được yêu nhất, dù là chuyện rất nhỏ? | What does the other do that makes you feel most loved, even something very small? |
 | dc-10 | | question | Có ước mơ nào mỗi người đã cất đi mà vẫn muốn một ngày được thử? | Is there a dream each of you put away but would still like to try one day? |
+
+### Thật hay thử thách / Truth or Dare (paid, 49.000đ)
+
+Description: "Câu hỏi thật lòng và thử thách nho nhỏ, để hai đứa cười cùng nhau." / "Honest questions and little dares, to laugh about together."
+
+Every card is of kind truth or dare and shows its truth in the "Thật" / "Truth" block and its dare in the "Thử thách" / "Dare" block (R71).
+
+| Id | Preview | Truth, Vietnamese | Truth, English | Dare, Vietnamese | Dare, English |
+|---|---|---|---|---|---|
+| tod-01 | preview | Lần đầu gặp nhau, mỗi người đã thật sự nghĩ gì về người kia? Nói thật nhé. | When you first met, what did each of you really think of the other? Be honest. | Ôm nhau thật chặt, đếm chậm đến mười rồi mới buông. | Hug tight and count slowly to ten before letting go. |
+| tod-02 | | Biệt danh hồi nhỏ của mỗi người là gì, và ai đã đặt cho? | What was each of your childhood nicknames, and who gave it to you? | Mỗi người gọi tên người kia bằng ba giọng: thì thầm, hát lên và giọng đọc bản tin. | Each say the other's name three ways: whispered, sung and in a newsreader's voice. |
+| tod-03 | | Điều đầu tiên mỗi người để ý ở người kia là gì? | What was the first thing each of you noticed about the other? | Dùng ngón tay viết một chữ lên lòng bàn tay người kia. Đoán đúng thì đổi lượt. | Trace a word with your finger on the other's palm. Guess it right and swap turns. |
+| tod-04 | preview | Mỗi người có món gì hay lén ăn một mình mà chưa từng mời người kia không? | Is there a snack each of you sneaks alone and has never offered the other? | Mỗi người diễn không lời món ăn mình thích nhất, người kia đoán. | Each act out your favourite food without a word while the other guesses. |
+| tod-05 | | Người kia có thói quen nhỏ nào mà mỗi người thầm thấy dễ thương nhưng chưa bao giờ nói? | What little habit of the other's does each of you secretly find cute but has never said? | Nắm tay nhau, mỗi người khen người kia ba điều không liên quan đến ngoại hình. | Hold hands and each give the other three compliments that have nothing to do with looks. |
+| tod-06 | | Có lần nào mỗi người giả vờ thích một thứ chỉ vì người kia thích không? | Has either of you ever pretended to like something just because the other did? | Thi nhìn nhau không cười. Ai cười trước thì kể một chuyện vui hồi nhỏ. | Look at each other without laughing. Whoever laughs first tells a funny story from childhood. |
+| tod-07 | | Tài lẻ nào của mỗi người mà người kia chưa được thấy? | What hidden talent does each of you have that the other hasn't seen yet? | Cùng hát một bài cả hai đều thuộc, mỗi người một câu, đến hết điệp khúc. | Sing a song you both know, one line each, to the end of the chorus. |
+| tod-08 | | Trong ngày, lúc nào mỗi người thấy nhớ người kia nhất? | What time of day does each of you miss the other most? | Ngồi tựa lưng vào nhau, nhắm mắt, cùng thở chậm năm hơi. | Sit back to back, close your eyes and take five slow breaths together. |
+| tod-09 | preview | Mỗi người có nỗi sợ nhỏ nào hơi buồn cười mà người kia chưa biết? | What small, slightly silly fear does each of you have that the other doesn't know yet? | Oẳn tù tì ba ván. Ai thua thì bóp vai cho người kia một phút. | Play rock paper scissors, best of three. Whoever loses gives the other a one-minute shoulder rub. |
+| tod-10 | | Nếu được sống thử một năm ở một thành phố khác, mỗi người sẽ chọn nơi nào? | If you could live in another city for a year, where would each of you pick? | Cùng xếp một cái tháp thật cao từ những thứ trong tầm tay, trong một phút. | Build the tallest tower you can from things within reach, in one minute. |
+| tod-11 | | Món nào hồi nhỏ mỗi người ghét mà giờ lại thích? | What food did each of you hate as a kid but like now? | Một người nhắm mắt, người kia đặt một món đồ trong phòng vào tay để đoán. Rồi đổi lượt. | One closes their eyes and the other puts something from the room in their hand to guess. Then swap. |
+| tod-12 | | Nếu được sống lại một ngày đã có cùng nhau, mỗi người chọn ngày nào? | If you could live one day you've had together again, which would each of you choose? | Nắm tay nhau, nhắm mắt, mỗi người kể ba tiếng động đang nghe thấy quanh mình. | Hold hands, close your eyes and each name three sounds you can hear around you. |
+| tod-13 | | Hồi nhỏ mỗi người từng tin điều gì ngây ngô nhất? | What's the most naive thing each of you believed as a kid? | Mỗi người bắt chước điệu cười của người kia, rồi người kia nói giống được mấy phần. | Each copy the other's laugh, and the other says how close it was. |
+| tod-14 | | Có bài hát nào mỗi người vừa nghe là nghĩ ngay đến người kia không? | Is there a song that makes each of you think of the other the moment it plays? | Một người ngân nga một giai điệu, cả hai cùng nhảy theo trong 30 giây. Nhảy xấu cũng được. | One of you hums a tune and you both dance to it for 30 seconds. Bad dancing counts. |
+| tod-15 | | Mỗi người muốn học được điều gì ở người kia nhất? | What would each of you most like to learn from the other? | Ngồi đối diện nhau làm gương: một người cử động thật chậm, người kia làm theo y hệt trong 30 giây. Rồi đổi. | Sit facing each other and play mirror: one moves slowly, the other copies exactly for 30 seconds. Then swap. |
+| tod-16 | | Nếu có siêu năng lực trong một ngày, mỗi người chọn gì, và sẽ cùng người kia làm gì với nó? | If you had a superpower for one day, what would each of you pick, and what would you do with it together? | Cùng đứng một chân, giữ yên 20 giây. Ai lảo đảo trước thì thua. | Both stand on one leg and hold still for 20 seconds. Whoever wobbles first loses. |
+| tod-17 | | Mỗi người còn giữ món đồ nhỏ nào từ người kia, dù chỉ là mảnh giấy hay tấm vé? | What small thing from the other does each of you still keep, even a note or a ticket? | Đổi chỗ ngồi cho nhau và ngồi theo dáng quen thuộc của người kia trong một phút. | Swap seats and sit the way the other usually sits for one minute. |
+| tod-18 | | Câu cửa miệng nào của người kia đã lây sang mỗi người? | Which of the other's pet phrases has rubbed off on each of you? | Đập tay theo một nhịp tự nghĩ ra, người kia phải vỗ lại cho đúng. Rồi đổi lượt. | Clap out a rhythm you make up, and the other has to clap it back exactly. Then swap. |
+| tod-19 | | Hồi nhỏ mỗi người có món đồ chơi nào không rời tay? | What toy did each of you never let go of as a kid? | Cùng kể một câu chuyện, mỗi người một câu, đến khi đủ mười câu. | Tell a story together, one sentence each, until you reach ten. |
+| tod-20 | | Nếu mai hai đứa được nghỉ một tuần, mỗi người muốn làm gì đầu tiên? | If you both had a week off from tomorrow, what would each of you want to do first? | Đan một tay vào nhau, rồi dùng hai tay còn lại vỗ vào nhau mười lần không trượt. | Lace one hand together, then clap your two free hands together ten times without missing. |
