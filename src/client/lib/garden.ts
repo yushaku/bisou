@@ -19,6 +19,9 @@ const seenThisSession = new Set<string>();
 export function gardenMemoryKey(scope: string, kind: "flip" | "stage", id: string): string {
   return `bisou.garden.v1:${scope}:${kind}:${id}`;
 }
+export function flipKey(scope: string, card: GardenCardState): string {
+  return gardenMemoryKey(scope, "flip", `${card.cardId}:${card.flippedDay ?? ""}`);
+}
 export function gardenSeen(key: string): boolean {
   try { return localStorage.getItem(key) === "1" || seenThisSession.has(key); }
   catch { return seenThisSession.has(key); }

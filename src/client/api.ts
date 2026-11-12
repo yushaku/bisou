@@ -67,6 +67,8 @@ export const api = {
   swapGarden: (cardId: string) => call<GardenState>("POST", "/api/garden/today/swap", { cardId }),
   answerGarden: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("POST", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),
   editGardenAnswer: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),
+  starGarden: (id: string) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/star`),
+  unstarGarden: (id: string) => call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/star`),
   deleteGardenAnswer: (id: string) => call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/answer`),
   setAvatar: (blob: Blob) => {
     const form = new FormData();

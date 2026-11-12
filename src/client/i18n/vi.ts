@@ -183,6 +183,8 @@ export const vi = {
   "garden.faceDown": "Đã úp thẻ",
   "garden.waiting": "Đợi {partner} nhé",
   "garden.privateHint": "Chỉ đọc được câu trả lời của nhau khi cả hai đã viết xong.",
+  "garden.star": "Gắn sao",
+  "garden.unstar": "Bỏ sao",
   "garden.flip": "Lật thẻ",
   "garden.edit": "Sửa câu trả lời",
   "garden.edited": "đã sửa",

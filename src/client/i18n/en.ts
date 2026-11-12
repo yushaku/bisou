@@ -183,6 +183,8 @@ export const en: Messages = {
   "garden.faceDown": "Placed face down",
   "garden.waiting": "Waiting for {partner}",
   "garden.privateHint": "Your answers stay private until you have both written.",
+  "garden.star": "Star",
+  "garden.unstar": "Unstar",
   "garden.flip": "Flip",
   "garden.edit": "Edit your answer",
   "garden.edited": "edited",

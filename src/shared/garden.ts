@@ -39,6 +39,7 @@ export interface GardenCardState {
   mineDeleted: boolean;
   partnerDeleted: boolean;
   flippedDay: string | null;
+  starred: boolean;
 }
 export interface GardenPlant { deckId: string; stage: number }
 export interface GardenState {

@@ -47,7 +47,7 @@ function setup() {
   vi.stubGlobal("navigator", { onLine: true });
   return store;
 }
-const card: GardenCardState = { cardId: "L2-01", mine: null, mineChoice: null, mineDeleted: false, mineEdited: false, partner: null, partnerChoice: null, partnerAnswered: false, partnerDeleted: false, partnerEdited: false, flippedDay: null };
+const card: GardenCardState = { starred: false, cardId: "L2-01", mine: null, mineChoice: null, mineDeleted: false, mineEdited: false, partner: null, partnerChoice: null, partnerAnswered: false, partnerDeleted: false, partnerEdited: false, flippedDay: null };
 const state: GardenState = { day: "2026-11-09", today: null, swapLocked: false, freshness: "fresh", plants: [], levels: {
   revision: 3, initialLevelId: "in_love", selectedLevelId: "in_love", furthestLevelId: "in_love", placementComplete: true,
   proposal: { kind: "target", levelId: "living_together", agreed: false, proposedByMe: false }, decisions: [],

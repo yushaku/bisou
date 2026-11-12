@@ -11,7 +11,7 @@ import { Planter } from "../src/client/components/bisou/Planter";
 import { DECKS } from "../src/shared/garden";
 import { readFileSync } from "node:fs";
 
-const card: GardenCardState = { cardId: "money-01", mine: "my words", partner: null, partnerAnswered: false, mineChoice: null, partnerChoice: null, mineEdited: false, partnerEdited: false, mineDeleted: false, partnerDeleted: false, flippedDay: null };
+const card: GardenCardState = { starred: false, cardId: "money-01", mine: "my words", partner: null, partnerAnswered: false, mineChoice: null, partnerChoice: null, mineEdited: false, partnerEdited: false, mineDeleted: false, partnerDeleted: false, flippedDay: null };
 afterEach(() => vi.unstubAllGlobals());
 
 it("R13 R14 R30 R31 AC8: face-down slots show real names without answers or timestamps", () => {
@@ -130,4 +130,22 @@ it("R15 R48: device memory handles unavailable storage without losing session st
   vi.stubGlobal("localStorage", { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } });
   const key = gardenMemoryKey("blocked-test", "stage", "in_love");
   expect(gardenSeen(key)).toBe(false); rememberGarden(key); expect(gardenSeen(key)).toBe(true);
+});
+
+it.each(["vi", "en"])("AC39: %s star toggle requires a device-revealed ordinary card", (locale) => {
+  let seen = false;
+  vi.stubGlobal("localStorage", { getItem: (key: string) => key === "bisou.locale" ? locale : seen ? "1" : null });
+  const render = (state: GardenCardState, variant: "today" | "deck" = "deck") => renderToString(h(I18nProvider, null, h(GardenCard, { variant, card: state, myName: "An", partnerName: "Binh", memoryScope: "star-ui", onChanged: () => {}, onSignedOut: () => {} })));
+  const flipped = { ...card, partner: "other", flippedDay: "2026-11-09" };
+  expect(render(flipped)).not.toContain('aria-pressed=');
+  seen = true;
+  for (const variant of ["today", "deck"] as const) {
+    expect(render(flipped, variant)).toContain('aria-pressed="false"');
+    expect(render(flipped, variant)).toContain(locale === "vi" ? "Gắn sao" : "Star");
+    expect(render({ ...flipped, starred: true }, variant)).toContain('aria-pressed="true"');
+    expect(render({ ...flipped, starred: true }, variant)).toContain(locale === "vi" ? "Bỏ sao" : "Unstar");
+  }
+  expect(render(card)).not.toContain('aria-pressed=');
+  expect(render({ ...flipped, cardId: "L2-01" })).not.toContain('aria-pressed=');
+  expect(render({ ...flipped, mine: null, partner: null, mineDeleted: true, partnerDeleted: true })).toContain('aria-pressed="false"');
 });

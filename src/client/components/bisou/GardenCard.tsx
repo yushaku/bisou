@@ -1,9 +1,9 @@
 import { useEffect, useId, useState } from "react";
-import { Heart, LockKeyhole, PencilLine } from "lucide-react";
+import { Heart, LockKeyhole, PencilLine, Star } from "lucide-react";
 import { cardById, DECKS, type ResponseChoice, type GardenCardState, type GardenState } from "../../../shared/garden";
 import { api } from "../../api";
 import { useI18n } from "../../i18n";
-import { cardPhase, gardenQuestion, gardenMemoryKey, gardenSeen, rememberGarden } from "../../lib/garden";
+import { cardPhase, gardenQuestion, flipKey, gardenSeen, rememberGarden } from "../../lib/garden";
 import { formatDay } from "../../lib/format";
 import { useOnline } from "../../lib/useOnline";
 import { cn } from "../../lib/utils";
@@ -38,7 +38,7 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
   const [choice, setChoice] = useState<ResponseChoice | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const memoryKey = gardenMemoryKey(memoryScope, "flip", `${card.cardId}:${card.flippedDay ?? ""}`);
+  const memoryKey = flipKey(memoryScope, card);
   const [revealedKey, setRevealedKey] = useState(() => gardenSeen(memoryKey) ? memoryKey : null);
   const [animating, setAnimating] = useState(false);
   const revealed = revealedKey === memoryKey || gardenSeen(memoryKey);
@@ -69,6 +69,19 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
     }
     setWriting(false);
     setConfirm(false);
+    onChanged();
+  }
+  async function toggleStar() {
+    if (busy || !online) return;
+    setBusy(true);
+    setError(null);
+    const result = await (card.starred ? api.unstarGarden(card.cardId) : api.starGarden(card.cardId));
+    setBusy(false);
+    if (!result.ok) {
+      if (result.status === 401) return onSignedOut();
+      setError(t("error.generic"));
+      return;
+    }
     onChanged();
   }
   async function flip() {
@@ -124,7 +137,12 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
         </div> : <Button className="w-full" onClick={write}><PencilLine aria-hidden="true" />{t("garden.write")}</Button>) : <>
           <div className={animating ? "garden-card-flip" : undefined} onAnimationEnd={() => setAnimating(false)}><AnswerSlots card={card} revealed={revealed && phase === "flipped"} myName={myName} partnerName={partnerName} variant={variant} /></div>
           {phase === "flipped" && !revealed && <Button size={today ? "lg" : "default"} className="mt-4 w-full" onClick={() => void flip()}>{today && <Heart aria-hidden="true" />}{t("garden.flip")}</Button>}
-          {revealed && card.flippedDay && <p className={cn("mt-3 flex items-center justify-center gap-1.5 text-center text-muted-foreground", today ? "text-xs" : "text-sm")}><Heart className={today ? "size-3.5 text-primary/70" : "hidden"} aria-hidden="true" /><time dateTime={card.flippedDay}>{formatDay(card.flippedDay, locale)}</time></p>}
+          {revealed && card.flippedDay && <div className={cn("mt-3 flex flex-wrap items-center justify-center gap-1.5 text-center text-muted-foreground", today ? "text-xs" : "text-sm")}>
+            <Heart className={today ? "size-3.5 text-primary/70" : "hidden"} aria-hidden="true" /><time dateTime={card.flippedDay}>{formatDay(card.flippedDay, locale)}</time>
+            {definition?.kind === "ordinary" && phase === "flipped" && <Button variant="ghost" size="sm" aria-pressed={card.starred} loading={busy} disabled={!online} onClick={() => void toggleStar()}>
+              <Star aria-hidden="true" className={card.starred ? "fill-current text-primary" : undefined} />{t(card.starred ? "garden.unstar" : "garden.star")}
+            </Button>}
+          </div>}
           {phase === "waiting" && <p role="status" className={cn("mt-3 text-center text-muted-foreground", today ? "mx-auto max-w-[34ch] text-xs leading-relaxed" : "text-sm")}>{t("garden.waiting", { partner: partnerName })}</p>}
         </>}
         {!writing && card.mineDeleted && <Button className="mt-4 w-full" onClick={write}><PencilLine aria-hidden="true" />{t("garden.write")}</Button>}

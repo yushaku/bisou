@@ -112,6 +112,7 @@ export async function cardStates(db: D1Database, coupleId: string, userId: strin
   if (!cardIds.length) return [];
   // Only the answered boolean crosses the reveal boundary before both submit.
   const rows = await db.prepare(`SELECT requested.value AS card_id, mine.body AS mine, other.body AS partner,
+    EXISTS(SELECT 1 FROM garden_stars s WHERE s.couple_id = ? AND s.card_id = requested.value) AS starred,
     mine.response_choice AS mine_choice, other.response_choice AS partner_choice,
     EXISTS(SELECT 1 FROM garden_answers answered WHERE answered.couple_id = ? AND answered.card_id = requested.value
       AND answered.round = 1 AND answered.user_id <> ?
@@ -128,11 +129,11 @@ export async function cardStates(db: D1Database, coupleId: string, userId: strin
       AND other.user_id <> mine.user_id AND mine.flipped_day IS NOT NULL AND other.flipped_day IS NOT NULL
       AND other.user_id IN (SELECT user_id FROM couple_members WHERE couple_id = mine.couple_id)
     WHERE ${memberGuard}`)
-    .bind(coupleId, userId, coupleId, JSON.stringify(cardIds), coupleId, userId, coupleId, userId, coupleId)
-    .all<{ card_id: string; mine: string | null; partner: string | null; partner_answered: number; mine_choice: ResponseChoice | null; partner_choice: ResponseChoice | null; mine_edited: number; partner_edited: number; mine_deleted: number; partner_deleted: number; flipped_day: string | null }>();
+    .bind(coupleId, coupleId, userId, coupleId, JSON.stringify(cardIds), coupleId, userId, coupleId, userId, coupleId)
+    .all<{ card_id: string; starred: number; mine: string | null; partner: string | null; partner_answered: number; mine_choice: ResponseChoice | null; partner_choice: ResponseChoice | null; mine_edited: number; partner_edited: number; mine_deleted: number; partner_deleted: number; flipped_day: string | null }>();
   return cardIds.map((cardId) => {
     const row = rows.results.find((r) => r.card_id === cardId);
-    return { cardId, partnerAnswered: !!row?.partner_answered, mine: row?.mine ?? null, partner: row?.partner ?? null, mineChoice: row?.mine_choice ?? null, partnerChoice: row?.partner_choice ?? null, mineEdited: !!row?.mine_edited,
+    return { cardId, starred: !!row?.starred, partnerAnswered: !!row?.partner_answered, mine: row?.mine ?? null, partner: row?.partner ?? null, mineChoice: row?.mine_choice ?? null, partnerChoice: row?.partner_choice ?? null, mineEdited: !!row?.mine_edited,
       partnerEdited: !!row?.partner_edited, mineDeleted: !!row?.mine_deleted, partnerDeleted: !!row?.partner_deleted,
       flippedDay: row?.flipped_day ?? null };
   });
