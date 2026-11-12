@@ -39,3 +39,12 @@ export function validateClosedNote(raw: unknown, now: number): { input: ClosedNo
   if (!isValidDay(date) || date > latestDay(now)) return { error: "invalid_entry_date" };
   return { input: { ...parts.input, ...close.input, date } };
 }
+
+export function validateNoteDelivery(raw: unknown, now: number): { scheduledAt?: number; immediate: boolean } | ApiError {
+  const { delivery, sendAt } = raw as Record<string, unknown>;
+  if (delivery === undefined) return { immediate: false };
+  if (delivery === "now") return { immediate: true };
+  if (delivery === "eightHours") return { immediate: false, scheduledAt: now + NOTE_COOLDOWN };
+  if (delivery !== "custom" || typeof sendAt !== "number" || !Number.isSafeInteger(sendAt) || sendAt <= now || sendAt > 8.64e15) return { error: "invalid_note_schedule" };
+  return { immediate: false, scheduledAt: sendAt };
+}

@@ -155,7 +155,7 @@ it("notes AC33 AC40: an offline draft cannot save or send", async () => {
   nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
   await Promise.resolve();
   expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled(); expect(send).not.toHaveBeenCalled();
-  expect(nodes.find(n => n.props.children === "notes.save")!.props.disabled).toBe(true);
+  expect(nodes.find(n => n.props.children === "notes.send")!.props.disabled).toBe(true);
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
 });
 

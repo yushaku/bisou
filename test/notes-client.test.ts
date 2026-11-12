@@ -4,6 +4,8 @@ import { afterEach, expect, test, vi } from "vitest";
 import { noteBlock, softHints } from "../src/client/lib/notes";
 import { I18nProvider } from "../src/client/i18n";
 import { createTabMemory, TabMemory } from "../src/client/lib/tabMemory";
+import { Drawer } from "../src/client/components/ui/drawer";
+import { NoteForm } from "../src/client/components/bisou/NoteSheet";
 import { NotesSection } from "../src/client/components/bisou/NotesSection";
 const input = { happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" };
 afterEach(() => vi.unstubAllGlobals());
@@ -97,4 +99,20 @@ test.each(["vi", "en"])("envelope writer states have readable captions and no to
     const ids = [...html.matchAll(/ id="([^"]+)"/g)].map((match) => match[1]);
     expect(new Set(ids).size).toBe(ids.length);
   } finally { clock.mockRestore(); }
+});
+
+test.each(["vi", "en"])("note form offers immediate, eight-hour and custom delivery in %s", (locale) => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const html = renderToString(h(I18nProvider, null, h(Drawer, { open: true }, h(NoteForm, { partnerName: "Linh", onSaved() {}, onRefresh() {}, onSignedOut() {}, onLock() {}, onClose() {}, onDone() {} }))));
+  for (const label of locale === "vi" ? ["Gửi ngay", "Sau 8 tiếng", "Tuỳ chọn"] : ["Send now", "In 8 hours", "Custom"]) expect(html).toContain(label);
+});
+
+test("scheduled note shows its date and time instead of asking the writer to send", () => {
+  vi.stubGlobal("localStorage", { getItem: () => "vi" });
+  const memory = createTabMemory();
+  memory.notes = { toMe: [], fromMe: [{ ...input, id: "n", state: "draft", sendableAt: Date.now() - 1, scheduledAt: Date.now() - 1 }] };
+  const user = { id: "a", displayName: "An", email: "an@example.com", locale: "vi" as const, birthDate: null, avatarId: null, createdAt: 1 };
+  const couple = { id: "c", startDate: null, events: [], members: [user, { ...user, id: "b", displayName: "Linh" }] };
+  const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(NotesSection, { user, couple, onSignedOut() {} }))));
+  expect(html).toContain("Hẹn gửi"); expect(html).not.toContain("Đọc lại và gửi");
 });

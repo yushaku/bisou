@@ -1,5 +1,17 @@
 # Lời nhắn nhỏ / Kind notes
 
+## Delivery update (12 November 2026)
+
+This decision replaces the mandatory wait and reread flow in D4, S12, R9 to R11 and their acceptance examples below.
+
+- The writer chooses “Gửi ngay” / “Send now” (default), “Sau 8 tiếng” / “In 8 hours”, or “Tuỳ chọn” / “Custom” with a future date and time in the device's time zone.
+- Send now delivers on submission. Eight hours starts at submission. Custom sends at the selected time. Scheduled delivery runs on the server with the app closed, checked each minute; it can arrive after the selected time if the scheduler is delayed.
+- Until delivery, only the writer sees the note and may edit it, change its send time or delete it. Editing text keeps the existing time; choosing eight hours again starts a new eight-hour wait.
+- After delivery the existing unopened, opened, withdrawal and reminder rules apply. Reminder timing starts at actual delivery. The writer receives no delivery notification.
+- Existing drafts are never scheduled by migration. They stay private until the writer explicitly sends or schedules them in the form. Requests from an older app without delivery options keep the old manual wait and send behavior.
+
+The remaining mandatory-wait descriptions below record the original flow and apply only to older clients using the manual send API.
+
 ## Decided at Gate 1
 
 PO, 11 November 2026 (one-pager D1 to D12 and A1 to A4, Gate 1 answers G1 to G10):

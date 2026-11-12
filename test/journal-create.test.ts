@@ -15,6 +15,8 @@ import { PersonAvatar } from "../src/client/components/bisou/CoupleAvatars";
 import { DayField } from "../src/client/components/bisou/DayField";
 import { Tabs, TabsContent, TabsTrigger } from "../src/client/components/ui/tabs";
 import { Dialog } from "../src/client/components/ui/dialog";
+import { ToggleGroup } from "../src/client/components/ui/toggle-group";
+import { Input } from "../src/client/components/ui/input";
 import { api } from "../src/client/api";
 
 const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, refs: [] as { current: unknown }[], refIndex: 0, locale: "vi", effects: [] as (() => unknown)[], requests: new Map<string, () => void>() }));
@@ -40,7 +42,7 @@ vi.mock("../src/client/lib/useTabNavigation", async (original) => ({ ...await or
 
 vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
 
-type Props = { className?: string; id?: string; "aria-describedby"?: string; initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; inert?: boolean; "aria-hidden"?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
+type Props = { onSubmit?: (event: { preventDefault: () => void }) => void; onChange?: (event: { target: { value: string } }) => void; type?: string; className?: string; id?: string; "aria-describedby"?: string; initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; inert?: boolean; "aria-hidden"?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -211,4 +213,49 @@ it.each(["vi", "en"])("shared composer forms keep only screen reader titles in %
     expect(form.filter(n => n.type === ComposeBody)).toHaveLength(1);
     expect(form.filter(n => n.type === ComposeFooter)).toHaveLength(1);
   }
+});
+
+it.each(["now", "eightHours", "custom"] as const)("note composer submits %s delivery", async (delivery) => {
+  hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
+  const created = vi.spyOn(api, "createNote").mockResolvedValue({ ok: true, data: { note: { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft", sendableAt: 1 } } });
+  const props = { partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
+  const render = () => { hooks.index = 0; return nodes(NoteForm(props)); };
+  let form = render();
+  form.find(n => n.type === ToggleGroup)!.props.onValueChange!(delivery);
+  form = render();
+  const custom = "2099-11-13T06:30";
+  if (delivery === "custom") {
+    form.find(n => n.type === Input && n.props.type === "datetime-local")!.props.onChange!({ target: { value: custom } });
+    form = render();
+  }
+  form.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await Promise.resolve();
+  expect(created).toHaveBeenCalledWith({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", delivery, ...(delivery === "custom" ? { sendAt: new Date(custom).getTime() } : {}) });
+  expect(props.onSaved).toHaveBeenCalled();
+});
+
+it("changing custom delivery to a past date keeps the note in the form", async () => {
+  hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
+  const create = vi.spyOn(api, "createNote");
+  const props = { partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
+  const render = () => { hooks.index = 0; return nodes(NoteForm(props)); };
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("custom");
+  render().find(n => n.type === Input)!.props.onChange!({ target: { value: "2000-01-01T00:00" } });
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  expect(create).not.toHaveBeenCalled();
+  expect(props.onDone).not.toHaveBeenCalled();
+  expect(render().some(n => n.props.children === vietnamese["notes.scheduleError"])).toBe(true);
+});
+
+it.each([false, true])("editing a scheduled note preserves delivery unless changed (send now: %s)", async (sendNow) => {
+  const entry = { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" as const, sendableAt: new Date("2099-11-13T06:30").getTime(), scheduledAt: new Date("2099-11-13T06:30").getTime() };
+  const update = vi.spyOn(api, "updateNote").mockResolvedValue({ ok: true, data: { note: entry } });
+  const props = { entry, partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
+  const render = () => { hooks.index = 0; return nodes(NoteForm(props)); };
+  let form = render();
+  expect(form.find(n => n.type === Input)!.props.value).toBe("2099-11-13T06:30");
+  if (sendNow) { form.find(n => n.type === ToggleGroup)!.props.onValueChange!("now"); form = render(); }
+  form.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await Promise.resolve();
+  expect(update).toHaveBeenCalledWith("n", { ...entry, ...(sendNow ? { delivery: "now" } : {}) });
 });
