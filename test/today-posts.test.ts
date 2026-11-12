@@ -27,7 +27,7 @@ function render(entries: JournalEntry[], today = "2026-11-08") {
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("R25: shows only entries dated today, in feed order", () => {
+it("journal R25: shows only entries dated today, in feed order", () => {
   const html = render([
     entry("a", "2026-11-08", "Hôm nay một", "binh"),
     entry("b", "2026-11-08", "Hôm nay hai"),
@@ -40,7 +40,7 @@ it("R25: shows only entries dated today, in feed order", () => {
   expect(html.indexOf("Hôm nay một")).toBeLessThan(html.indexOf("Hôm nay hai"));
 });
 
-it("R25: shows nothing at all when no entry is dated today", () => {
+it("journal R25: shows nothing at all when no entry is dated today", () => {
   expect(render([entry("c", "2026-11-07", "Hôm qua")])).toBe("");
   expect(render([])).toBe("");
 });

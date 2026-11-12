@@ -455,7 +455,7 @@ describe("PATCH /api/me", () => {
     }
   });
 
-  it("R4 / AC2: sets and renames a display name, trimming outer spaces", async () => {
+  it("pairing R4 / AC2: sets and renames a display name, trimming outer spaces", async () => {
     const { cookie } = await login("patch@example.com");
     const res = await call("PATCH", "/api/me", { cookie, body: { displayName: "  Mai  ", locale: "vi" } });
     expect(res.status).toBe(200);
@@ -471,7 +471,7 @@ describe("PATCH /api/me", () => {
   });
 
   describe.each([null, "Mai"])("with stored display name %j", (storedName) => {
-    it.each([null, "", "   ", "x".repeat(41)])("R4 / AC2: rejects displayName %j without changing the stored name", async (displayName) => {
+    it.each([null, "", "   ", "x".repeat(41)])("pairing R4 / AC2: rejects displayName %j without changing the stored name", async (displayName) => {
       const { cookie } = await login("invalid-name@example.com");
       if (storedName !== null) {
         const setup = await call("PATCH", "/api/me", { cookie, body: { displayName: storedName } });
@@ -486,7 +486,7 @@ describe("PATCH /api/me", () => {
     });
   });
 
-  it.each([1, 40])("R4 / AC2: accepts a %i character name after trimming", async (length) => {
+  it.each([1, 40])("pairing R4 / AC2: accepts a %i character name after trimming", async (length) => {
     const { cookie } = await login("boundary@example.com");
     const displayName = "x".repeat(length);
     const res = await call("PATCH", "/api/me", { cookie, body: { displayName: `  ${displayName}  ` } });

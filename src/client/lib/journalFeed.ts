@@ -2,7 +2,7 @@
 // Pure functions, so pages, refreshes and local saves merge the same way and are unit tested.
 import type { JournalEntry, JournalPage } from "../../shared/types";
 
-/** Feed order, newest first: entry day, then time written, then id (R12, R13). Same order as the server cursor. */
+/** Feed order, newest first: entry day, then time written, then id (journal R12, R13). Same order as the server cursor. */
 export function compareEntries(a: JournalEntry, b: JournalEntry): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
   if (a.createdAt !== b.createdAt) return b.createdAt - a.createdAt;
@@ -48,7 +48,7 @@ export interface DayGroup {
   entries: JournalEntry[];
 }
 
-/** Consecutive entries of one day under one heading; days without entries never appear (R14). */
+/** Consecutive entries of one day under one heading; days without entries never appear (journal R14). */
 export function groupByDay(entries: JournalEntry[]): DayGroup[] {
   const groups: DayGroup[] = [];
   for (const e of entries) {

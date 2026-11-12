@@ -30,7 +30,7 @@ afterEach(() => {
 });
 
 describe("journal api client", () => {
-  it("AC8 (R12): reads the first page without a cursor and the next page with it", async () => {
+  it("journal AC8 (R12): reads the first page without a cursor and the next page with it", async () => {
     const fn = mockFetch(200, { entries: [entry()], nextCursor: "abc+/=" });
     const first = await api.journal();
     expect(fn.mock.calls[0]?.[0]).toBe("/api/journal");
@@ -41,7 +41,7 @@ describe("journal api client", () => {
     expect(fn.mock.calls[1]?.[0]).toBe("/api/journal?cursor=abc%2B%2F%3D");
   });
 
-  it("AC2 (R3): createEntry posts the input and surfaces the error code", async () => {
+  it("journal AC2 (R3): createEntry posts the input and surfaces the error code", async () => {
     const input: EntryInput = { date: "2026-11-06", text: "", photoIds: [] };
     const fn = mockFetch(400, { error: "entry_empty" });
     const res = await api.createEntry(input);
@@ -51,7 +51,7 @@ describe("journal api client", () => {
     expect(res).toEqual({ ok: false, status: 400, error: { error: "entry_empty" } });
   });
 
-  it("AC9 (R10): updateEntry puts a full replace to the entry path", async () => {
+  it("journal AC9 (R10): updateEntry puts a full replace to the entry path", async () => {
     const input: EntryInput = { date: "2026-11-05", text: "fixed typo", photoIds: ["p1"] };
     const fn = mockFetch(200, { entry: entry({ text: "fixed typo", photoIds: ["p1"] }) });
     const res = await api.updateEntry("e/1", input);
@@ -61,7 +61,7 @@ describe("journal api client", () => {
     expect(res.ok && res.data.entry.text).toBe("fixed typo");
   });
 
-  it("AC10 (R11): deleteEntry sends DELETE and maps not_author", async () => {
+  it("journal AC10 (R11): deleteEntry sends DELETE and maps not_author", async () => {
     const fn = mockFetch(403, { error: "not_author" });
     const res = await api.deleteEntry("e1");
     expect(fn.mock.calls[0]?.[0]).toBe("/api/journal/e1");
@@ -74,7 +74,7 @@ describe("journal api client", () => {
     expect(await api.journal()).toEqual({ ok: false, status: 0, error: null });
   });
 
-  it("AC13 (R18): photoUrl points at one of the two square renditions", () => {
+  it("journal AC13 (R18): photoUrl points at one of the two square renditions", () => {
     expect(photoUrl("p1", "thumb")).toBe("/api/photos/p1/thumb");
     expect(photoUrl("p1", "full")).toBe("/api/photos/p1/full");
   });
@@ -89,12 +89,12 @@ describe("journal feed state", () => {
   const first = entry({ id: "first", authorId: "an", date: "2026-11-05", createdAt: 500 });
   const lake = entry({ id: "lake", authorId: "binh", date: "2023-02-12", createdAt: 3_000 });
 
-  it("AC5 (R13): within a day the most recently written entry comes first", () => {
+  it("journal AC5 (R13): within a day the most recently written entry comes first", () => {
     const state = addPage({ entries: [], nextCursor: "c" }, { entries: [lunch, rain], nextCursor: null });
     expect(ids(state.entries)).toEqual(["rain", "lunch"]);
   });
 
-  it("AC6 (R7, R14): a back-filled day sorts after newer days and empty days never appear", () => {
+  it("journal AC6 (R7, R14): a back-filled day sorts after newer days and empty days never appear", () => {
     const state = addPage({ entries: [], nextCursor: "c" }, { entries: [lake, first, lunch, rain], nextCursor: null });
     expect(groupByDay(state.entries).map((g) => [g.date, ids(g.entries)])).toEqual([
       ["2026-11-06", ["rain", "lunch"]],
@@ -109,7 +109,7 @@ describe("journal feed state", () => {
     expect(ids(addPage({ entries: [a], nextCursor: null }, { entries: [b], nextCursor: null }).entries)).toEqual(["b", "a"]);
   });
 
-  it("AC15 (R12, R21): a day split across pages merges into one group with no duplicates or gaps", () => {
+  it("journal AC15 (R12, R21): a day split across pages merges into one group with no duplicates or gaps", () => {
     const page1 = addPage({ entries: [], nextCursor: "c" }, { entries: [rain], nextCursor: "c1" });
     // The server repeats nothing, but a refresh or a local insert may already hold an entry of the next page.
     const page2 = addPage(page1, { entries: [rain, lunch, first], nextCursor: "c2" });
@@ -121,7 +121,7 @@ describe("journal feed state", () => {
     expect(end.nextCursor).toBeNull();
   });
 
-  it("AC8 (R9): a newly saved entry goes to the top without refetching, and an edit replaces it", () => {
+  it("journal AC8 (R9): a newly saved entry goes to the top without refetching, and an edit replaces it", () => {
     const loaded = { entries: [lunch, first], nextCursor: "c1" };
     const saved = upsertEntry(loaded, rain);
     expect(ids(saved.entries)).toEqual(["rain", "lunch", "first"]);
@@ -130,7 +130,7 @@ describe("journal feed state", () => {
     expect(ids(moved.entries)).toEqual(["lunch", "first", "rain"]);
   });
 
-  it("AC8, AC10 (R9, R20): a refresh of page 1 adds the partner's new entry, drops a deleted one and keeps older pages", () => {
+  it("journal AC8, AC10 (R9, R20): a refresh of page 1 adds the partner's new entry, drops a deleted one and keeps older pages", () => {
     const loaded = { entries: [rain, lunch, first, lake], nextCursor: "deep" };
     // Partner deleted lunch and wrote fresh; page 1 now ends at first.
     const fresh = entry({ id: "fresh", date: "2026-11-07", createdAt: 4_000 });
@@ -139,7 +139,7 @@ describe("journal feed state", () => {
     expect(next.nextCursor).toBe("deep");
   });
 
-  it("AC10 (R11): a deleted entry leaves the feed and its day goes when it was the last one", () => {
+  it("journal AC10 (R11): a deleted entry leaves the feed and its day goes when it was the last one", () => {
     const loaded = { entries: [rain, lunch, first, lake], nextCursor: "deep" };
     const gone = removeEntry(loaded, "first");
     expect(ids(gone.entries)).toEqual(["rain", "lunch", "lake"]);
@@ -148,7 +148,7 @@ describe("journal feed state", () => {
     expect(groupByDay(removeEntry(gone, "rain").entries)[0]?.entries.map((e) => e.id)).toEqual(["lunch"]);
   });
 
-  it("AC9 (R10): an edit that moves the day keeps the entry once, under its new day, in written order", () => {
+  it("journal AC9 (R10): an edit that moves the day keeps the entry once, under its new day, in written order", () => {
     const loaded = { entries: [rain, lunch, first], nextCursor: null };
     const moved = upsertEntry(loaded, { ...first, date: "2026-11-06", updatedAt: 9_000 });
     expect(groupByDay(moved.entries).map((g) => [g.date, ids(g.entries)])).toEqual([["2026-11-06", ["rain", "lunch", "first"]]]);

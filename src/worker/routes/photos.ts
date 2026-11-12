@@ -96,7 +96,7 @@ photos.get("/:id/:size", async (c) => {
   return new Response(object.body, { headers: {
     "Content-Type": object.httpMetadata!.contentType!,
     "Content-Length": String(object.size),
-    // R20: a partner's cached photo must become stale within a day of deletion.
+    // journal R20: a partner's cached photo must become stale within a day of deletion.
     "Cache-Control": "private, max-age=86400",
     "X-Content-Type-Options": "nosniff",
   } });

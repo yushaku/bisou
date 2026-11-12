@@ -15,8 +15,8 @@ test.each([
   ["hiện tại anh đang bận, tại sao anh, bao giờ anh về, nevertheless", []],
   ["tại anh và lỗi của em", ["tại anh", "lỗi của em"]],
   ["every time and all the time, your fault because of you", ["every time", "all the time", "your fault", "because of you"]],
-])("AC3 AC34: soft hints match both languages without rewriting %s", (text, expected) => expect(softHints(text as string)).toEqual(expected));
-test("AC2: noteBlock counts trimmed code points, requires all parts", () => {
+])("notes AC3, notes-journal AC34: soft hints match both languages without rewriting %s", (text, expected) => expect(softHints(text as string)).toEqual(expected));
+test("notes AC2: noteBlock counts trimmed code points, requires all parts", () => {
   expect(noteBlock(input)).toBeNull();
   for (const field of ["happened", "feel", "need", "hope"]) {
     expect(noteBlock({ ...input, [field]: "  " })).toBe("empty");
@@ -25,7 +25,7 @@ test("AC2: noteBlock counts trimmed code points, requires all parts", () => {
     expect(noteBlock({ ...input, [field]: "😀".repeat(501) })).toBe("tooLong");
   }
 });
-test.each(["vi", "en"])("AC1 AC31: empty section offers writing to the named partner in %s", (locale) => {
+test.each(["vi", "en"])("notes AC1 AC31: empty section offers writing to the named partner in %s", (locale) => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const memory = createTabMemory(); memory.notes = { fromMe: [], toMe: [] };
   const user = { id: "a", displayName: "An", email: "an@example.com", locale: "vi" as const, birthDate: null, avatarId: null, createdAt: 1 };
@@ -36,7 +36,7 @@ test.each(["vi", "en"])("AC1 AC31: empty section offers writing to the named par
   couple.members.pop(); expect(render()).toBe("");
 });
 
-test("R26: an opened recipient note offers reading again", () => {
+test("notes R26: an opened recipient note offers reading again", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const memory = createTabMemory();
   memory.notes = { fromMe: [], toMe: [{ id: "n", state: "opened", ...input }] };
@@ -52,7 +52,7 @@ test("R26: an opened recipient note offers reading again", () => {
   expect(html).not.toContain("Viết cho Linh");
 });
 
-test("AC32: offline waiting note disables opening and explains the connection", () => {
+test("notes AC32: offline waiting note disables opening and explains the connection", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   vi.stubGlobal("navigator", { onLine: false });
   const memory = createTabMemory(); memory.notes = { fromMe: [], toMe: [{ id: "n", state: "waiting" }] };

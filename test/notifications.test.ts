@@ -41,7 +41,7 @@ async function setup({ permission = "default", online = true, key = "public-key"
 it.each([
   [{ permission: "denied" }, "push.blocked"], [{ online: false }, "offline.save"],
   [{ key: "" }, "push.unavailable"], [{ registered: false }, "push.unsupported"], [{ userAgent: "iPhone" }, "push.needsInstall"],
-])("AC20, R20, R22: explains %s and disables the switches", async (options, text) => {
+])("notifications AC20, R20, R22: explains %s and disables the switches", async (options, text) => {
   const { registration } = await setup(options);
   const nodes = render(); expect(nodes.some((n) => n.props.children === text)).toBe(true);
   const toggles = nodes.filter((n) => n.props.onCheckedChange);
@@ -49,7 +49,7 @@ it.each([
   await toggles[0]!.props.onCheckedChange!(true);
   expect(registration.pushManager.subscribe).not.toHaveBeenCalled();
 });
-it("AC15, R21: opt in saves only the selected kind after a tap", async () => {
+it("notifications AC15, R21: opt in saves only the selected kind after a tap", async () => {
   const { registration } = await setup();
   const save = vi.spyOn(api, "savePush").mockResolvedValue({ ok: true, data: { device: { endpoint: "this-device", journal: true, reminders: false } } });
   expect(registration.pushManager.subscribe).not.toHaveBeenCalled();
@@ -62,7 +62,7 @@ it("AC15, R21: opt in saves only the selected kind after a tap", async () => {
   expect(render().find((n) => n.props.id === "push-journal")!.props.checked).toBe(true);
 });
 
-it("R21: visibility reload cannot replace an in-flight switch change", async () => {
+it("notifications R21: visibility reload cannot replace an in-flight switch change", async () => {
   await setup();
   Object.defineProperty(document, "visibilityState", { value: "visible" });
   let finish!: (value: Awaited<ReturnType<typeof api.savePush>>) => void;
@@ -77,7 +77,7 @@ it("R21: visibility reload cannot replace an in-flight switch change", async () 
   expect(render().find(n => n.props.id === "push-journal")!.props.checked).toBe(true);
 });
 
-it("R20, R32: a browser endpoint unknown to the server shows off and registers again", async () => {
+it("notifications R20, R32: a browser endpoint unknown to the server shows off and registers again", async () => {
   const { registration, subscription } = await setup();
   registration.pushManager.getSubscription.mockResolvedValue(subscription as never);
   Object.defineProperty(document, "visibilityState", { value: "visible" });

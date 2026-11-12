@@ -23,7 +23,7 @@ async function addEvent(who: TestUser, title: string, date: string) {
   return res.json<{ couple: { events: { id: string; title: string }[] } }>();
 }
 
-it("AC7, R10, R12: only Bình receives the two reminders of An's birthday", async () => {
+it("notifications AC7, R10, R12: only Bình receives the two reminders of An's birthday", async () => {
   const { bDevice } = await example(); const send = mockPush();
   for (const [at, title, ttl] of [
     ["2026-11-17T13:00:00Z", "Ngày mai: Sinh nhật An", "86400"],
@@ -38,7 +38,7 @@ it("AC7, R10, R12: only Bình receives the two reminders of An's birthday", asyn
   expect(send.sent).toHaveLength(2);
 });
 
-it.each([false, true])("AC8, AC9, R11: both partners get the anniversary and same-day events in list order, custom=%s", async (custom) => {
+it.each([false, true])("notifications AC8, AC9, R11: both partners get the anniversary and same-day events in list order, custom=%s", async (custom) => {
   const { a, aDevice, bDevice } = await example();
   if (custom) await addEvent(a, "Xem phim", "2027-02-12");
   const send = mockPush();
@@ -51,7 +51,7 @@ it.each([false, true])("AC8, AC9, R11: both partners get the anniversary and sam
   }
 });
 
-it("AC9, R11: five same-day events show three names and the remaining count in both languages", async () => {
+it("notifications AC9, R11: five same-day events show three names and the remaining count in both languages", async () => {
   const { a, b, aDevice, bDevice } = await example();
   await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale: "en" } });
   const names = ["Đi dạo", "Xem phim", "Ăn tối", "Ngắm sao", "Đọc sách"];
@@ -70,7 +70,7 @@ it("AC9, R11: five same-day events show three names and the remaining count in b
   }
 });
 
-it("AC9, R11: long multibyte titles remain within the encrypted payload limit", async () => {
+it("notifications AC9, R11: long multibyte titles remain within the encrypted payload limit", async () => {
   const { a, aDevice, bDevice } = await example();
   const title = "💖".repeat(60);
   for (let i = 0; i < 5; i++) await addEvent(a, title, "2026-12-01");
@@ -89,7 +89,7 @@ it("AC9, R11: long multibyte titles remain within the encrypted payload limit", 
   expect(reminderMessage(["💖".repeat(1000)], "vi", 0).title).toBe("Hôm nay: và 1 sự kiện khác");
 });
 
-it("AC10, AC11, R13, R14: added after 20:00 gets only 08:00; deleted before a run gets neither", async () => {
+it("notifications AC10, AC11, R13, R14: added after 20:00 gets only 08:00; deleted before a run gets neither", async () => {
   const { a, aDevice, bDevice } = await example(); const send = mockPush();
   await runPushCron("2026-11-30T20:00:00+07:00"); expect(send.sent).toHaveLength(0);
   const added = await addEvent(a, "Xem phim", "2026-12-01");
@@ -102,7 +102,7 @@ it("AC10, AC11, R13, R14: added after 20:00 gets only 08:00; deleted before a ru
   await runPushCron("2026-12-01T20:00:00+07:00"); expect(send.sent).toHaveLength(2);
 });
 
-it("AC15, AC21, R31: English recipient, disabled devices and concurrent runs", async () => {
+it("notifications AC15, AC21, R31: English recipient, disabled devices and concurrent runs", async () => {
   const { a, aDevice, bDevice } = await example();
   await call("PATCH", "/api/me", { cookie: a.cookie, body: { locale: "en" } });
   const off = await device("off", { journal: true, reminders: false }); await subscribe(a, off);
@@ -113,13 +113,13 @@ it("AC15, AC21, R31: English recipient, disabled devices and concurrent runs", a
   expect(send.sent.some((s) => s.endpoint === bDevice.body.endpoint)).toBe(false);
 });
 
-it("R10, R13: 07:00 and 09:00 do not send event reminders", async () => {
+it("notifications R10, R13: 07:00 and 09:00 do not send event reminders", async () => {
   await example(); const send = mockPush();
   await runPushCron("2026-11-18T07:00:00+07:00"); await runPushCron("2026-11-18T09:00:00+07:00");
   expect(send.sent).toHaveLength(0);
 });
 
-it("R4: an unpaired recipient is skipped and a couple is loaded only once", async () => {
+it("notifications R4: an unpaired recipient is skipped and a couple is loaded only once", async () => {
   const { b, aDevice, bDevice } = await example(); const send = mockPush();
   const batch = vi.spyOn(env.DB, "batch");
   await runPushCron("2027-02-11T20:00:00+07:00"); expect(batch).toHaveBeenCalledTimes(1);
@@ -129,7 +129,7 @@ it("R4: an unpaired recipient is skipped and a couple is loaded only once", asyn
   await runPushCron("2027-02-12T08:00:00+07:00"); expect(send.sent).toHaveLength(0);
 });
 
-it("R10: a recipient D1 failure does not stop the next recipient", async () => {
+it("notifications R10: a recipient D1 failure does not stop the next recipient", async () => {
   await example();
   const batch = env.DB.batch.bind(env.DB);
   vi.spyOn(env.DB, "batch").mockRejectedValueOnce(new Error("private")).mockImplementation(batch);

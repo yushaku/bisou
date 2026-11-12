@@ -8,7 +8,7 @@ beforeEach(resetDb);
 afterEach(() => vi.restoreAllMocks());
 
 describe("wish jar", () => {
-  it("AC1, AC2 (R1-R5): title only defaults, and only the owner reads or changes their jar", async () => {
+  it("wishes AC1, AC2 (R1-R5): title only defaults, and only the owner reads or changes their jar", async () => {
     const { a, b } = await paired();
     const res = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title: "  Scarf  " } });
     expect(res.status).toBe(201);
@@ -25,14 +25,14 @@ describe("wish jar", () => {
     expect((await call("GET", "/api/wishes")).status).toBe(401);
   });
 
-  it("AC14 (R10): a partner with no wishes has an empty jar", async () => {
+  it("wishes AC14 (R10): a partner with no wishes has an empty jar", async () => {
     const { a } = await paired();
     const res = await call("GET", "/api/wishes", { cookie: a.cookie });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ open: [], received: [], partnerJarEmpty: true });
   });
 
-  it("AC14 (R10): claimed open wishes keep the partner jar nonempty", async () => {
+  it("wishes AC14 (R10): claimed open wishes keep the partner jar nonempty", async () => {
     const { a, b } = await paired();
     const created = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title: "Scarf", price: 450000 } });
     const { wish } = await created.json<{ wish: { id: string } }>();
@@ -41,7 +41,7 @@ describe("wish jar", () => {
     expect(await (await call("POST", "/api/wishes/spin", { cookie: a.cookie, body: { budget: 500000 } })).json()).toEqual({ wish: null });
   });
 
-  it("AC14 (R10): received wishes are no longer in the partner jar", async () => {
+  it("wishes AC14 (R10): received wishes are no longer in the partner jar", async () => {
     const { a, b } = await paired();
     const created = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title: "Scarf" } });
     const { wish } = await created.json<{ wish: { id: string } }>();
@@ -49,7 +49,7 @@ describe("wish jar", () => {
     expect(await (await call("GET", "/api/wishes", { cookie: a.cookie })).json()).toEqual({ open: [], received: [], partnerJarEmpty: true });
   });
 
-  it("AC14 (R10, R1): reveals only a boolean, never a partner wish count or details", async () => {
+  it("wishes AC14 (R10, R1): reveals only a boolean, never a partner wish count or details", async () => {
     const { a, b } = await paired();
     for (const title of ["Scarf", "Candle"]) {
       expect((await call("POST", "/api/wishes", { cookie: b.cookie, body: { title, price: 450000 } })).status).toBe(201);
@@ -57,14 +57,14 @@ describe("wish jar", () => {
     expect(await (await call("GET", "/api/wishes", { cookie: a.cookie })).json()).toEqual({ open: [], received: [], partnerJarEmpty: false });
   });
 
-  it("AC14 (R10, R1): an unpaired user still gets not_in_couple without jar information", async () => {
+  it("wishes AC14 (R10, R1): an unpaired user still gets not_in_couple without jar information", async () => {
     const outsider = await user("Outsider");
     const res = await call("GET", "/api/wishes", { cookie: outsider.cookie });
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "not_in_couple" });
   });
 
-  it("AC2 (R3-R5): validates title, positive integer VND, web links and priority", async () => {
+  it("wishes AC2 (R3-R5): validates title, positive integer VND, web links and priority", async () => {
     const { a } = await paired();
     for (const [input, error] of [
       [{ title: " " }, "wish_title_invalid"], [{ title: "x".repeat(101) }, "wish_title_invalid"],
@@ -80,7 +80,7 @@ describe("wish jar", () => {
     expect(res.status).toBe(201);
   });
 
-  it("AC13 (R6, R23): keeps one photo, swaps and deletes its objects, and rejects others' pending photos", async () => {
+  it("wishes AC13 (R6, R23): keeps one photo, swaps and deletes its objects, and rejects others' pending photos", async () => {
     const { a, b, couple } = await paired();
     const first = await upload(a);
     const second = await upload(a);
@@ -107,7 +107,7 @@ describe("wish jar", () => {
     expect(await env.PHOTOS.head(photoKey(couple.id, second, "full"))).toBeNull();
   });
 
-  it("AC13 (R6): wish photos survive pending cleanup, deletion, cap counting and journal attachment", async () => {
+  it("wishes AC13 (R6): wish photos survive pending cleanup, deletion, cap counting and journal attachment", async () => {
     const { a, b, couple } = await paired();
     const photoId = await upload(a);
     expect((await call("POST", "/api/wishes", { cookie: a.cookie, body: { title: "Scarf", photoId } })).status).toBe(201);

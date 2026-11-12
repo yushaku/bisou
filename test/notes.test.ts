@@ -6,7 +6,7 @@ import { call, paired, resetDb, user, waitForBackground } from "./helpers";
 beforeEach(async () => { await resetDb(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date("2026-11-12T22:30:00+07:00")); });
 afterEach(() => vi.useRealTimers());
 const input = { happened: "Em lúc nào cũng về muộn", feel: "Anh lo", need: "Biết em an toàn", hope: "Nhắn anh trước nhé" };
-test("AC28 AC29: a draft is byte-identical to no note for its recipient on every route", async () => {
+test("notes-journal AC28 AC29: a draft is byte-identical to no note for its recipient on every route", async () => {
   const { a, b } = await paired();
   const before = await (await call("GET", "/api/notes", { cookie: b.cookie })).text();
   const created = await call("POST", "/api/notes", { cookie: a.cookie, body: input });
@@ -42,7 +42,7 @@ test("AC5 AC6 AC7 AC9 AC37 AC38: cool-down survives edits; send stores reread te
   expect(again.status).toBe(409); expect(await again.json()).toEqual({ error: "note_sent" });
 });
 
-test("AC10 AC35: withdraw deletes a waiting note for both; recipient cannot delete", async () => {
+test("notes AC10, notes-journal AC35: withdraw deletes a waiting note for both; recipient cannot delete", async () => {
   const { a, b } = await paired();
   const { note } = await (await call("POST", "/api/notes", { cookie: a.cookie, body: input })).json<{ note: { id: string } }>();
   vi.setSystemTime(new Date("2026-11-13T06:30:00+07:00"));
@@ -56,13 +56,13 @@ test.each([
   [{ feel: " " }, "note_empty"], [{ hope: "x".repeat(501) }, "note_text_too_long"],
   [{ feel: "\u200b" }, "note_empty"], [{ feel: "bad\u0001" }, "invalid_body"],
   [{ photoIds: [] }, "invalid_body"],
-])("AC2: refuses invalid fields %j", async (change, error) => {
+])("notes AC2: refuses invalid fields %j", async (change, error) => {
   const { a } = await paired();
   const res = await call("POST", "/api/notes", { cookie: a.cookie, body: { ...input, ...change } });
   expect(res.status).toBe(400); expect(await res.json()).toEqual({ error });
 });
 
-test("AC11 AC39: edit and withdraw lose after open without changing stored text or clocks", async () => {
+test("notes AC11 AC39: edit and withdraw lose after open without changing stored text or clocks", async () => {
   const { a } = await paired();
   const { note } = await (await call("POST", "/api/notes", { cookie: a.cookie, body: input })).json<{ note: { id: string } }>();
   vi.setSystemTime(new Date("2026-11-13T06:30:00+07:00"));
@@ -81,7 +81,7 @@ test("AC11 AC39: edit and withdraw lose after open without changing stored text 
   }
 });
 
-test("AC2 AC3 AC8: 500 code points, whitespace and newlines preserved; unsent notes never expire", async () => {
+test("notes AC2 AC3 AC46: 500 code points, whitespace and newlines preserved; unsent notes never expire", async () => {
   const { a, b } = await paired();
   const text = "  One\nconcrete time  ";
   const res = await call("POST", "/api/notes", { cookie: a.cookie, body: { ...input, happened: text, feel: "😀".repeat(500) } });
@@ -102,7 +102,7 @@ async function sentNote() {
   await call("POST", `/api/notes/${note.id}/send`, { cookie: pair.a.cookie, body: input });
   return { ...pair, id: note.id };
 }
-test("AC11 AC15 AC16 AC39: edit/open race orders preserve the winning whole text and lock edits", async () => {
+test("notes AC11 AC15 AC16 AC39: edit/open race orders preserve the winning whole text and lock edits", async () => {
   const { a, b, id } = await sentNote();
   const fixed = { ...input, happened: "Saved first", feel: "Calm" };
   expect((await call("PUT", `/api/notes/${id}`, { cookie: a.cookie, body: fixed })).status).toBe(200);
@@ -115,7 +115,7 @@ test("AC11 AC15 AC16 AC39: edit/open race orders preserve the winning whole text
   expect((await (await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie })).json())).toEqual({ note: { id, state: "opened", ...fixed } });
   expect((await (await call("GET", "/api/notes", { cookie: a.cookie })).json<{ fromMe: { state: string }[] }>()).fromMe[0]?.state).toBe("opened");
 });
-test.each([true, false])("AC10 AC11: open/withdraw race first winner is preserved: openFirst=%s", async (openFirst) => {
+test.each([true, false])("notes AC10 AC11: open/withdraw race first winner is preserved: openFirst=%s", async (openFirst) => {
   const { a, b, id } = await sentNote();
   const open = () => call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
   const withdraw = () => call("DELETE", `/api/notes/${id}`, { cookie: a.cookie });
@@ -123,7 +123,7 @@ test.each([true, false])("AC10 AC11: open/withdraw race first winner is preserve
   expect((await (openFirst ? withdraw() : open())).status).toBe(openFirst ? 409 : 404);
 });
 
-test("AC17 AC18 AC19 AC21 AC22: close once moves structured words into both journal feeds at Vietnam close time", async () => {
+test("notes AC17 AC18, notes-journal AC19 AC21 AC22: close once moves structured words into both journal feeds at Vietnam close time", async () => {
   const { a, b, id } = await sentNote();
   expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "try" } })).status).toBe(404);
   await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
@@ -145,13 +145,13 @@ test("AC17 AC18 AC19 AC21 AC22: close once moves structured words into both jour
   expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries WHERE note_id = ?").bind(id).first("n")).toBe(1);
 });
 
-test("AC17: a pick without a line closes and concurrent closes create exactly one entry", async () => {
+test("notes AC17: a pick without a line closes and concurrent closes create exactly one entry", async () => {
   const { b, id } = await sentNote(); await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
   const responses = await Promise.all([1, 2].map(() => call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "try" } })));
   expect(responses.map((r) => r.status).sort()).toEqual([201, 404]);
   const entry = await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries WHERE note_id = ?").bind(id).first("n"); expect(entry).toBe(1);
 });
-test("AC30: unpaired and paired outsiders get uniform 404 on every notes route", async () => {
+test("notes-journal AC30: unpaired and paired outsiders get uniform 404 on every notes route", async () => {
   const { id } = await sentNote();
   const outsider = await user("Other");
   for (const pairedOutside of [false, true]) {
@@ -169,7 +169,7 @@ test("AC30: unpaired and paired outsiders get uniform 404 on every notes route",
     }
   }
 });
-test.each(["14:00:00", "23:00:00"])("AC21: closing at %s never announces a new journal entry, including the 07:00 release", async (time) => {
+test.each(["14:00:00", "23:00:00"])("notes-journal AC21: closing at %s never announces a new journal entry, including the 07:00 release", async (time) => {
   const { a, b, id } = await sentNote();
   await subscribe(a, await device("writer")); await subscribe(b, await device("reader"));
   await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
@@ -181,7 +181,7 @@ test.each(["14:00:00", "23:00:00"])("AC21: closing at %s never announces a new j
     expect(push.sent).toHaveLength(0);
   } finally { push.spy.mockRestore(); }
 });
-test("R23: waiting first oldest sent; opened notes follow oldest opened with no timestamps in payload", async () => {
+test("notes R23: waiting first oldest sent; opened notes follow oldest opened with no timestamps in payload", async () => {
   const { a, b, id } = await sentNote();
   const { note: second } = await (await call("POST", "/api/notes", { cookie: a.cookie, body: input })).json<{ note: { id: string } }>();
   vi.setSystemTime(new Date("2026-11-13T15:00:00+07:00"));
@@ -193,7 +193,7 @@ test("R23: waiting first oldest sent; opened notes follow oldest opened with no 
   expect((await (await call("GET", "/api/notes", { cookie: b.cookie })).json<{ toMe: unknown[] }>()).toMe).toEqual([{ id: second.id, state: "opened", ...input }, { id, state: "opened", ...input }]);
 });
 
-test("AC18 AC19: a failed journal insert rolls back closing without losing the opened note", async () => {
+test("notes AC18, notes-journal AC19: a failed journal insert rolls back closing without losing the opened note", async () => {
   const { a, b, id } = await sentNote();
   await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
   await env.DB.exec("CREATE TRIGGER reject_note_entry BEFORE INSERT ON journal_entries BEGIN SELECT RAISE(ABORT, 'fixture rejects entry'); END");
@@ -212,7 +212,7 @@ async function closedNote() {
   const { entry } = await res.json<{ entry: import("../src/shared/types").JournalEntry }>();
   return { ...pair, entry };
 }
-test("AC20 journal AC20 AC21: either partner edits all closed-note fields and day, normal journal routes hide it", async () => {
+test("notes-journal AC20 journal AC20 AC21: either partner edits all closed-note fields and day, normal journal routes hide it", async () => {
   const { a, b, id, entry } = await closedNote();
   for (const person of [a,b]) {
     const body = { ...input, hope: `Talk with ${person.id}`, pick: "differ", line: "My understanding", date: "2026-11-12" };
@@ -223,7 +223,7 @@ test("AC20 journal AC20 AC21: either partner edits all closed-note fields and da
     for (const method of ["PUT", "DELETE"]) expect((await call(method, `/api/journal/${entry.id}`, { cookie: person.cookie, body: { date: body.date, text: "Bypass", photoIds: [] } })).status).toBe(404);
   }
 });
-test("AC20: closed notes permit 2500 characters but reject bad parts, pick, day and photoIds", async () => {
+test("notes-journal AC20: closed notes permit 2500 characters but reject bad parts, pick, day and photoIds", async () => {
   const { a, id } = await closedNote();
   const body = { happened: "h".repeat(500), feel: "f".repeat(500), need: "n".repeat(500), hope: "r".repeat(500), line: "l".repeat(500), pick: "talk", date: "2026-11-12" };
   expect((await call("PUT", `/api/notes/${id}/closed`, { cookie: a.cookie, body })).status).toBe(200);
@@ -232,7 +232,7 @@ test("AC20: closed notes permit 2500 characters but reject bad parts, pick, day 
     if ("date" in change) expect(await res.json()).toEqual({ error: "invalid_entry_date" });
   }
 });
-test.each(["writer", "recipient"])("AC36: %s deletes the closed note and cascading entry for both", async (who) => {
+test.each(["writer", "recipient"])("notes-journal AC36: %s deletes the closed note and cascading entry for both", async (who) => {
   const { a, b, id, entry } = await closedNote();
   expect((await call("DELETE", `/api/notes/${id}`, { cookie: (who === "writer" ? a : b).cookie })).status).toBe(200);
   expect(await env.DB.prepare("SELECT id FROM notes WHERE id = ?").bind(id).first()).toBeNull();
@@ -240,7 +240,7 @@ test.each(["writer", "recipient"])("AC36: %s deletes the closed note and cascadi
   for (const person of [a,b]) expect((await (await call("GET", "/api/journal", { cookie: person.cookie })).json<{ entries: unknown[] }>()).entries).toEqual([]);
 });
 
-test("AC20 AC21: open notes refuse closed edits; closed edits and deletes never push at the next 07:00", async () => {
+test("notes-journal AC20 AC21: open notes refuse closed edits; closed edits and deletes never push at the next 07:00", async () => {
   const { a, b, id } = await closedNote();
   await subscribe(a, await device("writer")); await subscribe(b, await device("recipient"));
   const body = { ...input, pick: "talk", line: "Understood", date: "2026-11-12" };

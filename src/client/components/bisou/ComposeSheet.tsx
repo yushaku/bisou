@@ -21,7 +21,7 @@ interface ComposeSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   partnerName: string;
-  /* The author's own entry to change (R10); omit to write a new one. */
+  /* The author's own entry to change (journal R10); omit to write a new one. */
   entry?: JournalEntry;
   receiving?: Wish;
   onSaved: (entry: JournalEntry) => void;
@@ -32,7 +32,7 @@ interface ComposeSheetProps {
 export type Lock = "dirty" | "saving" | null;
 
 /*
- * Bottom sheet to write an entry. Nothing is kept after it closes (no drafts, R9), so a
+ * Bottom sheet to write an entry. Nothing is kept after it closes (no drafts, journal R9), so a
  * changed form asks before it is discarded, by the close button, Escape, a tap outside or a swipe.
  */
 export function ComposeSheet({ open, onOpenChange, fromMenu, ...form }: ComposeSheetProps) {

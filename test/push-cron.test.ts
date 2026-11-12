@@ -14,7 +14,7 @@ async function entry(who: TestUser, at: string) {
   return (await res.json<{ entry: { id: string } }>()).entry.id;
 }
 
-it.each(["2026-11-07T21:59:00+07:00", "2026-11-07T22:00:00+07:00", "2026-11-07T23:10:00+07:00", "2026-11-08T06:59:00+07:00"])("AC12: an entry at %s pushes at once with a 24 hour TTL", async (at) => {
+it.each(["2026-11-07T21:59:00+07:00", "2026-11-07T22:00:00+07:00", "2026-11-07T23:10:00+07:00", "2026-11-08T06:59:00+07:00"])("notifications AC12: an entry at %s pushes at once with a 24 hour TTL", async (at) => {
   const { a, b } = await paired(); await call("PATCH", "/api/me", { cookie: b.cookie, body: { displayName: "Bình" } });
   const d = await device("a"); await subscribe(a, d); const send = mockPush();
   await entry(b, at);
@@ -22,7 +22,7 @@ it.each(["2026-11-07T21:59:00+07:00", "2026-11-07T22:00:00+07:00", "2026-11-07T2
   expect(await decrypt(send.sent[0]!.body, d)).toEqual({ title: "Bình vừa viết nhật ký", url: "/journal", tag: "journal" });
 });
 
-it("AC12: the 07:00 cron sends no journal push", async () => {
+it("notifications AC12: the 07:00 cron sends no journal push", async () => {
   const { a, b } = await paired(); const d = await device("a"); await subscribe(a, d); const send = mockPush();
   for (const at of ["2026-11-07T22:00:00+07:00", "2026-11-07T23:10:00+07:00"]) await entry(b, at);
   expect(send.sent).toHaveLength(2);

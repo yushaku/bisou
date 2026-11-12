@@ -14,7 +14,7 @@ async function save(who: TestUser, id: string, text = "ANSWER SECRET") {
 beforeEach(async () => { await resetDb(); vi.spyOn(Date, "now").mockReturnValue(DAY); });
 afterEach(async () => { await waitForBackground(); vi.restoreAllMocks(); });
 
-it("R32 R33 AC9 AC20: each daily answer notifies only the other partner's journal-enabled devices, privately in their language", async () => {
+it("garden R32 R33 AC9 AC20: each daily answer notifies only the other partner's journal-enabled devices, privately in their language", async () => {
   const { a, b } = await paired();
   await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale: "en" } });
   const devices = [await device("a"), await device("a2"), await device("b"), await device("off", { journal: false, reminders: true })];
@@ -45,7 +45,7 @@ it("R32 R33 AC9 AC20: each daily answer notifies only the other partner's journa
   }
 });
 
-it("R32 R35: concurrent answers notify each partner only once; retries, edits and deletion send nothing", async () => {
+it("garden R32 R33: concurrent answers notify each partner only once; retries, edits and deletion send nothing", async () => {
   const { a, b } = await paired();
   await subscribe(a, await device("a")); await subscribe(b, await device("b"));
   const id = await today(a);
@@ -60,7 +60,7 @@ it("R32 R35: concurrent answers notify each partner only once; retries, edits an
   expect(send.sent).toHaveLength(2);
 });
 
-it("R22 R35 AC11 AC20: swap, extra play and an old daily card answered on a later day never notify", async () => {
+it("garden R22 R33 AC11 AC20: swap, extra play and an old daily card answered on a later day never notify", async () => {
   const { a, b } = await paired();
   await subscribe(a, await device("a")); await subscribe(b, await device("b"));
   const old = await today(a);
@@ -82,7 +82,7 @@ it("R22 R35 AC11 AC20: swap, extra play and an old daily card answered on a late
   expect(send.sent).toHaveLength(1);
 });
 
-it.each(["2026-11-09T21:59:59+07:00", "2026-11-09T22:00:00+07:00", "2026-11-10T06:59:59+07:00", "2026-11-10T07:00:00+07:00"])("R32 R33 AC13: daily answers notify at once at any hour, such as %s", async (time) => {
+it.each(["2026-11-09T21:59:59+07:00", "2026-11-09T22:00:00+07:00", "2026-11-10T06:59:59+07:00", "2026-11-10T07:00:00+07:00"])("garden R32 R33 AC49: daily answers notify at once at any hour, such as %s", async (time) => {
   const { a, b } = await paired();
   await subscribe(a, await device("a"));
   vi.mocked(Date.now).mockReturnValue(Date.parse(time));
@@ -93,7 +93,7 @@ it.each(["2026-11-09T21:59:59+07:00", "2026-11-09T22:00:00+07:00", "2026-11-10T0
   expect(send.sent).toHaveLength(1);
 });
 
-it("R13 R36 R37: request and failed-push logs never include questions, answers or member ids", async () => {
+it("garden R13 R36 R37: request and failed-push logs never include questions, answers or member ids", async () => {
   const { a, b } = await paired();
   await subscribe(a, await device("a"));
   const id = await today(a);
@@ -109,7 +109,7 @@ it("R13 R36 R37: request and failed-push logs never include questions, answers o
   expect(output).not.toContain(id);
 });
 
-it("R55 AC31: targets, decision reveals and opening a stage never notify or water", async () => {
+it("garden-stages R55 AC31: targets, decision reveals and opening a stage never notify or water", async () => {
   const { a, b } = await paired();
   await subscribe(a, await device("stage-a")); await subscribe(b, await device("stage-b"));
   const send = mockPush();

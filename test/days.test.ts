@@ -29,7 +29,7 @@ describe("day strings", () => {
     ["2026-12-31T10:00:00.000Z", "2027-01-01"],
     ["2024-02-28T10:00:00.000Z", "2024-02-29"],
     ["2025-02-28T10:00:00.000Z", "2025-03-01"],
-  ])("AC7 (R8): latest day at %s is %s in UTC+14", (now, expected) => {
+  ])("journal AC7 (R8): latest day at %s is %s in UTC+14", (now, expected) => {
     expect(latestDay(Date.parse(now))).toBe(expected);
   });
 

@@ -19,20 +19,20 @@ describe("profile photo client", () => {
     expect(avatarRetryWait("en", seconds)).toBe(en);
     expect(avatarRetryWait("vi", seconds)).toBe(vi);
   });
-  it.each(["image/jpeg", "image/png", "image/heic", "image/heif"])("AC3 R4: accepts %s", (type) => {
+  it.each(["image/jpeg", "image/png", "image/heic", "image/heif"])("avatar AC3 R4: accepts %s", (type) => {
     expect(avatarFileError(new File(["photo"], "photo", { type }))).toBeNull();
   });
-  it("AC3 R4: accepts untyped photo extensions but refuses PDF and WebP input", () => {
+  it("avatar AC3 R4: accepts untyped photo extensions but refuses PDF and WebP input", () => {
     expect(avatarFileError(new File(["photo"], "PHOTO.HEIC"))).toBeNull();
     for (const type of ["application/pdf", "image/webp"]) {
       expect(avatarFileError(new File(["file"], "file.jpg", { type }))).toBe("avatar.wrongType");
     }
   });
-  it("AC4 R5: refuses 25 MB before framing and accepts 19 MB", () => {
+  it("avatar AC4 R5: refuses 25 MB before framing and accepts 19 MB", () => {
     expect(avatarFileError(new File([new Uint8Array(25 * 1024 * 1024)], "photo.jpg", { type: "image/jpeg" }))).toBe("avatar.tooLarge");
     expect(avatarFileError(new File([new Uint8Array(19 * 1024 * 1024)], "photo.jpg", { type: "image/jpeg" }))).toBeNull();
   });
-  it("AC5 R6: keeps only the framed square, upscales to 512, and frees bitmap and canvas", async () => {
+  it("avatar AC5 R6: keeps only the framed square, upscales to 512, and frees bitmap and canvas", async () => {
     const drawImage = vi.fn();
     const bitmap = { close: vi.fn() } as unknown as ImageBitmap;
     const canvas = { width: 0, height: 0, getContext: () => ({ drawImage }), toBlob: (done: BlobCallback) => done(new Blob(["pixels"], { type: "image/webp" })) };
@@ -44,7 +44,7 @@ describe("profile photo client", () => {
     expect(canvas.width).toBe(0);
     expect(canvas.height).toBe(0);
   });
-  it("AC2 AC7: sends multipart without a JSON header and removes through the self endpoint", async () => {
+  it("avatar AC2 AC7: sends multipart without a JSON header and removes through the self endpoint", async () => {
     const fetch = vi.fn(async (_url: string, _init?: RequestInit) => Response.json({ user: { avatarId: "new" } }));
     vi.stubGlobal("fetch", fetch);
     expect((await api.setAvatar(new Blob(["pixels"], { type: "image/jpeg" })))).toMatchObject({ ok: true });
@@ -56,11 +56,11 @@ describe("profile photo client", () => {
     expect(fetch.mock.calls[1]?.[1]?.method).toBe("DELETE");
     expect(avatarUrl("a/b", "c/d")).toBe("/api/avatars/a%2Fb/c%2Fd");
   });
-  it("AC11 R14: a network failure returns no replacement user", async () => {
+  it("avatar AC11 R14: a network failure returns no replacement user", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("offline")));
     expect(await api.setAvatar(new Blob(["pixels"]))).toEqual({ ok: false, status: 0, error: null });
   });
-  it("AC8 R9 R10: both people carry photos and self changes override stale couple data", async () => {
+  it("avatar AC8 R9 R10: both people carry photos and self changes override stale couple data", async () => {
     const { toPeople } = await import("../src/client/components/bisou/CoupleAvatars");
     const t: Translate = (key) => messages[key];
     const user: User = { id: "a", displayName: "An", email: "an@example.com", birthDate: null, avatarId: "new", locale: "vi", createdAt: 0 };

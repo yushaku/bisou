@@ -249,7 +249,7 @@ export function Journal({ couple, ...session }: JournalProps) {
                     showDate={false}
                     onOpen={() => setDetailId(e.id)}
                     onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
-                    // Only the author changes or deletes an entry (R10, R11), either partner a note entry (R26); the server checks it again.
+                    // Only the author changes or deletes an entry (journal R10, R11), either partner a note entry (journal R26); the server checks it again.
                     actions={
                       (e.authorId === user.id || !!e.note) && (
                         <Button

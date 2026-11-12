@@ -15,7 +15,7 @@ async function setup(time = "2026-11-13T06:30:00+07:00") {
   vi.setSystemTime(new Date(time));
   return { ...pair, reader, writer, off, id: note.id, push: mockPush() };
 }
-test("AC23 AC26 AC27: daytime send pushes exact private payload only to recipient journal-on devices", async () => {
+test("notes-journal AC23 AC26 AC27: daytime send pushes exact private payload only to recipient journal-on devices", async () => {
   const { a, id, reader, push } = await setup("2026-11-13T15:00:00+07:00");
   expect((await call("POST", `/api/notes/${id}/send`, { cookie: a.cookie, body: input })).status).toBe(200);
   await waitForBackground(); expect(push.sent).toHaveLength(1);
@@ -49,7 +49,7 @@ test("the 07:00 cron still flushes a note held with notified_at NULL", async () 
   expect(await env.DB.prepare("SELECT notified_at FROM notes WHERE id = ?").bind(id).first("notified_at")).toBe(Date.parse("2026-11-13T07:00:00+07:00"));
 });
 
-test.each(["opened", "withdrawn"])("R43 AC10: %s before 07:00 suppresses the reminder", async (action) => {
+test.each(["opened", "withdrawn"])("notes-journal R43, notes AC10: %s before 07:00 suppresses the reminder", async (action) => {
   const { a, b, id, push } = await setup();
   await call("POST", `/api/notes/${id}/send`, { cookie: a.cookie, body: input });
   if (action === "opened") await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
@@ -58,7 +58,7 @@ test.each(["opened", "withdrawn"])("R43 AC10: %s before 07:00 suppresses the rem
   await runPushCron("2026-11-13T07:00:00+07:00"); await runPushCron("2026-11-16T07:00:00+07:00");
   expect(push.sent).toHaveLength(0);
 });
-test("AC25: overnight notes each arrive at once and share a counted plural reminder", async () => {
+test("notes-journal AC47: overnight notes each arrive at once and share a counted plural reminder", async () => {
   const { a, id, reader, push } = await setup();
   vi.setSystemTime(new Date("2026-11-12T22:30:00+07:00"));
   const { note } = await (await call("POST", "/api/notes", { cookie: a.cookie, body: input })).json<{ note: { id: string } }>();
@@ -77,13 +77,13 @@ test("Q5: missed 07:00 catches up, arrival wins over reminder in the same run", 
   expect(push.sent).toHaveLength(1); expect((await decrypt(push.sent[0]!.body, reader)).title).toBe("Sơn có một lời nhắn nhỏ");
   await runPushCron("2026-11-17T07:00:00+07:00"); expect(push.sent).toHaveLength(1);
 });
-test("R28: gone subscriptions are deleted and other devices still receive notes", async () => {
+test("notifications R28: gone subscriptions are deleted and other devices still receive notes", async () => {
   const { a, id, reader, off, push } = await setup("2026-11-13T15:00:00+07:00");
   push.spy.mockRestore(); const gone = mockPush(410);
   await call("POST", `/api/notes/${id}/send`, { cookie: a.cookie, body: input }); await waitForBackground();
   expect(gone.sent).toHaveLength(1); expect(await stored(reader.body.endpoint)).toBeNull(); expect(await stored(off.body.endpoint)).not.toBeNull();
 });
-test.each(["07:00:00", "21:59:00", "22:00:00", "06:59:00"])("R38 a send at %s pushes at once", async (clock) => {
+test.each(["07:00:00", "21:59:00", "22:00:00", "06:59:00"])("notes-journal R38 a send at %s pushes at once", async (clock) => {
   const { a, id, push } = await setup(`2026-11-13T${clock}+07:00`);
   await call("POST", `/api/notes/${id}/send`, { cookie: a.cookie, body: input }); await waitForBackground();
   expect(push.sent).toHaveLength(1); expect(push.sent[0]!.headers.get("TTL")).toBe("86400");
@@ -105,7 +105,7 @@ test("R39 R40: a new arrival includes another note's claimed reminder once", asy
   expect(await env.DB.prepare("SELECT reminded_at FROM notes WHERE id = ?").bind(id).first("reminded_at")).toBe(Date.parse("2026-11-16T07:00:00+07:00"));
   await runPushCron("2026-11-17T07:00:00+07:00"); expect(push.sent).toHaveLength(1);
 });
-test("AC24: a 15:00 send is reminded at 07:00 on the third Vietnam day only", async () => {
+test("notes-journal AC24: a 15:00 send is reminded at 07:00 on the third Vietnam day only", async () => {
   const { a, id, reader, push } = await setup("2026-11-13T15:00:00+07:00");
   await call("POST", `/api/notes/${id}/send`, { cookie: a.cookie, body: input }); await waitForBackground();
   for (const day of [14, 15]) await runPushCron(`2026-11-${day}T07:00:00+07:00`);

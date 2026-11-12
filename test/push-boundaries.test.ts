@@ -24,13 +24,13 @@ async function titles(send: ReturnType<typeof mockPush>, ...devices: Awaited<Ret
   return Promise.all(send.sent.map(async (s) => (await decrypt(s.body, devices.find((d) => d.body.endpoint === s.endpoint)!)).title));
 }
 
-it("AC8, R10: the anniversary also reminds both partners on the day at 08:00", async () => {
+it("notifications AC8, R10: the anniversary also reminds both partners on the day at 08:00", async () => {
   const { aPhone, bPhone } = await couple(); const send = mockPush();
   await runPushCron("2027-02-12T08:00:00+07:00");
   expect(await titles(send, aPhone, bPhone)).toEqual(["Hôm nay: Kỷ niệm 4 năm", "Hôm nay: Kỷ niệm 4 năm"]);
 });
 
-it("R10: 19:59 and 07:59 send nothing, 20:00 and 08:00 send the reminders", async () => {
+it("notifications R10: 19:59 and 07:59 send nothing, 20:00 and 08:00 send the reminders", async () => {
   const { a, aPhone, bPhone } = await couple(); await addEvent(a, "Xem phim", "2026-12-01"); const send = mockPush();
   await runPushCron("2026-11-30T19:59:00+07:00"); expect(send.sent).toHaveLength(0);
   await runPushCron("2026-11-30T20:00:00+07:00");
@@ -50,7 +50,7 @@ it("R10, R16: the Vietnam day changes at 00:00 VN (17:00 UTC), not at 00:00 UTC"
   await runPushCron("2026-12-01T13:00:00Z"); expect(send.sent).toHaveLength(4);
 });
 
-it("R10: a yearly event on 29 February is reminded on 28 February in a common year and on the 29th in a leap year", async () => {
+it("notifications R10: a yearly event on 29 February is reminded on 28 February in a common year and on the 29th in a leap year", async () => {
   const { a, aPhone, bPhone } = await couple(); await addEvent(a, "Ngày nhuận", "2024-02-29", "yearly"); const send = mockPush();
   await runPushCron("2027-02-27T20:00:00+07:00"); await runPushCron("2027-02-28T08:00:00+07:00");
   const common = await titles(send, aPhone, bPhone);
@@ -61,14 +61,14 @@ it("R10: a yearly event on 29 February is reminded on 28 February in a common ye
   expect(leap).toHaveLength(2); expect(leap.every((t) => t.startsWith("Ngày mai: Ngày nhuận"))).toBe(true);
 });
 
-it("R14: an event deleted between the 20:00 and 08:00 reminders gets no second one", async () => {
+it("notifications R14: an event deleted between the 20:00 and 08:00 reminders gets no second one", async () => {
   const { a } = await couple(); const id = await addEvent(a, "Xem phim", "2026-12-01"); const send = mockPush();
   await runPushCron("2026-11-30T20:00:00+07:00"); expect(send.sent).toHaveLength(2);
   expect((await call("DELETE", `/api/events/${id}`, { cookie: a.cookie })).status).toBe(200);
   await runPushCron("2026-12-01T08:00:00+07:00"); expect(send.sent).toHaveLength(2);
 });
 
-it("AC15, R2, R3: with reminders off on the laptop, the phone gets both kinds and the laptop journal only", async () => {
+it("notifications AC15, R2, R3: with reminders off on the laptop, the phone gets both kinds and the laptop journal only", async () => {
   const { a, b, aPhone, bPhone } = await couple(); const laptop = await device("binh-laptop", { journal: true, reminders: false });
   await subscribe(b, laptop); const send = mockPush();
   await runPushCron("2027-02-11T20:00:00+07:00");
@@ -79,7 +79,7 @@ it("AC15, R2, R3: with reminders off on the laptop, the phone gets both kinds an
   expect(send.sent.map((s) => s.endpoint).sort()).toEqual([bPhone.body.endpoint, laptop.body.endpoint].sort());
 });
 
-it("AC5, R7: neither of the author's two devices is notified, the partner's is", async () => {
+it("notifications AC5, R7: neither of the author's two devices is notified, the partner's is", async () => {
   const { a, b, aPhone, bPhone } = await couple(); const laptop = await device("binh-laptop"); await subscribe(b, laptop);
   const send = mockPush();
   vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-07T15:00:00+07:00"));
@@ -88,7 +88,7 @@ it("AC5, R7: neither of the author's two devices is notified, the partner's is",
   expect(send.sent.some((s) => [bPhone.body.endpoint, laptop.body.endpoint].includes(s.endpoint))).toBe(false);
 });
 
-it("AC6, R9: spinning, claiming and releasing a wish send nothing", async () => {
+it("notifications AC6, R9: spinning, claiming and releasing a wish send nothing", async () => {
   const { a, b } = await paired(); await subscribe(a, await device("an")); await subscribe(b, await device("binh"));
   const send = mockPush();
   const created = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title: "Secret scarf", price: 100, link: null, photoId: null } });
@@ -100,7 +100,7 @@ it("AC6, R9: spinning, claiming and releasing a wish send nothing", async () => 
   await waitForBackground(); expect(send.sent).toHaveLength(0);
 });
 
-it("AC18, R26, R28: after sign-out the device gets nothing, the other device still does", async () => {
+it("notifications AC18, R26, R28: after sign-out the device gets nothing, the other device still does", async () => {
   const { a, b, aPhone } = await couple(); const second = await device("an-second"); await subscribe(a, second);
   const send = mockPush();
   await call("POST", "/api/auth/logout", { cookie: a.cookie, body: { endpoint: aPhone.body.endpoint } });
@@ -112,7 +112,7 @@ it("AC18, R26, R28: after sign-out the device gets nothing, the other device sti
   expect(send.sent.filter((s) => s.endpoint === second.body.endpoint)).toHaveLength(2);
 });
 
-it("R28: a 410 on an event reminder deletes only that device, the user's other device still receives", async () => {
+it("notifications R28: a 410 on an event reminder deletes only that device, the user's other device still receives", async () => {
   const { a, aPhone, bPhone } = await couple(); const gone = await device("binh-gone"); await subscribe(a, gone);
   const send = mockPush();
   send.spy.mockImplementation(async (input, init) => {

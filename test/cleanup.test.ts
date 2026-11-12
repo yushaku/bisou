@@ -104,7 +104,7 @@ async function expectOnlyLiveRowsLeft() {
 }
 
 describe("runCleanup", () => {
-  it("R16, R23: expires unread titles 30 days after deletion, preserving recent notices and live claims", async () => {
+  it("wishes R16, R23: expires unread titles 30 days after deletion, preserving recent notices and live claims", async () => {
     const { a, b } = await paired();
     for (const title of ["Deleted", "Live"]) {
       const res = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title, price: 100 } });
@@ -211,7 +211,7 @@ async function seedPhotos() {
 }
 
 describe("scheduled photo sweep", () => {
-  it("AC3, AC12 (R3, R17): a save racing expiration cannot attach a photo whose objects the sweep removes", async () => {
+  it("journal AC3, AC12 (R3, R17): a save racing expiration cannot attach a photo whose objects the sweep removes", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(NOW);
     const { a } = await paired();
@@ -234,7 +234,7 @@ describe("scheduled photo sweep", () => {
     expect(await count("journal_entries")).toBe(0);
   });
 
-  it("AC10, AC12 (R11, R17): removes expired and detached photos, retains recent and attached photos, and logs row counts", async () => {
+  it("journal AC10, AC12 (R11, R17): removes expired and detached photos, retains recent and attached photos, and logs row counts", async () => {
     await seedPhotos();
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     await scheduled();
@@ -263,7 +263,7 @@ describe("scheduled photo sweep", () => {
     expect(await count("otp_codes")).toBe(3);
   });
 
-  it("AC12 (R17): an R2 failure leaves pending rows for a later retry", async () => {
+  it("journal AC12 (R17): an R2 failure leaves pending rows for a later retry", async () => {
     await seedPhotos();
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
@@ -276,7 +276,7 @@ describe("scheduled photo sweep", () => {
     expect(await keys("SELECT id AS k FROM photos")).toEqual(["attached", "recent"]);
   });
 
-  it("AC12 (R17): limits each sweep to 500 photos and 1000 R2 keys within D1 parameter limits", async () => {
+  it("journal AC12 (R17): limits each sweep to 500 photos and 1000 R2 keys within D1 parameter limits", async () => {
     await seed();
     const ids = Array.from({ length: 501 }, (_, i) => `pending-${i}`);
     await env.DB.batch(ids.map((id) => env.DB.prepare("INSERT INTO photos (id, couple_id, uploader_id, created_at) VALUES (?, 'c4', 'u4', 0)").bind(id)));
@@ -294,7 +294,7 @@ describe("scheduled photo sweep", () => {
 });
 
 
-it("AC10 (R24): daily cleanup retains only the last 24 hours of spin times", async () => {
+it("wishes AC10 (R24): daily cleanup retains only the last 24 hours of spin times", async () => {
   await seed();
   await env.DB.batch([NOW - 24 * HOUR - 1, NOW - 24 * HOUR, NOW - 24 * HOUR + 1].map((at) =>
     env.DB.prepare("INSERT INTO wish_spins (user_id, created_at) VALUES ('u1', ?)").bind(at)));

@@ -20,19 +20,19 @@ async function members(who: TestUser) {
 
 describe("birthdays", () => {
   it.each(["2026-04-31", "1899-12-31", "2023-02-29", "29-02-2024", "02-29", 1997, "", {}])(
-    "AC10 R13 R14: refuses invalid full date %j", async (date) => {
+    "events AC10 R13 R14: refuses invalid full date %j", async (date) => {
       const a = await user("An");
       const res = await patch(a, date);
       expect(res.status).toBe(400);
       expect(await res.json()).toEqual({ error: "invalid_birth_date" });
     },
   );
-  it("AC10 R14: accepts today at UTC+14 and refuses a later date", async () => {
+  it("events AC10 R14: accepts today at UTC+14 and refuses a later date", async () => {
     const a = await user("An");
     expect((await patch(a, latestDay(Date.now()))).status).toBe(200);
     expect((await patch(a, addDays(latestDay(Date.now()), 1))).status).toBe(400);
   });
-  it("AC10 AC12 R14 R16: saves a leap birthday, preserves it through other edits, and clears it", async () => {
+  it("events AC10 AC12 R14 R16: saves a leap birthday, preserves it through other edits, and clears it", async () => {
     const a = await user("An");
     for (const birthDate of ["1900-01-01", "1996-02-29", "2024-02-29"]) {
       const res = await patch(a, birthDate);
@@ -44,7 +44,7 @@ describe("birthdays", () => {
     const removed = await patch(a, null);
     expect(await removed.json()).toMatchObject({ user: { birthDate: null } });
   });
-  it("AC11 R15: a birthday entered before pairing appears to both partners", async () => {
+  it("events AC11 R15: a birthday entered before pairing appears to both partners", async () => {
     const a = await user("An");
     expect((await patch(a, "1997-11-18")).status).toBe(200);
     const b = await user("Binh");
@@ -53,7 +53,7 @@ describe("birthdays", () => {
     expect((await call("POST", "/api/couple/join", { cookie: b.cookie, body: { code: couple.pendingCode!.code } })).status).toBe(200);
     for (const who of [a, b]) expect((await members(who))?.find((m) => m.id === a.id)?.birthDate).toBe("1997-11-18");
   });
-  it("AC12 R13 R16 R17: a partner can only edit their own birthday and removal reaches both payloads", async () => {
+  it("events AC12 R13 R16 R17: a partner can only edit their own birthday and removal reaches both payloads", async () => {
     const { a, b } = await paired();
     await patch(a, "1997-11-18");
     for (const birthDate of ["1996-01-03", null]) {
@@ -67,7 +67,7 @@ describe("birthdays", () => {
       }
     }
   });
-  it("AC1 R1: unpaired and paired outsiders receive no other couple birthdays", async () => {
+  it("events AC1 R1: unpaired and paired outsiders receive no other couple birthdays", async () => {
     const { a, b, couple } = await paired();
     await patch(a, "1997-11-18");
     await patch(b, "1996-01-03");
@@ -86,7 +86,7 @@ describe("birthdays", () => {
     expect((await call("GET", "/api/couple")).status).toBe(401);
     expect((await call("PATCH", "/api/me", { body: { birthDate: "1997-11-18" } })).status).toBe(401);
   });
-  it("AC1 R1: birthday queries retain indexed user and membership lookups", async () => {
+  it("events AC1 R1: birthday queries retain indexed user and membership lookups", async () => {
     const { a } = await paired();
     const plans = [
       await explain(`SELECT u.id AS id, u.display_name AS display_name, u.birth_date AS birth_date, u.avatar_id
