@@ -5,8 +5,8 @@
 PO, 11 November 2026 (one-pager D1 to D8 and A1 to A5, Gate 1 answers G1 to G6, then the answers to Decisions 1 to 14; 12 November 2026, the UI round after testing the local build). Later items win over earlier ones.
 
 1. D1. Named "Hộp thẻ" / "Card box"; each topic set is a box ("hộp Deep Connection"); the copy never says "bộ thẻ", "deck" or "thẻ hôm nay" (R7).
-2. D2. A paid box unlocks per couple: one partner unlocks it, both use it (R4, R33). (Deferred: unlock, see todo.md.)
-3. D3. One-time unlock per box, no subscription; bundles only once there are 3 or more paid boxes (R5, Out of scope). (Deferred: unlock, see todo.md.)
+2. D2. A paid box unlocks per couple: one partner unlocks it, both use it (R4, R33). (Now a gift unlock, items 35 to 38; codes stay deferred, see todo.md.)
+3. D3. One-time unlock per box, no subscription; bundles only once there are 3 or more paid boxes (R5, Out of scope). (Now a gift unlock, items 35 to 38.)
 4. D4 (revised by 21 and 22). One or two free boxes open in full; a paid box plays only its preview cards for a couple without it; Bisou never hands non-preview card text to such a couple (R3, R27, R28, R42).
 5. D5. Random draw among unseen cards, no card limit, no session; seen history only on the phone; a previous card button (R13 to R17).
 6. D6. A block on Home under today's card, with the boxes, opening the box list; no new tab (R9 to R11).
@@ -34,14 +34,19 @@ PO, 11 November 2026 (one-pager D1 to D8 and A1 to A5, Gate 1 answers G1 to G6, 
 28. Truth or Dare, items 2 and 6. 20 cards, each holding both a truth and a dare, in Vietnamese and English, rewritten in Bisou's voice from the research sources and never copied; the first 10 truths and 10 dares are kept, 10 more of each are added, and they are paired so both sides of a card feel about equally light; card copy follows R48 to R54 (R70, Appendix).
 29. Truth or Dare, items 3 and 6 (item 6 replaces the labels of item 3). A new kind, truth or dare ("Thật hay thử thách" / "Truth or dare"), shows the truth and the dare as two blocks marked "Thật" / "Truth" and "Thử thách" / "Dare", like a rather card; whoever drew reads both and picks one aloud, with nothing to tap and nothing recorded. No box sets its own labels. Drawing is random as in every box, with no step to choose truth or dare before a card shows (R19, R71, R72).
 30. Truth or Dare, item 4. The cover is white line art of a bottle on soft lilac, and the box colour is lilac, with a light and a dark version like the other boxes (R70).
-31. Rau răm, 12 November 2026, item 7. A new free box "Rau răm" / "Spicy" for adults (18+), open in full to every couple, with 10 cards, all of kind truth or dare (R73).
+31. Rau răm, 12 November 2026, item 7 (superseded by 39). A new free box "Rau răm" / "Spicy" for adults (18+), open in full to every couple, with 10 cards, all of kind truth or dare (R73).
 32. Rau răm, item 8. Flirty, teasing talk about desire and bolder intimate dares between the two partners, never graphic or explicit; always consensual and skippable, no pressure wording, no alcohol, no third parties, no photos or recording, nothing in front of others. Card copy follows R47 to R54 except the "never intimate" limit, which this box alone lifts (R75, R76).
 33. Rau răm, item 9. Shown like the other boxes on Home and in the box list, with an "18+" badge on its product card and on its cards; no age check, warning screen or setting (R74).
 34. Rau răm, item 10. The cover is white line art of a sprig of rau răm leaves on deep rose, with no text in the image; the box colour is rose, with a light and a dark version like the other boxes (R73).
+35. Gift unlock, 12 November 2026, item 11 (replaces the end line of 22, revises "no buy" in 25). When a couple has seen every preview card of a paid box, the next card is a buy view with the box's cover, name, price and a "Mua hộp" / "Buy box" button; no real payment (R28, R78).
+36. Gift unlock, item 12. Tapping "Mua hộp" opens a dialog: "Bạn tính mua thật à? Đùa thôi, cái này tôi tặng bạn." / "You were really going to pay? Just kidding, this one's on us.", with one button "Nhận hộp" / "Get the box". That button unlocks the box for the couple, for good, for both partners, and the player continues with the full box at once; the partner sees it open on the next refresh, with no push (R4, R5, R39, R79, R80). Bisou keeps one row per couple and unlocked box, with the day (R58).
+37. Gift unlock, item 13. Needs a connection: offline the buy button is disabled with the existing needs-connection message. Only paired couples can unlock; an unknown or free box cannot; repeated taps change nothing (R40, R81, R82).
+38. Gift unlock, item 14. A couple who closed the buy view can still get it later from the box's tile (R83). Codes, real payment, contact and the code rate limit stay deferred (todo.md).
+39. Rau răm, item 15 (replaces 31). Rau răm is a paid box at 49.000đ, with preview cards rr-04, rr-07 and rr-08 and the same gift unlock as other paid boxes (R73, R78 to R83); the 18+ badge stays.
 
 ## Purpose
 
-Two partners sitting together, or on a call, want something good to talk about right now, with nothing to write, nothing scored and nothing kept. A card box gives them one card at a time on a topic; they read it and talk in person. Some boxes are free; a paid box shows only its preview cards for now, and unlocking it comes later. It builds on [pairing](pairing.md) and stays apart from the [garden](garden.md).
+Two partners sitting together, or on a call, want something good to talk about right now, with nothing to write, nothing scored and nothing kept. A card box gives them one card at a time on a topic; they read it and talk in person. Some boxes are free; a paid box shows only its preview cards until the couple gets it, which for now is a gift from Bisou. It builds on [pairing](pairing.md) and stays apart from the [garden](garden.md).
 
 ## Actors
 
@@ -51,25 +56,25 @@ Two partners sitting together, or on a call, want something good to talk about r
 
 ## Running example
 
-Sơn and Linh sit together on Friday evening, 13 November 2026. Linh opens Home, taps the card box block, sees the boxes as a grid of product cards, picks the free box "Làm quen lại" (marked "Miễn phí"), draws cards on her phone, swiping left for the next card, and they talk. Then she opens the paid box "Deep Connection" (49.000đ, "Xem thử") and plays its preview cards; when all of them were seen, a short line says the rest of the box is not open yet and the preview starts over. There is no code to enter.
+Sơn and Linh sit together on Friday evening, 13 November 2026. Linh opens Home, taps the card box block, sees the boxes as a grid of product cards, picks the free box "Làm quen lại" (marked "Miễn phí"), draws cards on her phone, swiping left for the next card, and they talk. Then she opens the paid box "Deep Connection" (49.000đ, "Xem thử") and plays its preview cards; when all of them were seen, a buy view shows. She taps "Mua hộp", Bisou jokes that this one is a gift, she taps "Nhận hộp", and the whole box is open for her and Sơn. There is no code to enter.
 
 ## 1. Boxes
 
-A box is a set of cards on one topic. Free boxes are open in full to every couple; a paid box plays only its preview cards.
+A box is a set of cards on one topic. Free boxes are open in full to every couple; a paid box plays only its preview cards until the couple unlocks it.
 
 Example: on 13 November Sơn and Linh have "Làm quen lại", free, and "Deep Connection", paid, which they can try through its 3 preview cards.
 
 - R1. Card boxes are for partners in a couple: a person not yet paired has none, and an outsider learns nothing of which boxes a couple has played.
 - R2. A box has a name, a one-line description and an ordered list of cards, each in Vietnamese and English; it has a cover image; it is free or paid, a paid box has a price, and in a paid box some cards are marked as preview.
 - R3. Bisou has one or two free boxes, each open in full to every couple; paid boxes may be added at any time under the same rules.
-- R4. (Deferred: unlock, see todo.md.) A paid box belongs to the couple once either partner unlocks it.
-- R5. (Deferred: unlock, see todo.md.) An unlock is once and for good: no subscription, renewal or expiry.
+- R4. A paid box belongs to the couple once either partner unlocks it (R80).
+- R5. An unlock is once and for good: no subscription, renewal or expiry.
 - R6. Box names, descriptions and cards show in the reader's app language, so the two partners may read the same card in different languages.
-- R7. The copy calls a set "hộp" / "box", never "bộ thẻ", "deck" or "thẻ hôm nay", which belong to the [garden](garden.md); "mở khoá hộp" / "unlock the box" is kept for when unlocking comes (Deferred: unlock, see todo.md).
+- R7. The copy calls a set "hộp" / "box", never "bộ thẻ", "deck" or "thẻ hôm nay", which belong to the [garden](garden.md); the unlock copy is "Mua hộp" / "Buy box" and "Nhận hộp" / "Get the box" (R78, R79), and "mở khoá hộp" / "unlock the box" is kept for when codes come (Deferred: unlock, see todo.md).
 - R8. Playing a box never touches the garden (no card, growth or freshness change) and never sends a notification.
 
 - AC1 (R1). Given Sơn and Linh are a couple, then both see the boxes; a person not yet paired sees none, and an outsider cannot tell which boxes they have played.
-- AC2 (R4, R5). (Deferred: unlock, see todo.md.) Given Sơn unlocked Deep Connection, then Linh plays all of it too, with nothing to pay or renew.
+- AC2 (R4, R5). Given Sơn unlocked Deep Connection, then Linh plays all of it too, with nothing to pay or renew, and it stays open on later days.
 - AC3 (R6). Given Linh's app is in English and Sơn's in Vietnamese, when both look at lql-01, then Linh reads "Which food tastes like home to you? Tell each other about it." and Sơn reads its Vietnamese text.
 - AC4 (R8). Given they play 20 cards, then today's card, every plant and its freshness are unchanged, and neither phone gets a notification.
 
@@ -96,7 +101,7 @@ Example: at 20:05 Linh opens Làm quen lại and gets lql-04; she taps "Thẻ ti
 - R13. Opening a box shows a card drawn at random among that box's cards not yet seen on this phone; "Thẻ tiếp" / "Next card" draws another the same way, unless the couple stepped back (R17).
 - R14. A card counts as seen on a phone once it was shown there; each phone keeps its own history, so Sơn's phone may show cards Linh already saw.
 - R15. There is no limit on draws, no session to start or finish, and reopening the box later, on any day, continues with the cards not yet seen on that phone.
-- R16. Once every card of a box was seen on a phone, the next draw starts that box over with every card unseen, never repeating the card just shown, and says once "Hai đứa đã xem hết hộp này, mình bắt đầu lại nhé" / "You've seen the whole box, starting over". A paid box's preview says the line in R28 instead.
+- R16. Once every card of a box was seen on a phone, the next draw starts that box over with every card unseen, never repeating the card just shown, and says once "Hai đứa đã xem hết hộp này, mình bắt đầu lại nhé" / "You've seen the whole box, starting over". A paid box's preview shows the buy view instead (R28).
 - R17. "Thẻ trước" / "Previous card" steps back through every card shown since the box was opened, one card per tap, until the first one. From a past card, "Thẻ tiếp" shows the next card of that stack again, and draws a new card as R13 only from the newest one.
 - R18. Any card can be skipped with "Thẻ tiếp": Bisou never asks why, marks nothing and suggests no card is expected to be done.
 
@@ -128,22 +133,22 @@ Example: lql-03 reads "Ai hay hát một mình trong nhà tắm hơn?"; they cou
 
 Any couple can try a paid box through its preview cards, the cards the box's content marks as preview. Which cards they are does not depend on their position in the box.
 
-Example: at 21:00 Linh opens Deep Connection, whose preview cards are dc-02, dc-05 and dc-07. She draws them in a random order, goes back with "Thẻ trước", and once all three were seen, a line says the rest of the box is not open yet and the three start over.
+Example: at 21:00 Linh opens Deep Connection, whose preview cards are dc-02, dc-05 and dc-07. She draws them in a random order, goes back with "Thẻ trước", and once all three were seen, the next draw shows the buy view (section 15).
 
-- R27. A couple that does not have a paid box draws only among its preview cards, with draw, previous card and start over working as in a free box (R13 to R17); no other card of the box shows.
-- R28. When every preview card was seen on the phone, the next draw shows once "Hết thẻ xem thử. Phần còn lại của hộp sẽ mở sau." / "That's all the preview cards. The rest of the box opens later.", then the preview starts over with every preview card unseen, never repeating the card just shown.
-- R29. The Home block and the box list mark a paid box "Xem thử" / "Preview" and show its price (R12); no buy button, contact or code field shows. (Unlock screen: Deferred: unlock, see todo.md.)
+- R27. A couple that does not have a paid box draws only among its preview cards, with draw, previous card and start over working as in a free box (R13 to R17), except for the end in R28; no other card of the box shows.
+- R28. When every preview card was seen on the phone, the next draw shows the buy view (R78) instead of a card, and the preview does not start over by itself; "Thẻ trước" from the buy view steps back through the cards shown (R17).
+- R29. The Home block and the box list mark a paid box "Xem thử" / "Preview" and show its price (R12); their product cards have no buy button, contact or code field. (Contact and code field: Deferred: unlock, see todo.md.)
 - R30. (Deferred: unlock, see todo.md.) A way to contact Bisou for a box.
 - R31. Preview cards count as seen on a phone like any card (R14, R15).
 
-- AC14 (R27, R28). Given Linh opens Deep Connection, then only dc-02, dc-05 and dc-07 come up, never another card; after all three were seen the next draw shows the "Hết thẻ xem thử" line once and a preview card other than the one just shown.
+- AC14 (R27, R28). Given Linh opens Deep Connection, then only dc-02, dc-05 and dc-07 come up, never another card; after all three were seen the next draw shows the buy view and no card.
 - AC15 (R27). Given Linh saw dc-05 on Friday and reopens Deep Connection on Saturday, then she continues with dc-02 and dc-07 not yet seen, and "Thẻ trước" works as in a free box.
-- AC16 (R29). Given the Home block and the box list, then Deep Connection shows "49.000đ" and is marked "Xem thử" in both, and no buy button, contact or code field shows anywhere.
+- AC16 (R29). Given the Home block and the box list, then Deep Connection shows "49.000đ" and is marked "Xem thử" in both, and neither product card has a buy button, contact or code field.
 - AC17 (R31). Given Linh saw dc-02 and dc-05, then neither comes up again on her phone until dc-07 was seen.
 
 ## 6. Codes (deferred)
 
-(Deferred: unlock, see todo.md.) A code would unlock one paid box for the couple. None of this is in v1: no code field, no codes, no limit on tries.
+A code would unlock one paid box for the couple. Codes are not built: no code field, no codes, no limit on tries. Only R39 and R40 are active, since the gift unlock (section 15) uses them.
 
 - R32. (Deferred: unlock, see todo.md.) A code has 6 characters from the invite code alphabet ([pairing](pairing.md) R6).
 - R33. (Deferred: unlock, see todo.md.) A code names one paid box, works once and unlocks it for the couple.
@@ -152,8 +157,8 @@ Example: at 21:00 Linh opens Deep Connection, whose preview cards are dc-02, dc-
 - R36. (Deferred: unlock, see todo.md.) A code for an owned box says "đã mở khoá" and is not used up.
 - R37. (Deferred: unlock, see todo.md.) A wrong or used code gets one message and counts as a wrong try.
 - R38. (Deferred: unlock, see todo.md.) At most 10 wrong tries per person per rolling hour.
-- R39. (Deferred: unlock, see todo.md.) An unlock reaches the partner's phone with no notification.
-- R40. (Deferred: unlock, see todo.md.) Unlocking needs a connection.
+- R39. An unlock reaches the partner's phone the next time it refreshes, with no notification.
+- R40. Unlocking needs a connection.
 - R41. (Deferred: unlock, see todo.md.) However the box was paid for, the unlock is the same.
 
 - AC18 (R32, R33). (Deferred: unlock, see todo.md.)
@@ -161,19 +166,19 @@ Example: at 21:00 Linh opens Deep Connection, whose preview cards are dc-02, dc-
 - AC20 (R37). (Deferred: unlock, see todo.md.)
 - AC21 (R38). (Deferred: unlock, see todo.md.)
 - AC22 (R35). (Deferred: unlock, see todo.md.)
-- AC23 (R39). (Deferred: unlock, see todo.md.)
-- AC24 (R40). (Deferred: unlock, see todo.md.)
+- AC23 (R39). Given Linh unlocked Deep Connection, when Sơn's phone next refreshes, then he plays all of it and neither phone got a notification.
+- AC24 (R40). Given Linh is offline at the buy view, then she cannot unlock the box (AC45).
 
 ## 7. Locked cards stay locked
 
-A couple can read the preview cards of a paid box and nothing more, anywhere. No couple has a paid box in v1.
+A couple that has not unlocked a paid box can read its preview cards and nothing more, anywhere.
 
 Example: on 13 November nothing on Sơn's or Linh's phone holds the text of any Deep Connection card other than dc-02, dc-05 and dc-07, online or offline.
 
-- R42. The server never sends the non-preview cards of a paid box to any couple, by any means in Bisou, on either phone.
+- R42. The server never sends the non-preview cards of a paid box to a couple that has not unlocked it, by any means in Bisou, on either phone.
 - R43. Every couple can see the cover image, name, description and price of every paid box.
 
-- AC25 (R42). Given Sơn and Linh open Deep Connection, then nothing Bisou gives their phones, by any means, holds the text of any card other than dc-02, dc-05 and dc-07.
+- AC25 (R42). Given Sơn and Linh have not unlocked Deep Connection and open it, then nothing Bisou gives their phones, by any means, holds the text of any card other than dc-02, dc-05 and dc-07.
 
 ## 8. Offline
 
@@ -217,19 +222,19 @@ Example: dc-07 asks Sơn and Linh to hold hands and each say a "Cảm ơn vì...
 
 ## 11. Personal data
 
-In v1 Bisou keeps nothing about a couple's card play: no codes, no wrong tries, no ownership rows. There is nothing to see, correct, delete or export beyond what each phone holds.
+Bisou keeps nothing about a couple's card play except which paid boxes the couple unlocked. Apart from that there is nothing to see, correct, delete or export beyond what each phone holds.
 
-Example: on the evening of 13 November Bisou holds nothing of Sơn and Linh's play; which cards Linh saw lives only on Linh's phone.
+Example: on the evening of 13 November Bisou holds nothing of Sơn and Linh's play; which cards Linh saw lives only on Linh's phone. Once Linh gets Deep Connection, Bisou also holds that it is open for the two of them since that day.
 
-- R58. (Deferred: unlock, see todo.md.) Bisou would keep which paid boxes a couple owns and the day each was unlocked.
+- R58. For each paid box a couple unlocked, Bisou keeps the couple, the box and the day of the unlock, so that the box stays open for both partners. It is kept as long as the couple exists and goes with it. Both partners see it as the box being open; correcting, deleting and exporting it are decided with leaving (R64).
 - R59. (Deferred: unlock, see todo.md.) Bisou would keep for each code its box and, once used, the couple and the day.
 - R60. (Deferred: unlock, see todo.md.) Wrong tries would be kept per person for one hour.
 - R61. Which cards were seen stays on each phone and never reaches Bisou or the partner; clearing Bisou's data on a phone starts every box over there.
 - R62. Bisou keeps no answer, choice, number or reaction to any card, and no record of which cards a couple drew or when.
-- R63. Both partners see the same boxes in the box list. (Owned boxes: Deferred: unlock, see todo.md.)
-- R64. A couple splitting, export and account deletion are decided when leaving exists ([pairing](pairing.md) R2); this spec promises nothing more until then. (Owned boxes: Deferred: unlock, see todo.md.)
+- R63. Both partners see the same boxes in the box list, and the same ones open.
+- R64. A couple splitting, export and account deletion are decided when leaving exists ([pairing](pairing.md) R2), including what happens to the couple's unlocked boxes; this spec promises nothing more until then.
 
-- AC30 (R58 to R62). Given the evening of 13 November, then Bisou holds no code, no wrong try, no box ownership, no record of which cards they drew and nothing of what they said.
+- AC30 (R58 to R62). Given the evening of 13 November, then Bisou holds no code, no wrong try, no box ownership, no record of which cards they drew and nothing of what they said; after Linh gets Deep Connection it holds one fact, that the box is open for the couple since that day, and still nothing else.
 
 ## 12. The card player
 
@@ -263,24 +268,46 @@ Example: at 21:30 Linh opens Truth or Dare (49.000đ, "Xem thử") and gets tod-
 
 ## 14. Rau răm
 
-A free box for adults: every card holds a flirty truth and a bolder, intimate dare for the two partners alone. It plays like any box; only its copy limit differs.
+A paid box at 49.000đ for adults: every card holds a flirty truth and a bolder, intimate dare for the two partners alone. It plays like any box; only its copy limit differs.
 
-Example: at 22:30, at home with the door closed, Linh opens Rau răm ("Miễn phí", "18+") and gets rr-02. She picks the truth and answers. On rr-09 Sơn does not feel like the dare, so they take the truth instead; on the next card Linh just taps "Thẻ tiếp" and nothing asks why.
+Example: at 22:30, at home with the door closed, Linh opens Rau răm ("49.000đ", "Xem thử", "18+") and gets rr-04. She picks the truth and answers. After the gift unlock, on rr-09 Sơn does not feel like the dare, so they take the truth instead; on the next card Linh just taps "Thẻ tiếp" and nothing asks why.
 
-- R73. Bisou has the free box "Rau răm" / "Spicy", for adults, with a deep rose cover of a sprig of rau răm leaves in white line art and a rose box colour; it holds 10 cards, all of kind truth or dare (R71), open in full to every couple like any free box (R3) (Appendix).
-- R74. Rau răm shows on Home and in the box list like every box, among the free boxes (R10, R11), with an "18+" badge on its product card and on each of its cards in the player; there is no age check, warning screen or setting to show or hide it.
+- R73. Bisou has the paid box "Rau răm" / "Spicy", for adults, with a deep rose cover of a sprig of rau răm leaves in white line art and a rose box colour; it holds 10 cards, all of kind truth or dare (R71), priced at 49.000đ, with only rr-04, rr-07 and rr-08 available as previews before the gift unlock opens all 10 cards for both partners (R27, R78 to R83) (Appendix).
+- R74. Rau răm shows on Home and in the box list like every box, after the free boxes (R10, R11), with an "18+" badge on its product card and on each of its cards in the player; there is no age check, warning screen or setting to show or hide it.
 - R75. For Rau răm only, cards may talk about desire, attraction and intimate memories, and dares may ask the two partners for kissing, touching, a slow massage, taking off a piece of clothing or whispered wishes; this lifts the intimacy limit of R48 and R50 for this box and no other.
 - R76. Rau răm cards still follow R47, R49 and R51 to R54, and also: wording is tasteful, never graphic or anatomical; a dare involves only the two partners, in private, never in front of others or in public; no card mentions or involves anyone else, alcohol or any substance, or photos, video or recording; no card pressures (no "phải", "không được từ chối" or similar), and a dare that undresses or touches the other asks for their yes.
 - R77. Either partner can say no to any Rau răm card at any time: whoever drew may take the truth instead of the dare, and "Thẻ tiếp" skips the card without asking why (R18).
 
-- AC37 (R73, R74, R12). Given the box list, then Rau răm shows among the free boxes with its cover, name, description, "Miễn phí" and an "18+" badge; when Linh opens it, then a card shows right away with no age check or warning first, and any of rr-01 to rr-10 can come up.
+- AC37 (R73, R74, R12). Given the box list before unlock, then Rau răm shows after the free boxes with its cover, name, description, "49.000đ", "Xem thử" and an "18+" badge; when Linh opens it, then only rr-04, rr-07 and rr-08 can come up, with no age check or warning first. After the gift unlock (R78 to R83), both partners can draw any of rr-01 to rr-10, and the 18+ badge stays.
 - AC38 (R74, R71). Given rr-04 shows, then Linh sees the "18+" badge, the label "Thật hay thử thách" and the two blocks "Thật" and "Thử thách"; tapping either block records nothing.
 - AC39 (R75, R76, R54). Given the Rau răm cards in the appendix, then each dare is done by the two of them alone, in private, with nothing graphic or anatomical; no card names a third person, alcohol, a camera or recording, or a public place; no card uses pressure wording, and no Vietnamese card uses "anh" or "em".
 - AC40 (R77, R18). Given rr-09 shows and Sơn does not want the dare, when they take the truth or Linh taps "Thẻ tiếp", then Bisou asks nothing and keeps nothing.
 
+## 15. Gift unlock
+
+When a couple has seen every preview card of a paid box, Bisou offers the box, and a joke turns the purchase into a gift. No money is asked and no payment happens.
+
+Example: at 21:20 Linh has seen dc-02, dc-05 and dc-07. Her next draw shows the buy view: the cover, "Deep Connection", "49.000đ" and "Mua hộp". She taps it; the dialog says "Bạn tính mua thật à? Đùa thôi, cái này tôi tặng bạn."; she taps "Nhận hộp" and draws from all ten cards. Sơn's phone shows the box open the next time it refreshes, with no notification.
+
+- R78. When every preview card of a paid box was seen on the phone, the next draw shows a buy view instead of a card (R28): the box's cover, name and price and a "Mua hộp" / "Buy box" button. Nothing is paid.
+- R79. Tapping "Mua hộp" opens a dialog: "Bạn tính mua thật à? Đùa thôi, cái này tôi tặng bạn." / "You were really going to pay? Just kidding, this one's on us.", with one button, "Nhận hộp" / "Get the box".
+- R80. "Nhận hộp" unlocks the box for the couple, once and for good, for both partners (R4, R5). The player continues at once with the full box; cards seen as preview count as seen (R14), and drawing goes on as in R13.
+- R81. Only a partner in a couple can unlock a box, and only a paid box that exists; a free or unknown box cannot be unlocked. Unlocking a box the couple already has changes nothing and gives the same result, so a repeated tap is harmless.
+- R82. Offline, "Mua hộp" and "Nhận hộp" are disabled and the needs-connection message shows as elsewhere in Bisou (R40).
+- R83. A couple that closed the buy view can get it again: reopening the box from its tile, with every preview card already seen on that phone, shows the buy view at once.
+- R84. Once unlocked, the box's product card no longer shows "Xem thử" or the price, on Home and in the list.
+
+- AC41 (R78, R28). Given Linh saw dc-02, dc-05 and dc-07, when she taps "Thẻ tiếp", then the buy view shows with the cover, "Deep Connection", "49.000đ" and "Mua hộp", no card shows, and no "Hết thẻ xem thử" line shows anywhere.
+- AC42 (R79). Given Linh taps "Mua hộp", then the dialog shows the Vietnamese text above, or the English text when her app is in English, with the single button "Nhận hộp" / "Get the box".
+- AC43 (R80, R4, R5). Given Linh taps "Nhận hộp", then she draws from all ten cards at once, dc-02, dc-05 and dc-07 do not repeat until the other cards were seen, and the box is still open a month later with nothing to pay or renew.
+- AC44 (R81). Given Linh already unlocked Deep Connection, when Sơn taps "Nhận hộp" on his phone or Linh taps it twice, then the box is open once with the same result and nothing is duplicated; a free box or one that does not exist cannot be unlocked, and a person not yet paired cannot unlock anything.
+- AC45 (R82, R40). Given Linh is offline at the buy view, then "Mua hộp" is disabled with the needs-connection message and nothing is unlocked.
+- AC46 (R83). Given Linh closed the buy view and reopens Deep Connection the next day with all preview cards still seen on her phone, then the buy view shows at once.
+- AC47 (R84). Given Linh unlocked Deep Connection, then its product card on Home and in the list shows neither "Xem thử" nor "49.000đ".
+
 ## Decisions to confirm
 
-None open.
+- PM defaults for PO to confirm: R83 (reopening shows the buy view at once, not a card) and R84 (an unlocked box's tile shows no price and no mark; its wording is left to design).
 
 ## Glossary
 
@@ -290,11 +317,12 @@ None open.
 - **Preview** (xem thử): the cards marked as preview in a paid box; a couple without the box plays only these.
 - **Draw** (rút thẻ), **next card** (thẻ tiếp), **previous card** (thẻ trước), **seen** (đã xem), **start over** (bắt đầu lại).
 - **Kinds** (loại thẻ): question (câu hỏi), dare (thử), rather (chọn một), point (ai hơn), scale (từ 1 đến 10), truth or dare (thật hay thử thách).
-- Deferred with unlocking (see todo.md): **unlock** (mở khoá hộp), **code** (mã mở khoá), **unlock screen** (màn mở khoá), **wrong try** (lần nhập sai), **open box** (hộp đã mở) and **locked box** (hộp chưa mở) as ownership states.
+- **Unlock** (mở khoá hộp) and **open box** (hộp đã mở) / **locked box** (hộp chưa mở) as ownership states; **buy view** (màn mua hộp): the screen after the last preview card, with the box's cover, name, price and "Mua hộp"; **gift unlock** (hộp được tặng): the unlock a tap on "Nhận hộp" gives.
+- Deferred (see todo.md): **code** (mã mở khoá), **wrong try** (lần nhập sai), contact and real payment.
 
 ## Out of scope
 
-- Unlocking a paid box (codes, price, payment): next, see todo.md.
+- Unlocking a paid box with a code, real payment and contact: next, see todo.md.
 - Payment inside Bisou, refunds and taking back an unlock.
 - A place in Bisou to create, list or cancel codes (R55).
 - Subscription; bundles until there are 3 or more paid boxes.
@@ -372,21 +400,21 @@ Every card is of kind truth or dare and shows its truth in the "Thật" / "Truth
 | tod-19 | | Hồi nhỏ mỗi người có món đồ chơi nào không rời tay? | What toy did each of you never let go of as a kid? | Cùng kể một câu chuyện, mỗi người một câu, đến khi đủ mười câu. | Tell a story together, one sentence each, until you reach ten. |
 | tod-20 | | Nếu mai hai đứa được nghỉ một tuần, mỗi người muốn làm gì đầu tiên? | If you both had a week off from tomorrow, what would each of you want to do first? | Đan một tay vào nhau, rồi dùng hai tay còn lại vỗ vào nhau mười lần không trượt. | Lace one hand together, then clap your two free hands together ten times without missing. |
 
-### Rau răm / Spicy (free, 18+)
+### Rau răm / Spicy (paid, 49.000đ, 18+)
 
 Description: "Cay cay một chút, chỉ dành cho hai đứa." / "A little spicy, just for the two of you."
 
 Every card is of kind truth or dare (R71) and carries the "18+" badge (R74). Any dare can be refused and swapped for the card's truth (R77).
 
-| Id | Truth, Vietnamese | Truth, English | Dare, Vietnamese | Dare, English |
-|---|---|---|---|---|
-| rr-01 | Lần đầu mỗi người thấy người kia thật sự quyến rũ là lúc nào? Kể kỹ một chút. | When did each of you first find the other truly attractive? Tell it with a little detail. | Hôn nhau một nụ thật chậm, đếm thầm đến mười rồi mới rời ra. | Share one slow kiss, counting silently to ten before you part. |
-| rr-02 | Người kia mặc gì thì mỗi người thấy khó rời mắt nhất? | What does the other wear that each of you finds hardest to look away from? | Mỗi người cởi bớt một món đồ đang mặc, món nào tùy mình. | Each take off one thing you're wearing, your choice which. |
-| rr-03 | Nụ hôn nào của hai đứa mà mỗi người nhớ nhất, và vì sao? | Which of your kisses does each of you remember most, and why? | Một người nhắm mắt, người kia hôn ba chỗ bất kỳ trên mặt và cổ, rồi đoán chỗ nào là đầu tiên. Rồi đổi lượt. | One closes their eyes while the other kisses three spots on their face and neck, then guess which came first. Then swap. |
-| rr-04 | Có kiểu chạm nào mỗi người rất thích mà chưa từng nói ra? | Is there a kind of touch each of you loves but has never said out loud? | Xoa vai và lưng cho nhau thật chậm, mỗi người hai phút. Người được xoa chỉ cần nói "chỗ đó" hay "nhẹ thôi". | Give each other a slow shoulder and back massage, two minutes each. The one receiving just says "right there" or "gentler". |
-| rr-05 | Có giấc mơ nào về người kia mà mỗi người hơi ngại kể không? Kể bản đã kiểm duyệt cũng được. | Has either of you had a dream about the other you'd be a bit shy to tell? The censored version counts. | Ghé sát tai người kia, thì thầm một điều mình muốn hai đứa làm tối nay. Rồi đổi lượt. | Lean close and whisper in the other's ear one thing you'd like the two of you to do tonight. Then swap. |
-| rr-06 | Mỗi người thấy mình quyến rũ nhất vào lúc nào? | When does each of you feel at your most attractive? | Ngồi thật gần, mỗi người hôn dọc cánh tay người kia, từ đầu ngón tay lên đến vai, thật chậm. | Sit close and each kiss along the other's arm, from fingertips to shoulder, slowly. |
-| rr-07 | Ông bà bảo rau răm làm bớt "nóng". Theo mỗi người, hai đứa nên ăn thêm hay ăn bớt? | Folk wisdom says rau răm cools you down. Should the two of you eat more of it, or less? | Ôm sát nhau nhảy chậm hết một bài, không cần nhạc, một người ngân nga là đủ. | Slow dance close together for one song; no music needed, one of you can hum. |
-| rr-08 | Người kia làm gì, dù rất nhỏ, mà mỗi người "đổ" ngay tại chỗ? | What does the other do, however small, that makes each of you melt on the spot? | Một người nhắm mắt, người kia dùng đầu ngón tay vẽ chậm một hình lên lưng. Đoán sai thì bị hôn một cái. Rồi đổi lượt. | One closes their eyes while the other slowly traces a shape on their back with a fingertip. A wrong guess earns a kiss. Then swap. |
-| rr-09 | Một buổi tối chỉ có hai đứa, mỗi người muốn nó bắt đầu thế nào và kết thúc ra sao? | An evening with just the two of you: how would each of you like it to start, and to end? | Cởi một cúc áo hay một món đồ của người kia, chỉ khi người kia gật đầu. Rồi đổi lượt. | Undo one button or take off one piece of the other's clothing, only once they nod. Then swap. |
-| rr-10 | Có điều gì mỗi người muốn hai đứa thử cùng nhau mà chưa dám nói? Nói một nửa thôi cũng được. | Is there something each of you would like to try together but hasn't dared to say? Half of it is enough. | Nằm cạnh nhau, nhìn vào mắt nhau một phút, rồi hôn khi cả hai cùng thấy muốn. | Lie side by side and look into each other's eyes for a minute, then kiss when you both feel like it. |
+| Id | Truth, Vietnamese | Truth, English | Dare, Vietnamese | Dare, English | Preview |
+|---|---|---|---|---|---|
+| rr-01 | Lần đầu mỗi người thấy người kia thật sự quyến rũ là lúc nào? Kể kỹ một chút. | When did each of you first find the other truly attractive? Tell it with a little detail. | Hôn nhau một nụ thật chậm, đếm thầm đến mười rồi mới rời ra. | Share one slow kiss, counting silently to ten before you part. | |
+| rr-02 | Người kia mặc gì thì mỗi người thấy khó rời mắt nhất? | What does the other wear that each of you finds hardest to look away from? | Mỗi người cởi bớt một món đồ đang mặc, món nào tùy mình. | Each take off one thing you're wearing, your choice which. | |
+| rr-03 | Nụ hôn nào của hai đứa mà mỗi người nhớ nhất, và vì sao? | Which of your kisses does each of you remember most, and why? | Một người nhắm mắt, người kia hôn ba chỗ bất kỳ trên mặt và cổ, rồi đoán chỗ nào là đầu tiên. Rồi đổi lượt. | One closes their eyes while the other kisses three spots on their face and neck, then guess which came first. Then swap. | |
+| rr-04 | Có kiểu chạm nào mỗi người rất thích mà chưa từng nói ra? | Is there a kind of touch each of you loves but has never said out loud? | Xoa vai và lưng cho nhau thật chậm, mỗi người hai phút. Người được xoa chỉ cần nói "chỗ đó" hay "nhẹ thôi". | Give each other a slow shoulder and back massage, two minutes each. The one receiving just says "right there" or "gentler". | Yes |
+| rr-05 | Có giấc mơ nào về người kia mà mỗi người hơi ngại kể không? Kể bản đã kiểm duyệt cũng được. | Has either of you had a dream about the other you'd be a bit shy to tell? The censored version counts. | Ghé sát tai người kia, thì thầm một điều mình muốn hai đứa làm tối nay. Rồi đổi lượt. | Lean close and whisper in the other's ear one thing you'd like the two of you to do tonight. Then swap. | |
+| rr-06 | Mỗi người thấy mình quyến rũ nhất vào lúc nào? | When does each of you feel at your most attractive? | Ngồi thật gần, mỗi người hôn dọc cánh tay người kia, từ đầu ngón tay lên đến vai, thật chậm. | Sit close and each kiss along the other's arm, from fingertips to shoulder, slowly. | |
+| rr-07 | Ông bà bảo rau răm làm bớt "nóng". Theo mỗi người, hai đứa nên ăn thêm hay ăn bớt? | Folk wisdom says rau răm cools you down. Should the two of you eat more of it, or less? | Ôm sát nhau nhảy chậm hết một bài, không cần nhạc, một người ngân nga là đủ. | Slow dance close together for one song; no music needed, one of you can hum. | Yes |
+| rr-08 | Người kia làm gì, dù rất nhỏ, mà mỗi người "đổ" ngay tại chỗ? | What does the other do, however small, that makes each of you melt on the spot? | Một người nhắm mắt, người kia dùng đầu ngón tay vẽ chậm một hình lên lưng. Đoán sai thì bị hôn một cái. Rồi đổi lượt. | One closes their eyes while the other slowly traces a shape on their back with a fingertip. A wrong guess earns a kiss. Then swap. | Yes |
+| rr-09 | Một buổi tối chỉ có hai đứa, mỗi người muốn nó bắt đầu thế nào và kết thúc ra sao? | An evening with just the two of you: how would each of you like it to start, and to end? | Cởi một cúc áo hay một món đồ của người kia, chỉ khi người kia gật đầu. Rồi đổi lượt. | Undo one button or take off one piece of the other's clothing, only once they nod. Then swap. | |
+| rr-10 | Có điều gì mỗi người muốn hai đứa thử cùng nhau mà chưa dám nói? Nói một nửa thôi cũng được. | Is there something each of you would like to try together but hasn't dared to say? Half of it is enough. | Nằm cạnh nhau, nhìn vào mắt nhau một phút, rồi hôn khi cả hai cùng thấy muốn. | Lie side by side and look into each other's eyes for a minute, then kiss when you both feel like it. | |
