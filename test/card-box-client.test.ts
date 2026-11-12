@@ -256,3 +256,23 @@ it.each(["vi", "en"])("PO18: player deck provides previous, labelled random and 
   expect(html).toContain('data-variant="default"');
   expect(html).toContain('disabled=""');
 });
+
+it.each(["vi", "en"] as const)("AC35 AC36: truth and dare are labelled static blocks in the deck in %s", locale => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const card: CardBoxDetail["cards"][number] = { id: "tod-04", kind: "truthDare", truth: { vi: "Mỗi người có món gì hay lén ăn một mình mà chưa từng mời người kia không?", en: "Is there a snack each of you sneaks alone and has never offered the other?" }, dare: { vi: "Mỗi người diễn không lời món ăn mình thích nhất, người kia đoán.", en: "Each act out your favourite food without a word while the other guesses." } };
+  const html = renderToString(h(I18nProvider, null, h(CardBoxCard, { card, boxId: "truth-or-dare" })));
+  for (const label of locale === "vi" ? ["Thật hay thử thách", ">Thật<", ">Thử thách<"] : ["Truth or dare", ">Truth<", ">Dare<"]) expect(html).toContain(label);
+  expect(html).toContain(card.truth[locale]); expect(html).toContain(card.dare[locale]);
+  expect(html.match(/rounded-xl border border-current\/20/g)).toHaveLength(2);
+  expect(html).not.toMatch(/<button|<input|<select|aria-pressed|aria-selected|role="radio/);
+  const deck = renderToString(h(I18nProvider, null, h(CardBoxDeck, { card, boxId: "truth-or-dare", boxName: "Truth or Dare", onNext() {}, onPrevious() {}, onRandom() {} })));
+  expect(deck).toContain(card.truth[locale]); expect(deck).toContain(card.dare[locale]);
+  expect(deck).toContain(locale === "vi" ? "Thẻ tiếp" : "Next card");
+  expect(deck.match(/<button/g)).toHaveLength(3);
+  const box = { ...detail, box: { ...detail.box, id: "truth-or-dare", open: false }, cards: [card, { ...card, id: "tod-09" }] };
+  const first = nextCard(box, { stack: [], index: -1, startedOver: false }, [], () => 0);
+  expect(first.play.stack).toEqual(["tod-04"]);
+  expect(nextCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["tod-04", "tod-09"]);
+  expect(randomCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["tod-04", "tod-09"]);
+  expect(cardSwipe(80, 0, 400)).toBe("previous"); expect(cardSwipe(-80, 0, 400)).toBe("next");
+});
