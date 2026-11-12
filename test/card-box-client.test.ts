@@ -69,12 +69,15 @@ it.each(["vi", "en"])("AC11 AC12 AC13: five kinds are readable without response 
   expect(html).not.toMatch(/<button|<input|<select|role="radio|role="slider/);
   for (const label of locale === "vi" ? ["Câu hỏi", "Thử", "Ai hơn?", "Chọn một", "Từ 1 đến 10", "1: Ít 10: Nhiều"] : ["Question", "Try it", "Who’s more?", "Pick one", "1 to 10", "1: Low 10: High"]) expect(html).toContain(label);
 });
-it.each(["vi", "en"] as const)("product grid shows covers, descriptions, free and preview prices in %s", locale => {
+it.each(["vi", "en"] as const)("product grid shows half-height covers, descriptions and price badges in %s", locale => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const free = { ...detail.box, description: { vi: "Câu nhẹ nhàng", en: "Light cards" } };
-  const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [free, { ...free, id: "paid", open: false, price: 49000 }], from: "/boxes" })) }));
+  const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [free, { ...free, id: "paid", open: false, price: 49000 }, { ...free, id: "unpriced", open: false, price: null }], from: "/boxes" })) }));
   expect(html).toContain('grid-cols-2');
-  expect(html).toContain('border border-border bg-card p-3 text-card-foreground');
+  expect(html).toContain('border border-border bg-card text-card-foreground');
+  expect(html.match(/data-slot="badge"/g)).toHaveLength(2);
+  expect(html).toContain('relative h-1/2 shrink-0 bg-muted');
+  expect(html).toContain('absolute top-2 left-2 bg-card text-card-foreground tabular-nums');
   expect(html).toContain('line-clamp-2 font-heading text-base');
   expect(html).toContain('loading="lazy"');
   expect(html).toContain('width="640" height="640"');
@@ -82,7 +85,7 @@ it.each(["vi", "en"] as const)("product grid shows covers, descriptions, free an
   expect(html).toContain(free.description[locale]);
   expect(html).toContain(locale === "vi" ? "Miễn phí" : "Free");
   expect(html).toContain(locale === "vi" ? "49.000đ" : "49,000₫");
-  expect(html).toContain(locale === "vi" ? "Xem thử" : "Preview");
+  expect(html).not.toContain(locale === "vi" ? "Xem thử" : "Preview");
   expect(html).not.toMatch(/<input|Liên hệ|Mã mở/);
 });
 it("AC25: client and shared sources have no runtime imports from Worker", () => {
@@ -121,10 +124,12 @@ it("AC5 AC6 AC16: Home block and box list share ordered preview-only rows and th
   for (const screen of [h(CardBoxBlock, { onSignedOut, scope: "c:u" }), h(CardBoxes, { user, onUser() {}, onSignedOut, couple: { id: "c", members: [], events: [], startDate: null } })]) {
     const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, screen)) }));
     expect(html.indexOf("Làm quen lại")).toBeLessThan(html.indexOf("Deep Connection"));
-    expect(html).toContain("Xem thử");
+    expect(html).not.toContain("Xem thử");
     expect(html).toContain("Deep talk");
-    expect(html).toContain("absolute inset-0 -z-20 h-full w-full object-cover");
-    expect(html).not.toMatch(/<input|Liên hệ|Mã mở|[0-9]\/[0-9]/);
+    expect(html).toContain("relative h-1/2 shrink-0 bg-muted");
+    expect(html).toContain("h-full w-full object-cover");
+    expect(html).not.toMatch(/<input|Liên hệ|Mã mở/);
+    expect(html.replace(/<[^>]*>/g, "")).not.toMatch(/[0-9]\/[0-9]/);
   }
   expect(TABS).toEqual(["home", "journal", "wishes", "garden"]);
 });

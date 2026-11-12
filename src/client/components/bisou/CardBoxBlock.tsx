@@ -8,20 +8,21 @@ import { cardBoxLoadMessage } from "../../lib/cardBox";
 import { useOnline } from "../../lib/useOnline";
 import { formatBoxPrice } from "../../lib/cardBox";
 import { Button } from "../ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "../ui/skeleton";
 import { EmptyState } from "./EmptyState";
 export function CardBoxRows({ boxes, from }: { boxes: CardBoxSummary[]; from: string }) {
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
   return <ul className="grid grid-cols-2 items-stretch gap-4">{boxes.map(box => <li key={box.id} className="min-w-0">
-    <Link id={`card-box-${box.id}`} href={`/boxes/${box.id}`} state={{ from }} onClick={() => { if (memory && from === "/") { memory.scroll.set("home", window.scrollY); memory.returnFocus = `card-box-${box.id}`; } }} className="relative isolate flex h-64 min-h-11 flex-col justify-end gap-2 overflow-hidden rounded-xl border border-border bg-card p-3 text-card-foreground focus-visible:outline-2 focus-visible:outline-ring">
-      <img src={box.cover} alt={box.name[locale]} width={640} height={640} loading="lazy" className="absolute inset-0 -z-20 h-full w-full object-cover" onError={event => { event.currentTarget.style.visibility = "hidden"; }} />
-      <span aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-t from-card via-card/95 via-50% to-card/10" />
-      <span className="line-clamp-2 font-heading text-base leading-snug">{box.name[locale]}</span>
-      <span className="line-clamp-2 min-h-10 text-sm text-card-foreground">{box.description[locale]}</span>
-      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1">
-        <span className="rounded-full bg-card/90 px-2 py-1 text-sm font-semibold tabular-nums">{box.price == null ? (box.open ? t("cardBox.free") : "") : formatBoxPrice(box.price, locale)}</span>
-        {!box.open && <span className="text-xs text-muted-foreground">{t("cardBox.preview")}</span>}
+    <Link id={`card-box-${box.id}`} href={`/boxes/${box.id}`} state={{ from }} onClick={() => { if (memory && from === "/") { memory.scroll.set("home", window.scrollY); memory.returnFocus = `card-box-${box.id}`; } }} className="relative isolate flex h-64 min-h-11 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground focus-visible:outline-2 focus-visible:outline-ring">
+      <span className="relative h-1/2 shrink-0 bg-muted">
+        <img src={box.cover} alt={box.name[locale]} width={640} height={640} loading="lazy" className="h-full w-full object-cover" onError={event => { event.currentTarget.style.visibility = "hidden"; }} />
+        {(box.price != null || box.open) && <Badge variant="secondary" className="absolute top-2 left-2 bg-card text-card-foreground tabular-nums">{box.price != null ? formatBoxPrice(box.price, locale) : t("cardBox.free")}</Badge>}
+      </span>
+      <span className="flex h-1/2 flex-col gap-2 p-3">
+        <span className="line-clamp-2 font-heading text-base leading-snug">{box.name[locale]}</span>
+        <span className="line-clamp-2 min-h-10 text-sm text-card-foreground">{box.description[locale]}</span>
       </span>
     </Link>
   </li>)}</ul>;
