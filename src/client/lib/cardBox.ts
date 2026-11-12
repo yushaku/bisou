@@ -26,6 +26,9 @@ export function randomCard(detail: CardBoxDetail, play: Play, seen: string[], ra
   return { play: { stack: [...play.stack.slice(0, play.index + 1), id], index: play.index + 1, startedOver }, seen: [...validSeen, id] };
 }
 export function previousCard(play: Play): Play { return { ...play, index: Math.max(0, play.index - 1), startedOver: false }; }
+export function seenCardCount(detail: CardBoxDetail, seen: string[]): number {
+  return new Set(seen.filter(id => detail.cards.some(card => card.id === id))).size;
+}
 export function readSeen(scope: string, boxId: string): string[] {
   try { const value: unknown = JSON.parse(localStorage.getItem(`bisou.cardBox.v1:${scope}:seen:${boxId}`) ?? "[]"); return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []; } catch { return []; }
 }

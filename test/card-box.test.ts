@@ -2,7 +2,7 @@ import { env } from "cloudflare:test";
 import { CARD_BOXES } from "../src/worker/lib/cardBoxes";
 import { beforeEach, expect, it } from "vitest";
 import { call, explain, paired, resetDb, user } from "./helpers";
-import type { CardBoxDetail } from "../src/shared/cardBox";
+import type { CardBoxDetail, CardBoxSummary } from "../src/shared/cardBox";
 beforeEach(resetDb);
 it("AC25: paid detail sends exactly flagged preview cards to both partners", async () => {
   const { a, b } = await paired();
@@ -173,4 +173,21 @@ it("AC25 AC44: gift unlock stays within the caller's couple and uses the couple 
   expect(other.box.open).toBe(false); expect(other.cards).toHaveLength(3);
   const plans = await explain("SELECT box_id FROM card_box_unlocks WHERE couple_id = ?", "couple");
   expect(plans.join(" ")).toContain("SEARCH"); expect(plans.join(" ")).not.toContain("SCAN");
+});
+
+
+it("R12: summaries expose total card counts for free, locked and unlocked boxes without card text", async () => {
+  const { a } = await paired();
+  const list = async () => (await (await call("GET", "/api/boxes", { cookie: a.cookie })).json<{ boxes: CardBoxSummary[] }>()).boxes;
+  const locked = await list();
+  expect(locked).toMatchObject([{ id: "lam-quen-lai", cardCount: 10, open: true }, { id: "rau-ram", cardCount: 10, open: false }, { id: "deep-connection", cardCount: 10, open: false }, { id: "truth-or-dare", cardCount: 20, open: false }]);
+  expect(JSON.stringify(locked)).not.toMatch(/"cards"|"truth"|"dare"|"text"/);
+  const preview = await (await call("GET", "/api/boxes/truth-or-dare", { cookie: a.cookie })).json<CardBoxDetail>();
+  expect(preview.box).toMatchObject({ cardCount: 20, open: false });
+  expect(preview.cards).toHaveLength(3);
+  expect(JSON.stringify(preview)).not.toContain("childhood nicknames");
+  const unlocked = await (await call("POST", "/api/boxes/truth-or-dare/unlock", { cookie: a.cookie })).json<CardBoxDetail>();
+  expect(unlocked.box).toMatchObject({ cardCount: 20, open: true });
+  expect(unlocked.cards).toHaveLength(20);
+  expect((await list()).find(box => box.id === "truth-or-dare")).toMatchObject({ cardCount: 20, open: true });
 });

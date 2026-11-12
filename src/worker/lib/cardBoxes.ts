@@ -639,7 +639,7 @@ export const CARD_BOXES: Box[] = [
   }
 ];
 function isOpen(box: Box, unlocked: Set<string>): boolean { return box.free || unlocked.has(box.id); }
-function summary(box: Box, unlocked: Set<string>): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box, unlocked), ...(box.adult ? { adult: box.adult } : {}), cover: box.cover, price: box.price }; }
+function summary(box: Box, unlocked: Set<string>): CardBoxSummary { return { id: box.id, name: box.name, description: box.description, open: isOpen(box, unlocked), cardCount: box.cards.length, ...(box.adult ? { adult: box.adult } : {}), cover: box.cover, price: box.price }; }
 export function boxList(unlocked = new Set<string>()): CardBoxSummary[] { return [...CARD_BOXES].sort((a, b) => Number(isOpen(b, unlocked)) - Number(isOpen(a, unlocked))).map(box => summary(box, unlocked)); }
 export function boxDetail(boxId: string, unlocked = new Set<string>()): CardBoxDetail | null {
   const box = CARD_BOXES.find(box => box.id === boxId);

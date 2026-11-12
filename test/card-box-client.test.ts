@@ -8,7 +8,7 @@ import { CardBoxRows, CardBoxBlock, CardBoxList } from "../src/client/components
 import { Router } from "wouter";
 import { vi, afterEach } from "vitest";
 import { expect, it } from "vitest";
-import { formatBoxPrice, cardSwipe, cardBoxEndMessage, cardBoxLoadMessage, nextCard, randomCard, previousCard, readSeen, writeSeen, readCache, writeCache, clearCardBoxCache, type Play } from "../src/client/lib/cardBox";
+import { formatBoxPrice, seenCardCount, cardSwipe, cardBoxEndMessage, cardBoxLoadMessage, nextCard, randomCard, previousCard, readSeen, writeSeen, readCache, writeCache, clearCardBoxCache, type Play } from "../src/client/lib/cardBox";
 import type { CardBoxDetail } from "../src/shared/cardBox";
 import { CardBoxGift } from "../src/client/components/bisou/CardBoxGift";
 import { CardBoxPlayer } from "../src/client/screens/CardBoxPlayer";
@@ -20,7 +20,7 @@ vi.mock("../src/client/components/ui/dialog", async original => ({
   ...await original<typeof import("../src/client/components/ui/dialog")>(),
   DialogContent: ({ children }: { children: import("react").ReactNode }) => h("div", { role: "dialog" }, children),
 }));
-const detail: CardBoxDetail = { box: { id: "sample", name: { vi: "Hộp", en: "Box" }, description: { vi: "", en: "" }, open: true, cover: "/card-boxes/sample.jpg", price: null }, cards: ["a", "b", "c", "d"].map(id => ({ id, kind: "question", text: { vi: id, en: id } })) };
+const detail: CardBoxDetail = { box: { id: "sample", name: { vi: "Hộp", en: "Box" }, description: { vi: "", en: "" }, open: true, cardCount: 4, cover: "/card-boxes/sample.jpg", price: null }, cards: ["a", "b", "c", "d"].map(id => ({ id, kind: "question", text: { vi: id, en: id } })) };
 it("AC26 AC27: load failures stay hidden with cached content and uncached offline content needs a connection", () => {
   expect(cardBoxLoadMessage(true, false, "loadError")).toBeNull();
   expect(cardBoxLoadMessage(true, true, "loadError")).toBeNull();
@@ -83,7 +83,7 @@ it.each(["vi", "en"] as const)("product grid shows background covers, descriptio
   expect(html.match(/data-slot="badge"/g)).toHaveLength(2);
   expect(html).toContain('relative h-1/2 shrink-0');
   expect(html).toContain('absolute top-2 left-2 bg-card text-card-foreground tabular-nums');
-  expect(html).toContain('line-clamp-2 font-heading text-base');
+  expect(html).toContain('truncate font-heading text-base');
   expect(html).toContain('loading="lazy"');
   expect(html).toContain('width="800" height="1024"');
   expect(html).toContain('alt=""');
@@ -343,4 +343,52 @@ it.each(["vi", "en"] as const)("AC41 AC42 AC45: buy view and gift dialog show th
   expect(render(false, false)).toContain('disabled=""');
   expect(render(false, false)).toContain(locale === "vi" ? "Kết nối mạng để mở hộp này lần đầu" : "Connect to open this box for the first time");
   expect(render(true, true, true)).toContain(locale === "vi" ? "Chưa nhận được hộp. Thử lại nhé." : "Couldn&#x27;t get the box. Try again.");
+});
+
+
+it("R12: distinct playable seen counts follow next, previous, random, start over and preview", () => {
+  let state = { play: { stack: [], index: -1, startedOver: false } as Play, seen: [] as string[] };
+  expect(seenCardCount(detail, state.seen)).toBe(0);
+  state = nextCard(detail, state.play, state.seen, () => 0);
+  expect(seenCardCount(detail, state.seen)).toBe(1);
+  state = nextCard(detail, state.play, state.seen, () => 0);
+  expect(seenCardCount(detail, state.seen)).toBe(2);
+  state.play = previousCard(state.play);
+  expect(seenCardCount(detail, state.seen)).toBe(2);
+  state = nextCard(detail, state.play, state.seen, () => 0);
+  expect(seenCardCount(detail, state.seen)).toBe(2);
+  state = randomCard(detail, state.play, state.seen, () => 0);
+  expect(seenCardCount(detail, state.seen)).toBe(3);
+  state = nextCard(detail, state.play, state.seen, () => 0);
+  expect(seenCardCount(detail, state.seen)).toBe(4);
+  state = nextCard(detail, state.play, state.seen, () => 0);
+  expect(state.play.startedOver).toBe(true);
+  expect(seenCardCount(detail, state.seen)).toBe(1);
+  const preview = { ...detail, box: { ...detail.box, open: false }, cards: detail.cards.slice(0, 3) };
+  expect(seenCardCount(preview, ["a", "a", "b", "c", "d", "obsolete"])).toBe(3);
+  const end = nextCard(preview, state.play, ["a", "b", "c"], () => 0);
+  expect(end.play.startedOver).toBe(true);
+  expect(seenCardCount(preview, end.seen)).toBe(3);
+});
+
+it.each(["vi", "en"] as const)("R12: tiles show total counts with a single-line title and singular-safe copy in %s", locale => {
+  storage().set("bisou.locale", locale);
+  for (const count of [0, 1, 4]) {
+    const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, h(CardBoxRows, { boxes: [{ ...detail.box, cardCount: count, open: false }], from: "/boxes" })) }));
+    expect(html).toContain(locale === "vi" ? `${count} thẻ` : `${count} ${count === 1 ? "card" : "cards"}`);
+    expect(html).toContain("truncate font-heading");
+  }
+});
+
+it.each(["vi", "en"] as const)("R12: player renders quiet seen and preview counters from phone history in %s", locale => {
+  const values = storage(); values.set("bisou.locale", locale);
+  vi.stubGlobal("navigator", { onLine: true });
+  const user = { id: "u", displayName: "U", email: "u@example.com", locale, createdAt: 1, birthDate: null, avatarId: null };
+  for (const open of [true, false]) {
+    writeCache("c:u", "box:sample", { ...detail, box: { ...detail.box, open }, cards: open ? detail.cards : detail.cards.slice(0, 3) });
+    writeSeen("c:u", "sample", ["a", "a", "b", "obsolete"]);
+    const html = renderToString(h(Router, { ssrPath: "/boxes/sample", children: h(I18nProvider, null, h(CardBoxPlayer, { user, couple: { id: "c", members: [], startDate: null, events: [] }, boxId: "sample", onUser() {}, onSignedOut() {} })) }));
+    expect(html).toContain(`${open ? locale === "vi" ? "Đã xem" : "Seen" : locale === "vi" ? "Xem thử" : "Preview"} 2/${open ? 4 : 3}`);
+    expect(html).not.toMatch(/<p[^>]*aria-live/);
+  }
 });

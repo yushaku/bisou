@@ -22,8 +22,9 @@ export function CardBoxRows({ boxes, from }: { boxes: CardBoxSummary[]; from: st
         {box.adult && <Badge variant="secondary" className="absolute top-2 right-2 bg-card text-card-foreground">{t("cardBox.adult")}</Badge>}
       </span>
       <span className="liquid-glass mt-auto flex shrink-0 flex-col gap-2 rounded-t-xl border-x-0 border-b-0 p-3">
-        <span className="line-clamp-2 font-heading text-base leading-snug">{box.name[locale]}</span>
+        <span className="truncate font-heading text-base leading-snug">{box.name[locale]}</span>
         <span className="line-clamp-2 text-sm text-card-foreground">{box.description[locale]}</span>
+        {box.cardCount != null && <span className="text-xs text-muted-foreground tabular-nums">{t(box.cardCount === 1 ? "cardBox.cardCountOne" : "cardBox.cardCount", { count: box.cardCount })}</span>}
       </span>
     </Link>
   </li>)}</ul>;

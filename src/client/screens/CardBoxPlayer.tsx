@@ -8,7 +8,7 @@ import { CardBoxGift } from "../components/bisou/CardBoxGift";
 import { CardBoxDeck } from "../components/bisou/CardBoxDeck";
 import { Button } from "../components/ui/button";
 import { useI18n } from "../i18n";
-import { cardBoxEndMessage, cardBoxLoadMessage, readCache, writeCache, nextCard, randomCard, previousCard, readSeen, writeSeen, type Play } from "../lib/cardBox";
+import { cardBoxEndMessage, cardBoxLoadMessage, readCache, writeCache, nextCard, randomCard, previousCard, readSeen, writeSeen, seenCardCount, type Play } from "../lib/cardBox";
 import { useOnline } from "../lib/useOnline";
 import { useTabNavigation } from "../lib/useTabNavigation";
 import type { SessionProps } from "./SignedInShell";
@@ -75,7 +75,7 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
   const card = detail?.cards.find(card => card.id === play.stack[play.index]);
   return <div className="flex min-h-dvh flex-col overflow-x-clip"><SubPageHeader title={detail?.box.name[locale] ?? t("cardBox.title")} />
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
-      {detail && !detail.box.open && !buying && <p className="text-sm text-muted-foreground">{t("cardBox.preview")}</p>}
+      {detail && !buying && <p className="text-center text-sm text-muted-foreground tabular-nums">{t(detail.box.open ? "cardBox.seenCount" : "cardBox.previewCount", { seen: seenCardCount(detail, seen), total: detail.cards.length })}</p>}
       {message && <div role="status"><p>{t(`cardBox.${message}`)}</p><Button variant="ghost" onClick={() => void refresh()}>{t("cardBox.retry")}</Button></div>}
       {buying ? <CardBoxGift box={detail.box} online={online} dialogOpen={dialogOpen} pending={unlockPending} failed={unlockFailed} onDialogChange={setDialogOpen} onConfirm={() => void unlock()} onPrevious={() => {
         if (play.index >= 0) setPlay({ ...play, startedOver: false });
