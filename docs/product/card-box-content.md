@@ -34,7 +34,7 @@ Truth or Dare
 
 Rau răm
 
-- R73. Bisou has the paid box "Rau răm" / "Spicy", for adults, at 49.000đ; it holds 10 cards, all of kind truth or dare, and 3 of them are preview cards before the gift unlock opens all 10 for both partners.
+- R73. Bisou has the paid box "Rau răm" / "Spicy", for adults, at 49.000đ; it holds 30 cards, all of kind truth or dare, and 3 of them are preview cards before the gift unlock opens all 30 for both partners.
 - R74. Rau răm shows like every box, after the free boxes, with an "18+" badge on its tile and on each of its cards; there is no age check, warning or setting to show or hide it.
 - R75. For Rau răm only, cards may talk about desire, attraction and intimate memories, and dares may ask the two partners for kissing, touching, a slow massage, taking off a piece of clothing or whispered wishes; this lifts the limit of R48 and R50 for this box and no other.
 - R76. Rau răm cards still follow R47, R49 and R51 to R54, and also: wording is tasteful, never graphic or anatomical; a dare involves only the two partners, in private; no card mentions anyone else, alcohol or any substance, or photos, video or recording; no card pressures (no "phải", "không được từ chối" or similar), and a dare that undresses or touches the other asks for their yes.
@@ -50,7 +50,7 @@ Rau răm
 
 - AC28 (R49 to R54). Given the cards of the free box and of Deep Connection, then each dare can be done on the spot by the two of them alone with at most holding hands, each point card is about a harmless habit, each scale card asks about oneself, and no Vietnamese card uses "anh" or "em".
 - AC34 (R70, [card-box-unlock](card-box-unlock.md) R27). Given the box list, then Truth or Dare shows its cover, name, description and "49.000đ"; when a couple opens it without the box, then only its 3 preview cards come up.
-- AC37 (R73, R74). Given the box list before unlock, then Rau răm shows after the free boxes with its cover, name, description, "49.000đ" and an "18+" badge; when a couple opens it, then only its 3 preview cards can come up, with no age check or warning first; after the gift unlock both partners can draw any of its 10 cards, and the badge stays.
+- AC37 (R73, R74). Given the box list before unlock, then Rau răm shows after the free boxes with its cover, name, description, "49.000đ" and an "18+" badge; when a couple opens it, then only its 3 preview cards can come up, with no age check or warning first; after the gift unlock both partners can draw any of its 30 cards, and the badge stays.
 - AC38 (R74, [card-box](card-box.md) R71). Given a Rau răm card, then the partner sees the "18+" badge, the label "Thật hay thử thách" and the two blocks "Thật" and "Thử thách"; tapping either block records nothing.
 - AC39 (R75, R76, R54). Given the Rau răm cards, then each dare is done by the two of them alone, in private, with nothing graphic or anatomical; no card names a third person, alcohol, a camera or recording, or a public place; no card uses pressure wording, and no Vietnamese card uses "anh" or "em".
 - AC40 (R77). Given a Rau răm card where one partner does not want the dare, when they take the truth or ask for the next card, then Bisou asks nothing and keeps nothing.

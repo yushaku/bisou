@@ -46,7 +46,7 @@ it("card-box-unlock AC25, card-box-content AC28: launch content has unique bilin
   const ids = CARD_BOXES.flatMap(box => box.cards.map(card => card.id));
   expect(new Set(ids).size).toBe(ids.length);
   for (const box of CARD_BOXES) {
-    expect(box.cards).toHaveLength(box.id === "truth-or-dare" ? 20 : 10);
+    expect(box.cards).toHaveLength(box.id === "rau-ram" ? 30 : box.id === "truth-or-dare" ? 20 : 10);
     if (box.id === "deep-connection") expect(box.cards.filter(card => card.preview).map(card => card.id)).toEqual(["dc-02", "dc-05", "dc-07"]);
     for (const card of box.cards) {
       const texts = card.kind === "truthDare" ? [card.truth, card.dare] : card.kind === "rather" ? card.options : card.kind === "scale" ? [card.text, card.low, card.high] : [card.text];
@@ -90,11 +90,11 @@ it("card-box-content AC34, card-box-unlock AC25: both partners receive only Trut
   }
 });
 
-it("card-box-content AC37 AC39: Rau răm has ten unique bilingual truth/dare cards with the approved copy", () => {
+it("card-box-content AC37 AC39: Rau răm has thirty unique bilingual truth/dare cards with the approved copy", () => {
   const box = CARD_BOXES.find(box => box.id === "rau-ram");
   expect(box).toMatchObject({ free: false, adult: true, price: 49000, cover: "/card-boxes/rau-ram.jpg", name: { vi: "Rau răm", en: "Spicy" }, description: { vi: "Cay cay một chút, chỉ dành cho hai đứa.", en: "A little spicy, just for the two of you." } });
   expect(box?.cards.filter(card => card.preview).map(card => card.id)).toEqual(["rr-04", "rr-07", "rr-08"]);
-  expect(box?.cards.map(card => card.id)).toEqual(["rr-01", "rr-02", "rr-03", "rr-04", "rr-05", "rr-06", "rr-07", "rr-08", "rr-09", "rr-10"]);
+  expect(box?.cards.map(card => card.id)).toEqual(Array.from({ length: 30 }, (_, i) => `rr-${String(i + 1).padStart(2, "0")}`));
   for (const card of box!.cards) {
     expect(card.kind).toBe("truthDare");
     if (card.kind !== "truthDare") throw new Error("Expected a truth and a dare");
@@ -123,7 +123,7 @@ it("card-box-content AC37 AC40: both partners receive only Rau răm previews unt
   for (const person of [a, b]) {
     const detail = await (await call("GET", "/api/boxes/rau-ram", { cookie: person.cookie })).json<CardBoxDetail>();
     expect(detail.box).toMatchObject({ open: true, adult: true, price: 49000 });
-    expect(detail.cards).toHaveLength(10);
+    expect(detail.cards).toHaveLength(30);
     expect(detail.cards).toEqual(full);
   }
 });
@@ -180,7 +180,7 @@ it("card-box R12: summaries expose total card counts for free, locked and unlock
   const { a } = await paired();
   const list = async () => (await (await call("GET", "/api/boxes", { cookie: a.cookie })).json<{ boxes: CardBoxSummary[] }>()).boxes;
   const locked = await list();
-  expect(locked).toMatchObject([{ id: "lam-quen-lai", cardCount: 10, open: true }, { id: "rau-ram", cardCount: 10, open: false }, { id: "deep-connection", cardCount: 10, open: false }, { id: "truth-or-dare", cardCount: 20, open: false }]);
+  expect(locked).toMatchObject([{ id: "lam-quen-lai", cardCount: 10, open: true }, { id: "rau-ram", cardCount: 30, open: false }, { id: "deep-connection", cardCount: 10, open: false }, { id: "truth-or-dare", cardCount: 20, open: false }]);
   expect(JSON.stringify(locked)).not.toMatch(/"cards"|"truth"|"dare"|"text"/);
   const preview = await (await call("GET", "/api/boxes/truth-or-dare", { cookie: a.cookie })).json<CardBoxDetail>();
   expect(preview.box).toMatchObject({ cardCount: 20, open: false });
