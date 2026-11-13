@@ -210,8 +210,8 @@ export const CARD_BOXES: Box[] = [
         "preview": true,
         "kind": "truthDare",
         "truth": {
-          "vi": "Ông bà bảo rau răm làm bớt \"nóng\". Theo mỗi người, hai đứa nên ăn thêm hay ăn bớt?",
-          "en": "Folk wisdom says rau răm cools you down. Should the two of you eat more of it, or less?"
+          "vi": "Khi gần gũi, mỗi người thích ánh sáng thế nào để vừa thoải mái vừa có hứng?",
+          "en": "When you're intimate, what kind of lighting helps each of you feel relaxed and in the mood?"
         },
         "dare": {
           "vi": "Ôm sát nhau nhảy chậm hết một bài, không cần nhạc, một người ngân nga là đủ.",

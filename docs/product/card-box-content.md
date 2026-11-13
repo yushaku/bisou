@@ -58,7 +58,7 @@ Rau răm
 ## Glossary
 
 - **Truth or dare** (thật hay thử thách): a card kind with a truth and a dare; **Truth or Dare** is also the box.
-- **Rau răm** (Vietnamese coriander, folk "cooling" herb): the adults-only box; **18+** badge: its marker.
+- **Rau răm**: the adults-only box, named for the Vietnamese "răm/dâm" wordplay about sexual desire; cards are about adult intimacy, not herbs, food or folk aphrodisiacs. **18+** badge: its marker.
 - **Spicy**: the English name of Rau răm.
 
 ## Out of scope
