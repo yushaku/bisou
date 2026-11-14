@@ -63,7 +63,12 @@ describe("wish receipt", () => {
     expect(feed.entries).toEqual([entry]);
     expect((await receive(b, wish.id)).status).toBe(409);
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(1);
-    for (const method of ["PUT", "DELETE"]) expect((await call(method, `/api/journal/${entry.id}`, { cookie: a.cookie, body: { date: input.date, text: "Changed", photoIds } })).status).toBe(403);
+    const edited = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: { date: "2023-02-13", text: "Changed", photoIds } });
+    expect(edited.status).toBe(200);
+    const changed = (await edited.json<{ entry: JournalEntry }>()).entry;
+    expect(changed).toEqual({ ...entry, date: "2023-02-13", text: "Changed", updatedAt: changed.updatedAt });
+    for (const who of [a, b]) expect((await (await call("GET", "/api/journal", { cookie: who.cookie })).json<{ entries: JournalEntry[] }>()).entries).toEqual([changed]);
+    expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie })).status).toBe(403);
     expect((await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: { date: input.date, text: "Edited memory", photoIds } })).status).toBe(200);
     expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: b.cookie })).status).toBe(200);
     expect(await env.DB.prepare("SELECT status FROM wishes WHERE id = ?").bind(wish.id).first("status")).toBe("received");

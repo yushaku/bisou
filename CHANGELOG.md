@@ -36,6 +36,7 @@
 
 ### Changed
 
+- Either partner can edit journal entries; delete permissions are unchanged.
 - On the Journal tab, + opens the composer at once with two tabs, Journal and Kind note; it starts on the section you are viewing and keeps what you typed in both tabs while switching. The composer no longer shows your avatar and name, nor the "Past days are welcome" hint.
 - The offline notice is now a toast at the top (title, a line about loaded data, Retry and close) that stays while you are offline and goes away when the connection returns; a newer toast can temporarily replace it.
 - Notifications inside the app (saved, deleted, errors) now use the ding toast, one at a time at the top, in the current theme's colors.

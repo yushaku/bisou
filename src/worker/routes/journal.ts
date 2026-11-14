@@ -80,7 +80,6 @@ journal.put("/:id", limitEntryBody, async (c) => {
   const userId = c.get("user").id;
   const current = await findEntry(db, id, userId);
   if (!current || current.note_id) return c.json({ error: "not_found" }, 404);
-  if (current.author_id !== userId) return c.json({ error: "not_author" }, 403);
   const now = Date.now();
   const parsed = validateEntry(await c.req.json().catch(() => null), now);
   if ("error" in parsed) return c.json(parsed, 400);
@@ -96,14 +95,14 @@ journal.put("/:id", limitEntryBody, async (c) => {
   const removed = previousPhotos.filter((photo) => !photoIds.includes(photo.id));
   const keep = photoIds.length ? ` AND id NOT IN (${photoIds.map(() => "?").join(",")})` : "";
   const [updated] = await db.batch([
-    db.prepare("UPDATE journal_entries SET entry_date = ?, body = ?, updated_at = ? WHERE id = ? AND author_id = ?")
-      .bind(date, text, now, id, userId),
+    db.prepare("UPDATE journal_entries SET entry_date = ?, body = ?, updated_at = ? WHERE id = ? AND couple_id = ?")
+      .bind(date, text, now, id, current.couple_id),
     db.prepare(`UPDATE photos SET entry_id = NULL, position = NULL, created_at = 0 WHERE entry_id = ?${keep}`)
       .bind(id, ...photoIds),
     ...photoIds.map((photoId, position) => db.prepare(`UPDATE photos SET entry_id = ?, position = ?
       WHERE id = ? AND (entry_id = ? OR (entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND created_at > ?))
-      AND EXISTS (SELECT 1 FROM journal_entries WHERE id = ? AND author_id = ?)`)
-      .bind(id, position, photoId, id, userId, now - PENDING_PHOTO_TTL, id, userId)),
+      AND EXISTS (SELECT 1 FROM journal_entries WHERE id = ? AND couple_id = ?)`)
+      .bind(id, position, photoId, id, userId, now - PENDING_PHOTO_TTL, id, current.couple_id)),
   ]);
   if (!updated?.meta.changes) return c.json({ error: "not_found" }, 404);
   await purgePhotos(c.env, removed);

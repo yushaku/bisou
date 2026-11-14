@@ -104,7 +104,6 @@ describe("compose error messages", () => {
     expect(saveErrorKey("invalid_entry_date")).toBe("compose.dateError");
     expect(saveErrorKey("too_many_photos")).toBe("compose.limit");
     expect(saveErrorKey("photo_invalid")).toBe("compose.photoExpired");
-    expect(saveErrorKey("not_author")).toBe("compose.notAuthor");
     expect(saveErrorKey("not_found")).toBe("compose.gone");
     expect(saveErrorKey(undefined)).toBe("compose.saveError");
     expect(saveErrorKey("server_error")).toBe("compose.saveError");

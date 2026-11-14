@@ -569,7 +569,6 @@ export const vi = {
   "compose.photoUnreadable": "Máy chưa mở được ảnh {name}. Thử ảnh khác nhé.",
   "compose.photoExpired": "Có ảnh không còn dùng được. Bỏ ảnh đó rồi thêm lại nhé.",
   "compose.saveError": "Chưa lưu được. Nội dung vẫn ở đây, thử lại nhé.",
-  "compose.notAuthor": "Chỉ người viết mới sửa được bài này.",
   "compose.gone": "Bài này không còn trong nhật ký nữa.",
   "compose.saved": "Đã lưu vào ngày {day}",
   "compose.discardTitle": "Bỏ phần chưa lưu?",

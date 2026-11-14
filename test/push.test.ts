@@ -98,7 +98,11 @@ describe("partner journal pushes", () => {
     expect(send.sent[0]!.headers.get("authorization")).toMatch(/^vapid t=/);
     expect(Number(send.sent[0]!.headers.get("ttl"))).toBeGreaterThan(0);
     const { entry } = await res.json<any>();
-    await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: { ...input, text: "edited" } });
+    for (const editor of [a, b]) {
+      expect((await call("PUT", `/api/journal/${entry.id}`, { cookie: editor.cookie, body: { ...input, text: "edited" } })).status).toBe(200);
+      await waitForBackground();
+      expect(send.sent).toHaveLength(1);
+    }
     await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie }); await waitForBackground();
     expect(send.sent).toHaveLength(1);
     await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale: "en" } });

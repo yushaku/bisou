@@ -90,13 +90,13 @@ it("notes-journal AC19 journal AC22: feed keeps writer name/time and recipient a
   expect(html).toContain("I understand");
 });
 
-it.each([0, 1])("notes-journal AC20 journal AC22: note-entry actions show for both partners, normal-entry actions stay author-only: %i", (index) => {
+it.each([0, 1])("notes-journal AC20 journal AC22: ordinary and note-entry options show for both partners: %i", (index) => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const user = { ...session.user, ...members[index]! };
   const base = { id: "normal", authorId: "an", date: "2026-11-13", text: "Normal", source: "partner" as const, photoIds: [], createdAt: 1794556500000, updatedAt: 1794556500000 };
   const memory = createTabMemory(); memory.journal = { entries: [base, { ...base, id: "note-entry", text: "", note: { id: "n", recipientId: "binh", happened: "h", feel: "f", need: "n", hope: "r", pick: "try", line: "" } }], nextCursor: null };
   const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, user, couple }))) }));
-  expect([...html.matchAll(/lucide-ellipsis/g)]).toHaveLength(index === 0 ? 2 : 1);
+  expect([...html.matchAll(/lucide-ellipsis/g)]).toHaveLength(2);
 });
 
 it.each([[1, "1 note is waiting"], [2, "2 notes are waiting"]])("notes AC12: English Home uses the right count for %i", (count, text) => {

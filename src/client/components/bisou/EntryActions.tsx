@@ -11,12 +11,13 @@ import { formatDay } from "@/lib/format";
 import { useOnline } from "@/lib/useOnline";
 
 interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoIds">> {
-  /* The author's own entry whose actions are open, or null. */
+  /* The entry whose actions are open, or null. */
   entry: T | null;
   detail?: ReactNode;
   title?: string;
   remove?: typeof api.deleteEntry;
   own?: boolean;
+  canDelete?: boolean;
   onClose: () => void;
   onEdit: (entry: T) => void;
   onDeleted: (id: string) => void;
@@ -24,10 +25,10 @@ interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoI
 }
 
 /*
- * Edit or delete one's own entry (journal R10, R11) or a note entry (journal R26). Delete asks first, naming the day and photo
+ * Edit a shared entry (journal R28), delete as author (R11) or either partner for a note entry (R26). Delete asks first, naming the day and photo
  * count; a failure keeps the entry and the dialog for another try. There is no undo.
  */
-export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photoIds">>({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, title, own = true, remove: deleteItem = api.deleteEntry }: EntryActionsProps<T>) {
+export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photoIds">>({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, title, own = true, canDelete = own, remove: deleteItem = api.deleteEntry }: EntryActionsProps<T>) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const offlineId = useId();
@@ -83,7 +84,7 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
               <PencilLine aria-hidden="true" />
               {t("entry.edit")}
             </Button>
-            <Button
+            {canDelete && <Button
               variant="outline"
               size="lg"
               className="justify-start text-destructive"
@@ -96,7 +97,7 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
             >
               <Trash2 aria-hidden="true" />
               {t("entry.delete")}
-            </Button>
+            </Button>}
             </>}
             </div>
             <Button variant="ghost" size="lg" onClick={onClose}>
