@@ -7,8 +7,8 @@ export const rauRam: Box = {
     "en": "Spicy"
   },
   "description": {
-    "vi": "Cay cay một chút, chỉ dành cho hai đứa.",
-    "en": "A little spicy, just for the two of you."
+    "vi": "Dằm khăm bù khu. thêm gia vị cho cuộc yêu",
+    "en": "A little spice for your love life."
   },
   "free": false,
   "adult": true,
@@ -19,36 +19,36 @@ export const rauRam: Box = {
       "id": "rr-01",
       "kind": "truthDare",
       "truth": {
-        "vi": "Lần đầu mỗi người thấy người kia thật sự quyến rũ là lúc nào? Kể kỹ một chút.",
-        "en": "When did each of you first find the other truly attractive? Tell it with a little detail."
+        "vi": "Lần đầu mỗi người muốn cởi đồ người kia là lúc nào, khi đó hai đứa đang ở đâu?",
+        "en": "When did each of you first want to undress the other, and where were you?"
       },
       "dare": {
-        "vi": "Hôn nhau một nụ thật chậm, đếm thầm đến mười rồi mới rời ra.",
-        "en": "Share one slow kiss, counting silently to ten before you part."
+        "vi": "Hôn nhau thật sâu trong ba mươi giây, tay không được rời khỏi eo người kia.",
+        "en": "Kiss deeply for thirty seconds, hands never leaving the other's waist."
       }
     },
     {
       "id": "rr-02",
       "kind": "truthDare",
       "truth": {
-        "vi": "Người kia mặc gì thì mỗi người thấy khó rời mắt nhất?",
-        "en": "What does the other wear that each of you finds hardest to look away from?"
+        "vi": "Món đồ lót nào của người kia khiến mỗi người phát điên nhất?",
+        "en": "Which piece of the other's underwear drives each of you the wildest?"
       },
       "dare": {
-        "vi": "Mỗi người cởi bớt một món đồ đang mặc, món nào tùy mình.",
-        "en": "Each take off one thing you're wearing, your choice which."
+        "vi": "Mỗi người cởi một món đồ trên người kia, chỉ được dùng một tay.",
+        "en": "Each take off one piece of the other's clothing, using only one hand."
       }
     },
     {
       "id": "rr-03",
       "kind": "truthDare",
       "truth": {
-        "vi": "Nụ hôn nào của hai đứa mà mỗi người nhớ nhất, và vì sao?",
-        "en": "Which of your kisses does each of you remember most, and why?"
+        "vi": "Chỗ nào trên người mỗi người chỉ cần được hôn vào là \"đầu hàng\" ngay?",
+        "en": "Which spot on your body makes each of you surrender the moment it's kissed?"
       },
       "dare": {
-        "vi": "Một người nhắm mắt, người kia hôn ba chỗ bất kỳ trên mặt và cổ, rồi đoán chỗ nào là đầu tiên. Rồi đổi lượt.",
-        "en": "One closes their eyes while the other kisses three spots on their face and neck, then guess which came first. Then swap."
+        "vi": "Một người nhắm mắt, người kia hôn chậm từ cổ xuống xương quai xanh. Người nhắm mắt chỉ được thở, không được cử động. Rồi đổi lượt.",
+        "en": "One closes their eyes while the other kisses slowly from the neck down to the collarbone. The one with eyes closed may only breathe, not move. Then swap."
       }
     },
     {
@@ -56,36 +56,36 @@ export const rauRam: Box = {
       "preview": true,
       "kind": "truthDare",
       "truth": {
-        "vi": "Có kiểu chạm nào mỗi người rất thích mà chưa từng nói ra?",
-        "en": "Is there a kind of touch each of you loves but has never said out loud?"
+        "vi": "Có kiểu chạm nào làm mỗi người nổi da gà mà chưa từng dám nói ra?",
+        "en": "Is there a touch that gives each of you goosebumps that you've never dared to mention?"
       },
       "dare": {
-        "vi": "Xoa vai và lưng cho nhau thật chậm, mỗi người hai phút. Người được xoa chỉ cần nói \"chỗ đó\" hay \"nhẹ thôi\".",
-        "en": "Give each other a slow shoulder and back massage, two minutes each. The one receiving just says \"right there\" or \"gentler\"."
+        "vi": "Xoa lưng trần cho nhau, mỗi người ba phút. Người được xoa chỉ được nói \"chỗ đó\" hoặc \"xuống chút nữa\".",
+        "en": "Massage each other's bare back, three minutes each. The one receiving may only say \"right there\" or \"a little lower\"."
       }
     },
     {
       "id": "rr-05",
       "kind": "truthDare",
       "truth": {
-        "vi": "Có giấc mơ nào về người kia mà mỗi người hơi ngại kể không? Kể bản đã kiểm duyệt cũng được.",
-        "en": "Has either of you had a dream about the other you'd be a bit shy to tell? The censored version counts."
+        "vi": "Kể một giấc mơ \"người lớn\" về người kia, bản không kiểm duyệt.",
+        "en": "Tell a grown-up dream you've had about the other, the uncensored version."
       },
       "dare": {
-        "vi": "Ghé sát tai người kia, thì thầm một điều mình muốn hai đứa làm tối nay. Rồi đổi lượt.",
-        "en": "Lean close and whisper in the other's ear one thing you'd like the two of you to do tonight. Then swap."
+        "vi": "Ghé sát tai người kia, thì thầm chính xác điều mình muốn làm với người ấy đêm nay. Rồi đổi lượt.",
+        "en": "Lean close and whisper in the other's ear exactly what you want to do to them tonight. Then swap."
       }
     },
     {
       "id": "rr-06",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người thấy mình quyến rũ nhất vào lúc nào?",
-        "en": "When does each of you feel at your most attractive?"
+        "vi": "Ở tư thế nào mỗi người thấy mình gợi cảm nhất?",
+        "en": "In which position does each of you feel the sexiest?"
       },
       "dare": {
-        "vi": "Ngồi thật gần, mỗi người hôn dọc cánh tay người kia, từ đầu ngón tay lên đến vai, thật chậm.",
-        "en": "Sit close and each kiss along the other's arm, from fingertips to shoulder, slowly."
+        "vi": "Hôn từ cổ tay lên vai, qua cổ rồi dừng ngay trước môi người kia. Người kia chờ đủ năm giây mới được hôn lại. Rồi đổi lượt.",
+        "en": "Kiss from the wrist up to the shoulder, across the neck, and stop just before their lips. They must wait five seconds before kissing back. Then swap."
       }
     },
     {
@@ -93,12 +93,12 @@ export const rauRam: Box = {
       "preview": true,
       "kind": "truthDare",
       "truth": {
-        "vi": "Khi gần gũi, mỗi người thích ánh sáng thế nào để vừa thoải mái vừa có hứng?",
-        "en": "When you're intimate, what kind of lighting helps each of you feel relaxed and in the mood?"
+        "vi": "Khi yêu nhau, mỗi người thích bật đèn, tắt đèn hay chỉ một ngọn nến?",
+        "en": "When you make love, does each of you prefer the lights on, off, or just a candle?"
       },
       "dare": {
-        "vi": "Ôm sát nhau nhảy chậm hết một bài, không cần nhạc, một người ngân nga là đủ.",
-        "en": "Slow dance close together for one song; no music needed, one of you can hum."
+        "vi": "Chỉnh ánh sáng trong phòng theo ý cả hai, rồi ôm sát nhau nhảy chậm hết một bài. Tay được phép đi lang thang.",
+        "en": "Set the lighting the way you both like, then slow dance close for one song. Hands are allowed to wander."
       }
     },
     {
@@ -106,276 +106,276 @@ export const rauRam: Box = {
       "preview": true,
       "kind": "truthDare",
       "truth": {
-        "vi": "Người kia làm gì, dù rất nhỏ, mà mỗi người \"đổ\" ngay tại chỗ?",
-        "en": "What does the other do, however small, that makes each of you melt on the spot?"
+        "vi": "Người kia làm gì, dù rất nhỏ, mà mỗi người \"nóng\" lên ngay tại chỗ?",
+        "en": "What does the other do, however small, that heats each of you up on the spot?"
       },
       "dare": {
-        "vi": "Một người nhắm mắt, người kia dùng đầu ngón tay vẽ chậm một hình lên lưng. Đoán sai thì bị hôn một cái. Rồi đổi lượt.",
-        "en": "One closes their eyes while the other slowly traces a shape on their back with a fingertip. A wrong guess earns a kiss. Then swap."
+        "vi": "Một người nằm sấp, người kia dùng đầu ngón tay viết chậm một chữ lên lưng trần. Đoán sai thì người viết được hôn vào chỗ mình chọn. Rồi đổi lượt.",
+        "en": "One lies face down while the other slowly writes a letter on their bare back with a fingertip. A wrong guess lets the writer kiss a spot of their choice. Then swap."
       }
     },
     {
       "id": "rr-09",
       "kind": "truthDare",
       "truth": {
-        "vi": "Một buổi tối chỉ có hai đứa, mỗi người muốn nó bắt đầu thế nào và kết thúc ra sao?",
-        "en": "An evening with just the two of you: how would each of you like it to start, and to end?"
+        "vi": "Đêm nay mỗi người muốn bắt đầu ở đâu: trên giường, trên sofa hay trong phòng tắm?",
+        "en": "Where would each of you like tonight to start: the bed, the sofa or the shower?"
       },
       "dare": {
-        "vi": "Cởi một cúc áo hay một món đồ của người kia, chỉ khi người kia gật đầu. Rồi đổi lượt.",
-        "en": "Undo one button or take off one piece of the other's clothing, only once they nod. Then swap."
+        "vi": "Cởi áo người kia chậm nhất có thể, vừa cởi vừa nhìn thẳng vào mắt. Rồi đổi lượt.",
+        "en": "Take off the other's top as slowly as you can, holding their gaze the whole time. Then swap."
       }
     },
     {
       "id": "rr-10",
       "kind": "truthDare",
       "truth": {
-        "vi": "Có điều gì mỗi người muốn hai đứa thử cùng nhau mà chưa dám nói? Nói một nửa thôi cũng được.",
-        "en": "Is there something each of you would like to try together but hasn't dared to say? Half of it is enough."
+        "vi": "Có điều gì trên giường mỗi người muốn thử mà chưa dám nói? Lần này nói hết.",
+        "en": "Is there something in bed each of you wants to try but hasn't dared to say? This time, say all of it."
       },
       "dare": {
-        "vi": "Nằm cạnh nhau, nhìn vào mắt nhau một phút, rồi hôn khi cả hai cùng thấy muốn.",
-        "en": "Lie side by side and look into each other's eyes for a minute, then kiss when you both feel like it."
+        "vi": "Nằm đè lên người kia và hôn mà không được dùng tay. Ai dùng tay trước thì cởi thêm một món.",
+        "en": "Lie on top of the other and kiss without using your hands. Whoever uses their hands first takes off one more thing."
       }
     },
     {
       "id": "rr-11",
       "kind": "truthDare",
       "truth": {
-        "vi": "Giọng người kia lúc nào làm mỗi người thấy xao xuyến nhất?",
-        "en": "When does the other's voice give each of you butterflies?"
+        "vi": "Âm thanh nào của người kia lúc gần gũi khiến mỗi người không kiềm chế được?",
+        "en": "What sound does the other make when you're close that each of you can't resist?"
       },
       "dare": {
-        "vi": "Mỗi người nói một câu tán tỉnh bằng giọng thật thấp, chỉ đủ cho người kia nghe.",
-        "en": "Each say a flirty line in a low voice, just loud enough for the other to hear."
+        "vi": "Mỗi người nói một câu thật \"hư\" bằng giọng thấp sát tai người kia. Ai đỏ mặt trước thì cởi một món.",
+        "en": "Each say one truly naughty line in a low voice right by the other's ear. Whoever blushes first takes off one thing."
       }
     },
     {
       "id": "rr-12",
       "kind": "truthDare",
       "truth": {
-        "vi": "Nếu rủ người kia lại gần chỉ bằng một ánh nhìn, mỗi người sẽ nhìn thế nào?",
-        "en": "How would each of you invite the other closer with just a look?"
+        "vi": "Mỗi người thích mình dẫn dắt hay để người kia \"xử lý\" mình?",
+        "en": "Does each of you prefer to lead, or to let the other take charge of you?"
       },
       "dare": {
-        "vi": "Dùng ánh mắt mời người kia ngồi vào lòng mình. Chờ người kia nói muốn rồi mới đỡ người kia ngồi xuống; rồi đổi lượt.",
-        "en": "Invite the other into your lap with a look. Wait for them to say they want to before helping them settle in; then swap."
+        "vi": "Ngồi lên đùi người kia, mặt đối mặt, hôn cho đến khi người kia xin dừng hoặc xin thêm. Rồi đổi lượt.",
+        "en": "Sit in the other's lap facing them and kiss until they ask you to stop or beg for more. Then swap."
       }
     },
     {
       "id": "rr-13",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người thích được người kia chủ động hay thích tự mình mở lời hơn?",
-        "en": "Does each of you prefer the other to make the first move, or to make it yourself?"
+        "vi": "Chỗ nhạy cảm nào trên người mỗi người mà người kia chưa khám phá hết?",
+        "en": "Which sensitive spot on each of you has the other not fully explored yet?"
       },
       "dare": {
-        "vi": "Chìa tay mời người kia. Khi người kia đồng ý, dẫn tay người kia đến một chỗ trên vai hoặc lưng mình và chỉ cách mình thích được vuốt ve. Rồi đổi lượt.",
-        "en": "Offer the other your hand. Once they agree, guide their hand to a spot on your shoulder or back and show them how you like to be caressed. Then swap."
+        "vi": "Cầm tay người kia dẫn đến chỗ mình muốn được chạm nhất lúc này, và chỉ cho người ấy cách mình thích. Rồi đổi lượt.",
+        "en": "Take the other's hand, guide it to where you most want to be touched right now, and show them how you like it. Then swap."
       }
     },
     {
       "id": "rr-14",
       "kind": "truthDare",
       "truth": {
-        "vi": "Có lời khen nào về vẻ quyến rũ của mình mà mỗi người vẫn muốn được nghe lại?",
-        "en": "Is there a compliment about your attractiveness that each of you would love to hear again?"
+        "vi": "Câu khen \"trên giường\" nào của người kia mà mỗi người muốn được nghe lại?",
+        "en": "Which thing the other said in bed would each of you love to hear again?"
       },
       "dare": {
-        "vi": "Lần lượt nói một điều mình thấy quyến rũ ở người kia ngay lúc này, không dùng từ \"đẹp\" hay \"xinh\".",
-        "en": "Take turns saying what you find attractive about the other right now, without using \"beautiful\" or \"good-looking\"."
+        "vi": "Lần lượt nói ba chỗ mình thích nhất trên cơ thể người kia, nói đến đâu hôn vào đúng chỗ đó.",
+        "en": "Take turns naming three places you love most on the other's body, kissing each one as you name it."
       }
     },
     {
       "id": "rr-15",
       "kind": "truthDare",
       "truth": {
-        "vi": "Một tín hiệu nhỏ nào của người kia khiến mỗi người biết là đang được tán tỉnh?",
-        "en": "What little signal tells each of you the other is flirting with you?"
+        "vi": "Mỗi người hay \"bật đèn xanh\" muốn yêu bằng tín hiệu gì mà người kia có khi không để ý?",
+        "en": "What signal does each of you give when you want sex that the other might miss?"
       },
       "dare": {
-        "vi": "Cùng nghĩ một tín hiệu bằng tay để rủ nhau hôn. Mỗi người thử một lần, chỉ hôn khi người kia nói có; lắc đầu cười cũng được.",
-        "en": "Make up a hand signal to ask for a kiss. Each try it once, kissing only when the other says yes; a smile and a shake of the head is fine too."
+        "vi": "Cùng nghĩ ra một tín hiệu riêng nghĩa là \"vào phòng ngay\". Dùng thử nó ngay bây giờ, rồi làm theo.",
+        "en": "Make up a private signal that means \"bedroom, now\". Try it right away, then follow it."
       }
     },
     {
       "id": "rr-16",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người thích một nụ hôn bất ngờ hay được hỏi trước bằng một câu thật tình tứ?",
-        "en": "Does each of you prefer a surprise kiss or a flirty question first?"
+        "vi": "Bị bịt mắt lúc gần gũi, mỗi người thấy hồi hộp hay hơi run?",
+        "en": "Being blindfolded when you're intimate: does it thrill each of you, or make you a little nervous?"
       },
       "dare": {
-        "vi": "Hỏi người kia có thích được trêu bằng hơi thở không. Khi người kia gật đầu, ghé sát tai và thổi một làn hơi thật nhẹ, không chạm môi. Rồi đổi lượt.",
-        "en": "Ask if the other would enjoy being teased with your breath. Once they nod, lean close to their ear and blow a very gentle breath, without touching with your lips. Then swap."
+        "vi": "Bịt mắt người kia bằng khăn. Trong một phút, thổi hơi, hôn và chạm thật nhẹ vào những chỗ không ngờ tới. Rồi đổi lượt.",
+        "en": "Blindfold the other with a scarf. For one minute, breathe on, kiss and lightly touch places they won't expect. Then swap."
       }
     },
     {
       "id": "rr-17",
       "kind": "truthDare",
       "truth": {
-        "vi": "Khi hai đứa ở sát nhau, mỗi người thích được gọi bằng tên hay một biệt danh riêng?",
-        "en": "When you're close together, does each of you prefer your name or a private nickname?"
+        "vi": "Lúc gần gũi nhất, mỗi người muốn được gọi bằng tên, biệt danh hay một từ thật hư?",
+        "en": "In your most intimate moments, does each of you want your name, a nickname or something naughty?"
       },
       "dare": {
-        "vi": "Mỗi người nghĩ một biệt danh hơi táo bạo cho người kia, rồi nói nhỏ để người kia chọn giữ hay bỏ.",
-        "en": "Each invent a slightly daring nickname for the other, then say it softly so they can choose to keep it or drop it."
+        "vi": "Thì thầm vào tai người kia cái tên táo bạo nhất mình nghĩ ra cho người ấy, kèm một cái cắn nhẹ vành tai. Rồi đổi lượt.",
+        "en": "Whisper the boldest name you can think of for the other into their ear, with a gentle bite on the earlobe. Then swap."
       }
     },
     {
       "id": "rr-18",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người có dễ đỏ mặt khi được người kia nhìn chăm chú không?",
-        "en": "Does each of you blush easily when the other looks at you intently?"
+        "vi": "Mỗi người có thích được người kia ngắm lúc mình cởi đồ không?",
+        "en": "Does each of you like the other watching while you undress?"
       },
       "dare": {
-        "vi": "Ngồi đối diện và hỏi người kia có muốn thử chạm chân không. Khi người kia nói có, chậm rãi vuốt bàn chân mình dọc cổ chân người kia, rồi đổi lượt.",
-        "en": "Sit facing each other and ask if the other wants to try a little foot caress. Once they say yes, slowly slide your foot along their ankle, then swap."
+        "vi": "Cởi một món đồ của chính mình thật chậm như đang biểu diễn, người kia chỉ được ngồi nhìn. Rồi đổi lượt.",
+        "en": "Take off one thing you're wearing, slowly, like a show. The other may only sit and watch. Then swap."
       }
     },
     {
       "id": "rr-19",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người thích cảm giác chờ một nụ hôn đến mức nào?",
-        "en": "How much does each of you enjoy the anticipation before a kiss?"
+        "vi": "Mỗi người thích dạo đầu thật lâu hay vào thẳng chuyện chính?",
+        "en": "Does each of you prefer long foreplay or getting straight to it?"
       },
       "dare": {
-        "vi": "Ghé mặt lại gần và hỏi nhỏ \"Chờ thêm chút nhé?\" Khi người kia đồng ý, dừng một nhịp rồi mới hôn nếu cả hai vẫn muốn. Rồi đổi lượt.",
-        "en": "Bring your faces close and ask softly, \"Shall we wait a little?\" Once the other agrees, pause for a moment, then kiss if you both still want to. Then swap."
+        "vi": "Hôn nhau và dừng lại ngay khi một người định tiến xa hơn. Lặp lại ba lần; lần thứ ba thì không cần dừng.",
+        "en": "Kiss, and stop the moment either of you tries to go further. Do it three times; the third time, you don't have to stop."
       }
     },
     {
       "id": "rr-20",
       "kind": "truthDare",
       "truth": {
-        "vi": "Khi đang hôn mà bật cười, mỗi người muốn hôn tiếp hay dừng lại cười cho đã?",
-        "en": "If you start laughing during a kiss, does each of you want to keep kissing or pause to enjoy the laugh?"
+        "vi": "Đang yêu mà bật cười, mỗi người thấy mất hứng hay càng thích?",
+        "en": "If you burst out laughing mid-sex, does it kill the mood for each of you, or make it better?"
       },
       "dare": {
-        "vi": "Rủ người kia chơi hôn khóe môi. Khi người kia gật đầu, lần lượt hôn nhẹ một bên khóe môi nhau, bên nào tùy mình; bật cười thì nghỉ một nhịp.",
-        "en": "Invite the other to play a kissing game. Once they nod, take turns lightly kissing one corner of each other's mouth, choosing either side; pause for a moment if you start laughing."
+        "vi": "Hôn rồi cắn nhẹ môi dưới người kia, rồi đổi lượt. Ai bật cười trước thì cởi một món.",
+        "en": "Kiss the other and gently bite their lower lip, then swap. Whoever laughs first takes off one thing."
       }
     },
     {
       "id": "rr-21",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người thích được vuốt tóc lúc đang gần gũi không, hay muốn để tóc yên?",
-        "en": "Does each of you enjoy having your hair stroked when you're close, or prefer it left alone?"
+        "vi": "Lúc gần gũi, mỗi người thích được kéo tóc, vuốt tóc hay để tóc yên?",
+        "en": "When you're intimate, does each of you like your hair pulled, stroked or left alone?"
       },
       "dare": {
-        "vi": "Hỏi người kia có muốn được xoa đầu thật chậm không. Khi người kia đồng ý, để người kia tựa sát vào mình rồi dùng đầu ngón tay xoa nhẹ da đầu trong một phút. Rồi đổi lượt.",
-        "en": "Ask if the other would like a slow head massage. Once they agree, let them lean close and gently massage their scalp with your fingertips for a minute. Then swap."
+        "vi": "Luồn tay vào tóc người kia, kéo nhẹ ra sau rồi hôn lên phần cổ vừa lộ ra. Hỏi người kia muốn mạnh hơn hay nhẹ hơn. Rồi đổi lượt.",
+        "en": "Slide your fingers into the other's hair, pull gently back and kiss the neck you've uncovered. Ask if they want it firmer or softer. Then swap."
       }
     },
     {
       "id": "rr-22",
       "kind": "truthDare",
       "truth": {
-        "vi": "Có mùi hương quen thuộc nào khiến mỗi người chỉ muốn rúc lại gần người kia?",
-        "en": "Is there a familiar scent that makes each of you want to snuggle closer to the other?"
+        "vi": "Mùi nào trên người người kia khiến mỗi người muốn ngay lập tức?",
+        "en": "What scent on the other makes each of you want them right away?"
       },
       "dare": {
-        "vi": "Mời người kia tựa đầu vào vai mình. Khi người kia nói muốn, ngồi sát cho người kia tựa một lúc, không nói gì, rồi đổi lượt.",
-        "en": "Invite the other to rest their head on your shoulder. Once they say they'd like to, sit close and let them lean on you quietly for a while, then swap."
+        "vi": "Vùi mặt vào hõm cổ người kia, hít thật sâu rồi hôn lên đúng chỗ đó. Rồi đổi lượt.",
+        "en": "Bury your face in the curve of the other's neck, breathe in deeply, then kiss that exact spot. Then swap."
       }
     },
     {
       "id": "rr-23",
       "kind": "truthDare",
       "truth": {
-        "vi": "Khi nắm tay, mỗi người thích đan ngón hay được bàn tay kia bao lấy?",
-        "en": "When holding hands, does each of you prefer fingers intertwined or your hand wrapped in the other's?"
+        "vi": "Khi đang hôn, mỗi người thích tay người kia đặt ở đâu nhất?",
+        "en": "When you're kissing, where does each of you most like the other's hands to be?"
       },
       "dare": {
-        "vi": "Chìa tay xin được hôn vào lòng bàn tay người kia. Chờ một tiếng \"ừ\" rồi mới nâng tay lên hôn, sau đó đổi lượt.",
-        "en": "Ask to kiss the other's palm. Wait for a yes before lifting their hand for a kiss, then swap."
+        "vi": "Hôn lòng bàn tay, rồi cổ tay, rồi ngậm nhẹ một ngón tay của người kia. Rồi đổi lượt.",
+        "en": "Kiss the other's palm, then their wrist, then gently take one of their fingers between your lips. Then swap."
       }
     },
     {
       "id": "rr-24",
       "kind": "truthDare",
       "truth": {
-        "vi": "Khi gần gũi, điều gì khiến mỗi người muốn chậm lại và tận hưởng lâu hơn?",
-        "en": "When you're intimate, what makes each of you want to slow down and linger?"
+        "vi": "Lúc yêu, mỗi người thích chậm mà lâu hay nhanh mà mạnh?",
+        "en": "When you make love, does each of you prefer slow and long or fast and hard?"
       },
       "dare": {
-        "vi": "Vuốt nhẹ cánh tay người kia bằng đầu ngón tay, chỉ sau khi người kia nói muốn thử. Để người kia đổi nhịp bằng cách nói \"chậm hơn\", \"nhanh hơn\" hoặc \"dừng\", rồi đổi lượt.",
-        "en": "Gently stroke the other's arm with your fingertips, only after they say they want to try. Let them change the pace by saying \"slower\", \"faster\" or \"stop\", then swap."
+        "vi": "Vuốt dọc đùi trong của người kia bằng đầu ngón tay. Người kia điều khiển bằng \"chậm hơn\", \"nhanh hơn\" hoặc \"dừng\". Rồi đổi lượt.",
+        "en": "Trace the other's inner thigh with your fingertips. They steer with \"slower\", \"faster\" or \"stop\". Then swap."
       }
     },
     {
       "id": "rr-25",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người muốn được báo thế nào khi một cái chạm đang hơi mạnh hoặc hơi nhanh?",
-        "en": "How would each of you like to be told when a touch is a little too firm or too fast?"
+        "vi": "Mỗi người muốn được báo thế nào khi điều gì đó hơi quá, hoặc chưa đủ?",
+        "en": "How does each of you want to be told when something is too much, or not enough?"
       },
       "dare": {
-        "vi": "Xin người kia một tiếng \"ừ\" trước khi xoa bàn tay cho nhau, mỗi người một phút. Người được xoa chỉ lực nhẹ hay mạnh theo ý mình.",
-        "en": "Get a yes from the other before massaging each other's hands for a minute each. The one receiving guides how light or firm it feels."
+        "vi": "Xoa bàn chân người kia, rồi lên dần bắp chân, đầu gối và cao hơn nữa. Người kia nói \"dừng\" ở đâu thì dừng ở đó. Rồi đổi lượt.",
+        "en": "Massage the other's foot, then work slowly up the calf, the knee and higher. Wherever they say \"stop\" is where you stop. Then swap."
       }
     },
     {
       "id": "rr-26",
       "kind": "truthDare",
       "truth": {
-        "vi": "Khi gần gũi, mỗi người thích được hướng dẫn bằng lời hay bằng cử chỉ?",
-        "en": "When you're intimate, does each of you prefer guidance through words or gestures?"
+        "vi": "Trên giường, mỗi người thích được hướng dẫn bằng lời hay bằng tay?",
+        "en": "In bed, does each of you prefer to be guided with words or with hands?"
       },
       "dare": {
-        "vi": "Cùng chọn một từ làm tín hiệu tạm dừng. Hỏi người kia có muốn thử trò đứng hình với một cái vuốt má không; khi người kia đồng ý, bắt đầu vuốt và dừng tay ngay lúc nghe tín hiệu. Rồi đổi lượt.",
-        "en": "Choose a word as your pause signal. Ask if the other wants to try a freeze game with a cheek caress; once they agree, start stroking and stop your hand as soon as you hear the signal. Then swap."
+        "vi": "Chọn một từ an toàn. Một người được chạm bất cứ đâu trên người kia trong một phút, và dừng ngay khi nghe từ đó. Rồi đổi lượt.",
+        "en": "Choose a safe word. One of you may touch the other anywhere for one minute, stopping the moment you hear it. Then swap."
       }
     },
     {
       "id": "rr-27",
       "kind": "truthDare",
       "truth": {
-        "vi": "Có món đồ đang mặc nào khiến mỗi người thấy mình bạo dạn hơn thường ngày?",
-        "en": "Does anything you're wearing make each of you feel bolder than usual?"
+        "vi": "Đồ ngủ hay đồ lót nào mỗi người muốn người kia mặc riêng cho mình xem?",
+        "en": "What lingerie or nightwear would each of you love the other to wear just for you?"
       },
       "dare": {
-        "vi": "Mỗi người tạo ba dáng quyến rũ ngay tại chỗ, vẫn mặc nguyên đồ. Người kia chọn dáng khiến mình khó rời mắt nhất.",
-        "en": "Each strike three seductive poses right where you are, keeping your clothes on. The other picks the pose they find hardest to look away from."
+        "vi": "Mỗi người tạo ba dáng quyến rũ, mỗi dáng bớt đi một món đồ. Người kia chọn dáng mình thích nhất.",
+        "en": "Each strike three seductive poses, losing one piece of clothing with each. The other picks their favourite."
       }
     },
     {
       "id": "rr-28",
       "kind": "truthDare",
       "truth": {
-        "vi": "Mỗi người thích được ôm từ phía trước hay phía sau khi chỉ có hai đứa?",
-        "en": "Does each of you prefer a hug from the front or from behind when it's just the two of you?"
+        "vi": "Mỗi người thích được ôm từ phía sau vào lúc nào nhất?",
+        "en": "When does each of you most love being held from behind?"
       },
       "dare": {
-        "vi": "Ngồi ôm người kia từ phía sau và hôn lên vai, chỉ khi người kia nói muốn cả hai điều đó. Giữ cái ôm một lúc rồi đổi lượt.",
-        "en": "Sit with your arms around the other from behind and kiss their shoulder, only when they say they want both. Stay in the embrace for a while, then swap."
+        "vi": "Ôm người kia từ phía sau, hôn lên gáy, luồn tay vào trong áo và đặt lên bụng. Giữ một phút rồi đổi lượt.",
+        "en": "Hold the other from behind, kiss the back of their neck, and slip your hands under their top onto their stomach. Stay a minute, then swap."
       }
     },
     {
       "id": "rr-29",
       "kind": "truthDare",
       "truth": {
-        "vi": "Sau một lúc gần gũi, mỗi người thích nằm yên bên nhau hay thủ thỉ chuyện gì đó?",
-        "en": "After being intimate, does each of you prefer lying quietly together or talking softly?"
+        "vi": "Sau khi yêu xong, mỗi người thích làm gì nhất?",
+        "en": "After sex, what does each of you love doing most?"
       },
       "dare": {
-        "vi": "Cùng nói xem có muốn áp trán vào nhau không. Hai tiếng \"ừ\" thì ghé lại, thở chậm năm nhịp, mắt mở hay nhắm tùy mình.",
-        "en": "Ask each other if you'd like to rest your foreheads together. Two yeses, then lean in and take five slow breaths, with your eyes open or closed as you like."
+        "vi": "Áp trán vào nhau, thở chậm năm nhịp, rồi nói cho người kia biết mình muốn tiếp tục ở đâu.",
+        "en": "Rest your foreheads together, take five slow breaths, then tell the other where you want to take this next."
       }
     },
     {
       "id": "rr-30",
       "kind": "truthDare",
       "truth": {
-        "vi": "Dấu hiệu nào giúp mỗi người nhận ra hôm nay mình chỉ muốn được âu yếm, không hơn?",
-        "en": "What helps each of you recognize when you only want affection today, and nothing more?"
+        "vi": "Có hôm mỗi người chỉ muốn được âu yếm thôi. Làm sao để người kia biết?",
+        "en": "Some nights each of you only wants to cuddle. How can the other tell?"
       },
       "dare": {
-        "vi": "Mỗi người nói một điều âu yếm mình muốn ngay bây giờ. Người kia chọn đồng ý, gợi ý điều khác hoặc để lúc khác; cùng làm nếu hai đứa thấy thích.",
-        "en": "Each name one affectionate thing you want right now. The other can agree, suggest something else or leave it for another time; do it together if you both feel like it."
+        "vi": "Mỗi người nói một điều mình muốn ngay bây giờ, táo bạo đến đâu tùy mình. Người kia trả lời \"có\", \"để sau\" hoặc gợi ý khác, rồi cùng làm điều cả hai muốn.",
+        "en": "Each say one thing you want right now, as bold as you like. The other answers \"yes\", \"later\" or suggests something else, then do what you both want."
       }
     }
   ]

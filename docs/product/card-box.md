@@ -32,9 +32,9 @@ Boxes
 On Home and in the box list
 
 - R9. Home shows the card box block right under today's card, or in its place when there is no today's card ([garden](garden.md) R11); the main areas of Bisou stay as they are.
-- R10. The block shows the boxes as a 2-column grid of tiles, free boxes first, then paid boxes; tapping a box opens it, and the block also opens the box list.
-- R11. The box list shows every box in the same grid, free ones first, then paid ones, each group in Bisou's own order.
-- R12. A tile shows the box's cover, name, description and total card count, locked paid boxes included ("10 thẻ" / "10 cards"), and "Miễn phí" / "Free" for a free box or the price for a locked paid box; it has no purchase, contact or code entry, score or streak. While playing, a quiet counter shows "Đã xem 4/10" / "Seen 4/10" for an open box or "Xem thử 2/3" / "Preview 2/3" for a preview, counting distinct cards seen on this phone out of the playable total; next card and a random draw update it, previous card does not, and start over resets it to 1.
+- R10. The block shows the first 4 boxes of the box list order (R11) as a 2-column grid of tiles, without descriptions; tapping a box opens it, and the block also opens the box list.
+- R11. The box list shows every box in the same grid: 18+ boxes always last; before them, free ones first, then paid ones, each group in Bisou's own order.
+- R12. A tile shows the box's cover, name, description (box list only) and total card count, locked paid boxes included ("10 thẻ" / "10 cards"), and "Miễn phí" / "Free" for a free box or the price for a locked paid box; it has no purchase, contact or code entry, score or streak. While playing, a quiet counter shows "Đã xem 4/10" / "Seen 4/10" for an open box or "Xem thử 2/3" / "Preview 2/3" for a preview, counting distinct cards seen on this phone out of the playable total; next card and a random draw update it, previous card does not, and start over resets it to 1.
 
 Drawing cards
 
@@ -88,7 +88,7 @@ Offline and data
 - AC1 (R1, R63). Given a couple, then both see the same boxes; a person not yet paired sees none, and an outsider cannot tell which boxes they played.
 - AC3 (R6). Given one partner's app is in English and the other's in Vietnamese, when both look at the same card, then each reads it in their own language.
 - AC4 (R8). Given the couple plays 20 cards, then today's card, every plant and its freshness are unchanged, and neither phone gets a notification.
-- AC5 (R9, R10). Given a couple with one free and one paid box, then Home shows today's card, then the block as a grid with the free box first, each tile with cover, name and description.
+- AC5 (R9, R10, R11). Given six boxes, two of them 18+, then Home shows today's card, then the block as a grid of the first 4 boxes with the free boxes first and no 18+ box, each tile with cover and name but no description; the box list shows all six with the two 18+ boxes last.
 - AC6 (R11, R12). Given Home or the box list, then free boxes come first and every tile shows the card count, including locked paid boxes; free boxes show "Miễn phí", locked paid boxes their price, unlocked paid boxes none; given 4 of 10 cards seen on this phone, then the player shows "Đã xem 4/10"; given 2 of 3 preview cards seen, then it shows "Xem thử 2/3", without revealing other cards; next card updates the count, previous card leaves it, start over shows 1.
 - AC7 (R13, R14). Given a partner saw two cards on one phone, then neither comes up again on it until all were seen; on the other phone either may come up.
 - AC8 (R15). Given a partner draws 30 times in one evening, then nothing stops them; when they reopen the box the next day, then it continues with cards not yet seen on that phone.

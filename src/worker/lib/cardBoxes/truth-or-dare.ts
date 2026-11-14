@@ -256,6 +256,126 @@ export const truthOrDare: Box = {
         "vi": "Đan một tay vào nhau, rồi dùng hai tay còn lại vỗ vào nhau mười lần không trượt.",
         "en": "Lace one hand together, then clap your two free hands together ten times without missing."
       }
+    },
+    {
+      "id": "tod-21",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Lần gần nhất mỗi người cười đến chảy nước mắt là vì chuyện gì?",
+        "en": "What was the last thing that made each of you laugh until you cried?"
+      },
+      "dare": {
+        "vi": "Mỗi người làm khuôn mặt xấu nhất có thể và giữ yên năm giây. Người kia không được cười.",
+        "en": "Each pull the silliest face you can and hold it for five seconds. The other isn't allowed to laugh."
+      }
+    },
+    {
+      "id": "tod-22",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Có tin nhắn nào mỗi người gửi cho người kia rồi hối hận vì quá sến không?",
+        "en": "Is there a message each of you sent the other and then cringed at for being too cheesy?"
+      },
+      "dare": {
+        "vi": "Đọc to tin nhắn sến nhất mình từng gửi cho người kia, bằng giọng thật nghiêm túc.",
+        "en": "Read aloud the cheesiest message you ever sent the other, in a completely serious voice."
+      }
+    },
+    {
+      "id": "tod-23",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Thói quen kỳ lạ nhất của mỗi người khi ở nhà một mình là gì?",
+        "en": "What's the strangest thing each of you does when home alone?"
+      },
+      "dare": {
+        "vi": "Đi một vòng quanh phòng theo kiểu người mẫu sải bước, người kia làm giám khảo chấm điểm.",
+        "en": "Do one catwalk lap around the room while the other judges and gives a score."
+      }
+    },
+    {
+      "id": "tod-24",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Nếu được đổi tên mình trong một ngày, mỗi người muốn được gọi là gì?",
+        "en": "If you could change your name for a day, what would each of you want to be called?"
+      },
+      "dare": {
+        "vi": "Đặt cho người kia một cái tên mới thật kêu, rồi gọi người ấy bằng tên đó đến hết lượt sau.",
+        "en": "Give the other a grand new name and call them by it until the end of the next card."
+      }
+    },
+    {
+      "id": "tod-25",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Hồi đi học, mỗi người từng bị phạt vì chuyện gì?",
+        "en": "Back in school, what did each of you once get told off for?"
+      },
+      "dare": {
+        "vi": "Ôm người kia thật chặt và lắc lư qua lại như đang ru, đếm đến mười.",
+        "en": "Hug the other tight and sway side to side like a lullaby, counting to ten."
+      }
+    },
+    {
+      "id": "tod-26",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Món ăn nào mỗi người tự tin nấu ngon nhất, và đã từng nấu hỏng lần nào chưa?",
+        "en": "What dish is each of you proudest to cook, and have you ever ruined it?"
+      },
+      "dare": {
+        "vi": "Giới thiệu món đó như đang quay một chương trình nấu ăn trong 30 giây, không cần vào bếp.",
+        "en": "Present that dish like a cooking show host for 30 seconds, no kitchen needed."
+      }
+    },
+    {
+      "id": "tod-27",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Có lần nào mỗi người cố tỏ ra ngầu trước người kia nhưng thất bại không?",
+        "en": "Was there a time each of you tried to look cool in front of the other and failed?"
+      },
+      "dare": {
+        "vi": "Diễn lại đúng khoảnh khắc đó trong 20 giây, càng giống càng tốt.",
+        "en": "Re-enact that exact moment in 20 seconds, as faithfully as you can."
+      }
+    },
+    {
+      "id": "tod-28",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Nếu hai đứa là nhân vật trong một bộ phim, mỗi người nghĩ đó là phim gì?",
+        "en": "If the two of you were characters in a film, which film would each of you say it is?"
+      },
+      "dare": {
+        "vi": "Nắm tay nhau và cùng nói một câu thoại phim mà cả hai đều nhớ.",
+        "en": "Hold hands and say a film line together that you both remember."
+      }
+    },
+    {
+      "id": "tod-29",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Lời khen nào từ người kia mà mỗi người nhớ mãi?",
+        "en": "Which compliment from the other has each of you never forgotten?"
+      },
+      "dare": {
+        "vi": "Khen người kia một câu thật sến, nói xong không được cười trong năm giây.",
+        "en": "Pay the other an outrageously cheesy compliment, then keep a straight face for five seconds."
+      }
+    },
+    {
+      "id": "tod-30",
+      "kind": "truthDare",
+      "truth": {
+        "vi": "Nếu được tặng người kia một món quà không giới hạn, mỗi người sẽ tặng gì?",
+        "en": "If you could give the other any gift at all, what would each of you give?"
+      },
+      "dare": {
+        "vi": "Diễn không lời món quà đó cho người kia đoán trong 30 giây.",
+        "en": "Mime that gift for the other to guess within 30 seconds."
+      }
     }
   ]
 };

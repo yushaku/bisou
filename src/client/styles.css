@@ -742,7 +742,8 @@ body .tst-viewport {
   --box-paper: var(--box-blue);
   --box-ink: var(--box-blue-foreground);
 }
-.card-box-colour[data-box="rau-ram"] {
+.card-box-colour[data-box="rau-ram"],
+.card-box-colour[data-box="thuong-hay-phat"] {
 --box-paper: var(--box-rose);
 --box-ink: var(--box-rose-foreground);
 }
