@@ -68,9 +68,9 @@ export function Journal({ couple, ...session }: JournalProps) {
   // Stays mounted after the first open so the sheet can animate closed.
   const [composeLoaded, setComposeLoaded] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
-  // Own entry being edited in the sheet; null writes a new one.
+  // Entry being edited in the sheet; null writes a new one.
   const [editing, setEditing] = useState<JournalEntry | null>(null);
-  // Own entry whose edit and delete actions are open.
+  // Entry whose actions are open.
   const [acting, setActing] = useState<JournalEntry | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const detail = feed?.entries.find((e) => e.id === detailId);
@@ -249,19 +249,16 @@ export function Journal({ couple, ...session }: JournalProps) {
                     showDate={false}
                     onOpen={() => setDetailId(e.id)}
                     onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
-                    // Only the author changes or deletes an entry (journal R10, R11), either partner a note entry (journal R26); the server checks it again.
                     actions={
-                      (e.authorId === user.id || !!e.note) && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="-my-2 -mr-2"
-                          aria-label={t("entry.options", { name: card.author.name, time: card.time ?? "" })}
-                          onClick={() => setActing(e)}
-                        >
-                          <Ellipsis aria-hidden="true" />
-                        </Button>
-                      )
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="-my-2 -mr-2"
+                        aria-label={t("entry.options", { name: card.author.name, time: card.time ?? "" })}
+                        onClick={() => setActing(e)}
+                      >
+                        <Ellipsis aria-hidden="true" />
+                      </Button>
                     }
                   />
                 );
@@ -309,9 +306,9 @@ export function Journal({ couple, ...session }: JournalProps) {
         }
       />
 
-      <EntryActions entry={detail ?? null} own={detail?.authorId === user.id || !!detail?.note} remove={deleteItem} onClose={() => setDetailId(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut}
+      <EntryActions entry={detail ?? null} canDelete={detail?.authorId === user.id || !!detail?.note} remove={deleteItem} onClose={() => setDetailId(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut}
         detail={detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={(index) => { setDetailId(null); setViewer({ entry: detail, index, open: true }); }} />} />
-      <EntryActions remove={deleteItem} entry={acting} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
+      <EntryActions remove={deleteItem} entry={acting} canDelete={acting?.authorId === user.id || !!acting?.note} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
 
       {closedEditing && <Suspense fallback={null}><ClosedNoteSheet key={closedEditing.id} entry={closedEditing} onClose={() => setClosedEditing(null)} onSignedOut={onSignedOut} onSaved={(entry) => { onSaved(entry); setClosedEditing(null); }} /></Suspense>}
       </TabsContent></Tabs>

@@ -51,7 +51,7 @@ describe("journal api client", () => {
     expect(res).toEqual({ ok: false, status: 400, error: { error: "entry_empty" } });
   });
 
-  it("journal AC9 (R10): updateEntry puts a full replace to the entry path", async () => {
+  it("journal AC23 (R28): updateEntry puts a full replace to the entry path", async () => {
     const input: EntryInput = { date: "2026-11-05", text: "fixed typo", photoIds: ["p1"] };
     const fn = mockFetch(200, { entry: entry({ text: "fixed typo", photoIds: ["p1"] }) });
     const res = await api.updateEntry("e/1", input);
@@ -148,7 +148,7 @@ describe("journal feed state", () => {
     expect(groupByDay(removeEntry(gone, "rain").entries)[0]?.entries.map((e) => e.id)).toEqual(["lunch"]);
   });
 
-  it("journal AC9 (R10): an edit that moves the day keeps the entry once, under its new day, in written order", () => {
+  it("journal AC23 (R28): an edit that moves the day keeps the entry once, under its new day, in written order", () => {
     const loaded = { entries: [rain, lunch, first], nextCursor: null };
     const moved = upsertEntry(loaded, { ...first, date: "2026-11-06", updatedAt: 9_000 });
     expect(groupByDay(moved.entries).map((g) => [g.date, ids(g.entries)])).toEqual([["2026-11-06", ["rain", "lunch", "first"]]]);

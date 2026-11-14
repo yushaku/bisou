@@ -33,7 +33,7 @@ const CLAMP_AT = 220;
 
 /*
  * showDate: off in the day feed, where the day heading already says it. id: lets the feed scroll
- * to and focus the card. actions: a control at the header's end, only on the author's own entries.
+ * to and focus the card. actions: an optional control at the header's end.
  * onOpenPhoto: makes each photo a button that opens the viewer.
  */
 export function EntryCard({

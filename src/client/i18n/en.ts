@@ -569,7 +569,6 @@ export const en: Messages = {
   "compose.photoUnreadable": "This device can't open {name}. Try another photo.",
   "compose.photoExpired": "A photo is no longer available. Remove it and add it again.",
   "compose.saveError": "Couldn't save. Your words are still here. Try again.",
-  "compose.notAuthor": "Only the person who wrote this entry can change it.",
   "compose.gone": "This entry is no longer in the journal.",
   "compose.saved": "Saved under {day}",
   "compose.discardTitle": "Discard your changes?",

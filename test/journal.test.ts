@@ -31,34 +31,40 @@ beforeEach(async () => {
 });
 
 describe("journal edit and delete", () => {
-  it("journal AC9 (R10): only the author can edit and changing the day preserves creation time and origin", async () => {
+  it.each(["author", "partner"])("journal AC23 (R28): %s edits preserve exact authorship, creation time and origin", async (editor) => {
     const { a, b } = await paired();
     const entry = await create(a);
     vi.setSystemTime(NOW + HOUR);
-    await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ text: "not mine" }) }), 403, "not_author");
-    expect((await page(a)).entries[0]).toEqual(entry);
-    const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ date: "2023-02-12", text: "  Fixed typo  " }) });
+    const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: (editor === "author" ? a : b).cookie, body: input({ date: "2023-02-12", text: "  Fixed typo  " }) });
     expect(res.status).toBe(200);
     const changed = (await res.json<{ entry: JournalEntry }>()).entry;
     expect(changed).toEqual({ ...entry, date: "2023-02-12", text: "Fixed typo", updatedAt: NOW + HOUR });
+    expect((await page(a)).entries[0]).toEqual(changed);
     expect((await page(b)).entries[0]).toEqual(changed);
   });
 
-  it("journal AC1, AC9, AC10 (R1, R10, R11): foreign and unknown entry ids reveal nothing", async () => {
+  it("journal AC26, AC10 (R1, R2, R28, R11): foreign, unpaired, missing-session and unknown callers reveal nothing", async () => {
     const { a } = await paired();
     const entry = await create(a);
     const outsider = await user("Lan");
+    const other = await user("Hoa");
+    const unpaired = await user("Lone");
+    const created = await call("POST", "/api/couple", { cookie: outsider.cookie });
+    const { couple: { pendingCode } } = await created.json<{ couple: { pendingCode: { code: string } } }>();
+    expect((await call("POST", "/api/couple/join", { cookie: other.cookie, body: { code: pendingCode.code } })).status).toBe(200);
     for (const method of ["PUT", "DELETE"]) {
       for (const id of [entry.id, "unknown"]) {
         const res = await call(method, `/api/journal/${id}`, { cookie: outsider.cookie, body: method === "PUT" ? input() : undefined });
-        expect(res.status).toBe(404);
+        await error(res, 404, "not_found");
+        await error(await call(method, `/api/journal/${id}`, { body: method === "PUT" ? input() : undefined }), 401, "unauthorized");
+        await error(await call(method, `/api/journal/${id}`, { cookie: unpaired.cookie, body: method === "PUT" ? input() : undefined }), 404, "not_in_couple");
       }
       await error(await call(method, "/api/journal/unknown", { cookie: a.cookie, body: method === "PUT" ? input() : undefined }), 404, "not_found");
     }
     expect((await page(a)).entries[0]).toEqual(entry);
   });
 
-  it("journal AC7, AC9 (R3, R4, R7, R8, R10): edits enforce the same shape, date, text and empty rules", async () => {
+  it("journal AC7, AC23 (R3, R4, R7, R8, R28): edits enforce the same shape, date, text and empty rules", async () => {
     const { a } = await paired();
     const entry = await create(a);
     for (const [body, code] of [
@@ -75,14 +81,17 @@ describe("journal edit and delete", () => {
     }
   });
 
-  it("journal AC9, AC12 (R10, R17): keeps, reorders, adds and removes photos with both removed objects purged", async () => {
+  it("journal AC23, AC12 (R28, R17): keeps, reorders, adds and removes photos with both removed objects purged", async () => {
     const { a, b, couple } = await paired();
     const first = await upload(a);
     const second = await upload(a);
-    const added = await upload(a);
+    const added = await upload(b);
     const entry = await create(a, input({ photoIds: [first, second] }));
+    const reordered = await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ photoIds: [second, first] }) });
+    expect(reordered.status).toBe(200);
+    expect((await reordered.json<{ entry: JournalEntry }>()).entry.photoIds).toEqual([second, first]);
     const photoIds = [added, second];
-    const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ photoIds }) });
+    const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ photoIds }) });
     expect(res.status).toBe(200);
     expect((await res.json<{ entry: JournalEntry }>()).entry.photoIds).toEqual(photoIds);
     expect((await page(b)).entries[0]?.photoIds).toEqual(photoIds);
@@ -91,31 +100,67 @@ describe("journal edit and delete", () => {
       await error(await call("GET", `/api/photos/${first}/${size}`, { cookie: b.cookie }), 404, "not_found");
     }
     expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(first).first()).toBeNull();
-    const cleared = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input() });
+    const cleared = await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input() });
     expect(cleared.status).toBe(200);
     expect((await page(b)).entries[0]?.photoIds).toEqual([]);
+    for (const id of [added, second]) {
+      expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(id).first()).toBeNull();
+      for (const size of ["full", "thumb"] as const) expect(await env.PHOTOS.head(photoKey(couple.id, id, size))).toBeNull();
+    }
   });
 
-  it("journal AC1, AC9, AC12 (R1, R10, R17): rejects another entry's photos, partner pending photos and expired uploads on edit", async () => {
+  it.each(["author", "partner"])("journal AC26, AC23, AC12 (R1, R28, R17): %s rejects unauthorized and expired photos without changes", async (editor) => {
     const { a, b } = await paired();
-    const partner = await upload(b);
+    const who = editor === "author" ? a : b;
+    const partner = await upload(editor === "author" ? b : a);
     const attached = await upload(a);
-    const expired = await upload(a);
+    const expired = await upload(who);
+    const wishPhoto = await upload(who);
+    expect((await call("POST", "/api/wishes", { cookie: who.cookie, body: { title: "Present", photoId: wishPhoto } })).status).toBe(201);
+    const foreign = await user("Foreign");
+    const foreignPartner = await user("ForeignPartner");
+    const created = await call("POST", "/api/couple", { cookie: foreign.cookie });
+    const { couple: { pendingCode } } = await created.json<{ couple: { pendingCode: { code: string } } }>();
+    expect((await call("POST", "/api/couple/join", { cookie: foreignPartner.cookie, body: { code: pendingCode.code } })).status).toBe(200);
+    const foreignPhoto = await upload(foreign);
     await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?").bind(NOW - PENDING_PHOTO_TTL, expired).run();
     await create(a, input({ photoIds: [attached] }));
-    const entry = await create(a);
-    for (const photoId of [partner, attached, expired, "unknown"]) {
-      await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ photoIds: [photoId] }) }), 400, "photo_invalid");
+    const retained = await upload(a);
+    const entry = await create(a, input({ photoIds: [retained] }));
+    const photos = await env.DB.prepare("SELECT * FROM photos ORDER BY id").all();
+    for (const photoId of [partner, attached, wishPhoto, foreignPhoto, expired, "unknown"]) {
+      await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: who.cookie, body: input({ photoIds: [retained, photoId] }) }), 400, "photo_invalid");
+      expect((await page(b)).entries.find((row) => row.id === entry.id)).toEqual(entry);
+      expect((await env.DB.prepare("SELECT * FROM photos ORDER BY id").all()).results).toEqual(photos.results);
     }
     expect((await page(a)).entries.find((row) => row.id === entry.id)).toEqual(entry);
+  });
+
+  it("journal AC27 (R30): the later valid save replaces the earlier save under the original author", async () => {
+    const { a, b } = await paired();
+    const entry = await create(a);
+    expect((await page(a)).entries).toEqual([entry]);
+    expect((await page(b)).entries).toEqual([entry]);
+    for (const [who, text, date] of [[a, "First correction", "2023-02-12"], [b, "Later correction", "2023-02-13"]] as const) {
+      vi.setSystemTime(Date.now() + HOUR);
+      const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: who.cookie, body: input({ text, date }) });
+      expect(res.status).toBe(200);
+      expect((await res.json<{ entry: JournalEntry }>()).entry).toEqual({ ...entry, text, date, updatedAt: Date.now() });
+    }
+    const expected = { ...entry, text: "Later correction", date: "2023-02-13", updatedAt: NOW + 2 * HOUR };
+    expect((await page(a)).entries).toEqual([expected]);
+    expect((await page(b)).entries).toEqual([expected]);
   });
 
   it("journal AC10 (R11, R20): only the author deletes the entry, both renditions and all photo rows", async () => {
     const { a, b, couple } = await paired();
     const photoIds = [await upload(a), await upload(a)];
     const entry = await create(a, input({ photoIds }));
+    const edited = await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ text: "Partner correction", photoIds }) });
+    expect(edited.status).toBe(200);
+    const changed = (await edited.json<{ entry: JournalEntry }>()).entry;
     await error(await call("DELETE", `/api/journal/${entry.id}`, { cookie: b.cookie }), 403, "not_author");
-    expect((await page(b)).entries[0]).toEqual(entry);
+    expect((await page(b)).entries[0]).toEqual(changed);
     const res = await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
@@ -142,12 +187,12 @@ describe("journal edit and delete", () => {
       .toEqual({ entry_id: null, position: null, created_at: 0 });
   });
 
-  it("journal AC9, AC10 (R10, R11): a concurrent delete and edit cannot resurrect the entry or attach a new photo to it", async () => {
-    const { a } = await paired();
+  it("journal AC23, AC10 (R28, R11): a concurrent delete and edit cannot resurrect the entry or attach a new photo to it", async () => {
+    const { a, b } = await paired();
     const entry = await create(a);
-    const photoId = await upload(a);
+    const photoId = await upload(b);
     const [edited, deleted] = await Promise.all([
-      call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ photoIds: [photoId] }) }),
+      call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ photoIds: [photoId] }) }),
       call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie }),
     ]);
     expect([200, 404]).toContain(edited.status);

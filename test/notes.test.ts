@@ -222,7 +222,7 @@ async function closedNote() {
   const { entry } = await res.json<{ entry: import("../src/shared/types").JournalEntry }>();
   return { ...pair, entry };
 }
-test("notes-journal AC20 journal AC20 AC21: either partner edits all closed-note fields and day, normal journal routes hide it", async () => {
+test("notes-journal AC20 journal AC25 AC21: either partner edits all closed-note fields and day, normal journal routes hide it", async () => {
   const { a, b, id, entry } = await closedNote();
   for (const person of [a,b]) {
     const body = { ...input, hope: `Talk with ${person.id}`, pick: "differ", line: "My understanding", date: "2026-11-12" };

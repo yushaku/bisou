@@ -76,7 +76,6 @@ const SAVE_ERRORS: Partial<Record<ApiErrorCode, MessageKey>> = {
   invalid_entry_date: "compose.dateError",
   too_many_photos: "compose.limit",
   photo_invalid: "compose.photoExpired",
-  not_author: "compose.notAuthor",
   not_found: "compose.gone",
   wish_received: "wish.alreadyReceived",
 };

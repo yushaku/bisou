@@ -21,7 +21,7 @@ Once a kind note is delivered ([notes](notes.md)), the couple needs it to become
 Closing into the journal
 
 - R32. When the recipient closes a note, it becomes at once a journal entry in the couple's feed, shown with both partners' names (the writer's with the time, the recipient's over the pick and the line), dated the day it was closed by the Vietnam calendar, marked as from a kind note, holding the four parts as delivered and the recipient's pick and line; it leaves the notes for both ([journal](journal.md) R26, R27).
-- R33. From then the [journal](journal.md) rules apply, with the exception [journal](journal.md) R26 makes to its R10 and R11: both partners see it, and either may change its four parts under [notes](notes.md) R2 to R5, the recipient's pick and line or its day, or delete it after confirming, when it is gone for both for good.
+- R33. From then the [journal](journal.md) rules apply, with the exception [journal](journal.md) R26 makes to its R11: both partners see it, and either may change its four parts under [notes](notes.md) R2 to R5, the recipient's pick and line or its day, or delete it after confirming, when it is gone for both for good.
 - R34. The entry never gets photos; a changed pick or line keeps showing under the recipient's name, and the pick stays one of the three in [notes](notes.md) R27.
 - R35. A note becoming a journal entry sends no notification to anyone.
 - R36. Undelivered, withdrawn, waiting and opened but not closed notes never reach the journal.

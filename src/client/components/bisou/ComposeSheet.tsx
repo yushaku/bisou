@@ -21,7 +21,7 @@ interface ComposeSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   partnerName: string;
-  /* The author's own entry to change (journal R10); omit to write a new one. */
+  /* The shared entry to change (journal R28); omit to write a new one. */
   entry?: JournalEntry;
   receiving?: Wish;
   onSaved: (entry: JournalEntry) => void;
