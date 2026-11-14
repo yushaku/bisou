@@ -3,6 +3,7 @@ import { Dices, ExternalLink, Gift, RotateCcw } from "lucide-react";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import type { SpinWish } from "../../../shared/types";
 import { api, photoUrl } from "@/api";
+import { useApiMutation } from "@/lib/serverQuery";
 import pouch from "@/assets/wish-pouch.webp";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +30,7 @@ interface SpinCardProps {
 }
 
 export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, initialState, onSpin = api.spin, onClaim = api.claim, onSignedOut, onViewClaims, className }: SpinCardProps) {
+  const claimWish = useApiMutation(onClaim, ["claims", "wishes"]);
   const { t, locale } = useI18n();
   const online = useOnline();
   const offlineId = useId();
@@ -65,7 +67,7 @@ export function SpinCard({ partnerName, partnerJarEmpty = false, initialBudget, 
   async function claim() {
     if (!online || state.step !== "result" || claiming || claimed) return;
     setClaiming(true); setError(null);
-    const res = await onClaim(state.wish.id);
+    const res = await claimWish(state.wish.id);
     setClaiming(false);
     if (res.ok) setClaimed(true);
     else if (res.status === 401) onSignedOut?.();

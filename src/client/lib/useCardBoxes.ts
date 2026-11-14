@@ -1,26 +1,13 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { createTabMemory, loadBoxes, TabMemory } from "./tabMemory";
+import { useEffect } from "react";
 import { readCache, writeCache } from "./cardBox";
+import { queries } from "./queries";
+import { useServerQuery } from "./serverQuery";
+
 export function useCardBoxes(onSignedOut: () => void, scope: string) {
-  const context = useContext(TabMemory);
-  const [memory] = useState(() => context ?? createTabMemory());
-  const [boxes, setBoxes] = useState(() => memory.boxes ?? readCache(scope, "list"));
-  const active = useRef(true);
-  const [failed, setFailed] = useState(false);
-  const refresh = useCallback(async () => {
-    const res = await loadBoxes(memory, true);
-    if (!active.current) return;
-    if (res.ok) { setBoxes(res.data.boxes); writeCache(scope, "list", res.data.boxes); setFailed(false); }
-    else if (res.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [memory, onSignedOut, scope]);
-  useEffect(() => {
-    active.current = true;
-    void refresh();
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    document.addEventListener("visibilitychange", visible);
-    window.addEventListener("online", visible);
-    return () => { active.current = false; document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
-  }, [refresh]);
-  return { boxes, failed, refresh };
+  const { data, failed, refresh } = useServerQuery({ ...queries.boxes,
+    initialData: () => { const boxes = readCache(scope, "list"); return boxes ? { boxes } : undefined; },
+    initialDataUpdatedAt: 0,
+  }, onSignedOut);
+  useEffect(() => { if (data) writeCache(scope, "list", data.boxes); }, [scope, data]);
+  return { boxes: data?.boxes ?? null, failed, refresh };
 }

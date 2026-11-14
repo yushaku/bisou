@@ -1,3 +1,4 @@
+import { useApiMutation } from "@/lib/serverQuery";
 import { useState } from "react";
 import type { ClosedNoteInput, JournalEntry } from "../../../shared/types";
 import { validateClosedNote } from "../../../shared/notes";
@@ -13,6 +14,7 @@ import { CloseFields } from "./NoteCloseSheet";
 import { DayField } from "./DayField";
 export function ClosedNoteSheet({ entry, onClose, onSaved, onSignedOut }: { entry: JournalEntry & { note: NonNullable<JournalEntry["note"]> }; onClose: () => void; onSaved: (entry: JournalEntry) => void; onSignedOut: () => void }) {
   const { t } = useI18n(), online = useOnline();
+  const updateClosedNote = useApiMutation(api.updateClosedNote, ["notes", "journal"]);
   const [value, setValue] = useState<ClosedNoteInput>({ ...entry.note, date: entry.date });
   const [dirty, setDirty] = useState(false), [saving, setSaving] = useState(false), [discard, setDiscard] = useState(false), [error, setError] = useState<string | null>(null);
   const change = (next: ClosedNoteInput) => { setValue(next); setDirty(true); setError(null); };
@@ -21,7 +23,7 @@ export function ClosedNoteSheet({ entry, onClose, onSaved, onSignedOut }: { entr
   async function save() {
     if (!online || saving || "error" in parsed) return;
     setSaving(true); setError(null);
-    const res = await api.updateClosedNote(entry.note.id, parsed.input); setSaving(false);
+    const res = await updateClosedNote(entry.note.id, parsed.input); setSaving(false);
     if (res.ok) { onSaved(res.data.entry); return; }
     if (res.status === 401) return onSignedOut();
     setError(t(saveErrorKey(res.error?.error)));

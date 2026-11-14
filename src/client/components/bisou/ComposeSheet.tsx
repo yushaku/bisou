@@ -1,3 +1,4 @@
+import { useApiMutation } from "@/lib/serverQuery";
 import { useEffect, useId, useState } from "react";
 import { ENTRY_PHOTOS_MAX, ENTRY_TEXT_MAX, entryText } from "../../../shared/journal";
 import { receivedText } from "../../../shared/wishes";
@@ -87,6 +88,9 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
 export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
+  const createEntry = useApiMutation(api.createEntry, ["journal"]);
+  const updateEntry = useApiMutation(api.updateEntry, ["journal"]);
+  const receiveWish = useApiMutation(api.receiveWish, ["journal", "wishes", "claims"]);
   const online = useOnline();
   const ids = useId();
   const [now] = useState(Date.now);
@@ -117,8 +121,8 @@ export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, on
     setSaving(true);
     setFormError(null);
     const input = { date, text: entryText(text), photoIds: queue.items.map((i) => i.photoId ?? "") };
-    const res = receiving ? await api.receiveWish(receiving.id, { date, note: text.trim(), photoIds: input.photoIds, locale })
-      : entry ? await api.updateEntry(entry.id, input) : await api.createEntry(input);
+    const res = receiving ? await receiveWish(receiving.id, { date, note: text.trim(), photoIds: input.photoIds, locale })
+      : entry ? await updateEntry(entry.id, input) : await createEntry(input);
     setConfirmReceiving(false);
     setSaving(false);
     if (res.ok) {

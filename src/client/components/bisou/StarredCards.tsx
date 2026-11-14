@@ -1,9 +1,10 @@
-import { useCallback, useContext, useEffect, useId, useRef, useState } from "react";
+import { useContext, useEffect, useId, useState } from "react";
+import { queries } from "../../lib/queries";
+import { useServerQuery } from "../../lib/serverQuery";
 import { Heart } from "lucide-react";
 import { Link } from "wouter";
 import { cardById, DECKS, type GardenCardState } from "../../../shared/garden";
 import type { Couple, User } from "../../../shared/types";
-import { api } from "../../api";
 import { useI18n } from "../../i18n";
 import { gardenQuestion, starredHere } from "../../lib/garden";
 import { TabMemory } from "../../lib/tabMemory";
@@ -35,35 +36,19 @@ export function StarredBlock({ couple, user, onSignedOut, full = false }: Props 
   const { t } = useI18n();
   const memory = useContext(TabMemory);
   const scope = `${couple.id}:${user.id}`;
-  const [cards, setCards] = useState<GardenCardState[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data, failed, refresh } = useServerQuery(queries.gardenStars, onSignedOut);
+  const cards = data?.cards ?? null;
   const [, setSeenVersion] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
-  const request = useRef(0);
-  const refresh = useCallback(async () => {
-    const version = ++request.current;
-    const result = await api.gardenStars();
-    if (version !== request.current) return;
-    if (result.ok) { setCards(result.data.cards); setFailed(false); }
-    else if (result.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [onSignedOut]);
   useEffect(() => {
-    void refresh();
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
     const seen = () => setSeenVersion(version => version + 1);
-    document.addEventListener("visibilitychange", visible);
-    window.addEventListener("online", visible);
     window.addEventListener("bisou:garden-seen", seen);
     window.addEventListener("storage", seen);
     return () => {
-      ++request.current;
-      document.removeEventListener("visibilitychange", visible);
-      window.removeEventListener("online", visible);
       window.removeEventListener("bisou:garden-seen", seen);
       window.removeEventListener("storage", seen);
     };
-  }, [refresh]);
+  }, []);
   const shown = starredHere(cards ?? [], scope);
   const active = shown.find(card => card.cardId === openId);
   useEffect(() => { if (openId && !active) setOpenId(null); }, [openId, active]);

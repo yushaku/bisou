@@ -1,8 +1,8 @@
 import { Mascot } from "../components/bisou/Mascot";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { DECKS, type GardenDeckState } from "../../shared/garden";
+import { queries } from "../lib/queries";
+import { useServerQuery } from "../lib/serverQuery";
+import { DECKS } from "../../shared/garden";
 import type { Couple } from "../../shared/types";
-import { api } from "../api";
 import { GardenCard } from "../components/bisou/GardenCard";
 import { BottomBar } from "../components/bisou/AppShell";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
@@ -16,26 +16,8 @@ import type { SessionProps } from "./SignedInShell";
 export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps & { couple: Couple; deckId: string }) {
   const { t, locale } = useI18n();
   const deck = DECKS.find((d) => d.id === deckId);
-  const [state, setState] = useState<GardenDeckState | null>(null);
-  const [failed, setFailed] = useState(false);
-  const request = useRef(0);
+  const { data: state, failed, refresh } = useServerQuery(queries.gardenDeck(deckId), onSignedOut);
   const navigation = useTabNavigation("garden");
-  const refresh = useCallback(async () => {
-    const version = ++request.current;
-    const result = await api.gardenDeck(deckId);
-    if (version !== request.current) return;
-    if (result.ok) { setState(result.data); setFailed(false); }
-    else if (result.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [deckId, onSignedOut]);
-  useEffect(() => {
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    void refresh();
-    const timer = setInterval(visible, 15000);
-    document.addEventListener("visibilitychange", visible);
-    window.addEventListener("online", visible);
-    return () => { ++request.current; clearInterval(timer); document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
-  }, [refresh]);
   const names = { myName: user.displayName?.trim() || t("garden.me"), partnerName: couple.members.find((m) => m.id !== user.id)?.displayName?.trim() || t("garden.partner") };
   return <div className="flex min-h-dvh flex-col">
     <SubPageHeader title={deck?.name[locale] ?? t("garden.unknownDeck")} />

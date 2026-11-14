@@ -19,7 +19,7 @@ Giữ thay đổi: giảm 34% JavaScript ban đầu. Tổng gzip tăng khoảng 
 ## Rà soát các luồng
 
 - Nhật ký đã phân trang bằng cursor; ảnh được lấy chung theo trang, không gọi một query cho từng bài. Ảnh trong feed có kích thước cố định, `srcSet`, tải lười và giải mã bất đồng bộ.
-- Điều ước, lời nhắn và hộp thẻ đã có bộ nhớ trong phiên và gộp request trùng đang chạy. Không thêm cache dữ liệu cá nhân.
+- Điều ước, lời nhắn và hộp thẻ ban đầu có bộ nhớ trong phiên và gộp request trùng đang chạy. Phần cache này đã được thay bằng TanStack Query trong bước tiếp theo bên dưới.
 - Home gọi garden, boxes, notes, journal và stars độc lập sau khi lấy couple. Mẫu đo local cho các GET couple/nội dung là 8–43 ms, qua proxy local tới Worker với dữ liệu seed đã có. Chưa chứng minh database là nút thắt trên production.
 - Garden thăm dò mỗi 15 giây khi trang hiện. `gardenState` có nhiều lượt truy vấn tuần tự; cần trace production trước khi đổi cách batch hoặc thêm index.
 - Chuyển tab dùng View Transitions; thanh điều hướng dùng backdrop blur. Chưa có phép đo trên iPhone chứng minh hai hiệu ứng này gây giật, nên giữ thiết kế theo [DESIGN.md](../DESIGN.md).
@@ -29,3 +29,13 @@ Giữ thay đổi: giảm 34% JavaScript ban đầu. Tổng gzip tăng khoảng 
 Đã qua `pnpm typecheck`, 1.048 test Vitest, 24 test Node hiện có và `pnpm build` kèm kiểm tra dung lượng mới. Trên bản production local đã kiểm tra đăng nhập, Home, Journal, Wishes, Garden, Settings và Back về Garden. Do công cụ click bị lệch tọa độ khi giả lập màn hình điện thoại, kiểm tra điều hướng dùng focus và Enter; không lấy số đo click của phiên này làm INP.
 
 Không đo được INP/LCP/CLS đại diện cho người dùng từ dữ liệu local ít bài viết. Chưa kiểm thử trên iPhone thật, mạng di động hoặc dữ liệu production lớn. Cần đo các trường hợp đó nếu vẫn chậm sau phát hành; không suy ra phần trăm tăng tốc thực tế từ dung lượng bundle.
+
+## Cache dữ liệu và render với TanStack Query
+
+Áp dụng [ADR 0013](adr/0013-server-state-with-tanstack-query.md): Home/Garden dùng chung query Garden; Home/Journal dùng chung các trang nhật ký. Điều ước, lời nhắn, claims và hộp thẻ cũng dùng QueryClient riêng cho mỗi phiên. `TabMemory` chỉ giữ trạng thái giao diện. Query không còn component sử dụng được thu hồi sau 30 phút; đăng xuất dọn toàn bộ client của phiên.
+
+Test bằng QueryClient/QueryObserver thật xác nhận request đang chạy được gộp, dữ liệu còn mới không gọi lại, JSON không đổi giữ reference và không thông báo cho observer chỉ theo dõi data. Test cũng kiểm tra lỗi HTTP, lỗi làm mới vẫn giữ dữ liệu cũ, invalidation sau mutation, phân trang/cập nhật/xóa nhật ký và kết quả đến muộn sau đăng xuất. Các test component dùng adapter riêng vì bộ test hiện tại render SSR hoặc giả lập React hooks thủ công.
+
+Trên production local: Garden → Home giữ số GET `/api/garden` ở 8, Journal → Home giữ số GET `/api/journal` ở 4 trong thời gian cache còn mới. Đây là tổng đếm của phiên có polling và các lần đưa cửa sổ ra trước, không phải số request cần cho một lần mở app. Đã tạo một điều ước kiểm tra, xác nhận query được làm mới và mục xuất hiện, rồi xóa lại thành công; đăng xuất trả về màn đăng nhập. Không thay dữ liệu mẫu có sẵn.
+
+Sau migration: typecheck, 1.055 test Vitest, 24 test Node và build đều qua. JavaScript ban đầu là 167.854 byte gzip, tăng khoảng 10,5 kB so với bước tách màn hình, vẫn dưới budget 200 kB. Chưa có số đo React Profiler trên iPhone để kết luận mọi lần render tốn kém đã được xử lý.

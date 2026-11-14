@@ -1,3 +1,4 @@
+import { flushQueryWork } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { MascotPicker } from "../src/client/components/bisou/MascotPicker";
@@ -67,10 +68,10 @@ it.each([true, false])("gift unlock celebrates only after success (%s)", async s
   const player = () => CardBoxPlayer({ user, boxId: "sample", couple: { id: "c", members: [], events: [], startDate: null }, onUser() {}, onSignedOut() {} });
   expect(render(player).find(node => node.type === Celebration)!.props.open).toBe(false);
   for (const effect of hooks.effects) effect();
-  await Promise.resolve();
+  await flushQueryWork();
   render(player).find(node => node.type === CardBoxDeck)!.props.onNext!();
   render(player).find(node => node.type === CardBoxGift)!.props.onConfirm!();
-  await Promise.resolve();
+  await flushQueryWork();
   expect(unlock).toHaveBeenCalledWith("sample");
   expect(render(player).find(node => node.type === Celebration)!.props.open).toBe(success);
 });

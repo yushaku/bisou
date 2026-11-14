@@ -2,6 +2,9 @@ import { useEffect, useId, useState } from "react";
 import { Heart, LockKeyhole, PencilLine, Star } from "lucide-react";
 import { cardById, DECKS, type ResponseChoice, type GardenCardState, type GardenState } from "../../../shared/garden";
 import { api } from "../../api";
+import { ApiQueryError, useApiMutation } from "../../lib/serverQuery";
+import { queries } from "../../lib/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "../../i18n";
 import { cardPhase, gardenQuestion, flipKey, gardenSeen, rememberGarden } from "../../lib/garden";
 import { formatDay } from "../../lib/format";
@@ -31,6 +34,12 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
   variant?: "deck" | "today";
 }) {
   const { t, locale } = useI18n();
+  const client = useQueryClient();
+  const deleteAnswer = useApiMutation(api.deleteGardenAnswer, ["garden"]);
+  const editAnswer = useApiMutation(api.editGardenAnswer, ["garden"]);
+  const answer = useApiMutation(api.answerGarden, ["garden"]);
+  const star = useApiMutation(api.starGarden, ["garden"]);
+  const unstar = useApiMutation(api.unstarGarden, ["garden"]);
   const online = useOnline();
   const id = useId();
   const [writing, setWriting] = useState(false);
@@ -60,7 +69,7 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
     if (busy || !online) return;
     setBusy(true);
     setError(null);
-    const result = await (remove ? api.deleteGardenAnswer(card.cardId) : (hasMine || card.mineDeleted) ? api.editGardenAnswer(card.cardId, choice ? { choice } : { text }) : api.answerGarden(card.cardId, choice ? { choice } : { text }));
+    const result = await (remove ? deleteAnswer(card.cardId) : (hasMine || card.mineDeleted) ? editAnswer(card.cardId, choice ? { choice } : { text }) : answer(card.cardId, choice ? { choice } : { text }));
     setBusy(false);
     if (!result.ok) {
       if (result.status === 401) return onSignedOut();
@@ -75,7 +84,7 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
     if (busy || !online) return;
     setBusy(true);
     setError(null);
-    const result = await (card.starred ? api.unstarGarden(card.cardId) : api.starGarden(card.cardId));
+    const result = await (card.starred ? unstar(card.cardId) : star(card.cardId));
     setBusy(false);
     if (!result.ok) {
       if (result.status === 401) return onSignedOut();
@@ -91,9 +100,12 @@ export function GardenCard({ card, myName, partnerName, memoryScope, onChanged, 
     setAnimating(true);
     if (onFlip) { onFlip(); return; }
     if (definition?.kind === "decision") return;
-    const result = await api.garden();
-    if (!result.ok && result.status === 401) { onSignedOut(); return; }
-    if (result.ok && result.data.today?.cardId === card.cardId && card.flippedDay === result.data.day) setWatering(result.data);
+    try {
+      const state = await client.fetchQuery({ ...queries.garden, staleTime: 0 });
+      if (state.today?.cardId === card.cardId && card.flippedDay === state.day) setWatering(state);
+    } catch (error) {
+      if (error instanceof ApiQueryError && error.status === 401) onSignedOut();
+    }
   }
   function write() { setText(card.mine ?? ""); setChoice(card.mineChoice ?? null); setWriting(true); setError(null); }
 

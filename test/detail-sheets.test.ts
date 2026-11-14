@@ -7,7 +7,7 @@ import { WishDetailSheet } from "../src/client/components/bisou/WishDetailSheet"
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
 import { Journal } from "../src/client/screens/Journal";
 import type { JournalEntry } from "../src/shared/types";
-import { createTabMemory } from "../src/client/lib/tabMemory";
+import { createQueryFixture as createTabMemory } from "./query-fixture";
 const hooks = vi.hoisted(() => ({ active: false, index: 0, values: [] as unknown[], memory: null as unknown }));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(), useId: () => "test",

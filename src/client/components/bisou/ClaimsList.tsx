@@ -1,6 +1,8 @@
 import { useId } from "react";
 import { Check, ExternalLink } from "lucide-react";
-import { useCallback, useContext, useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { queries } from "@/lib/queries";
+import { useApiMutation, useServerQuery } from "@/lib/serverQuery";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Claim } from "../../../shared/types";
 import { api, photoUrl } from "@/api";
@@ -10,7 +12,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/i18n";
 import { formatVnd } from "@/lib/format";
-import { TabMemory } from "@/lib/tabMemory";
 import { useOnline } from "@/lib/useOnline";
 import { EmptyState } from "./EmptyState";
 
@@ -18,43 +19,30 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
   const { t, locale } = useI18n();
   const online = useOnline();
   const offlineId = useId();
-  const memory = useContext(TabMemory);
-  const [claims, setClaims] = useState<Claim[] | null>(() => memory?.claims ?? null);
-  useLayoutEffect(() => {
-    // Deletion notices are shown once, so they are not kept for the next visit.
-    if (memory) memory.claims = claims && claims.filter((c) => c.status !== "gone");
-  }, [claims, memory]);
-  const [failed, setFailed] = useState(false);
+  const { data, setData, failed, refresh } = useServerQuery(queries.claims, onSignedOut);
+  const releaseClaim = useApiMutation(api.releaseClaim, ["claims", "wishes"]);
+  const [notices, setNotices] = useState<Claim[]>([]);
+  const claims = data ? [...notices.filter(c => !data.claims.some(n => n.id === c.id)), ...data.claims] : null;
   const [releasing, setReleasing] = useState<Claim | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const refresh = useCallback(async () => {
-    const res = await api.claims();
-    if (res.ok) {
-      // A refresh must not hide a deletion notice before it can be read on this screen.
-      setClaims((old) => [...(old ?? []).filter((c) => c.status === "gone" && !res.data.claims.some((n) => n.id === c.id)), ...res.data.claims]);
-      setFailed(false);
-    } else if (res.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [onSignedOut]);
   useEffect(() => {
-    void refresh();
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    document.addEventListener("visibilitychange", visible);
-    return () => document.removeEventListener("visibilitychange", visible);
-  }, [refresh]);
-  useEffect(() => {
-    for (const claim of claims ?? []) {
-      if (claim.status === "gone") void api.acknowledgeClaimNotice(claim.id);
+    for (const claim of data?.claims ?? []) {
+      if (claim.status !== "gone") continue;
+      setNotices(old => old.some(n => n.id === claim.id) ? old : [...old, claim]);
+      void api.acknowledgeClaimNotice(claim.id).then(res => {
+        if (res.ok) setData(old => old && { claims: old.claims.filter(n => n.id !== claim.id) });
+        else if (res.status === 401) onSignedOut();
+      });
     }
-  }, [claims]);
+  }, [data, setData, onSignedOut]);
 
   async function release() {
     if (!online || !releasing || busy) return;
     setBusy(true);
-    const res = await api.releaseClaim(releasing.id);
+    const res = await releaseClaim(releasing.id);
     setBusy(false);
-    if (res.ok) { setClaims((cs) => cs?.filter((c) => c.id !== releasing.id) ?? null); setReleasing(null); toast.success(t("claims.released")); }
+    if (res.ok) { setData(old => old && { claims: old.claims.filter(c => c.id !== releasing.id) }); setReleasing(null); toast.success(t("claims.released")); }
     else if (res.status === 401) onSignedOut();
     else { setError(t(res.error?.error === "wish_received" ? "wish.alreadyReceived" : "error.generic")); void refresh(); }
   }
@@ -65,7 +53,7 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
     {!claims && !failed && <Skeleton className="h-28" aria-label={t("loading")} />}
     {claims?.length === 0 && <EmptyState title={t("claims.empty")} />}
     <div className="flex flex-col gap-3">{claims?.map((claim) => <Card key={claim.id} className="gap-3 p-4">
-      {claim.status === "gone" ? <><p>{t("claims.gone", { title: claim.title })}</p><Button variant="outline" onClick={() => setClaims((cs) => cs?.filter((c) => c.id !== claim.id) ?? null)}>{t("claims.dismiss")}</Button></> : <>
+      {claim.status === "gone" ? <><p>{t("claims.gone", { title: claim.title })}</p><Button variant="outline" onClick={() => { setNotices(old => old.filter(c => c.id !== claim.id)); setData(old => old && { claims: old.claims.filter(c => c.id !== claim.id) }); }}>{t("claims.dismiss")}</Button></> : <>
         <div className="flex items-center gap-3">
           {claim.photoId && <img src={photoUrl(claim.photoId, "thumb")} alt={claim.title} loading="lazy" className="size-20 rounded-lg object-cover" />}
           <div className="min-w-0 flex-1"><h2 className="font-semibold">{claim.title}</h2>{claim.price !== null && <p className="font-heading text-lg">{formatVnd(claim.price, locale)}</p>}</div>

@@ -39,7 +39,8 @@
 
 ### Changed
 
-- Signed-in screens load on demand, reducing initial JavaScript from 238 kB to 157 kB gzipped; production builds enforce a 200 kB initial JavaScript budget.
+- Signed-in screens load on demand; with the shared query cache, initial JavaScript is 168 kB gzipped versus the previous 238 kB. Production builds enforce a 200 kB initial JavaScript budget.
+- Garden, journal, wishes, notes, claims and card boxes share a TanStack Query cache per session. Fresh tab visits reuse data, writes update related queries, and unchanged JSON responses keep their data references.
 
 - Either partner can edit journal entries; delete permissions are unchanged.
 - On the Journal tab, + opens the composer at once with two tabs, Journal and Kind note; it starts on the section you are viewing and keeps what you typed in both tabs while switching. The composer no longer shows your avatar and name, nor the "Past days are welcome" hint.

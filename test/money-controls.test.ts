@@ -1,3 +1,4 @@
+import { flushQueryWork } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { MoneyInput } from "../src/client/components/bisou/MoneyInput";
@@ -45,8 +46,8 @@ it("MoneyInput treats a pasted unit suffix as digits only", () => {
 
 it("WishSheet submits zero price as null", async () => {
   const create = vi.spyOn(api, "createWish").mockResolvedValue({ ok: false, status: 0, error: null });
-  const tree = WishSheet({ wish: { id: "wish", title: "A book", price: 0, link: null, priority: 2, photoId: null, status: "open", receivedOn: null, note: null, createdAt: 0, updatedAt: 0 }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   const update = vi.spyOn(api, "updateWish").mockResolvedValue({ ok: false, status: 0, error: null });
+  const tree = WishSheet({ wish: { id: "wish", title: "A book", price: 0, link: null, priority: 2, photoId: null, status: "open", receivedOn: null, note: null, createdAt: 0, updatedAt: 0 }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   function findForm(node: ReactNode): ReactElement<{ onSubmit: (event: unknown) => void }> | undefined {
     if (Array.isArray(node)) return node.map(findForm).find(Boolean);
     if (!isValidElement<{ children?: ReactNode }>(node)) return;
@@ -54,7 +55,7 @@ it("WishSheet submits zero price as null", async () => {
     return findForm(node.props.children);
   }
   findForm(tree)!.props.onSubmit({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(update).toHaveBeenCalledWith("wish", expect.objectContaining({ price: null }));
   expect(create).not.toHaveBeenCalled();
 });
@@ -79,6 +80,6 @@ it("WishSheet refuses submission when offline", async () => {
   const tree = WishSheet({ wish: { id: "wish", title: "A book", price: 0, link: null, priority: 2, photoId: null, status: "open", receivedOn: null, note: null, createdAt: 0, updatedAt: 0 }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
   const form = tree.props.children[0].props.children.props.children;
   form.props.onSubmit({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(save).not.toHaveBeenCalled();
 });

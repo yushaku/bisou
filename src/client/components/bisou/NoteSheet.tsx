@@ -1,3 +1,4 @@
+import { useApiMutation } from "@/lib/serverQuery";
 import { useEffect, useId, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
 import type { WrittenNote, NoteInput, NoteDelivery } from "../../../shared/types";
@@ -27,6 +28,9 @@ export function NoteSheet({ open, onOpenChange, fromMenu, ...props }: Props) {
 }
 export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, onLock, onDone }: Omit<Props, "open" | "onOpenChange"> & { onLock: (lock: "saving" | "dirty" | null) => void; onClose: () => void; onDone: () => void }) {
   const { t } = useI18n(), online = useOnline(), id = useId();
+  const createNote = useApiMutation(api.createNote, ["notes"]);
+  const updateNote = useApiMutation(api.updateNote, ["notes"]);
+  const deleteNote = useApiMutation(api.deleteNote, ["notes"]);
   const [value, setValue] = useState<NoteInput>(entry ?? { happened: "", feel: "", need: "", hope: "" });
   const [dirty, setDirty] = useState(false), [saving, setSaving] = useState(false), [error, setError] = useState<string | null>(null), [locked, setLocked] = useState(false), [withdraw, setWithdraw] = useState(false);
   useEffect(() => onLock(saving ? "saving" : dirty ? "dirty" : null), [dirty, saving, onLock]);
@@ -47,7 +51,7 @@ export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, 
     if (invalidSchedule) { setError(t("notes.scheduleError")); return; }
     setSaving(true); setError(null);
     const input = { ...value, ...(choosingDelivery && deliveryChanged ? { delivery, ...(delivery === "custom" ? { sendAt: new Date(sendAt).getTime() } : {}) } : {}) };
-    const res = entry ? await api.updateNote(entry.id, input) : await api.createNote(input);
+    const res = entry ? await updateNote(entry.id, input) : await createNote(input);
     setSaving(false);
     if (res.ok) { setDirty(false); onSaved(res.data.note); onDone(); return; }
     if (res.status === 401) return onSignedOut();
@@ -58,7 +62,7 @@ export function NoteForm({ entry, partnerName, onSaved, onRefresh, onSignedOut, 
   async function remove() {
     if (!online || saving || !entry) return;
     setSaving(true);
-    const res = await api.deleteNote(entry.id); setSaving(false);
+    const res = await deleteNote(entry.id); setSaving(false);
     if (res.ok || res.status === 404) { toast.success(t("notes.deleted")); onRefresh(); onDone(); return; }
     if (res.status === 401) return onSignedOut();
     setWithdraw(false);

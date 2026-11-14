@@ -14,7 +14,8 @@ import { CardBoxGift } from "../src/client/components/bisou/CardBoxGift";
 import { CardBoxPlayer } from "../src/client/screens/CardBoxPlayer";
 import { api } from "../src/client/api";
 import { CardBoxes } from "../src/client/screens/CardBoxes";
-import { createTabMemory, TabMemory } from "../src/client/lib/tabMemory";
+import { TabMemory } from "../src/client/lib/tabMemory";
+import { createQueryFixture as createTabMemory } from "./query-fixture";
 import { TABS } from "../src/client/components/bisou/AppShell";
 vi.mock("../src/client/components/ui/dialog", async original => ({
   ...await original<typeof import("../src/client/components/ui/dialog")>(),

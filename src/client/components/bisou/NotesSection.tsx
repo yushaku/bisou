@@ -1,4 +1,5 @@
-import { lazy, Suspense, useContext, useImperativeHandle, useState, type Ref } from "react";
+import { lazy, Suspense, useImperativeHandle, useState, type Ref } from "react";
+import { useApiMutation } from "@/lib/serverQuery";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, User, WrittenNote, ReceivedNote, JournalEntry } from "../../../shared/types";
 import { vnDay } from "../../../shared/days";
@@ -6,7 +7,6 @@ import { api } from "@/api";
 import { useI18n } from "@/i18n";
 import { useNotes } from "@/lib/useNotes";
 import { useOnline } from "@/lib/useOnline";
-import { TabMemory } from "@/lib/tabMemory";
 import { formatDay, formatTime } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,7 +20,7 @@ const NoteCloseSheet = lazy(() => import("./NoteCloseSheet").then((m) => ({ defa
 export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref?: Ref<{ refresh: () => Promise<void> }>; couple: Couple; user: User; onSignedOut: () => void; onClosed?: (entry: JournalEntry) => void }) {
   const { t, locale } = useI18n();
   const online = useOnline();
-  const memory = useContext(TabMemory);
+  const openNote = useApiMutation(api.openNote, ["notes"]);
   const [opening, setOpening] = useState<string | null>(null), [received, setReceived] = useState<Extract<ReceivedNote, { state: "opened" }> | null>(null), [closing, setClosing] = useState<string | null>(null);
   const { lists, failed, refresh } = useNotes(onSignedOut);
   useImperativeHandle(ref, () => ({ refresh }), [refresh]);
@@ -32,7 +32,7 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref
     if (!online || opening) return;
     if (note.state === "opened") { setReceived(note); return; }
     setOpening(note.id);
-    const res = await api.openNote(note.id); setOpening(null);
+    const res = await openNote(note.id); setOpening(null);
     if (res.ok && res.data.note.state === "opened") { setReceived(res.data.note); void refresh(); }
     else if (!res.ok && res.status === 401) onSignedOut();
     else { toast.error(t("notes.loadError")); void refresh(); }
@@ -59,7 +59,7 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref
     })}</div></section>}
     <EntryActions title={t("notes.opened")} entry={detail && { id: detail.id, date: vnDay(Date.now()), photoIds: [] }} own={false} onClose={() => setDetail(null)} onEdit={() => {}} onDeleted={() => {}} onSignedOut={onSignedOut} detail={detail && <NoteParts note={detail} />} />
     <EntryActions title={partner.name} entry={received && { id: received.id, date: vnDay(Date.now()), photoIds: [] }} own={false} onClose={() => setReceived(null)} onEdit={() => {}} onDeleted={() => {}} onSignedOut={onSignedOut} detail={received && <><NoteParts note={received} /><Button size="lg" disabled={!online} onClick={() => { setClosing(received.id); setReceived(null); }}>{t("notes.readDone")}</Button>{!online && <p className="text-sm text-muted-foreground">{t("offline.continue")}</p>}</>} />
-    {closing && <Suspense fallback={null}><NoteCloseSheet id={closing} onClose={() => setClosing(null)} onSignedOut={onSignedOut} onClosed={(entry) => { if (memory?.notes) memory.notes = { fromMe: memory.notes.fromMe.filter((n) => n.id !== closing), toMe: memory.notes.toMe.filter((n) => n.id !== closing) }; setClosing(null); void refresh(); toast.success(t("notes.closed")); onClosed?.(entry); }} /></Suspense>}
+    {closing && <Suspense fallback={null}><NoteCloseSheet id={closing} onClose={() => setClosing(null)} onSignedOut={onSignedOut} onClosed={(entry) => { setClosing(null); void refresh(); toast.success(t("notes.closed")); onClosed?.(entry); }} /></Suspense>}
     {loaded && <Suspense fallback={null}><NoteSheet open={composing} onOpenChange={setComposing} partnerName={partner.name} entry={editing} onSignedOut={onSignedOut} onRefresh={() => void refresh()} onSaved={(note) => { toast.success(t(note.state === "sent" ? "notes.sent" : "notes.saved")); void refresh(); }} /></Suspense>}
   </div>;
 }

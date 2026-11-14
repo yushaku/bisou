@@ -3,7 +3,8 @@ import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { TodayPosts } from "../src/client/components/bisou/TodayPosts";
 import { I18nProvider } from "../src/client/i18n";
-import { createTabMemory, TabMemory } from "../src/client/lib/tabMemory";
+import { TabMemory } from "../src/client/lib/tabMemory";
+import { createQueryFixture as createTabMemory } from "./query-fixture";
 import type { JournalEntry } from "../src/shared/types";
 
 const members = [

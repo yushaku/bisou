@@ -5,6 +5,7 @@ import { useHistoryState } from "wouter/use-browser-location";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, Wish } from "../../shared/types";
 import { api } from "../api";
+import { useApiMutation } from "../lib/serverQuery";
 import { EmptyState } from "../components/bisou/EmptyState";
 import { Celebration } from "../components/bisou/Celebration";
 import { ClaimsList } from "../components/bisou/ClaimsList";
@@ -42,6 +43,7 @@ const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then(
 
 export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { t, locale } = useI18n();
+  const deleteWish = useApiMutation(api.deleteWish, ["wishes", "claims"]);
   const online = useOnline();
   const memory = useContext(TabMemory);
   const historyState = useHistoryState<{ shortcut?: boolean } | null>();
@@ -80,7 +82,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   async function remove() {
     if (!online || !acting || busy) return;
     setBusy(true);
-    const res = await api.deleteWish(acting.id);
+    const res = await deleteWish(acting.id);
     setBusy(false);
     if (res.ok) {
       setJar((j) => j && { ...j, open: j.open.filter((w) => w.id !== acting.id), received: j.received.filter((w) => w.id !== acting.id) });

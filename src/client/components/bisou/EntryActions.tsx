@@ -3,6 +3,7 @@ import { PencilLine, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { JournalEntry } from "../../../shared/types";
 import { api } from "@/api";
+import { useApiMutation } from "@/lib/serverQuery";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -29,6 +30,7 @@ interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoI
  * count; a failure keeps the entry and the dialog for another try. There is no undo.
  */
 export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photoIds">>({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, title, own = true, canDelete = own, remove: deleteItem = api.deleteEntry }: EntryActionsProps<T>) {
+  const removeEntry = useApiMutation(deleteItem, ["journal", "notes"]);
   const { t, locale } = useI18n();
   const online = useOnline();
   const offlineId = useId();
@@ -44,7 +46,7 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
     if (!online || deleting) return;
     setDeleting(true);
     setError(null);
-    const res = await deleteItem(e.id);
+    const res = await removeEntry(e.id);
     setDeleting(false);
     // Already gone (deleted on the other phone): the result the author wanted.
     if (res.ok || res.error?.error === "not_found") {

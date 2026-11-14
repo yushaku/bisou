@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../src/client/api";
 import { wishJarLevels } from "../src/client/lib/wishes";
-import { createTabMemory, loadWishes } from "../src/client/lib/tabMemory";
+import { createServerQueryClient } from "../src/client/lib/serverQuery";
+import { queries } from "../src/client/lib/queries";
 import { readCreateRequest, tabMove } from "../src/client/lib/navigation";
 
 afterEach(() => vi.restoreAllMocks());
@@ -30,29 +31,31 @@ describe("Wish jars", () => {
 
 describe("shared wishes cache", () => {
   it("shares the pending request across tabs and reuses the result", async () => {
-    const memory = createTabMemory();
+    const client = createServerQueryClient();
     const jar = { open: [], received: [], partnerJarEmpty: false };
     const fetch = vi.spyOn(api, "wishes").mockResolvedValue({ ok: true, data: jar });
-    const home = loadWishes(memory);
-    const wishes = loadWishes(memory);
+    const home = client.fetchQuery(queries.wishes);
+    const wishes = client.fetchQuery(queries.wishes);
     await Promise.all([home, wishes]);
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(memory.wishes).toEqual(jar);
-    await loadWishes(memory);
+    expect(client.getQueryData(queries.wishes.queryKey)).toEqual(jar);
+    await client.fetchQuery(queries.wishes);
     expect(fetch).toHaveBeenCalledTimes(1);
-    await loadWishes(memory, true);
+    await client.fetchQuery({ ...queries.wishes, staleTime: 0 });
     expect(fetch).toHaveBeenCalledTimes(2);
+    client.clear();
   });
 
   it("keeps cached data after a refresh failure and allows retry", async () => {
-    const memory = createTabMemory();
+    const client = createServerQueryClient();
     const jar = { open: [], received: [], partnerJarEmpty: true };
-    memory.wishes = jar;
+    client.setQueryData(queries.wishes.queryKey, jar);
     const fetch = vi.spyOn(api, "wishes").mockResolvedValue({ ok: false, status: 503, error: null });
-    expect((await loadWishes(memory, true)).ok).toBe(false);
-    expect(memory.wishes).toBe(jar);
+    await expect(client.fetchQuery({ ...queries.wishes, staleTime: 0 })).rejects.toMatchObject({ status: 503 });
+    expect(client.getQueryData(queries.wishes.queryKey)).toBe(jar);
     fetch.mockResolvedValue({ ok: true, data: { ...jar, partnerJarEmpty: false } });
-    expect((await loadWishes(memory, true)).ok).toBe(true);
-    expect(memory.wishes?.partnerJarEmpty).toBe(false);
+    await client.fetchQuery({ ...queries.wishes, staleTime: 0 });
+    expect(client.getQueryData(queries.wishes.queryKey)?.partnerJarEmpty).toBe(false);
+    client.clear();
   });
 });

@@ -8,7 +8,8 @@ import { Journal } from "../src/client/screens/Journal";
 import { Home } from "../src/client/screens/Home";
 import { Wishes } from "../src/client/screens/Wishes";
 import { I18nProvider } from "../src/client/i18n";
-import { createTabMemory, TabMemory } from "../src/client/lib/tabMemory";
+import { TabMemory } from "../src/client/lib/tabMemory";
+import { createQueryFixture as createTabMemory } from "./query-fixture";
 
 const buttons = vi.hoisted(() => new Map<string, () => void>());
 vi.mock("wouter/use-browser-location", async (original) => ({

@@ -1,3 +1,6 @@
+import { testQueryClient } from "./query-fixture";
+import { queries } from "../src/client/lib/queries";
+import { flushQueryWork } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { StarredBlock, StarredCard } from "../src/client/components/bisou/StarredCards";
@@ -79,7 +82,7 @@ it("garden-stages R43 R44 AC25 AC35: chips hide the text box, cancel submits not
   render(component).find((node) => node.type === ToggleGroup)!.props.onValueChange!("later_not_applicable");
   expect(render(component).some((node) => node.props.children === "Úp thẻ")).toBe(true);
   render(component).find((node) => node.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(save).toHaveBeenCalledWith("L2-01", { choice: "later_not_applicable" });
   expect(changed).toHaveBeenCalledOnce();
 });
@@ -101,6 +104,7 @@ it("garden-stages R48 R50 R59 AC27 AC33: named banner accepts the displayed revi
   const component = () => GardenStageNotice({ state, partnerName: "An", memoryScope: "banner-test", onChanged: changed, onSignedOut: vi.fn() });
   expect(render(component).some((node) => node.props.children === "An muốn hai đứa bước sang Sống chung")).toBe(true);
   await click(render(component), "Đồng ý");
+  await vi.waitFor(() => expect(changed).toHaveBeenCalledOnce());
   expect(accept).toHaveBeenCalledWith({ action: "accept", revision: 3 }); expect(changed).toHaveBeenCalledOnce();
   for (const effect of hooks.effects.splice(0)) effect();
   expect(render(component).find((node) => node.type === GardenScene)!.props.open).toBe(true);
@@ -121,12 +125,12 @@ it("garden-stages R54: the Garden lists the furthest stage's decisions, my turn 
   setup();
   vi.spyOn(api, "gardenStageDecisions").mockResolvedValue({ ok: true, data: { cards: [] } });
   const props = { myName: "An", partnerName: "Bình", memoryScope: "decisions-test", onChanged: vi.fn(), onSignedOut: vi.fn() };
-  hooks.values[0] = [
+  testQueryClient.setQueryData(queries.gardenDecisions("in_love").queryKey, { cards: [
     { ...card, cardId: "L2-01", mine: "x", partner: "y", flippedDay: "2026-11-09" },
     { ...card, cardId: "L2-02" },
     { ...card, cardId: "L2-03", partnerAnswered: true },
     { ...card, cardId: "L2-04", mine: "mine" },
-  ];
+  ] });
   const nodes = render(() => GardenStageDecisions({ ...props, stageId: "in_love" }));
   const text = (value: string) => nodes.some((node) => node.props.children === value);
   expect(text("Điều cần bàn trước khi Sống chung")).toBe(true);
@@ -142,7 +146,7 @@ it("garden-stars R67 AC39: the stage answered list shows a star toggle on a reve
   const store = setup();
   const answered = { ...card, mine: "An's answer", partner: "Bình's answer", flippedDay: "2026-11-09" };
   store.set(flipKey("stage-stars", answered), "1");
-  hooks.values[0] = [answered];
+  testQueryClient.setQueryData(queries.gardenStage("in_love").queryKey, { cards: [answered] });
   const nodes = render(() => GardenStageView({ levels: state.levels, plants: [], freshness: "fresh", stageId: "in_love", myName: "An", partnerName: "Bình", memoryScope: "stage-stars", onOpenMap: vi.fn(), onSelectStage: vi.fn(), onOpenDeck: vi.fn(), onChanged: vi.fn(), onSignedOut: vi.fn() }));
   const listed = nodes.find(node => node.type === GardenCard)!;
   hooks.values = [];
@@ -167,7 +171,7 @@ it.each([
   const component = () => GardenCard({ card: flipped, myName: "An", partnerName: "Bình", memoryScope: "star-click", onChanged: changed, onSignedOut: signedOut });
   const label = starred ? "Bỏ sao" : "Gắn sao";
   render(component).find(node => Array.isArray(node.props.children) && node.props.children.includes(label))!.props.onClick!();
-  await Promise.resolve();
+  await flushQueryWork();
   expect(starred ? unstar : star).toHaveBeenCalledExactlyOnceWith("money-01");
   expect(starred ? star : unstar).not.toHaveBeenCalled();
   expect(changed).toHaveBeenCalledTimes(status === 200 ? 1 : 0);
@@ -191,7 +195,7 @@ async function loadStars(cards: GardenCardState[], component: () => ReactNode) {
   vi.spyOn(api, "gardenStars").mockResolvedValue({ ok: true, data: { cards } });
   render(component);
   for (const effect of hooks.effects.splice(0)) effect();
-  await Promise.resolve();
+  await flushQueryWork();
   return render(component);
 }
 
@@ -214,8 +218,8 @@ it.each([{ cards: [] }, { cards: [starredCards[0]!] }])("garden-stars AC42: full
   const nodes = await loadStars([], component);
   // A server result can also contain a card this device has never revealed.
   vi.mocked(api.gardenStars).mockResolvedValue({ ok: true, data: { cards } });
-  document.dispatchEvent(new Event("visibilitychange"));
-  await Promise.resolve();
+  await testQueryClient.fetchQuery({ ...queries.gardenStars, staleTime: 0 }).catch(() => {});
+  await flushQueryWork();
   const loaded = render(component);
   expect(loaded.filter(node => node.type === StarredCard)).toHaveLength(0);
   expect(loaded.find(node => node.type === EmptyState)?.props).toMatchObject({ title: "Chưa có câu hỏi quan trọng nào." });
@@ -234,9 +238,9 @@ it.each(["drawer", "partner"])("garden-stars AC42: full stars becomes empty afte
     const drawerCard = render(component).find(node => node.type === GardenCard)!;
     (drawerCard.props as { onChanged: () => void }).onChanged();
   } else {
-    document.dispatchEvent(new Event("visibilitychange"));
+    await testQueryClient.fetchQuery({ ...queries.gardenStars, staleTime: 0 }).catch(() => {});
   }
-  await Promise.resolve();
+  await flushQueryWork();
   const refreshed = render(component);
   expect(refreshed.filter(node => node.type === StarredCard)).toHaveLength(0);
   expect(refreshed.find(node => node.type === EmptyState)?.props).toMatchObject({ title: "Chưa có câu hỏi quan trọng nào." });
@@ -251,7 +255,7 @@ it("garden-stars AC42: full stars keeps loading and failure distinct from an emp
   const component = () => StarredBlock({ ...starredProps, full: true });
   expect(render(component).some(node => node.type === EmptyState)).toBe(false);
   for (const effect of hooks.effects.splice(0)) effect();
-  await Promise.resolve();
+  await flushQueryWork();
   const failed = render(component);
   expect(failed.some(node => node.type === EmptyState)).toBe(false);
   expect(failed.some(node => (node.props as { role?: string }).role === "alert")).toBe(true);

@@ -1,3 +1,4 @@
+import { flushQueryWork } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { NotesSection } from "../src/client/components/bisou/NotesSection";
@@ -49,7 +50,7 @@ it.each([false, true])("entry deletion respects connectivity: online=%s", async 
   const confirm = nodes.find((node) => node.props.children === "entry.deleteYes")!;
   expect(Boolean(confirm.props.disabled)).toBe(!online);
   confirm.props.onClick!();
-  await Promise.resolve();
+  await flushQueryWork();
   expect(remove).toHaveBeenCalledTimes(online ? 1 : 0);
   if (!online) expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
 });
@@ -62,7 +63,7 @@ it.each([false, true])("wish deletion respects connectivity: online=%s", async (
   const confirm = nodes.find((node) => node.key === "confirm-delete")!;
   expect(Boolean(confirm.props.disabled)).toBe(!online);
   confirm.props.onClick!();
-  await Promise.resolve();
+  await flushQueryWork();
   expect(remove).toHaveBeenCalledTimes(online ? 1 : 0);
   if (!online) expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
 });
@@ -70,12 +71,12 @@ it.each([false, true])("wish deletion respects connectivity: online=%s", async (
 it.each([false, true])("claim release respects connectivity: online=%s", async (online) => {
   vi.stubGlobal("navigator", { onLine: online });
   const remove = vi.spyOn(api, "releaseClaim").mockResolvedValue({ ok: true, data: { ok: true } });
-  state.push([], false, { ...wish, id: "claim" }, false, null);
+  state.push([], { ...wish, id: "claim" }, false, null);
   const nodes = elements(ClaimsList({ onSignedOut: vi.fn() }));
   const confirm = nodes.find((node) => node.props.children === "claims.release" && node.props.onClick)!;
   expect(Boolean(confirm.props.disabled)).toBe(!online);
   confirm.props.onClick!();
-  await Promise.resolve();
+  await flushQueryWork();
   expect(remove).toHaveBeenCalledTimes(online ? 1 : 0);
   if (!online) expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
 });
@@ -87,7 +88,7 @@ it("ComposeSheet keeps a valid draft but refuses submission offline", async () =
   const form = sheet.props.children[0].props.children;
   const nodes = elements(form.type(form.props));
   nodes.find((node) => node.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(save).not.toHaveBeenCalled();
   expect(nodes.find((node) => node.props.children === "compose.save")!.props.disabled).toBe(true);
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(false);
@@ -101,7 +102,7 @@ it("pwa AC11 R11: a new journal entry is not sent offline and its save button st
   state.push(Date.UTC(2026, 10, 6), "2026-11-06", "A new memory");
   const nodes = elements(form.type(form.props));
   nodes.find((node) => node.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(create).not.toHaveBeenCalled();
   expect(nodes.find((node) => node.props.children === "compose.save")!.props.disabled).toBe(true);
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(false);
@@ -113,7 +114,7 @@ it("pwa AC11 R11: a new wish is not sent offline and its save button is disabled
   state.push("A book");
   const nodes = elements(WishSheet({ wish: null, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() }));
   nodes.find((node) => node.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(create).not.toHaveBeenCalled();
   expect(nodes.find((node) => node.props.children === "wish.save")!.props.disabled).toBe(true);
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
@@ -153,7 +154,7 @@ it("notes AC33 AC40: an offline draft cannot save", async () => {
   state.push({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" });
   const nodes = elements(form.type(form.props));
   nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(create).not.toHaveBeenCalled(); expect(update).not.toHaveBeenCalled();
   expect(nodes.find(n => n.props.children === "notes.send")!.props.disabled).toBe(true);
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
@@ -165,7 +166,7 @@ it("notes-journal AC20, notes AC40: closed-note editing keeps fields but cannot 
   const noteEntry = { ...entry, note: { id: "note", recipientId: "binh", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", pick: "try" as const, line: "Understood" } };
   const { ClosedNoteSheet } = await import("../src/client/components/bisou/ClosedNoteSheet");
   const nodes = elements(ClosedNoteSheet({ entry: noteEntry, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() }));
-  nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() }); await Promise.resolve();
+  nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() }); await flushQueryWork();
   expect(save).not.toHaveBeenCalled(); expect(nodes.find(n => n.props.children === "notes.save")!.props.disabled).toBe(true);
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);
 });

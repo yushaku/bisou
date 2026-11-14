@@ -9,6 +9,7 @@ import { clearJoinCode } from "./lib/joinLink";
 import { clearCardBoxCache } from "./lib/cardBox";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
 import { Login } from "./screens/Login";
+import { ServerDataProvider } from "./lib/serverQuery";
 
 const Home = lazy(() => import("./screens/Home").then(m => ({ default: m.Home })));
 const Journal = lazy(() => import("./screens/Journal").then(m => ({ default: m.Journal })));
@@ -178,14 +179,16 @@ function SignedIn({
     </Switch>
   );
   return (
-    <TabMemory value={tabMemory}>
-      <Suspense fallback={<LoadingScreen />}>
-        {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
-        <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
-        {location === "/settings" && <Settings {...session} couple={couple} onCouple={onCouple} />}
-        {location === "/settings/appearance" && <Appearance />}
-        {location === "/settings/notifications" && (paired ? <Notifications onSignedOut={onSignedOut} /> : <Settings {...session} couple={couple} onCouple={onCouple} />)}
-      </Suspense>
-    </TabMemory>
+    <ServerDataProvider key={`${user.id}:${couple?.id ?? "unpaired"}`}>
+      <TabMemory value={tabMemory}>
+        <Suspense fallback={<LoadingScreen />}>
+          {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
+          <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
+          {location === "/settings" && <Settings {...session} couple={couple} onCouple={onCouple} />}
+          {location === "/settings/appearance" && <Appearance />}
+          {location === "/settings/notifications" && (paired ? <Notifications onSignedOut={onSignedOut} /> : <Settings {...session} couple={couple} onCouple={onCouple} />)}
+        </Suspense>
+      </TabMemory>
+    </ServerDataProvider>
   );
 }

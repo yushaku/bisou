@@ -1,8 +1,9 @@
 import { Mascot } from "../components/bisou/Mascot";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { queries } from "../lib/queries";
+import { useServerQuery } from "../lib/serverQuery";
 import type { Couple } from "../../shared/types";
-import { type GardenState, type RelationshipLevel } from "../../shared/garden";
-import { api } from "../api";
+import { type RelationshipLevel } from "../../shared/garden";
 import { GardenMap } from "../components/bisou/GardenMap";
 import { GardenStageSheet } from "../components/bisou/GardenStageSheet";
 import { GardenStageView } from "../components/bisou/GardenStageView";
@@ -16,29 +17,11 @@ import { useLocation } from "wouter";
 export function Garden({ couple, ...session }: SessionProps & { couple: Couple }) {
   const { user, onSignedOut } = session;
   const { t } = useI18n();
-  const [state, setState] = useState<GardenState | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data: state, failed, refresh } = useServerQuery(queries.garden, onSignedOut);
   const [view, setView] = useState<"garden" | "map">("garden");
   const [viewingId, setViewingId] = useState<RelationshipLevel | null>(null);
   const [sheetLevel, setSheetLevel] = useState<RelationshipLevel | null>(null);
   const [location, navigate] = useLocation();
-  const request = useRef(0);
-  const refresh = useCallback(async () => {
-    const version = ++request.current;
-    const result = await api.garden();
-    if (version !== request.current) return;
-    if (result.ok) { setState(result.data); setFailed(false); }
-    else if (result.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [onSignedOut]);
-  useEffect(() => {
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    void refresh();
-    const timer = setInterval(visible, 15000);
-    document.addEventListener("visibilitychange", visible);
-    window.addEventListener("online", visible);
-    return () => { ++request.current; clearInterval(timer); document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
-  }, [refresh]);
   const stageId: RelationshipLevel = viewingId ?? state?.levels.selectedLevelId ?? state?.levels.initialLevelId ?? "acquainted";
   const myName = user.displayName?.trim() || t("garden.me");
   const partnerName = couple.members.find((member) => member.id !== user.id)?.displayName?.trim() || t("garden.partner");

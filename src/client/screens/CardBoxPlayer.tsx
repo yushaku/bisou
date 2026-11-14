@@ -1,9 +1,11 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { queries } from "../lib/queries";
+import { ApiQueryError, useApiMutation, useServerQuery } from "../lib/serverQuery";
 import type { Couple } from "../../shared/types";
 import { api } from "../api";
 import { BottomBar } from "../components/bisou/AppShell";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
-import { TabMemory } from "../lib/tabMemory";
 import { Celebration } from "../components/bisou/Celebration";
 import { Mascot } from "../components/bisou/Mascot";
 import { CardBoxGift } from "../components/bisou/CardBoxGift";
@@ -19,35 +21,29 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
   const online = useOnline();
   const active = useRef(true);
   const scope = `${couple.id}:${user.id}`;
-  const [detail, setDetail] = useState(() => readCache(scope, `box:${boxId}`));
+  const client = useQueryClient();
+  const unlockBox = useApiMutation(api.unlockBox, ["boxes"]);
+  const { data: detail, setData: setDetail, error: queryError, refresh } = useServerQuery({ ...queries.box(boxId),
+    initialData: () => readCache(scope, `box:${boxId}`) ?? undefined, initialDataUpdatedAt: 0,
+  }, onSignedOut);
   const [play, setPlay] = useState<Play>({ stack: [], index: -1, startedOver: false });
   const [seen, setSeen] = useState(() => readSeen(scope, boxId));
-  const [error, setError] = useState<"notFound" | "loadError" | null>(null);
-  const memory = useContext(TabMemory);
+  const error = queryError ? queryError instanceof ApiQueryError && queryError.status === 404 ? "notFound" : "loadError" : null;
   const [celebrating, setCelebrating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [unlockFailed, setUnlockFailed] = useState(false);
   const [unlockPending, setUnlockPending] = useState(false);
   const unlocking = useRef(false);
   const navigation = useTabNavigation();
-  const refresh = useCallback(async () => {
-    const res = await api.box(boxId);
-    if (!active.current) return;
-    if (res.ok) {
-      writeCache(scope, `box:${boxId}`, res.data);
-      setDetail(res.data); setError(null);
-      setPlay(play => res.data.cards.some(card => card.id === play.stack[play.index]) ? { ...play, startedOver: play.startedOver && !res.data.box.open } : { stack: [], index: -1, startedOver: false });
-    }
-    else if (res.status === 401) onSignedOut();
-    else setError(res.status === 404 ? "notFound" : "loadError");
-  }, [boxId, onSignedOut, scope]);
   useEffect(() => {
     active.current = true;
-    void refresh();
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    document.addEventListener("visibilitychange", visible); window.addEventListener("online", visible);
-    return () => { active.current = false; document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
-  }, [refresh]);
+    return () => { active.current = false; };
+  }, []);
+  useEffect(() => {
+    if (!detail) return;
+    writeCache(scope, `box:${boxId}`, detail);
+    setPlay(play => detail.cards.some(card => card.id === play.stack[play.index]) ? { ...play, startedOver: play.startedOver && !detail.box.open } : { stack: [], index: -1, startedOver: false });
+  }, [detail, scope, boxId]);
   const draw = (random = false) => { if (!detail) return; const next = (random ? randomCard : nextCard)(detail, play, seen); setPlay(next.play); setSeen(next.seen); writeSeen(scope, boxId, next.seen); };
   useEffect(() => {
     if (detail && play.index < 0 && !play.startedOver && detail.cards.length) {
@@ -57,7 +53,7 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
   const unlock = async () => {
     if (!online || unlocking.current) return;
     unlocking.current = true; setUnlockPending(true); setUnlockFailed(false);
-    const res = await api.unlockBox(boxId);
+    const res = await unlockBox(boxId);
     unlocking.current = false;
     if (!active.current) return;
     setUnlockPending(false);
@@ -67,8 +63,8 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
       return;
     }
     writeCache(scope, `box:${boxId}`, res.data);
-    const boxes = (memory?.boxes ?? readCache(scope, "list"))?.map(box => box.id === boxId ? res.data.box : box);
-    if (boxes) { writeCache(scope, "list", boxes); if (memory) memory.boxes = boxes; }
+    const boxes = (client.getQueryData(queries.boxes.queryKey)?.boxes ?? readCache(scope, "list"))?.map(box => box.id === boxId ? res.data.box : box);
+    if (boxes) { writeCache(scope, "list", boxes); client.setQueryData(queries.boxes.queryKey, { boxes }); }
     setDetail(res.data); setDialogOpen(false); setCelebrating(true);
     const next = nextCard(res.data, play, seen);
     setPlay(next.play); setSeen(next.seen); writeSeen(scope, boxId, next.seen);

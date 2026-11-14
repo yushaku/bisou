@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import type { Wish, WishPriority } from "../../../shared/types";
 import { api } from "@/api";
+import { useApiMutation } from "@/lib/serverQuery";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -24,6 +25,8 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
   onSignedOut: () => void;
 }) {
   const { t, locale } = useI18n();
+  const createWish = useApiMutation(api.createWish, ["wishes"]);
+  const updateWish = useApiMutation(api.updateWish, ["wishes", "claims"]);
   const online = useOnline();
   const offlineId = useId();
   const ids = useId();
@@ -46,7 +49,7 @@ export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu }: {
     e.preventDefault();
     if (!online || block || saving) return;
     setSaving(true);
-    const res = wish ? await api.updateWish(wish.id, input) : await api.createWish(input);
+    const res = wish ? await updateWish(wish.id, input) : await createWish(input);
     setSaving(false);
     if (res.ok) { queue.saved(); onSaved(res.data.wish); onClose(); }
     else if (res.status === 401) onSignedOut();

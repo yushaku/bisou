@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { queries } from "../../lib/queries";
+import { useServerQuery } from "../../lib/serverQuery";
 import { Route } from "lucide-react";
-import { levelRank, type Freshness, type GardenCardState, type GardenLevels as Levels, type GardenPlant, type RelationshipLevel } from "../../../shared/garden";
-import { api } from "../../api";
+import { levelRank, type Freshness, type GardenLevels as Levels, type GardenPlant, type RelationshipLevel } from "../../../shared/garden";
 import { useI18n } from "../../i18n";
 import { GARDEN_STAGE_LABEL, gardenStageState } from "../../lib/gardenStages";
 import { Button } from "../ui/button";
@@ -31,27 +31,8 @@ export function GardenStageView({ levels, plants, freshness, stageId, myName, pa
   const furthest = levels.furthestLevelId ? levelRank(levels.furthestLevelId) : -1;
   const open = levels.placementComplete && rank <= furthest;
   const current = levels.selectedLevelId === stageId;
-  const [cards, setCards] = useState<GardenCardState[] | null>(null);
-  const [failed, setFailed] = useState(false);
-  const request = useRef(0);
-  const load = useCallback(async () => {
-    if (!open) { setCards(null); setFailed(false); return; }
-    const version = ++request.current;
-    const result = await api.gardenStage(stageId);
-    if (version !== request.current) return;
-    if (result.ok) { setCards(result.data.cards); setFailed(false); }
-    else if (result.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [open, stageId, onSignedOut]);
-  useEffect(() => {
-    if (!open) { setCards(null); setFailed(false); return; }
-    const visible = () => { if (document.visibilityState === "visible") void load(); };
-    void load();
-    const timer = setInterval(visible, 15000);
-    document.addEventListener("visibilitychange", visible);
-    window.addEventListener("online", visible);
-    return () => { ++request.current; clearInterval(timer); document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
-  }, [load, open]);
+  const { data, failed, refresh: load } = useServerQuery({ ...queries.gardenStage(stageId), enabled: open }, onSignedOut);
+  const cards = data?.cards ?? null;
 
   return <div className="garden-stage-view">
     <div className="garden-view-head">

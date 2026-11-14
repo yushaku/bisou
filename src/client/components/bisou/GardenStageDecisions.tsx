@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { queries } from "../../lib/queries";
+import { useServerQuery } from "../../lib/serverQuery";
 import { Check, ChevronRight } from "lucide-react";
-import { cardById, CARDS, DECKS, LEVEL_IDS, levelRank, type GardenCardState, type RelationshipLevel } from "../../../shared/garden";
-import { api } from "../../api";
+import { cardById, CARDS, DECKS, LEVEL_IDS, levelRank, type RelationshipLevel } from "../../../shared/garden";
 import { useI18n } from "../../i18n";
 import { decisionStatus, type DecisionStatus as Status } from "../../lib/garden";
 import { cn } from "../../lib/utils";
@@ -22,18 +23,10 @@ export function GardenStageDecisions({ stageId, myName, partnerName, memoryScope
   const { t, locale } = useI18n();
   const next = LEVEL_IDS[levelRank(stageId) + 1];
   const hasQuestions = !!next && CARDS.some((card) => card.kind === "decision" && card.levelId === stageId);
-  const [cards, setCards] = useState<GardenCardState[] | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data, failed, refresh: load } = useServerQuery({ ...queries.gardenDecisions(stageId), enabled: hasQuestions }, onSignedOut);
+  const cards = data?.cards ?? null;
   const [expanded, setExpanded] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const load = useCallback(async () => {
-    if (!hasQuestions) return;
-    const result = await api.gardenStageDecisions(stageId);
-    if (result.ok) { setCards(result.data.cards); setFailed(false); }
-    else if (result.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [hasQuestions, stageId, onSignedOut]);
-  useEffect(() => { void load(); }, [load]);
   if (!hasQuestions) return null;
 
   const sorted = [...(cards ?? [])].sort((a, b) => ORDER[decisionStatus(a)] - ORDER[decisionStatus(b)]);

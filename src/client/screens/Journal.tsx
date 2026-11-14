@@ -1,7 +1,8 @@
 import { Ellipsis, Plus } from "lucide-react";
-import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useJournal } from "../lib/useJournal";
 import { toast } from "@/components/ui/ding-toaster";
-import type { Couple, JournalEntry, JournalPage } from "../../shared/types";
+import type { Couple, JournalEntry } from "../../shared/types";
 import { api, photoUrl } from "../api";
 import { toPeople } from "../components/bisou/CoupleAvatars";
 import { displayName } from "../lib/displayName";
@@ -16,7 +17,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
-import { addPage, groupByDay, refreshFirstPage, removeEntry, upsertEntry } from "../lib/journalFeed";
+import { groupByDay } from "../lib/journalFeed";
 import { toCard } from "../lib/journalCard";
 import { TabMemory } from "../lib/tabMemory";
 import { useCreateRequest } from "../lib/useTabNavigation";
@@ -46,15 +47,11 @@ export function Journal({ couple, ...session }: JournalProps) {
     if (url.searchParams.get("section") === "notes") { url.searchParams.delete("section"); history.replaceState(history.state, "", url); }
   }, [memory, section]);
   // null until the first page arrives; never shown as an empty journal while loading or failed.
-  const [feed, setFeed] = useState<JournalPage | null>(() => memory?.journal ?? null);
-  useLayoutEffect(() => {
-    if (memory) memory.journal = feed;
-  }, [feed, memory]);
-  const [firstLoad, setFirstLoad] = useState<"loading" | "error">("loading");
-  const [more, setMore] = useState<"idle" | "loading" | "error">("idle");
-  const [stale, setStale] = useState(false);
+  const { feed, refresh, loadMore, failed, moreFailed, loadingMore, saveEntry, removeEntry: removeCachedEntry } = useJournal(onSignedOut);
+  const firstLoad = failed ? "error" : "loading";
+  const more = loadingMore ? "loading" : moreFailed ? "error" : "idle";
+  const stale = failed && !moreFailed;
   const online = useOnline();
-  const moreBusy = useRef(false);
   const sentinel = useRef<HTMLDivElement>(null);
   const notesRef = useRef<{ refresh: () => Promise<void> }>(null);
 
@@ -99,13 +96,13 @@ export function Journal({ couple, ...session }: JournalProps) {
     return entry?.note ? api.deleteNote(entry.note.id) : api.deleteEntry(id);
   };
   const onDeleted = (id: string) => {
-    setFeed((f) => f && removeEntry(f, id));
+    removeCachedEntry(id);
     toast.success(t("entry.deleted"));
   };
 
-  // A saved entry joins the loaded feed in its place without a refetch; the partner sees it on their next refresh.
+  // A saved entry joins the shared feed in place; the partner sees it on their next refresh.
   const onSaved = (entry: JournalEntry) => {
-    setFeed((f) => (f ? upsertEntry(f, entry) : { entries: [entry], nextCursor: null }));
+    saveEntry(entry);
     setFocusId(entry.id);
     toast.success(t("compose.saved", { day: formatDay(entry.date, locale) }));
   };
@@ -118,63 +115,13 @@ export function Journal({ couple, ...session }: JournalProps) {
     setFocusId(null);
   }, [focusId, feed]);
 
-  // A 401 leaves the journal; its data goes with the session.
-  const refresh = useCallback(async () => {
-    const res = await api.journal();
-    if (!res.ok) {
-      if (res.status === 401) return onSignedOut();
-      setFirstLoad("error");
-      setStale(true);
-      return;
-    }
-    setStale(false);
-    setFeed((f) => (f ? refreshFirstPage(f, res.data) : res.data));
-  }, [onSignedOut]);
-
   const pullRefresh = useCallback(async () => {
     await Promise.all([refresh(), section === "notes" ? notesRef.current?.refresh() : undefined]);
   }, [refresh, section]);
 
-  const loadMore = useCallback(async () => {
-    const cursor = feed?.nextCursor;
-    if (!cursor || moreBusy.current) return;
-    moreBusy.current = true;
-    setMore("loading");
-    const res = await api.journal(cursor);
-    moreBusy.current = false;
-    if (!res.ok) {
-      if (res.status === 401) return onSignedOut();
-      setMore("error");
-      return;
-    }
-    setMore("idle");
-    setFeed((f) => (f ? addPage(f, res.data) : res.data));
-  }, [feed?.nextCursor, onSignedOut]);
-
   const retryFirst = () => {
-    setFirstLoad("loading");
     void refresh();
   };
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  // Picks up the partner's entries when the app comes back to the front or the network returns.
-  useEffect(() => {
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") void refresh();
-    };
-    const onOnline = () => {
-      void refresh();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("online", onOnline);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("online", onOnline);
-    };
-  }, [refresh]);
 
   // A new observer per page: observe() reports at once, so a sentinel still in view loads the next page too.
   const autoLoad = typeof IntersectionObserver !== "undefined";

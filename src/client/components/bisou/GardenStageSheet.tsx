@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { levelRank, type GardenLevels as Levels, type LevelAction, type RelationshipLevel } from "../../../shared/garden";
 import { api } from "../../api";
+import { useApiMutation } from "../../lib/serverQuery";
 import { useI18n } from "../../i18n";
 import { useOnline } from "../../lib/useOnline";
 import { Button } from "../ui/button";
@@ -20,6 +21,7 @@ export function GardenStageSheet({ levels, levelId, partnerName, open, onClose, 
   onViewStage: (levelId: RelationshipLevel) => void;
 }) {
   const { t } = useI18n();
+  const changeLevels = useApiMutation(api.gardenLevels, ["garden"]);
   const online = useOnline();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export function GardenStageSheet({ levels, levelId, partnerName, open, onClose, 
     if (!online || busy) return;
     setBusy(true);
     setError(null);
-    const result = await api.gardenLevels(action);
+    const result = await changeLevels(action);
     setBusy(false);
     if (!result.ok) {
       if (result.status === 401) return onSignedOut();

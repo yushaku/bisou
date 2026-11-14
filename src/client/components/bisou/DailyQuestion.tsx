@@ -1,7 +1,9 @@
 import { Mascot } from "./Mascot";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { queries } from "../../lib/queries";
+import { useApiMutation, useServerQuery } from "../../lib/serverQuery";
 import type { Couple, User } from "../../../shared/types";
-import { cardById, DECKS, type GardenState } from "../../../shared/garden";
+import { cardById, DECKS } from "../../../shared/garden";
 import { api } from "../../api";
 import { useI18n } from "../../i18n";
 import { useOnline } from "../../lib/useOnline";
@@ -15,36 +17,19 @@ import { GardenScene } from "./GardenScene";
 export function DailyQuestion({ couple, user, onSignedOut }: { couple: Couple; user: User; onSignedOut: () => void }) {
   const { t, locale } = useI18n();
   const online = useOnline();
-  const [state, setState] = useState<GardenState | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { data: state, setData: setState, failed, refresh } = useServerQuery(queries.garden, onSignedOut);
+  const swapCard = useApiMutation(api.swapGarden, ["garden"]);
   const [scene, setScene] = useState(false);
   const [swapping, setSwapping] = useState(false);
   const [swapError, setSwapError] = useState<string | null>(null);
-  const request = useRef(0);
-  const refresh = useCallback(async () => {
-    const version = ++request.current;
-    const result = await api.garden();
-    if (version !== request.current) return;
-    if (result.ok) { setState(result.data); setFailed(false); }
-    else if (result.status === 401) onSignedOut();
-    else setFailed(true);
-  }, [onSignedOut]);
-  useEffect(() => {
-    const visible = () => { if (document.visibilityState === "visible") void refresh(); };
-    void refresh();
-    const timer = setInterval(visible, 15000);
-    document.addEventListener("visibilitychange", visible);
-    window.addEventListener("online", visible);
-    return () => { ++request.current; clearInterval(timer); document.removeEventListener("visibilitychange", visible); window.removeEventListener("online", visible); };
-  }, [refresh]);
   const partner = couple.members.find((member) => member.id !== user.id);
   async function swap() {
     if (!state?.today || swapping || !online) return;
     setSwapping(true);
     setSwapError(null);
-    const result = await api.swapGarden(state.today.cardId);
+    const result = await swapCard(state.today.cardId);
     setSwapping(false);
-    if (result.ok) { ++request.current; setState(result.data); }
+    if (result.ok) setState(result.data);
     else if (result.status === 401) onSignedOut();
     else {
       setSwapError(t(result.error?.error === "swap_locked" ? "garden.swapLocked" : result.error?.error === "no_other_card" ? "garden.noOtherCard" : "error.generic"));

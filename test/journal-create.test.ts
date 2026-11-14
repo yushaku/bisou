@@ -1,3 +1,4 @@
+import { flushQueryWork } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { Journal } from "../src/client/screens/Journal";
@@ -97,7 +98,7 @@ it.each(["feed", "notes"])("pulling on %s refreshes its data and waits for compl
   expect(feedRefresh).toHaveBeenCalledOnce();
   if (section === "notes") {
     expect(notesRefresh).toHaveBeenCalledOnce();
-    await Promise.resolve();
+    await flushQueryWork();
     expect(done).toBe(false);
     finish();
   } else expect(notesRefresh).not.toHaveBeenCalled();
@@ -229,7 +230,7 @@ it.each(["now", "eightHours", "custom"] as const)("note composer submits %s deli
     form = render();
   }
   form.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(created).toHaveBeenCalledWith({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", delivery, ...(delivery === "custom" ? { sendAt: new Date(custom).getTime() } : {}) });
   expect(props.onSaved).toHaveBeenCalled();
 });
@@ -256,6 +257,6 @@ it.each([false, true])("editing a scheduled note preserves delivery unless chang
   expect(form.find(n => n.type === Input)!.props.value).toBe("2099-11-13T06:30");
   if (sendNow) { form.find(n => n.type === ToggleGroup)!.props.onValueChange!("now"); form = render(); }
   form.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  await Promise.resolve();
+  await flushQueryWork();
   expect(update).toHaveBeenCalledWith("n", { ...entry, ...(sendNow ? { delivery: "now" } : {}) });
 });

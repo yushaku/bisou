@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { GardenState, RelationshipLevel } from "../../../shared/garden";
 import { api } from "../../api";
+import { useApiMutation } from "../../lib/serverQuery";
 import { useI18n } from "../../i18n";
 import { gardenMemoryKey, gardenSeen, rememberGarden } from "../../lib/garden";
 import { useOnline } from "../../lib/useOnline";
@@ -12,6 +13,7 @@ export function GardenStageNotice({ state, memoryScope, partnerName, onChanged, 
   onChanged: () => void; onSignedOut: () => void;
 }) {
   const { t } = useI18n();
+  const changeLevels = useApiMutation(api.gardenLevels, ["garden"]);
   const online = useOnline();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function GardenStageNotice({ state, memoryScope, partnerName, onChanged, 
     if (!online || busy) return;
     setBusy(true);
     setError(null);
-    const result = await api.gardenLevels({ action, revision: state.levels.revision });
+    const result = await changeLevels({ action, revision: state.levels.revision });
     setBusy(false);
     if (!result.ok) {
       if (result.status === 401) return onSignedOut();

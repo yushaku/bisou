@@ -1,3 +1,4 @@
+import { useApiMutation } from "@/lib/serverQuery";
 import { useId, useState } from "react";
 import type { CloseInput, JournalEntry } from "../../../shared/types";
 import { NOTE_LINE_MAX, NOTE_PICKS } from "../../../shared/notes";
@@ -16,12 +17,13 @@ export function CloseFields({ value, onChange, disabled }: { value: { pick: Clos
 }
 export function NoteCloseSheet({ id, onClose, onClosed, onSignedOut }: { id: string; onClose: () => void; onClosed: (entry: JournalEntry) => void; onSignedOut: () => void }) {
   const { t } = useI18n(), online = useOnline();
+  const closeNote = useApiMutation(api.closeNote, ["notes", "journal"]);
   const [value, setValue] = useState<{ pick: CloseInput["pick"] | ""; line: string }>({ pick: "", line: "" });
   const [saving, setSaving] = useState(false), [error, setError] = useState(false);
   async function close() {
     if (!online || saving || !value.pick || Array.from(value.line.trim()).length > NOTE_LINE_MAX) return;
     setSaving(true); setError(false);
-    const res = await api.closeNote(id, { pick: value.pick, line: value.line }); setSaving(false);
+    const res = await closeNote(id, { pick: value.pick, line: value.line }); setSaving(false);
     if (res.ok) { onClosed(res.data.entry); return; }
     if (res.status === 401) return onSignedOut();
     setError(true);
