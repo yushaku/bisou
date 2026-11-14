@@ -74,6 +74,14 @@ it.each(["vi", "en"])("card-box AC11 AC12 AC13: five kinds are readable without 
   expect(html).not.toMatch(/<button|<input|<select|role="radio|role="slider/);
   for (const label of locale === "vi" ? ["Câu hỏi", "Thử", "Ai hơn?", "Chọn một", "Từ 1 đến 10", "1: Ít 10: Nhiều"] : ["Question", "Try it", "Who’s more?", "Pick one", "1 to 10", "1: Low 10: High"]) expect(html).toContain(label);
 });
+it("Home grid shows only the first four boxes, without descriptions", () => {
+  const boxes = ["a", "b", "c", "d", "e"].map(id => ({ ...detail.box, id, description: { vi: "Mô tả", en: "About" } }));
+  const html = renderToString(h(Router, { ssrPath: "/", children: h(I18nProvider, null, h(CardBoxRows, { boxes, from: "/", compact: true })) }));
+  expect(html.match(/<li/g)).toHaveLength(4);
+  expect(html).not.toContain("card-box-e");
+  expect(html).not.toMatch(/Mô tả|About/);
+});
+
 it.each(["vi", "en"] as const)("product grid shows background covers, descriptions and price badges in %s", locale => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
   const free = { ...detail.box, description: { vi: "Câu nhẹ nhàng", en: "Light cards" } };

@@ -14,6 +14,8 @@ Couples need cards that feel warm, plain and safe to say aloud to each other, an
 - US1 (PO): have every card follow one copy standard, so that no card embarrasses or pressures a couple. AC28
 - US2 (partner): play Truth or Dare, a light paid box of honest questions and small dares, so that we laugh together. AC34
 - US3 (partner): play Rau răm, an adults-only paid box, privately and with every dare optional, so that we can be playful and bolder with consent. AC37, AC38, AC39, AC40
+- US4 (partner): play Mật đắng, a free box about the joy, anger, jealousy and sadness in love, so that we can talk about the parts that aren't rosy. AC49
+- US5 (partner): play Bị thương hay được phạt, an adults-only paid box where whoever draws picks being cherished or being playfully punished, so that we can set the mood with a little power play. AC50
 
 ## Business rules
 
@@ -28,17 +30,26 @@ Copy of every card
 - R53. A scale card asks each partner about themselves, never to rate the other partner, the relationship or their love.
 - R54. A card's Vietnamese and English say the same thing, each written naturally; Vietnamese cards speak to both partners without "anh" / "em" or any form that assumes who is who.
 
+Mật đắng
+
+- R86. Bisou has the free box "Mật đắng" / "Bittersweet"; it holds 30 cards of every kind except truth or dare, about the emotions of love beyond the happy ones: joy, anger, jealousy, hurt, fear, loneliness and making up. It follows R47 to R54 like every box; a card may ask about a past hurt or fight, but never asks a partner to blame, judge or rate the other.
+
 Truth or Dare
 
-- R70. Bisou has the paid box "Thật hay thử thách" / "Truth or Dare" at 49.000đ; it holds 20 cards, all of kind truth or dare, paired so that both sides of a card feel about equally light, and 3 of them are preview cards.
+- R70. Bisou has the paid box "Thật hay thử thách" / "Truth or Dare" at 49.000đ; it holds 30 cards, all of kind truth or dare, paired so that both sides of a card feel about equally light, and 3 of them are preview cards.
 
 Rau răm
 
 - R73. Bisou has the paid box "Rau răm" / "Spicy", for adults, at 49.000đ; it holds 30 cards, all of kind truth or dare, and 3 of them are preview cards before the gift unlock opens all 30 for both partners.
 - R74. Rau răm shows like every box, after the free boxes, with an "18+" badge on its tile and on each of its cards; there is no age check, warning or setting to show or hide it.
-- R75. For Rau răm only, cards may talk about desire, attraction and intimate memories, and dares may ask the two partners for kissing, touching, a slow massage, taking off a piece of clothing or whispered wishes; this lifts the limit of R48 and R50 for this box and no other.
+- R75. For Rau răm only, cards may talk about desire, attraction and intimate memories, and dares may ask the two partners for kissing, touching, a slow massage, taking off a piece of clothing or whispered wishes; this lifts the limit of R48 and R50 for this box and Bị thương hay được phạt (R88), and no other.
 - R76. Rau răm cards still follow R47, R49 and R51 to R54, and also: wording is tasteful, never graphic or anatomical; a dare involves only the two partners, in private; no card mentions anyone else, alcohol or any substance, or photos, video or recording; no card pressures (no "phải", "không được từ chối" or similar), and a dare that undresses or touches the other asks for their yes.
 - R77. Either partner can say no to any Rau răm card at any time: whoever drew may take the truth instead of the dare, and next card skips the card without asking why ([card-box](card-box.md) R18).
+
+Bị thương hay được phạt
+
+- R87. Bisou has the paid box "Bị thương hay được phạt" / "Cherished or Punished", for adults, at 49.000đ; it holds 30 cards, all of kind rather, and 3 of them are preview cards. On each card the first option starts "Bị thương:" / "Cherished:" and is a tender touch the drawer receives; the second starts "Được phạt:" / "Punished:" and is a playful punishment: being held still, a loose scarf around the wrists, a blindfold, light smacks on the bum, teasing, small commands. The name plays on "thương" (to love).
+- R88. It shows and plays like Rau răm (R74, R77), with the "18+" badge; R75 and R76 apply to it as to Rau răm. Its description asks the couple to agree on a safe word first; no punishment causes pain beyond a light smack, and a tie is always loose enough to slip free.
 
 ## Main flows and exceptions
 
@@ -48,7 +59,9 @@ Rau răm
 
 ## Acceptance criteria
 
-- AC28 (R49 to R54). Given the cards of the free box and of Deep Connection, then each dare can be done on the spot by the two of them alone with at most holding hands, each point card is about a harmless habit, each scale card asks about oneself, and no Vietnamese card uses "anh" or "em".
+- AC28 (R49 to R54). Given the cards of the free boxes and of Deep Connection, then each dare can be done on the spot by the two of them alone with at most holding hands, each point card is about a harmless habit, each scale card asks about oneself, and no Vietnamese card uses "anh" or "em".
+- AC49 (R86, R52, R53). Given the box list, then Mật đắng shows among the free boxes with "Miễn phí" and 30 cards, open in full; its point cards are about a kind habit such as who makes peace first, and its scale cards ask each partner about themselves.
+- AC50 (R87, R88). Given the box list before unlock, then Bị thương hay được phạt shows among the paid boxes with "49.000đ" and the "18+" badge, and only its 3 preview cards can come up; each card offers a "Bị thương:" and a "Được phạt:" option, and its description names a safe word.
 - AC34 (R70, [card-box-unlock](card-box-unlock.md) R27). Given the box list, then Truth or Dare shows its cover, name, description and "49.000đ"; when a couple opens it without the box, then only its 3 preview cards come up.
 - AC37 (R73, R74). Given the box list before unlock, then Rau răm shows after the free boxes with its cover, name, description, "49.000đ" and an "18+" badge; when a couple opens it, then only its 3 preview cards can come up, with no age check or warning first; after the gift unlock both partners can draw any of its 30 cards, and the badge stays.
 - AC38 (R74, [card-box](card-box.md) R71). Given a Rau răm card, then the partner sees the "18+" badge, the label "Thật hay thử thách" and the two blocks "Thật" and "Thử thách"; tapping either block records nothing.

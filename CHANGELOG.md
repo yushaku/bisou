@@ -4,6 +4,9 @@
 
 ### Added
 
+- Bị thương hay được phạt, an 18+ paid box of 30 cards: pick being cherished or being playfully punished.
+- Mật đắng, a free box of 30 cards about the joy, anger, jealousy and sadness in love. Làm quen lại, Deep Connection and Truth or Dare grow to 30 cards each.
+
 - Choose a girl or boy wool mascot on this device in Settings, with illustrations for empty, waiting, error and celebration states.
 
 - Star or unstar flipped Garden cards together; Home shows the three most recently starred cards and links to the full list.
