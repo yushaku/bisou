@@ -26,6 +26,7 @@ Phong cách chung của cả app. Chi tiết từng màn hình nằm trong code;
 - Lựa chọn ngắn dùng chip `ToggleGroup`. Toast dùng ding, dáng viên thuốc đảo màu theo theme.
 - Vùng chạm tối thiểu 44px; tôn trọng safe area trên điện thoại.
 - Trạng thái trống, đang tải, lỗi dùng `EmptyState`, `Skeleton` và linh vật; không tự chế mẫu mới.
+- Chọn và cắt ảnh không hiện toast chờ; toast tiến độ ảnh chỉ hiện khi tải lên.
 
 ## Lời và hình ảnh
 

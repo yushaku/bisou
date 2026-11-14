@@ -79,17 +79,18 @@ it("warns when the wish photo limit is reached without an inline alert", () => {
   expect(nodes.some((node) => node.props.role === "alert")).toBe(false);
 });
 
-it("shows preparing and unreadable-photo toasts, then clears loading on completion and unmount", async () => {
+it("skips the preparing toast and keeps unreadable-photo errors", async () => {
   const uploads = queue();
   const { nodes } = render(uploads);
   nodes.find((node) => node.props.type === "file")!.props.onChange!({ target: { files: [new File(["bad"], "bad.jpg")], value: "" } });
   const { unmount } = render(uploads);
-  expect(toast.loading).toHaveBeenCalledWith("compose.preparing", { id: "picker-toast" });
+  expect(toast.loading).not.toHaveBeenCalled();
   await Promise.resolve();
   expect(toast.error).toHaveBeenCalledWith('compose.photoUnreadable {"name":"bad.jpg"}');
   render(uploads);
-  expect(toast.dismiss).toHaveBeenCalledWith("picker-toast");
+  expect(toast.loading).not.toHaveBeenCalled();
   unmount();
+  expect(toast.dismiss).toHaveBeenCalledWith("picker-toast");
 });
 
 it("dismisses an upload still in flight when the picker unmounts", () => {

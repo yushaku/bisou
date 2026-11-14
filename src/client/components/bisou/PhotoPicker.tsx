@@ -19,7 +19,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
   const [preparing, setPreparing] = useState(false);
   const [cropping, setCropping] = useState<CropRequest | null>(null);
   const toastId = useId();
-  const loading = useRef<"preparing" | "uploading" | null>(null);
+  const loading = useRef(false);
   const batch = useRef(new Set<string>());
   const latestQueue = useRef(queue);
   latestQueue.current = queue;
@@ -41,10 +41,7 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
       const title = t("compose.uploadProgress", { index: Math.min(settled + 1, photos.length), total: photos.length });
       const progress = photos.reduce((sum, item) => sum + (item.state === "done" ? 1 : item.state === "uploading" ? item.progress : 0), 0) / photos.length;
       toast.loading(title, { id: toastId, progress });
-      loading.current = "uploading";
-    } else if (preparing) {
-      if (loading.current !== "preparing") toast.loading(t("compose.preparing"), { id: toastId });
-      loading.current = "preparing";
+      loading.current = true;
     } else if (loading.current) {
       const failed = queue.items.filter((item) => item.state === "failed");
       if (failed.length) {
@@ -60,10 +57,10 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
       } else if (photos.some((item) => item.state === "done")) {
         toast.success(t("compose.photosUploaded"), { id: toastId });
       } else toast.dismiss(toastId);
-      loading.current = null;
+      loading.current = false;
       batch.current.clear();
     }
-  }, [queue.items, queue.retry, preparing, t, toastId]);
+  }, [queue.items, queue.retry, t, toastId]);
   /* The square the author frames in the crop step, or null when they skip the photo. */
   const frame = (file: File, bitmap: ImageBitmap, index: number, total: number) =>
     new Promise<Area | null>((resolve) => {
