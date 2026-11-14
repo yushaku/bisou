@@ -39,6 +39,8 @@
 
 ### Changed
 
+- Signed-in screens load on demand, reducing initial JavaScript from 238 kB to 157 kB gzipped; production builds enforce a 200 kB initial JavaScript budget.
+
 - Either partner can edit journal entries; delete permissions are unchanged.
 - On the Journal tab, + opens the composer at once with two tabs, Journal and Kind note; it starts on the section you are viewing and keeps what you typed in both tabs while switching. The composer no longer shows your avatar and name, nor the "Past days are welcome" hint.
 - The offline notice is now a toast at the top (title, a line about loaded data, Retry and close) that stays while you are offline and goes away when the connection returns; a newer toast can temporarily replace it.

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/dev-seed-garden.mjs",
     "dev:phone": "node scripts/dev-phone.mjs",
-    "build": "vite build",
+    "build": "vite build && node --test test/client-bundle.test.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.worker.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p test/tsconfig.json",
     "test": "vitest run && node --test test/design-system.test.mjs test/pwa-assets.test.mjs scripts/check-migrations.test.mjs scripts/dev-seed-garden.test.mjs",

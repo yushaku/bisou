@@ -1,6 +1,3 @@
-import { Starred } from "./screens/Starred";
-import { CardBoxes } from "./screens/CardBoxes";
-import { CardBoxPlayer } from "./screens/CardBoxPlayer";
 import { Activity, lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
@@ -11,18 +8,22 @@ import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
 import { clearCardBoxCache } from "./lib/cardBox";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
-import { Appearance } from "./screens/Appearance";
-import { Notifications } from "./screens/Notifications";
-import { Events } from "./screens/Events";
-import { Home } from "./screens/Home";
-import { Wishes } from "./screens/Wishes";
-import { Journal } from "./screens/Journal";
 import { Login } from "./screens/Login";
-import { Onboarding } from "./screens/Onboarding";
-import { Pairing } from "./screens/Pairing";
-import { Settings } from "./screens/Settings";
-import { Garden } from "./screens/Garden";
-import { GardenDeck } from "./screens/GardenDeck";
+
+const Home = lazy(() => import("./screens/Home").then(m => ({ default: m.Home })));
+const Journal = lazy(() => import("./screens/Journal").then(m => ({ default: m.Journal })));
+const Wishes = lazy(() => import("./screens/Wishes").then(m => ({ default: m.Wishes })));
+const Garden = lazy(() => import("./screens/Garden").then(m => ({ default: m.Garden })));
+const GardenDeck = lazy(() => import("./screens/GardenDeck").then(m => ({ default: m.GardenDeck })));
+const Starred = lazy(() => import("./screens/Starred").then(m => ({ default: m.Starred })));
+const CardBoxes = lazy(() => import("./screens/CardBoxes").then(m => ({ default: m.CardBoxes })));
+const CardBoxPlayer = lazy(() => import("./screens/CardBoxPlayer").then(m => ({ default: m.CardBoxPlayer })));
+const Events = lazy(() => import("./screens/Events").then(m => ({ default: m.Events })));
+const Settings = lazy(() => import("./screens/Settings").then(m => ({ default: m.Settings })));
+const Appearance = lazy(() => import("./screens/Appearance").then(m => ({ default: m.Appearance })));
+const Notifications = lazy(() => import("./screens/Notifications").then(m => ({ default: m.Notifications })));
+const Onboarding = lazy(() => import("./screens/Onboarding").then(m => ({ default: m.Onboarding })));
+const Pairing = lazy(() => import("./screens/Pairing").then(m => ({ default: m.Pairing })));
 
 // Dev only: import.meta.env.DEV is false in production builds, so this import and the
 // whole design folder are dropped from the bundle (checked by grepping dist).
@@ -178,11 +179,13 @@ function SignedIn({
   );
   return (
     <TabMemory value={tabMemory}>
-      {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
-      <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
-      {location === "/settings" && <Settings {...session} couple={couple} onCouple={onCouple} />}
-      {location === "/settings/appearance" && <Appearance />}
-      {location === "/settings/notifications" && (paired ? <Notifications onSignedOut={onSignedOut} /> : <Settings {...session} couple={couple} onCouple={onCouple} />)}
+      <Suspense fallback={<LoadingScreen />}>
+        {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
+        <Activity mode={settingsOpen ? "hidden" : "visible"}>{content}</Activity>
+        {location === "/settings" && <Settings {...session} couple={couple} onCouple={onCouple} />}
+        {location === "/settings/appearance" && <Appearance />}
+        {location === "/settings/notifications" && (paired ? <Notifications onSignedOut={onSignedOut} /> : <Settings {...session} couple={couple} onCouple={onCouple} />)}
+      </Suspense>
     </TabMemory>
   );
 }
