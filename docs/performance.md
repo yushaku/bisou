@@ -56,3 +56,53 @@ Phát hiện khi đo: `React.lazy` luôn treo ở lần render đầu, kể cả
 Đo trên bản production local (dữ liệu seed, cache hợp lệ, tải lại trang): khung chờ tĩnh → Home thật ở khoảng 30 ms, không qua màn chờ. Offline, mở nguội vẫn ra Home đã lưu. Đăng xuất làm IndexedDB trống và tải lại không tạo lại. JavaScript ban đầu: 170.729 byte gzip so với 167.854 (tăng 2.875 byte, dưới budget 200.000).
 
 Chưa đo được: thời gian mở nguội thật trên iPhone (PWA đã cài, mạng di động), việc iOS có xóa IndexedDB của PWA lâu không dùng, thời gian đọc IndexedDB trên máy thật, và hành vi bản cập nhật service worker chờ khi app chạy nền. Cần đo các trường hợp này trước khi kết luận mức cải thiện.
+
+## Chuyển tab: khung dùng chung, chuyển cảnh không render trong callback (perf/tab-shell)
+
+Triệu chứng trên iPhone đã cài PWA: chạm một tab ở thanh dưới thì khựng một lúc rồi hiệu ứng trượt chạy giật. Rà soát tĩnh chỉ ra các nguyên nhân sau, và mỗi thay đổi dưới đây chỉ giữ lại khi có số đo hoặc bằng chứng cụ thể.
+
+Nguyên nhân tìm thấy:
+
+- `document.startViewTransition(() => flushSync(navigate))`: Safari đóng băng ảnh cũ và chờ callback, trong khi toàn bộ màn hình mới được render đồng bộ trước khung hình đầu tiên.
+- Mỗi màn hình tự bọc `AppShell` nên header, thanh tab, Drawer và các listener bị dựng lại mỗi lần đổi tab.
+- `<main>` có `view-transition-name: tab-page` nên cả trang cao được chụp. Đo trong Chrome với 60 bài nhật ký: ảnh chụp trang cũ là 390 x 17.768 px CSS (khoảng 1170 x 53.300 px ở DPR 3), chụp hai lần.
+- Chạm lần đầu vào Journal, Wishes hoặc Garden tải chunk bên trong callback, và `Suspense` ngoài cùng có thể hiện lại màn chờ toàn app giữa chừng.
+- `formatDay` và `formatTime` tạo `Intl.DateTimeFormat` mới ở mỗi lần gọi; Journal tính lại `groupByDay` và `toCard` mỗi lần render.
+
+### Phương pháp đo
+
+Chrome headless-shell 154 (không phải Safari, không phải iPhone), bản production `pnpm build` chạy bằng `vite preview` với dữ liệu seed cục bộ (thêm 60 bài nhật ký không có ảnh và 8 điều ước), khung 390 x 844, DPR 3, giới hạn CPU 4x. Bản trước và bản sau chạy xen kẽ, hai phiên mỗi bên. Mỗi phiên: 3 lần mở nguội (tải lại trang, chờ 4 giây rồi chạm lần lượt Home→Journal→Wishes→Garden→Home) và 8 vòng nóng. Mốc là lúc chạm (`click()` trên nút của thanh tab) đến khi `ready` của view transition được giải quyết, tức lúc ảnh mới đã chụp và hiệu ứng bắt đầu. "Khung màn chờ" đếm số khung hình mà thanh tab biến mất hoặc màn chờ toàn app hiện trong lúc chuyển. Số liệu là trung vị, đơn vị ms. Không có long task (trên 50 ms) nào được ghi nhận ở cả hai bản nên không đưa vào bảng.
+
+| Chuyển | Nóng: trước | Nóng: sau | Nguội: trước | Nguội: sau | Khung màn chờ nguội: trước | sau |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Home → Journal | 40 | 38 | 37 | 44 | 4 | 0 |
+| Journal → Wishes | 40 | 38 | 22 | 80 | 6 | 0 |
+| Wishes → Garden | 99 | 67 | 65 | 96 | 6 | 0 |
+| Garden → Home | 40 | 39 | 42 | 39 | 0 | 0 |
+
+Đọc bảng:
+
+- Lần chạm nóng: gần như không đổi trong sai số của máy (Wishes → Garden nhanh hơn 32 ms ở hai phiên xen kẽ, các chuyển còn lại chênh dưới 2 ms). Headless Chrome không tái hiện được khựng trên iPhone, nên đừng đọc bảng này như mức giảm thời gian trên điện thoại.
+- Lần chạm nguội: số "trước" thấp vì hiệu ứng chạy trên màn chờ (cột khung màn chờ 4 đến 6), nội dung thật đến sau. Số "sau" cao hơn vì chờ nội dung thật rồi mới trượt, và không còn khung màn chờ nào.
+- Thời gian callback chạy đồng bộ (render nằm trong callback): trước 21 / 40 / 30 / 28 ms cho bốn chuyển (đo ở vòng nóng, 12 vòng), sau 0 ms. Render vẫn xảy ra, nhưng sau khi trình duyệt đã chụp xong ảnh cũ.
+- Ảnh chụp trang: 390 x 17.768 px xuống 390 x 788 px (giảm 95,6% diện tích). Chrome headless không cho thấy khác biệt thời gian, chi phí bộ nhớ GPU này cần đo trên Safari thật.
+- Style recalc trong lúc chuyển tăng từ khoảng 16 đến 24 ms lên 24 đến 34 ms (đo qua `Performance.getMetrics`): đây là giá của việc đóng băng trang.
+- `Intl.DateTimeFormat`: tạo mới mỗi lần khoảng 35 µs, dùng lại khoảng 1 µs (Node trên máy dev, chưa nhân hệ số làm chậm CPU). Journal gọi vài chục lần mỗi render.
+- JavaScript ban đầu: 170.729 byte gzip lên 171.559 byte (tăng 830 byte, dưới budget 200.000). Khung dùng chung nằm cùng chunk với Home chứ không vào bundle chính; lần thử đầu import trực tiếp vào `App.tsx` đã làm bundle tăng 16.727 byte nên bị đổi.
+
+### Đã giữ và đã hoàn lại
+
+| Thay đổi | Quyết định | Lý do |
+| --- | --- | --- |
+| Tải trước chunk Journal, Wishes, Garden khi rảnh sau khung hình đầu, render trực tiếp khi đã tải, `Suspense` cục bộ trong khung | Giữ | Khung màn chờ lần chạm nguội 4 đến 6 xuống 0. Ngoài ra là sửa lỗi hiển thị. |
+| Khung dùng chung (`TabFrame`): header, thanh tab, Drawer, pull-to-refresh nằm trên `Switch`, chỉ đổi nội dung | Giữ | Kiểm tra trên trình duyệt: phần tử `nav`, `header`, `main` giữ nguyên qua các lần đổi tab; cuộn từng tab, Settings, Events, nút tạo mới, kéo để làm mới vẫn chạy. Thời gian nóng không đổi. |
+| Bỏ `flushSync`; callback trả về promise giải quyết khi nội dung mới đã commit (có timeout 400 ms) | Giữ | Callback đồng bộ 21 đến 40 ms xuống 0. Không dùng `startTransition`: wouter cập nhật vị trí qua `useSyncExternalStore`, mà React không cho các cập nhật đó chạy như transition. |
+| Bỏ `view-transition-name` `tab-label-*` | Giữ | Không có CSS nào dùng, mỗi tên tạo thêm một nhóm. |
+| Giới hạn ảnh chụp `tab-page` bằng khung viền cố định trong lúc chuyển (`html.tab-switching`) | Giữ, cần kiểm tra trên iPhone | Ảnh chụp 17.768 px xuống 788 px; so ảnh chụp màn hình lúc nghỉ và lúc đóng băng, sai khác chỉ ở vùng kính của thanh tab (tối đa 19/255 mỗi kênh). Thời gian không đổi trong headless, style recalc tăng. Chưa chứng minh trên Safari. |
+| Cache `Intl.DateTimeFormat`/`NumberFormat` theo (locale, kiểu); memo `people`, `groupByDay`, `toCard` ở Journal | Giữ | Rẻ, có test so khớp chuỗi với cách cũ. Không đo được khác biệt thời gian chạm trong headless. |
+| `session` của `SignedIn` bọc `useMemo` | Giữ | Sửa lỗi tham chiếu đổi mỗi lần render, không còn render lại vô ích các màn hình nhận `session`. |
+| Đổi `backdrop-filter` của thanh tab sang nền đặc trong lúc chuyển | Hoàn lại | Headless Chrome không cho thấy khác biệt (giữ blur: 32 / 40 / 104 / 33 ms; đổi nền đặc: 32 / 44 / 103 / 35 ms), và nó làm thanh đổi vẻ ngoài trong lúc trượt. Nếu iPhone vẫn giật khi có kính mờ, thử lại sau khi đo bằng Web Inspector. |
+| Journal chỉ vẽ 10 bài đầu rồi vẽ phần còn lại sau khung hình đầu | Hoàn lại | Home → Journal 32 ms với bản thử và 33 ms với bản đầy đủ, không đo được lợi ích, lại thêm một lần render và phải xử lý khôi phục vị trí cuộn sâu. |
+| Bỏ qua kết quả thăm dò Garden 15 giây khi đang chuyển cảnh | Không làm | Không tầm thường; ghi lại để theo dõi. |
+
+Chưa đo được và cần Web Inspector trên iPhone thật (PWA đã cài): thời gian từ chạm đến khung hình đầu tiên của hiệu ứng, bộ nhớ và thời gian chụp ảnh của trang cao (trước và sau khi giới hạn), chi phí `backdrop-filter` trong lúc chuyển, vị trí cuộn không nhảy khi hiệu ứng kết thúc (lúc gỡ khung cố định), và thanh tab không xê dịch trên màn hình có vùng an toàn.

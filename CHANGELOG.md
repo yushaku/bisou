@@ -40,6 +40,7 @@
 ### Changed
 
 - The installed app opens straight on Home: the last Home, journal page and other loaded data are kept on the phone and refreshed in the background, a static logo shows before the app loads, and `/api/me`, `/api/couple` and Home load in parallel. Signing out, an expired session or a different account removes the saved data; offline still opens the saved Home; a new version clears it. `/api/me` now needs one database read instead of two, and a new version of the app no longer reloads it while you are using it (it applies when the app is hidden, checked at most once an hour).
+- Tapping a bottom tab on Home, Journal, Wishes or Garden keeps the header and tab bar in place and swaps only the page. The other tabs load in the background after the first paint, so a first tap no longer flashes the loading screen. The slide starts without rendering the new page inside the transition, and while it runs only the part of the page on screen is captured, so a long journal is no longer one huge snapshot. Dates and times reuse cached formatters, and the journal feed no longer rebuilds its cards on every render.
 - Signed-in screens load on demand; with the shared query cache, initial JavaScript is 168 kB gzipped versus the previous 238 kB. Production builds enforce a 200 kB initial JavaScript budget.
 - Garden, journal, wishes, notes, claims and card boxes share a TanStack Query cache per session. Fresh tab visits reuse data, writes update related queries, and unchanged JSON responses keep their data references.
 
