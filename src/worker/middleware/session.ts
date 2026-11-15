@@ -13,6 +13,7 @@ export const requireSession: MiddlewareHandler<AppEnv> = async (c, next) => {
   }
   c.set("user", loaded.user);
   c.set("session", loaded.session);
+  c.set("coupleId", loaded.coupleId);
   if (loaded.refreshed && token) setSessionCookie(c, token);
   return next();
 };

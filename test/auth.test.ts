@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/worker/app";
 import { hashOtp, sha256Hex } from "../src/worker/lib/crypto";
 import { DAY, MINUTE } from "../src/worker/lib/time";
-import { call, codeFromMail, login, mockResend, ORIGIN, sessionCookie } from "./helpers";
+import { call, codeFromMail, login, mockResend, ORIGIN, sessionCookie, user } from "./helpers";
 
 const T0 = new Date("2026-11-04T08:00:00Z").getTime();
 
@@ -393,6 +393,24 @@ describe("GET /api/me", () => {
     const { user } = await res.json<{ user: { email: string } }>();
     expect(user.email).toBe("me@example.com");
     expect(res.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("returns the same shape with coupleId null before pairing and the couple id after", async () => {
+    const { cookie } = await user("Shape");
+    const alone = await (await call("GET", "/api/me", { cookie })).json<{ user: { email: string }; coupleId: string | null }>();
+    expect(Object.keys(alone).sort()).toEqual(["coupleId", "user"]);
+    expect(alone.coupleId).toBeNull();
+    const created = await (await call("POST", "/api/couple", { cookie })).json<{ couple: { id: string } }>();
+    const paired = await (await call("GET", "/api/me", { cookie })).json<{ user: { email: string }; coupleId: string | null }>();
+    expect(paired).toEqual({ user: alone.user, coupleId: created.couple.id });
+  });
+
+  it("reads the session, user and couple in one D1 statement", async () => {
+    const { cookie } = await user("Single");
+    await call("POST", "/api/couple", { cookie });
+    const prepare = vi.spyOn(env.DB, "prepare");
+    expect((await call("GET", "/api/me", { cookie })).status).toBe(200);
+    expect(prepare).toHaveBeenCalledTimes(1);
   });
 
   it("rejects an expired session", async () => {

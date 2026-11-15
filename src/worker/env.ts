@@ -28,6 +28,8 @@ export interface AppEnv {
   Variables: {
     user: User;
     session: SessionInfo;
+    /** The caller's couple, read in the same query as the session so /api/me needs one D1 round trip. */
+    coupleId: string | null;
   };
 }
 

@@ -11,11 +11,8 @@ export const me = new Hono<AppEnv>();
 const limitBody = bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "body_too_large" }, 413) });
 
 me.get("/", async (c) => {
-  const user = c.get("user");
-  const coupleId = await c.env.DB.prepare("SELECT couple_id FROM couple_members WHERE user_id = ?")
-    .bind(user.id)
-    .first<string>("couple_id");
-  const body: MeResponse = { user, coupleId: coupleId ?? null };
+  // The session query already read the couple: no second D1 round trip.
+  const body: MeResponse = { user: c.get("user"), coupleId: c.get("coupleId") };
   return c.json(body);
 });
 

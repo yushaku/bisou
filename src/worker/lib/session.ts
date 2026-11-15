@@ -48,6 +48,7 @@ export async function createSession(env: Env, userId: string, now = Date.now()):
 export interface LoadedSession {
   user: User;
   session: SessionInfo;
+  coupleId: string | null;
   /** True when the expiry was pushed forward and the cookie must be sent again. */
   refreshed: boolean;
 }
@@ -56,11 +57,12 @@ export interface LoadedSession {
 export async function loadSession(env: Env, token: string, now = Date.now()): Promise<LoadedSession | null> {
   const tokenHash = await sha256Hex(token);
   const row = await env.DB.prepare(
-    `SELECT s.expires_at AS session_expires_at, u.id, u.email, u.display_name, u.locale, u.birth_date, u.avatar_id, u.created_at
+    `SELECT s.expires_at AS session_expires_at, u.id, u.email, u.display_name, u.locale, u.birth_date, u.avatar_id, u.created_at,
+            (SELECT cm.couple_id FROM couple_members cm WHERE cm.user_id = u.id) AS couple_id
      FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?`,
   )
     .bind(tokenHash)
-    .first<UserRow & { session_expires_at: number }>();
+    .first<UserRow & { session_expires_at: number; couple_id: string | null }>();
   if (!row) return null;
   if (row.session_expires_at <= now) {
     await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash).run();
@@ -73,7 +75,7 @@ export async function loadSession(env: Env, token: string, now = Date.now()): Pr
     refreshed = true;
     await env.DB.prepare("UPDATE sessions SET expires_at = ? WHERE token_hash = ?").bind(expiresAt, tokenHash).run();
   }
-  return { user: rowToUser(row), session: { tokenHash, expiresAt }, refreshed };
+  return { user: rowToUser(row), session: { tokenHash, expiresAt }, coupleId: row.couple_id, refreshed };
 }
 
 export async function deleteSession(env: Env, token: string): Promise<void> {
