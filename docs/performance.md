@@ -39,3 +39,20 @@ Test bằng QueryClient/QueryObserver thật xác nhận request đang chạy đ
 Trên production local: Garden → Home giữ số GET `/api/garden` ở 8, Journal → Home giữ số GET `/api/journal` ở 4 trong thời gian cache còn mới. Đây là tổng đếm của phiên có polling và các lần đưa cửa sổ ra trước, không phải số request cần cho một lần mở app. Đã tạo một điều ước kiểm tra, xác nhận query được làm mới và mục xuất hiện, rồi xóa lại thành công; đăng xuất trả về màn đăng nhập. Không thay dữ liệu mẫu có sẵn.
 
 Sau migration: typecheck, 1.055 test Vitest, 24 test Node và build đều qua. JavaScript ban đầu là 167.854 byte gzip, tăng khoảng 10,5 kB so với bước tách màn hình, vẫn dưới budget 200 kB. Chưa có số đo React Profiler trên iPhone để kết luận mọi lần render tốn kém đã được xử lý.
+
+## Khởi động nguội: hiện Home gần như ngay (perf/launch)
+
+Áp dụng [ADR 0014](adr/0014-persist-server-data-on-device.md). Trước đó, mở app từ đầu phải đi qua ba bước nối tiếp (`/api/me`, `/api/couple`, tải chunk Home) rồi mới tới các query của Home, trong lúc màn hình chỉ có màn chờ.
+
+Đã đổi:
+
+- Lưu cache query vào IndexedDB trên máy (mỗi user + couple một bản) cùng bản ghi `{user, couple}` cuối cùng. Người đã đăng nhập thấy Home từ cache ngay, `/api/me` và `/api/couple` cập nhật nền. Đăng xuất, 401 hoặc đổi người dùng xóa sạch. Offline vẫn ở Home đã lưu. Cache bị bỏ khi đổi bản build, quá 30 ngày; nhật ký chỉ lưu trang đầu; query lỗi không lưu.
+- `/api/me`, `/api/couple` và chunk Home chạy song song ngay từ `main.tsx`. `/api/me` còn một lượt D1 thay vì hai.
+- `index.html` có khung chờ tĩnh (logo trên nền theo theme) hiện trước khi JavaScript chạy; linh vật màn chờ tải ngay.
+- Service worker không còn tải lại app đang mở khi có bản mới (chờ tới khi app bị ẩn) và chỉ kiểm tra bản mới tối đa mỗi giờ.
+
+Phát hiện khi đo: `React.lazy` luôn treo ở lần render đầu, kể cả khi chunk đã tải, và React giữ nội dung lại khoảng 300 ms sau khi đã hiện fallback. Cùng một cache, Home hiện sau 433 ms khi dùng `lazy` và sau 71 ms khi render component đã tải trực tiếp (bản production local, Chrome headless, mốc từ lúc tài liệu bắt đầu; không phải số đo iPhone).
+
+Đo trên bản production local (dữ liệu seed, cache hợp lệ, tải lại trang): khung chờ tĩnh → Home thật ở khoảng 30 ms, không qua màn chờ. Offline, mở nguội vẫn ra Home đã lưu. Đăng xuất làm IndexedDB trống và tải lại không tạo lại. JavaScript ban đầu: 170.729 byte gzip so với 167.854 (tăng 2.875 byte, dưới budget 200.000).
+
+Chưa đo được: thời gian mở nguội thật trên iPhone (PWA đã cài, mạng di động), việc iOS có xóa IndexedDB của PWA lâu không dùng, thời gian đọc IndexedDB trên máy thật, và hành vi bản cập nhật service worker chờ khi app chạy nền. Cần đo các trường hợp này trước khi kết luận mức cải thiện.
