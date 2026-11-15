@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
@@ -6,8 +7,20 @@ import { defineConfig, type PluginOption } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { themeHead } from "./scripts/theme-bootstrap.ts";
 import palettes from "./src/client/theme/palettes.json" with { type: "json" };
+import pkg from "./package.json" with { type: "json" };
+
+// Cache buster for data saved on the device (ADR 0014): package version, commit and build time,
+// so every build discards what an older one saved.
+function buildId(): string {
+  let commit = process.env.GITHUB_SHA?.slice(0, 7) ?? "";
+  if (!commit) {
+    try { commit = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); } catch { commit = "nogit"; }
+  }
+  return `${pkg.version}-${commit}-${Date.now().toString(36)}`;
+}
 
 export default defineConfig({
+  define: { __BISOU_BUILD__: JSON.stringify(buildId()) },
   // `pnpm dev:phone` serves the dev server through a cloudflared quick tunnel.
   server: { allowedHosts: [".trycloudflare.com"] },
   // Deps used only inside lazy chunks (compose, crop, calendar). Pre-bundled at startup so the
@@ -56,7 +69,7 @@ export default defineConfig({
       },
       workbox: {
         importScripts: ["/push-sw.js"],
-        // A new deploy takes over open tabs at once; main.tsx reloads the page when it does.
+        // A new deploy takes over at once; updateReload.ts reloads the open page only when it is hidden.
         skipWaiting: true,
         clientsClaim: true,
         // App shell only (fonts included, for offline): never cache the API.

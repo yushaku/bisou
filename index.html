@@ -37,9 +37,16 @@
     <link rel="apple-touch-startup-image" href="/splash/440x956-3x-light.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" />
     <link rel="apple-touch-startup-image" href="/splash/440x956-3x-dark.png" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" />
     <!-- splash:end -->
+    <!-- Painted before any JavaScript runs; React replaces it. Colours come from the theme tokens set above. -->
+    <style>
+      #boot-skeleton{display:flex;min-height:100dvh;align-items:center;justify-content:center;background:var(--background)}
+      #boot-skeleton img{width:6rem;height:6rem;border-radius:var(--radius);animation:boot-pulse 1.6s ease-in-out infinite}
+      @keyframes boot-pulse{50%{opacity:.55}}
+      @media (prefers-reduced-motion:reduce){#boot-skeleton img{animation:none}}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><main id="boot-skeleton"><img src="/icons/icon-192.png" alt="" width="96" height="96" fetchpriority="high" /></main></div>
     <script type="module" src="/src/client/main.tsx"></script>
   </body>
 </html>

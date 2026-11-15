@@ -3,6 +3,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { App } from "../src/client/App";
 import { api } from "../src/client/api";
 import { readCache, readSeen, writeCache, writeSeen } from "../src/client/lib/cardBox";
+import { bootCacheNow, saveBootCache, startBoot } from "../src/client/lib/bootSession";
+import { memoryBackend, scopedStore, useDeviceBackend } from "../src/client/lib/deviceStore";
 
 const hooks = vi.hoisted(() => ({ effects: [] as (() => unknown)[], setAuth: vi.fn() }));
 vi.mock("react", async original => ({
@@ -58,4 +60,41 @@ it("card-box R44: a network failure on app startup keeps cached boxes and seen h
   expect(readCache("c:u", "list")).toEqual([]);
   expect(readSeen("c:u", "sample")).toEqual(["a"]);
   expect(values.get("bisou.locale")).toBe("vi");
+});
+
+async function seedDevice() {
+  const backend = memoryBackend();
+  useDeviceBackend(backend);
+  await saveBootCache(scopedStore(), { id: "u" } as never, null);
+  await backend.set("rq:u:unpaired", "{}");
+  return backend;
+}
+
+it("persisted data R1: child 401 sign-out wipes the boot cache and query cache on the device", async () => {
+  const { onSignedOut } = signedIn();
+  const backend = await seedDevice();
+  expect(backend.data.size).toBe(2);
+  onSignedOut();
+  await vi.waitFor(() => expect(backend.data.size).toBe(0));
+});
+
+it("persisted data R1: an expired session on app startup wipes the device cache", async () => {
+  signedIn();
+  const backend = await seedDevice();
+  vi.spyOn(api, "me").mockResolvedValue({ ok: false, status: 401, error: null });
+  hooks.effects[0]!();
+  await vi.waitFor(() => expect(backend.data.size).toBe(0));
+});
+
+it("persisted data R2: offline at startup with a cached session stays signed in and keeps the cache", async () => {
+  signedIn();
+  const backend = await seedDevice();
+  vi.spyOn(api, "me").mockResolvedValue({ ok: false, status: 0, error: null });
+  vi.spyOn(api, "couple").mockResolvedValue({ ok: false, status: 0, error: null });
+  await startBoot(() => Promise.resolve()).cache;
+  expect(bootCacheNow()?.user.id).toBe("u");
+  hooks.effects[0]!();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(hooks.setAuth).not.toHaveBeenCalled();
+  expect(backend.data.size).toBe(2);
 });

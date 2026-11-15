@@ -1,6 +1,9 @@
-import { QueryClient, QueryClientProvider, mutationOptions, useMutation, useQuery, useQueryClient, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
+import { QueryClient, mutationOptions, useIsRestoring, useMutation, useQuery, useQueryClient, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useCallback, useEffect, useState, type ReactNode, type SetStateAction } from "react";
 import type { ApiResult } from "../api";
+import { devicePersistOptions, dropOtherScopes } from "./devicePersist";
+import { scopedStore } from "./deviceStore";
 
 export class ApiQueryError extends Error {
   constructor(readonly status: number, readonly error: Extract<ApiResult<unknown>, { ok: false }>["error"]) {
@@ -21,11 +24,26 @@ export function createServerQueryClient() {
   } });
 }
 
-// A new provider owns each user/couple session, including requests still in flight at sign-out.
-export function ServerDataProvider({ children }: { children: ReactNode }) {
+function RestoreGate({ fallback, children }: { fallback: ReactNode; children: ReactNode }) {
+  return useIsRestoring() ? fallback : children;
+}
+
+/*
+ * A new provider owns each user/couple session, including requests still in flight at sign-out.
+ * `scope` (user and couple ids) also names the copy saved on the device (ADR 0014): it is restored
+ * before the children render, saved as the cache changes, and wiped on sign-out.
+ */
+export function ServerDataProvider({ scope, fallback, children }: { scope: string; fallback: ReactNode; children: ReactNode }) {
   const [client] = useState(createServerQueryClient);
+  const [store] = useState(scopedStore);
+  const [persistOptions] = useState(() => devicePersistOptions(store, scope));
+  useEffect(() => { void dropOtherScopes(store, scope); }, [store, scope]);
   useEffect(() => () => client.clear(), [client]);
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  return (
+    <PersistQueryClientProvider client={client} persistOptions={persistOptions}>
+      <RestoreGate fallback={fallback}>{children}</RestoreGate>
+    </PersistQueryClientProvider>
+  );
 }
 
 export function useQuerySignOut(error: Error | null, onSignedOut: () => void) {

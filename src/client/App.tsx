@@ -1,17 +1,24 @@
-import { Activity, lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { Activity, lazy, type ComponentProps, Suspense, useCallback, useEffect, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
-import type { Couple, User } from "../shared/types";
-import { api } from "./api";
+import type { Couple, CoupleResponse, User } from "../shared/types";
+import { api, type ApiResult } from "./api";
 import { Mascot } from "./components/bisou/Mascot";
 import { useI18n } from "./i18n";
 import { clearJoinCode } from "./lib/joinLink";
-import { clearCardBoxCache } from "./lib/cardBox";
+import { bootCacheNow, getBoot, meOutcome, saveBootCache, wipeDeviceData } from "./lib/bootSession";
+import { queryScope } from "./lib/devicePersist";
+import { scopedStore } from "./lib/deviceStore";
+import { loadedHome, loadHome } from "./lib/screens";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
 import { Login } from "./screens/Login";
 import { ServerDataProvider } from "./lib/serverQuery";
 
-const Home = lazy(() => import("./screens/Home").then(m => ({ default: m.Home })));
+const LazyHome = lazy(() => loadHome().then(m => ({ default: m.Home })));
+function Home(props: ComponentProps<typeof LazyHome>) {
+  const Loaded = loadedHome();
+  return Loaded ? <Loaded {...props} /> : <LazyHome {...props} />;
+}
 const Journal = lazy(() => import("./screens/Journal").then(m => ({ default: m.Journal })));
 const Wishes = lazy(() => import("./screens/Wishes").then(m => ({ default: m.Wishes })));
 const Garden = lazy(() => import("./screens/Garden").then(m => ({ default: m.Garden })));
@@ -30,11 +37,21 @@ const Pairing = lazy(() => import("./screens/Pairing").then(m => ({ default: m.P
 // whole design folder are dropped from the bundle (checked by grepping dist).
 const DesignPage = import.meta.env.DEV ? lazy(() => import("./design/DesignPage")) : null;
 
-/* coupleId is undefined when unknown (right after login); the couple is then fetched. */
+/*
+ * coupleId is undefined when unknown (right after login); the couple is then fetched.
+ * cachedCouple is the couple saved on this device; fromBoot marks a session whose couple request
+ * was already started at boot, so SignedIn waits for that one instead of sending another.
+ */
 type AuthState =
   | { status: "loading" }
   | { status: "signedOut" }
-  | { status: "signedIn"; user: User; coupleId: string | null | undefined };
+  | { status: "signedIn"; user: User; coupleId: string | null | undefined; cachedCouple?: Couple | null; fromBoot?: boolean };
+
+/* A returning user starts signed in from the device copy; /api/me and /api/couple then revalidate it. */
+function initialAuth(): AuthState {
+  const cache = bootCacheNow();
+  return cache ? { status: "signedIn", user: cache.user, coupleId: cache.couple?.id ?? null, cachedCouple: cache.couple, fromBoot: true } : { status: "loading" };
+}
 
 export function App() {
   return (
@@ -58,32 +75,47 @@ function LoadingScreen() {
   return (
     <main className="flex min-h-dvh items-center justify-center">
       <div className="flex flex-col items-center gap-3" aria-live="polite">
-        <Mascot situation="waiting" />
+        <Mascot situation="waiting" priority />
         <span className="text-base text-muted-foreground">{t("loading")}</span>
       </div>
     </main>
   );
 }
 
+/* The same picture as the static skeleton in index.html, so restoring the device cache does not flash another screen. */
+function BootSkeleton() {
+  return <main id="boot-skeleton"><img src="/icons/icon-192.png" alt="" width={96} height={96} /></main>;
+}
+
 function MainApp() {
-  const [auth, setAuth] = useState<AuthState>({ status: "loading" });
+  const [auth, setAuth] = useState<AuthState>(initialAuth);
   const onSignedOut = useCallback(() => {
-    clearCardBoxCache();
+    void wipeDeviceData();
     setAuth({ status: "signedOut" });
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    void api.me().then((res) => {
+    void (getBoot()?.me ?? api.me()).then(async (res) => {
       if (cancelled) return;
-      if (res.ok) setAuth({ status: "signedIn", user: res.data.user, coupleId: res.data.coupleId });
-      else if (res.status === 0) setAuth({ status: "signedOut" });
-      else onSignedOut();
+      const outcome = meOutcome(res, bootCacheNow());
+      if (outcome.kind === "keepCached") return;
+      if (outcome.kind === "signedOut") {
+        if (outcome.wipe) void wipeDeviceData();
+        setAuth({ status: "signedOut" });
+        return;
+      }
+      if (outcome.wipe) await wipeDeviceData();
+      if (cancelled) return;
+      const { user, coupleId } = outcome;
+      setAuth((previous) => previous.status === "signedIn" && previous.user.id === user.id
+        ? { ...previous, user, coupleId }
+        : { status: "signedIn", user, coupleId, fromBoot: true });
     });
     return () => {
       cancelled = true;
     };
-  }, [onSignedOut]);
+  }, []);
 
   const onUser = useCallback((user: User) => setAuth((a) => (a.status === "signedIn" ? { ...a, user } : a)), []);
 
@@ -92,7 +124,15 @@ function MainApp() {
     return <Login onSignedIn={(user) => setAuth({ status: "signedIn", user, coupleId: undefined })} />;
   }
   return (
-    <SignedIn key={auth.user.id} user={auth.user} knownCoupleId={auth.coupleId} onUser={onUser} onSignedOut={onSignedOut} />
+    <SignedIn
+      key={auth.user.id}
+      user={auth.user}
+      knownCoupleId={auth.coupleId}
+      cachedCouple={auth.cachedCouple}
+      bootCouple={auth.fromBoot ? getBoot()?.couple : undefined}
+      onUser={onUser}
+      onSignedOut={onSignedOut}
+    />
   );
 }
 
@@ -103,16 +143,21 @@ function MainApp() {
 function SignedIn({
   user,
   knownCoupleId,
+  cachedCouple,
+  bootCouple,
   onUser,
   onSignedOut,
 }: {
   user: User;
   knownCoupleId: string | null | undefined;
+  cachedCouple: Couple | null | undefined;
+  bootCouple: Promise<ApiResult<CoupleResponse>> | undefined;
   onUser: (user: User) => void;
   onSignedOut: () => void;
 }) {
-  // undefined while loading; /api/me already tells when there is no couple, saving a request.
-  const [couple, setCouple] = useState<Couple | null | undefined>(knownCoupleId === null ? null : undefined);
+  // undefined while loading; the device copy or /api/me (no couple) can answer without a request.
+  const [couple, setCouple] = useState<Couple | null | undefined>(cachedCouple !== undefined ? cachedCouple : knownCoupleId === null ? null : undefined);
+  const [store] = useState(scopedStore);
   const [celebrate, setCelebrate] = useState(false);
   const [tabMemory] = useState(createTabMemory);
   const paired = (couple?.members.length ?? 0) >= 2;
@@ -120,15 +165,25 @@ function SignedIn({
   const historyState = useHistoryState<{ from?: string } | null>();
   const settingsOpen = location === "/settings" || location === "/settings/appearance" || location === "/settings/notifications";
 
-  const refresh = useCallback(async () => {
-    const res = await api.couple();
+  const applyCouple = useCallback((res: ApiResult<CoupleResponse>) => {
     if (res.ok) setCouple(res.data.couple);
     else if (res.status === 401) onSignedOut();
   }, [onSignedOut]);
+  const refresh = useCallback(async () => applyCouple(await api.couple()), [applyCouple]);
+
+  // The boot request revalidates the couple behind a cached Home; offline (status 0) keeps the cached one.
+  useEffect(() => {
+    if (bootCouple) void bootCouple.then(applyCouple);
+  }, [bootCouple, applyCouple]);
 
   useEffect(() => {
-    if (couple === undefined) void refresh();
-  }, [couple, refresh]);
+    if (couple === undefined && !bootCouple) void refresh();
+  }, [couple, bootCouple, refresh]);
+
+  // Save the session so the next launch can show Home at once.
+  useEffect(() => {
+    if (couple !== undefined) void saveBootCache(store, user, couple);
+  }, [store, user, couple]);
 
   // Pick up the partner's changes (start date, name) when the app comes back to the front.
   useEffect(() => {
@@ -150,6 +205,7 @@ function SignedIn({
     setCouple(next);
   };
 
+  const scope = queryScope(user.id, couple?.id);
   const session = { user, onUser, onSignedOut };
   let content;
   if (!user.displayName) content = <Onboarding {...session} />;
@@ -179,7 +235,7 @@ function SignedIn({
     </Switch>
   );
   return (
-    <ServerDataProvider key={`${user.id}:${couple?.id ?? "unpaired"}`}>
+    <ServerDataProvider key={scope} scope={scope} fallback={<BootSkeleton />}>
       <TabMemory value={tabMemory}>
         <Suspense fallback={<LoadingScreen />}>
           {/* Keep loaded lists and drafts so Back can restore their scroll without waiting for a fetch. */}
