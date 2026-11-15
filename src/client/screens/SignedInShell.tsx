@@ -1,9 +1,10 @@
-import { useContext, useLayoutEffect, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 import { useLocation } from "wouter";
 import type { User } from "../../shared/types";
 import { AppShell, type TabId } from "../components/bisou/AppShell";
 import { useI18n, type MessageKey } from "../i18n";
-import { TabMemory } from "../lib/tabMemory";
+import { attachTabScroll, TabMemory } from "../lib/tabMemory";
+import { notifyTabCommitted } from "../lib/tabTransition";
 import { useTabNavigation } from "../lib/useTabNavigation";
 
 export interface SessionProps {
@@ -19,29 +20,73 @@ export interface SessionProps {
 // Each tab's name replaces the app name in the top bar.
 const TAB_TITLES: Partial<Record<TabId, MessageKey>> = { home: "home.ourCorner", journal: "journal.title", wishes: "nav.wishes", garden: "garden.title" };
 
+type Refresh = (() => void | Promise<void>) | undefined;
+
+/*
+ * Set by TabFrame. Inside it, a tab screen's SignedInShell renders only its content: the header,
+ * tab bar and pull-to-refresh stay mounted across tab switches and just follow the active tab.
+ */
+const TabFrameContext = createContext<RefObject<Refresh> | null>(null);
+
+function useScrollMemory(tab: TabId | undefined) {
+  const memory = useContext(TabMemory);
+  useLayoutEffect(() => (memory ? attachTabScroll(memory, tab) : undefined), [tab, memory]);
+  return memory;
+}
+
+/* The one frame of the four main tabs; `tab` is the active one and `children` the active screen. */
+export function TabFrame({ tab, children }: { tab: TabId; children: ReactNode }) {
+  const { t } = useI18n();
+  const [location, navigate] = useLocation();
+  const navigation = useTabNavigation(tab);
+  const memory = useScrollMemory(tab);
+  const refresh = useRef<Refresh>(undefined);
+  const pull = useCallback(() => refresh.current?.(), []);
+  return (
+    <TabFrameContext value={refresh}>
+      <AppShell
+        title={t(TAB_TITLES[tab]!)}
+        onOpenSettings={() => {
+          memory?.scroll.set(tab, window.scrollY);
+          if (memory) memory.returnFocus = "settings-button";
+          navigate("/settings", { state: { from: location } });
+        }}
+        onRefresh={pull}
+        tabs={{ active: tab, ...navigation }}
+      >
+        {children}
+      </AppShell>
+    </TabFrameContext>
+  );
+}
+
+/* A tab screen inside TabFrame: hands its refresh to the frame and tells a running tab transition it has committed. */
+function TabContent({ tab, onRefresh, refresh, children }: { tab: TabId; onRefresh: Refresh; refresh: RefObject<Refresh>; children: ReactNode }) {
+  useEffect(() => {
+    refresh.current = onRefresh;
+    return () => { if (refresh.current === onRefresh) refresh.current = undefined; };
+  });
+  useLayoutEffect(() => { notifyTabCommitted(); }, [tab]);
+  return children;
+}
+
 export function SignedInShell({
   tab,
   onRefresh,
   children,
 }: SessionProps & { tab?: TabId; onRefresh?: () => void | Promise<void>; children: ReactNode }) {
+  const frame = useContext(TabFrameContext);
+  if (frame && tab) return <TabContent tab={tab} onRefresh={onRefresh} refresh={frame}>{children}</TabContent>;
+  return <StandaloneShell tab={tab} onRefresh={onRefresh}>{children}</StandaloneShell>;
+}
+
+function StandaloneShell({ tab, onRefresh, children }: { tab?: TabId; onRefresh?: () => void | Promise<void>; children: ReactNode }) {
   const { t } = useI18n();
   const [location, navigate] = useLocation();
   const titleKey = tab && TAB_TITLES[tab];
-  const memory = useContext(TabMemory);
   const navigation = useTabNavigation(tab);
-
-  useLayoutEffect(() => {
-    if (!memory) return;
-    if (tab) window.scrollTo({ top: memory.scroll.get(tab) ?? 0, behavior: "instant" });
-    if (memory.returnFocus) {
-      document.getElementById(memory.returnFocus)?.focus({ preventScroll: true });
-      memory.returnFocus = null;
-    }
-    if (!tab) return;
-    const remember = () => memory.scroll.set(tab, window.scrollY);
-    window.addEventListener("scroll", remember, { passive: true });
-    return () => window.removeEventListener("scroll", remember);
-  }, [tab, memory]);
+  const memory = useScrollMemory(tab);
+  useLayoutEffect(() => { notifyTabCommitted(); }, []);
 
   return (
     <AppShell

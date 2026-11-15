@@ -2,7 +2,7 @@ import { captureInstallPrompt } from "./lib/install";
 import { captureShortcut } from "./lib/navigation";
 import { reloadOnNewVersion, shouldCheckForUpdate } from "./lib/updateReload";
 import { startBoot } from "./lib/bootSession";
-import { loadHome } from "./lib/screens";
+import { loadTabScreens } from "./lib/screens";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ErrorBoundary } from "./components/bisou/ErrorBoundary";
@@ -55,8 +55,8 @@ function mount() {
 // Boot: the device cache, /api/me, /api/couple and the Home chunk all start now, in parallel.
 // With a cached session, wait briefly for the Home chunk so the first React frame is Home itself;
 // the static skeleton in index.html stays on screen until then.
-const boot = startBoot(loadHome);
+const boot = startBoot(loadTabScreens);
 void boot.cache
-  .then((cache) => (cache ? Promise.race([loadHome(), new Promise((resolve) => setTimeout(resolve, 2000))]) : undefined))
+  .then((cache) => (cache ? Promise.race([loadTabScreens(), new Promise((resolve) => setTimeout(resolve, 2000))]) : undefined))
   .catch(() => undefined)
   .then(mount);

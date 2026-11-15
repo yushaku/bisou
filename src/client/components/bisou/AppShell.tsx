@@ -140,7 +140,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
         </div>
       </header>
 
-      <main ref={mainRef} tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">
+      <main ref={mainRef} data-tab-page tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">
         {canRefresh && <div className={cn("flex shrink-0 items-center justify-center overflow-hidden text-muted-foreground motion-reduce:transition-none", settling && "transition-[height] duration-(--duration) ease-(--ease)")} style={{ height: pull }}>
           {pull > 0 && <span role="status" aria-busy={refreshing}>
             <Loader2Icon aria-hidden="true" className={cn("size-5", refreshing && "animate-spin motion-reduce:animate-none")} />
@@ -177,7 +177,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
         onCreate(destination);
       }
     }}>
-      <nav aria-label={t("nav.label")} className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem] [view-transition-name:tab-bar]">
+      <nav aria-label={t("nav.label")} data-tab-bar className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem] [view-transition-name:tab-bar]">
         <ul className="mx-auto grid w-full max-w-md grid-cols-5">
           {TABS.map((id, index) => {
             const { icon: Icon, label } = TAB_META[id];
@@ -197,7 +197,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
                     className={cn("press flex h-16 w-full items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset", selected ? "text-foreground" : "text-muted-foreground")}>
                     <span className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
                       {selected && <span aria-hidden="true" className="absolute inset-0 rounded-control bg-accent elevate-sm [view-transition-name:tab-pill]" />}
-                      <span className={cn("relative flex flex-col items-center gap-0.5", selected && "text-accent-foreground")} style={{ viewTransitionName: `tab-label-${id}` }}>
+                      <span className={cn("relative flex flex-col items-center gap-0.5", selected && "text-accent-foreground")}>
                         <Icon className="size-5" aria-hidden="true" />
                         {t(label)}
                       </span>

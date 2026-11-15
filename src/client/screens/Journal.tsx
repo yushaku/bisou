@@ -1,5 +1,5 @@
 import { Ellipsis, Plus } from "lucide-react";
-import { lazy, Suspense, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useJournal } from "../lib/useJournal";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, JournalEntry } from "../../shared/types";
@@ -56,9 +56,12 @@ export function Journal({ couple, ...session }: JournalProps) {
   const notesRef = useRef<{ refresh: () => Promise<void> }>(null);
 
   // Creator first, as on Home, so each partner keeps one tint everywhere.
-  const people = new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person]));
+  const people = useMemo(() => new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person])), [couple.members, user, t]);
   const partner = couple.members.find((m) => m.id !== user.id);
   const partnerName = displayName(partner, t);
+
+  const groups = useMemo(() => feed ? groupByDay(feed.entries) : [], [feed]);
+  const cards = useMemo(() => new Map((feed?.entries ?? []).map((e) => [e.id, toCard(e, people, t, locale)])), [feed, people, t, locale]);
 
   const [fromMenu, setFromMenu] = useState(false);
   const [composing, setComposing] = useState(false);
@@ -181,13 +184,13 @@ export function Journal({ couple, ...session }: JournalProps) {
 
       {feed && feed.entries.length > 0 && (
         <>
-          {groupByDay(feed.entries).map((group) => (
+          {groups.map((group) => (
             <section key={group.date} aria-labelledby={`day-${group.date}`} className="mb-8 flex flex-col gap-3">
               <h2 id={`day-${group.date}`} className="font-heading text-xl">
                 <time dateTime={group.date}>{formatDay(group.date, locale)}</time>
               </h2>
               {group.entries.map((e) => {
-                const card = toCard(e, people, t, locale);
+                const card = cards.get(e.id)!;
                 return (
                   <EntryCard
                     key={e.id}

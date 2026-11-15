@@ -199,6 +199,23 @@
  * slides to the new tab, the page slides in from the side of the tab (--tab-dir: 1 or -1),
  * header and tab bar stay put. Reduced motion skips the transition in code.
  */
+/*
+ * While a tab switch runs (class set in lib/tabTransition.ts) the page box is the size of the
+ * screen, scrolled to where the reader is, so the snapshot holds what is visible and not the whole
+ * feed. Same place on screen as at rest; the bar keeps its sticky place at the bottom.
+ */
+html.tab-switching [data-tab-page] {
+  position: fixed;
+  top: var(--tab-top);
+  bottom: 0;
+  left: env(safe-area-inset-left);
+  right: env(safe-area-inset-right);
+  margin-inline: auto;
+  overflow: hidden;
+}
+html.tab-switching [data-tab-bar] {
+  margin-top: auto;
+}
 ::view-transition-group(tab-pill) {
   animation-duration: calc(var(--duration) * 2);
   animation-timing-function: var(--ease);

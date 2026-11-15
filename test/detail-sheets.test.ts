@@ -13,6 +13,7 @@ vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(), useId: () => "test",
   useContext: () => hooks.memory, useEffect: () => {}, useLayoutEffect: () => {},
   useCallback: (callback: unknown) => callback,
+  useMemo: (create: () => unknown) => create(),
   useState: (value: unknown) => {
     if (!hooks.active) return [value, vi.fn()];
     const index = hooks.index++;

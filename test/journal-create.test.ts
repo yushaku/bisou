@@ -32,7 +32,7 @@ vi.mock("react", async (original) => ({
   useRef: (initial: unknown) => hooks.refs[hooks.refIndex++] ?? (hooks.refs[hooks.refIndex - 1] = { current: initial }),
   useEffect: (effect: () => unknown) => { hooks.effects.push(effect); },
   useId: () => "test",
-  useLayoutEffect: vi.fn(), useContext: () => null, useCallback: <T,>(callback: T) => callback,
+  useLayoutEffect: vi.fn(), useContext: () => null, useCallback: <T,>(callback: T) => callback, useMemo: <T,>(create: () => T) => create(),
   useImperativeHandle: (ref: { current: unknown } | undefined, create: () => unknown) => { if (ref) ref.current = create(); },
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));

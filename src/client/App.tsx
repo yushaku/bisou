@@ -1,4 +1,4 @@
-import { Activity, lazy, type ComponentProps, Suspense, useCallback, useEffect, useState } from "react";
+import { Activity, lazy, type ComponentProps, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Route, Switch, useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import type { Couple, CoupleResponse, User } from "../shared/types";
@@ -9,19 +9,16 @@ import { clearJoinCode } from "./lib/joinLink";
 import { bootCacheNow, getBoot, meOutcome, saveBootCache, wipeDeviceData } from "./lib/bootSession";
 import { queryScope } from "./lib/devicePersist";
 import { scopedStore } from "./lib/deviceStore";
-import { loadedHome, loadHome } from "./lib/screens";
+import { loadedTabScreens, loadTabScreens, prewarmTabs } from "./lib/screens";
 import { createTabMemory, TabMemory } from "./lib/tabMemory";
 import { Login } from "./screens/Login";
 import { ServerDataProvider } from "./lib/serverQuery";
 
-const LazyHome = lazy(() => loadHome().then(m => ({ default: m.Home })));
-function Home(props: ComponentProps<typeof LazyHome>) {
-  const Loaded = loadedHome();
-  return Loaded ? <Loaded {...props} /> : <LazyHome {...props} />;
+const LazyTabScreens = lazy(() => loadTabScreens().then(m => ({ default: m.TabScreens })));
+function TabScreens(props: ComponentProps<typeof LazyTabScreens>) {
+  const Loaded = loadedTabScreens();
+  return Loaded ? <Loaded {...props} /> : <LazyTabScreens {...props} />;
 }
-const Journal = lazy(() => import("./screens/Journal").then(m => ({ default: m.Journal })));
-const Wishes = lazy(() => import("./screens/Wishes").then(m => ({ default: m.Wishes })));
-const Garden = lazy(() => import("./screens/Garden").then(m => ({ default: m.Garden })));
 const GardenDeck = lazy(() => import("./screens/GardenDeck").then(m => ({ default: m.GardenDeck })));
 const Starred = lazy(() => import("./screens/Starred").then(m => ({ default: m.Starred })));
 const CardBoxes = lazy(() => import("./screens/CardBoxes").then(m => ({ default: m.CardBoxes })));
@@ -180,6 +177,11 @@ function SignedIn({
     if (couple === undefined && !bootCouple) void refresh();
   }, [couple, bootCouple, refresh]);
 
+  // Fetch the other tab chunks once the first frame is out, so a tab switch never waits on one.
+  useEffect(() => {
+    if (paired) prewarmTabs();
+  }, [paired]);
+
   // Save the session so the next launch can show Home at once.
   useEffect(() => {
     if (couple !== undefined) void saveBootCache(store, user, couple);
@@ -206,31 +208,23 @@ function SignedIn({
   };
 
   const scope = queryScope(user.id, couple?.id);
-  const session = { user, onUser, onSignedOut };
+  const tabLocation = settingsOpen ? historyState?.from ?? "/" : location;
+  const session = useMemo(() => ({ user, onUser, onSignedOut }), [user, onUser, onSignedOut]);
   let content;
   if (!user.displayName) content = <Onboarding {...session} />;
   else if (couple === undefined) content = <LoadingScreen />;
   else if (!couple || !paired) content = <Pairing {...session} couple={couple} onCouple={onCouple} />;
   else content = (
-    <Switch location={settingsOpen ? historyState?.from ?? "/" : location}>
+    <Switch location={tabLocation}>
       <Route path="/boxes/:boxId">{params => <CardBoxPlayer key={params.boxId} {...session} couple={couple} boxId={params.boxId} />}</Route>
       <Route path="/stars"><Starred {...session} couple={couple} /></Route>
       <Route path="/boxes"><CardBoxes {...session} couple={couple} /></Route>
       <Route path="/events">
         <Events user={user} couple={couple} onCouple={onCouple} onSignedOut={onSignedOut} />
       </Route>
-      <Route path="/wishes">
-        <Wishes {...session} couple={couple} />
-      </Route>
-      <Route path="/journal">
-        <Journal {...session} couple={couple} />
-      </Route>
       <Route path="/garden/:deckId">{(params) => <GardenDeck key={params.deckId} {...session} couple={couple} deckId={params.deckId} />}</Route>
-      <Route path="/garden">
-        <Garden {...session} couple={couple} />
-      </Route>
       <Route>
-        <Home {...session} couple={couple} onCouple={onCouple} onRefresh={refresh} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
+        <TabScreens location={tabLocation} session={session} couple={couple} onCouple={onCouple} onRefresh={refresh} celebrate={celebrate} onCelebrated={() => setCelebrate(false)} />
       </Route>
     </Switch>
   );

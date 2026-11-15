@@ -1,19 +1,12 @@
 import { useContext, useEffect } from "react";
-import { flushSync } from "react-dom";
 import { useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import type { TabId } from "../components/bisou/AppShell";
 import { readCreateRequest, tabMove, TAB_PATH, type CreateDestination } from "./navigation";
 import { TabMemory } from "./tabMemory";
+import { browserHost, runTabTransition } from "./tabTransition";
 
 const LIVE_TABS = ["home", "journal", "wishes", "garden"] as const;
-
-function switchTab(go: () => void, direction: 1 | -1) {
-  const update = () => flushSync(go);
-  if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return update();
-  document.documentElement.style.setProperty("--tab-dir", String(direction));
-  document.startViewTransition(update);
-}
 
 export function useTabNavigation(tab?: TabId) {
   const [location, navigate] = useLocation();
@@ -43,7 +36,7 @@ export function useTabNavigation(tab?: TabId) {
       state: create ? { create } : null,
     });
     if (location === path) update();
-    else switchTab(update, LIVE_TABS.indexOf(next) > LIVE_TABS.indexOf(current) ? 1 : -1);
+    else runTabTransition(update, LIVE_TABS.indexOf(next) > LIVE_TABS.indexOf(current) ? 1 : -1, browserHost(), matchMedia("(prefers-reduced-motion: reduce)").matches);
   }
 
   return {
