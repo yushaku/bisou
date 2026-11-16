@@ -1,6 +1,6 @@
 # ADR 0013: Share server data through TanStack Query
 
-Status: accepted (November 2026). Partly superseded by [ADR 0014](0014-persist-server-data-on-device.md): server data is now persisted on the device.
+Status: accepted (November 2026). Partly superseded by [ADR 0014](0014-persist-server-data-on-device.md): server data is now persisted on the device. Its freshness rules (reuse windows on tab entry, Garden polling, refetch on reconnect) are superseded by [ADR 0015](0015-server-data-freshness.md).
 
 ## Context
 Home, Garden and Journal fetched overlapping data into separate component state. `TabMemory` cached some lists and pending requests, while each component implemented its own refresh listeners. Returning to Garden discarded its data, and an unchanged poll response still replaced component state.

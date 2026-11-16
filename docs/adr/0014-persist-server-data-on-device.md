@@ -1,6 +1,6 @@
 # ADR 0014: Persist server data on the device
 
-Status: accepted (November 2026). Supersedes the "keep private data in memory, not persisted" part of [ADR 0013](0013-server-state-with-tanstack-query.md).
+Status: accepted (November 2026). Supersedes the "keep private data in memory, not persisted" part of [ADR 0013](0013-server-state-with-tanstack-query.md). Its "restored data revalidates on mount" point is superseded by [ADR 0015](0015-server-data-freshness.md).
 
 ## Context
 A cold start of the installed iPhone app showed a loading screen through three serial round trips (`/api/me`, then `/api/couple`, then the lazy Home chunk, then Home's own queries). The query cache lived in memory only, so every launch started empty. `index.html` had an empty `#root`, so nothing painted before JavaScript ran. A new deploy also made the first open boot twice: the new service worker took control and the page reloaded itself.
