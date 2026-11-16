@@ -1,9 +1,11 @@
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { NotificationCard } from "../src/client/components/bisou/NotificationCard";
+import { QueryObserver, type UseQueryOptions } from "@tanstack/react-query";
+import { testQueryClient } from "./query-fixture";
 import { api } from "../src/client/api";
 
-const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as (() => unknown)[] }));
+const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as (() => unknown)[], cleanups: [] as (() => void)[] }));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useState: (initial: unknown) => {
@@ -14,9 +16,17 @@ vi.mock("react", async (original) => ({
   useEffect: (fn: () => unknown) => { hooks.effects.push(fn); },
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
+vi.mock("@tanstack/react-query", async original => ({
+  ...await original<typeof import("@tanstack/react-query")>(),
+  useQuery: (options: UseQueryOptions) => {
+    const observer = new QueryObserver(testQueryClient, options);
+    hooks.effects.push(() => { hooks.cleanups.push(observer.subscribe(() => {})); });
+    return observer.getCurrentResult();
+  },
+}));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 vi.mock("@yusufceng1z/ding-react", () => ({ toast: { error: vi.fn() } }));
-afterEach(() => { hooks.values = []; hooks.effects = []; hooks.index = 0; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { for (const cleanup of hooks.cleanups.splice(0)) cleanup(); hooks.values = []; hooks.effects = []; hooks.index = 0; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 type Props = { children?: ReactNode; disabled?: boolean; "aria-label"?: string; onClick?: () => Promise<void> | void };
 function elements(node: ReactNode): ReactElement<Props>[] {
@@ -39,6 +49,9 @@ async function setup(options: { installed?: boolean; permission?: string; subscr
   expect(render()).toHaveLength(0);
   for (const effect of hooks.effects.splice(0)) effect();
   // Drain the registration, API and getSubscription promises.
+  for (let i = 0; i < 8; i++) await Promise.resolve();
+  render();
+  for (const effect of hooks.effects.splice(0)) effect();
   for (let i = 0; i < 8; i++) await Promise.resolve();
   return { store, registration, focus };
 }
@@ -78,4 +91,16 @@ it("notifications R1, R24: offline invitation cannot start a subscription", asyn
   const button = render().find((n) => n.props.children === "push.card.button")!;
   expect(button.props.disabled).toBe(true); await button.props.onClick!();
   expect(registration.pushManager.subscribe).not.toHaveBeenCalled(); expect(store.size).toBe(0);
+});
+
+it("revisiting Home reuses push configuration without another API request", async () => {
+  await setup();
+  for (const cleanup of hooks.cleanups.splice(0)) cleanup();
+  hooks.values = []; hooks.effects = [];
+  for (let visit = 0; visit < 2; visit++) {
+    render();
+    for (const effect of hooks.effects.splice(0)) effect();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }
+  expect(api.push).toHaveBeenCalledOnce();
 });

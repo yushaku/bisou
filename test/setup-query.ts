@@ -7,7 +7,7 @@ import type { ApiResult } from "../src/client/api";
 // exercised with real QueryClient/QueryObserver instances in server-query.test.ts.
 vi.mock("@tanstack/react-query", async original => {
   const actual = await original<typeof import("@tanstack/react-query")>();
-  return { ...actual, useQueryClient: () => testQueryClient };
+  return { ...actual, useQueryClient: () => testQueryClient, useQuery: (options: UseQueryOptions) => actual.useQuery(options, testQueryClient) };
 });
 
 vi.mock("../src/client/lib/serverQuery", async original => {
@@ -15,7 +15,8 @@ vi.mock("../src/client/lib/serverQuery", async original => {
   const { useEffect, useCallback } = await import("react");
   return { ...actual,
     useServerQuery: <T, K extends QueryKey>(options: UseQueryOptions<T, Error, T, K>, onSignedOut: () => void) => {
-      const data = testQueryClient.getQueryData<T>(options.queryKey) ?? (typeof options.initialData === "function" ? (options.initialData as () => T | undefined)() : options.initialData) ?? null;
+      const state = testQueryClient.getQueryState(options.queryKey);
+      const data = testQueryClient.getQueryData<T>(options.queryKey) ?? (typeof options.initialData === "function" ? (options.initialData as () => T | undefined)() : options.initialData) ?? (state?.status === "error" ? undefined : typeof options.placeholderData === "function" ? (options.placeholderData as () => T | undefined)() : options.placeholderData) ?? null;
       const refresh = useCallback(async () => {
         try { await testQueryClient.fetchQuery({ ...options, staleTime: 0 }); }
         catch (error) { if (error instanceof actual.ApiQueryError && error.status === 401) onSignedOut(); }
@@ -23,7 +24,6 @@ vi.mock("../src/client/lib/serverQuery", async original => {
       useEffect(() => {
         if (options.enabled !== false) void testQueryClient.fetchQuery(options).catch(() => {});
       }, [options.queryKey]);
-      const state = testQueryClient.getQueryState(options.queryKey);
       return { data, failed: state?.status === "error", error: state?.error ?? null, refresh,
         setData: (value: SetStateAction<T | null>) => testQueryClient.setQueryData<T>(options.queryKey, old =>
           (typeof value === "function" ? (value as (old: T | null) => T | null)(old ?? null) : value) ?? undefined),

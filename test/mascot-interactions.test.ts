@@ -27,6 +27,7 @@ vi.mock("react", async original => ({
     return hooks.values[index];
   },
   useEffect: (effect: () => unknown) => { hooks.effects.push(effect); },
+  useMemo: (compute: () => unknown) => compute(),
   useContext: () => null,
   useCallback: <T,>(callback: T) => callback,
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),

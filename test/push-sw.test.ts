@@ -53,3 +53,30 @@ it("notifications AC3, R15: focuses and navigates an existing window", async () 
   expect(window.focus).toHaveBeenCalledOnce(); expect(window.navigate).toHaveBeenCalledWith("/events");
   expect(sw.clients.openWindow).not.toHaveBeenCalled();
 });
+
+it("a garden push notifies every window after showing the notification", async () => {
+  const sw = worker();
+  const first = { postMessage: vi.fn(() => { expect(sw.showNotification).toHaveBeenCalledOnce(); }) };
+  const second = { postMessage: vi.fn() };
+  sw.clients.matchAll.mockResolvedValue([first, second]);
+  await sw.dispatch("push", { data: { json: () => ({ title: "Both answered", tag: "garden" }) } });
+  expect(sw.clients.matchAll).toHaveBeenCalledWith({ type: "window", includeUncontrolled: true });
+  for (const window of [first, second]) expect(window.postMessage).toHaveBeenCalledWith({ type: "bisou:push", tag: "garden" });
+});
+
+it("a closed window cannot prevent the notification or delivery to another window", async () => {
+  const sw = worker();
+  const second = { postMessage: vi.fn() };
+  sw.clients.matchAll.mockResolvedValue([{ postMessage: () => { throw new Error("closed"); } }, second]);
+  await sw.dispatch("push", { data: { json: () => ({ title: "A note", tag: "notes" }) } });
+  expect(sw.showNotification).toHaveBeenCalledOnce();
+  expect(second.postMessage).toHaveBeenCalledWith({ type: "bisou:push", tag: "notes" });
+});
+
+it("a push without windows, or with failed window discovery, still shows its notification", async () => {
+  const sw = worker();
+  await sw.dispatch("push", { data: { json: () => ({ title: "A note", tag: "notes" }) } });
+  sw.clients.matchAll.mockRejectedValue(new Error("unavailable"));
+  await sw.dispatch("push", { data: { json: () => ({ title: "A note", tag: "notes" }) } });
+  expect(sw.showNotification).toHaveBeenCalledTimes(2);
+});

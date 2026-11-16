@@ -15,7 +15,7 @@ import { CardBoxPlayer } from "../src/client/screens/CardBoxPlayer";
 import { api } from "../src/client/api";
 import { CardBoxes } from "../src/client/screens/CardBoxes";
 import { TabMemory } from "../src/client/lib/tabMemory";
-import { createQueryFixture as createTabMemory } from "./query-fixture";
+import { testQueryClient, createQueryFixture as createTabMemory } from "./query-fixture";
 import { TABS } from "../src/client/components/bisou/AppShell";
 vi.mock("../src/client/components/ui/dialog", async original => ({
   ...await original<typeof import("../src/client/components/ui/dialog")>(),
@@ -400,4 +400,21 @@ it.each(["vi", "en"] as const)("card-box R12: player renders quiet seen and prev
     expect(html).toContain(`${open ? locale === "vi" ? "Đã xem" : "Seen" : locale === "vi" ? "Xem thử" : "Preview"} 2/${open ? 4 : 3}`);
     expect(html).not.toMatch(/<p[^>]*aria-live/);
   }
+});
+
+it.each(["list", "player"])("card-box AC26: local %s stays visible after its first server fetch fails", async screen => {
+  const values = storage(); values.set("bisou.locale", "en");
+  vi.stubGlobal("navigator", { onLine: false });
+  writeCache("c:u", "list", [detail.box]);
+  writeCache("c:u", "box:sample", detail);
+  const queryKey = screen === "list" ? ["boxes"] : ["boxes", "sample"];
+  await expect(testQueryClient.fetchQuery({ queryKey, queryFn: () => Promise.reject(new Error("offline")) })).rejects.toThrow("offline");
+  expect(testQueryClient.getQueryState(queryKey)?.status).toBe("error");
+  expect(testQueryClient.getQueryData(queryKey)).toBeUndefined();
+  const user = { id: "u", displayName: "U", email: "u@example.com", locale: "en" as const, createdAt: 1, birthDate: null, avatarId: null };
+  const props = { user, couple: { id: "c", members: [], startDate: null, events: [] }, onUser() {}, onSignedOut() {} };
+  const content = screen === "list" ? h(CardBoxes, props) : h(CardBoxPlayer, { ...props, boxId: "sample" });
+  const html = renderToString(h(Router, { ssrPath: "/boxes", children: h(I18nProvider, null, content) }));
+  expect(html).toContain(screen === "list" ? "Box" : "Seen 0/4");
+  expect(html).not.toContain("Connect to open this box for the first time");
 });

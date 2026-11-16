@@ -1,5 +1,5 @@
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { defaultShouldDehydrateQuery, type Query } from "@tanstack/react-query";
+import type { Query } from "@tanstack/react-query";
 import type { PersistQueryClientOptions } from "@tanstack/react-query-persist-client";
 import type { ScopedStore } from "./deviceStore";
 
@@ -26,7 +26,7 @@ export function firstPageOnly(data: unknown): unknown {
 }
 
 export function shouldPersistQuery(query: Query): boolean {
-  return query.state.status === "success" && defaultShouldDehydrateQuery(query);
+  return query.queryKey[0] !== "push" && query.state.data !== undefined;
 }
 
 export function devicePersistOptions(store: ScopedStore, scope: string): Omit<PersistQueryClientOptions, "queryClient"> {

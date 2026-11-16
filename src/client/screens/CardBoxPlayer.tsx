@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queries } from "../lib/queries";
 import { ApiQueryError, useApiMutation, useServerQuery } from "../lib/serverQuery";
@@ -23,9 +23,11 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
   const scope = `${couple.id}:${user.id}`;
   const client = useQueryClient();
   const unlockBox = useApiMutation(api.unlockBox, ["boxes"]);
-  const { data: detail, setData: setDetail, error: queryError, refresh } = useServerQuery({ ...queries.box(boxId),
-    initialData: () => readCache(scope, `box:${boxId}`) ?? undefined, initialDataUpdatedAt: 0,
+  const cached = useMemo(() => readCache(scope, `box:${boxId}`) ?? undefined, [scope, boxId]);
+  const { data: serverDetail, setData: setDetail, error: queryError, refresh } = useServerQuery({ ...queries.box(boxId),
+    placeholderData: cached,
   }, onSignedOut);
+  const detail = serverDetail ?? cached;
   const [play, setPlay] = useState<Play>({ stack: [], index: -1, startedOver: false });
   const [seen, setSeen] = useState(() => readSeen(scope, boxId));
   const error = queryError ? queryError instanceof ApiQueryError && queryError.status === 404 ? "notFound" : "loadError" : null;

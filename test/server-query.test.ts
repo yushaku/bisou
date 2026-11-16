@@ -1,12 +1,13 @@
-import { QueryObserver } from "@tanstack/react-query";
+import { readFileSync } from "node:fs";
+import { QueryObserver, dehydrate, hydrate, onlineManager } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../src/client/api";
-import { createServerQueryClient, apiData, apiMutationOptions } from "../src/client/lib/serverQuery";
+import { createServerQueryClient, apiData, apiMutationOptions, refreshServerData, refreshForPush } from "../src/client/lib/serverQuery";
 import { queries } from "../src/client/lib/queries";
 import { deleteJournalEntry, updateJournalEntry } from "../src/client/lib/useJournal";
 import type { JournalEntry } from "../src/shared/types";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
 it("Home and Garden share an in-flight request and reuse fresh data on tab entry", async () => {
   const client = createServerQueryClient();
@@ -99,5 +100,259 @@ it("Home and Journal share cursor pages; edits and deletions update the same cac
   expect(edited.pageParams).toEqual([undefined, "cursor"]);
   deleteJournalEntry(client, "new");
   expect(client.getQueryData(queries.journal.queryKey)!.pages.flatMap(page => page.entries).map(row => row.id)).toEqual(["old"]);
+  client.clear();
+});
+
+it("a tab reopened after two hours immediately reuses data without a request", async () => {
+  vi.useFakeTimers();
+  const client = createServerQueryClient();
+  const request = vi.spyOn(api, "wishes").mockResolvedValue({ ok: true, data: { open: [], received: [], partnerJarEmpty: true } });
+  const first = new QueryObserver(client, queries.wishes);
+  const leave = first.subscribe(() => {});
+  await first.refetch();
+  leave();
+  await vi.advanceTimersByTimeAsync(2 * 60 * 60_000);
+  const next = new QueryObserver(client, queries.wishes);
+  const leaveAgain = next.subscribe(() => {});
+  expect(next.getCurrentResult()).toMatchObject({ status: "success", data: { open: [], received: [], partnerJarEmpty: true } });
+  expect(request).toHaveBeenCalledTimes(1);
+  leaveAgain(); client.clear();
+});
+
+it("restored day-old data renders without fetching until the foreground refresh", async () => {
+  const client = createServerQueryClient();
+  const saved = createServerQueryClient();
+  saved.setQueryData(["wishes"], { open: [], received: [], partnerJarEmpty: true }, { updatedAt: Date.now() - 86400_000 });
+  hydrate(client, dehydrate(saved));
+  saved.clear();
+  const request = vi.spyOn(api, "wishes").mockResolvedValue({ ok: true, data: { open: [], received: [], partnerJarEmpty: true } });
+  const observer = new QueryObserver(client, queries.wishes);
+  const leave = observer.subscribe(() => {});
+  expect(observer.getCurrentResult()).toMatchObject({ status: "success", data: { open: [], received: [], partnerJarEmpty: true } });
+  expect(request).not.toHaveBeenCalled();
+  await refreshServerData(client);
+  expect(request).toHaveBeenCalledOnce();
+  leave(); client.clear();
+});
+
+it("foreground refresh fetches inactive lists and stars but defers details until opened", async () => {
+  const client = createServerQueryClient();
+  const list = vi.fn(async () => "list");
+  const stars = vi.fn(async () => "stars");
+  const detail = vi.fn(async () => "deck");
+  const push = vi.fn(async () => "push");
+  await client.fetchQuery({ queryKey: ["wishes"], queryFn: list });
+  await client.fetchQuery({ queryKey: ["garden", "stars"], queryFn: stars });
+  await client.fetchQuery({ queryKey: ["garden", "deck", "x"], queryFn: detail });
+  await client.fetchQuery({ queryKey: ["push"], queryFn: push });
+  await refreshServerData(client);
+  expect(list).toHaveBeenCalledTimes(2);
+  expect(stars).toHaveBeenCalledTimes(2);
+  expect(detail).toHaveBeenCalledOnce();
+  expect(push).toHaveBeenCalledOnce();
+  expect(client.getQueryState(["garden", "deck", "x"])?.isInvalidated).toBe(true);
+  const observer = new QueryObserver(client, { queryKey: ["garden", "deck", "x"], queryFn: detail });
+  const leave = observer.subscribe(() => {});
+  await vi.waitFor(() => expect(detail).toHaveBeenCalledTimes(2));
+  const control = new QueryObserver(client, { queryKey: ["push"], queryFn: push });
+  const leaveControl = control.subscribe(() => {});
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(push).toHaveBeenCalledOnce();
+  leaveControl();
+  leave(); client.clear();
+});
+
+it("a successful mutation refreshes an inactive query when its tab next opens", async () => {
+  const client = createServerQueryClient();
+  const request = vi.spyOn(api, "wishes").mockResolvedValue({ ok: true, data: { open: [], received: [], partnerJarEmpty: true } });
+  await client.fetchQuery(queries.wishes);
+  const healthy = vi.fn(async () => "healthy");
+  const controlOptions = { queryKey: ["notes"], queryFn: healthy };
+  await client.fetchQuery(controlOptions);
+  await client.getMutationCache().build(client, apiMutationOptions(client, async () => ({ ok: true, data: {} }), ["wishes"])).execute([]);
+  const observer = new QueryObserver(client, queries.wishes);
+  const leave = observer.subscribe(() => {});
+  await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+  const control = new QueryObserver(client, controlOptions);
+  const leaveControl = control.subscribe(() => {});
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(healthy).toHaveBeenCalledOnce();
+  leaveControl();
+  leave(); client.clear();
+});
+
+it("Garden has no polling schedule", async () => {
+  vi.useFakeTimers();
+  const client = createServerQueryClient();
+  const gardenQueries = [...Object.values(queries).filter(value => typeof value !== "function"), queries.gardenDeck("x"), queries.gardenStage("in_love"), queries.gardenDecisions("in_love")];
+  expect(gardenQueries.every(value => !("refetchInterval" in value))).toBe(true);
+  const request = vi.spyOn(api, "garden").mockResolvedValue({ ok: true, data: { day: "2026-11-14", today: null, swapLocked: false, freshness: "fresh", plants: [], levels: { revision: 0, initialLevelId: null, selectedLevelId: null, furthestLevelId: null, placementComplete: false, proposal: null, decisions: [] } } });
+  const observer = new QueryObserver(client, queries.garden);
+  const leave = observer.subscribe(() => {});
+  await observer.refetch({ cancelRefetch: false });
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(request).toHaveBeenCalledOnce();
+  leave(); client.clear();
+});
+
+it("reconnect retries only errored queries and leaves successful data alone", async () => {
+  const client = createServerQueryClient();
+  client.mount();
+  const good = vi.fn(async () => "good");
+  const bad = vi.fn<() => Promise<string>>().mockRejectedValueOnce(new Error("offline")).mockResolvedValue("recovered");
+  const successful = new QueryObserver(client, { queryKey: ["good"], queryFn: good });
+  const failed = new QueryObserver(client, { queryKey: ["bad"], queryFn: bad });
+  const leaveGood = successful.subscribe(() => {});
+  const leaveBad = failed.subscribe(() => {});
+  await Promise.all([successful.refetch(), failed.refetch()]);
+  onlineManager.setOnline(false); onlineManager.setOnline(true);
+  await vi.waitFor(() => expect(failed.getCurrentResult().data).toBe("recovered"));
+  expect(good).toHaveBeenCalledOnce();
+  expect(bad).toHaveBeenCalledTimes(2);
+  leaveGood(); leaveBad(); client.unmount(); client.clear();
+});
+
+it("journal pushes refresh only their related roots, including inactive data", async () => {
+  const client = createServerQueryClient();
+  const requests = Object.fromEntries(["journal", "wishes", "claims", "garden", "notes"].map(root => [root, vi.fn(async () => root)]));
+  for (const [root, queryFn] of Object.entries(requests)) await client.fetchQuery({ queryKey: [root], queryFn });
+  await refreshForPush(client, "journal");
+  expect(Object.fromEntries(Object.entries(requests).map(([root, request]) => [root, request.mock.calls.length]))).toEqual({ journal: 2, wishes: 2, claims: 2, garden: 1, notes: 1 });
+  for (const tag of ["events", "x", "__proto__"]) await refreshForPush(client, tag);
+  expect(Object.values(requests).map(request => request.mock.calls.length)).toEqual([2, 2, 2, 1, 1]);
+  client.clear();
+});
+
+it("garden pushes refresh every garden detail and stars; notes pushes refresh only notes", async () => {
+  const client = createServerQueryClient();
+  const keys = [["garden"], ["garden", "stars"], ["garden", "stage", "in_love"], ["garden", "decisions", "in_love"], ["garden", "deck", "x"], ["notes"], ["boxes"]];
+  const requests = keys.map(() => vi.fn(async () => "data"));
+  for (const [index, queryKey] of keys.entries()) await client.fetchQuery({ queryKey, queryFn: requests[index]! });
+  await refreshForPush(client, "garden");
+  expect(requests.map(request => request.mock.calls.length)).toEqual([2, 2, 2, 2, 2, 1, 1]);
+  await refreshForPush(client, "notes");
+  expect(requests.map(request => request.mock.calls.length)).toEqual([2, 2, 2, 2, 2, 2, 1]);
+  client.clear();
+});
+
+it("launch and push can refresh restored queries before any screen registers their fetch functions", async () => {
+  const saved = createServerQueryClient();
+  saved.setQueryData(["wishes"], { open: [], received: [], partnerJarEmpty: true });
+  saved.setQueryData(["journal"], { pages: [{ entries: [], nextCursor: null }], pageParams: [undefined] });
+  saved.setQueryData(["garden", "deck", "x"], { cached: true });
+  const client = createServerQueryClient();
+  hydrate(client, dehydrate(saved)); saved.clear();
+  const wishes = vi.spyOn(api, "wishes").mockResolvedValue({ ok: true, data: { open: [], received: [], partnerJarEmpty: false } });
+  const journal = vi.spyOn(api, "journal").mockResolvedValue({ ok: true, data: { entries: [], nextCursor: null } });
+  const deck = vi.spyOn(api, "gardenDeck").mockResolvedValue({ ok: false, status: 503, error: null });
+  await refreshServerData(client);
+  expect(wishes).toHaveBeenCalledOnce();
+  expect(journal).toHaveBeenCalledOnce();
+  expect(client.getQueryData(["journal"])).toEqual({ pages: [{ entries: [], nextCursor: null }], pageParams: [undefined] });
+  await refreshForPush(client, "garden");
+  expect(deck).toHaveBeenCalledWith("x");
+  client.clear();
+});
+
+it("foreground refresh refetches observed details while leaving closed details invalidated", async () => {
+  const client = createServerQueryClient();
+  const open = vi.fn(async () => "open");
+  const closed = vi.fn(async () => "closed");
+  const openOptions = { queryKey: ["garden", "deck", "open"], queryFn: open };
+  await client.fetchQuery(openOptions);
+  await client.fetchQuery({ queryKey: ["boxes", "closed"], queryFn: closed });
+  const observer = new QueryObserver(client, openOptions);
+  const leave = observer.subscribe(() => {});
+  await refreshServerData(client);
+  expect(open).toHaveBeenCalledTimes(2);
+  expect(closed).toHaveBeenCalledOnce();
+  expect(client.getQueryState(["boxes", "closed"])?.isInvalidated).toBe(true);
+  leave(); client.clear();
+});
+
+it("overlapping push and foreground refreshes join each running list request", async () => {
+  const client = createServerQueryClient();
+  let refreshing = false;
+  let finish!: (value: string) => void;
+  const pending = new Promise<string>(resolve => { finish = resolve; });
+  const requests = ["journal", "wishes", "claims", "notes"].map(root => ({ root, request: vi.fn(async () => refreshing ? pending : "cached") }));
+  for (const { root, request } of requests) await client.fetchQuery({ queryKey: [root], queryFn: request });
+  refreshing = true;
+  const refreshes = [refreshForPush(client, "journal"), refreshServerData(client)];
+  await vi.dynamicImportSettled();
+  finish("fresh");
+  await Promise.all(refreshes);
+  expect(requests.map(({ request }) => request.mock.calls.length)).toEqual([2, 2, 2, 2]);
+  client.clear();
+});
+
+it("overlapping foreground refreshes also join an observed detail request", async () => {
+  const client = createServerQueryClient();
+  let finish!: (value: string) => void;
+  const pending = new Promise<string>(resolve => { finish = resolve; });
+  const request = vi.fn<() => Promise<string>>().mockResolvedValueOnce("cached").mockImplementation(() => pending);
+  const options = { queryKey: ["boxes", "open"], queryFn: request };
+  await client.fetchQuery(options);
+  const observer = new QueryObserver(client, options);
+  const leave = observer.subscribe(() => {});
+  const refreshes = [refreshServerData(client), refreshServerData(client)];
+  await vi.dynamicImportSettled();
+  finish("fresh"); await Promise.all(refreshes);
+  expect(request).toHaveBeenCalledTimes(2);
+  leave(); client.clear();
+});
+
+it("reopening a list retries its failed background refresh once while healthy data stays cached", async () => {
+  const client = createServerQueryClient();
+  const request = vi.fn<() => Promise<string>>().mockResolvedValueOnce("cached").mockRejectedValueOnce(new Error("offline")).mockResolvedValue("recovered");
+  const healthy = vi.fn(async () => "healthy");
+  const options = { queryKey: ["wishes"], queryFn: request };
+  const control = { queryKey: ["push"], queryFn: healthy };
+  await client.fetchQuery(options); await client.fetchQuery(control);
+  await refreshServerData(client);
+  expect(client.getQueryState(["wishes"])).toMatchObject({ status: "error", data: "cached" });
+  const observer = new QueryObserver(client, options);
+  const healthyObserver = new QueryObserver(client, control);
+  const leave = observer.subscribe(() => {});
+  const leaveHealthy = healthyObserver.subscribe(() => {});
+  await vi.waitFor(() => expect(observer.getCurrentResult()).toMatchObject({ status: "success", data: "recovered" }));
+  expect(request).toHaveBeenCalledTimes(3);
+  expect(healthy).toHaveBeenCalledOnce();
+  leave(); leaveHealthy(); client.clear();
+});
+
+it("every content push tag emitted by the Worker refreshes a cached query root", async () => {
+  const source = readFileSync(new URL("../src/worker/lib/notify.ts", import.meta.url), "utf8");
+  const tags = new Set([...source.matchAll(/tag:\s*["']([^"']+)["']/g)].map(match => match[1]!));
+  tags.delete("events"); tags.delete("bisou");
+  expect(tags.size).toBeGreaterThan(0);
+  const client = createServerQueryClient();
+  const requests = ["journal", "wishes", "claims", "garden", "notes", "boxes"].map(root => ({ root, request: vi.fn(async () => "cached") }));
+  for (const { root, request } of requests) await client.fetchQuery({ queryKey: [root], queryFn: request });
+  for (const tag of tags) {
+    for (const { request } of requests) request.mockClear();
+    await refreshForPush(client, tag);
+    expect(requests.some(({ request }) => request.mock.calls.length > 0), `unmapped Worker tag: ${tag}`).toBe(true);
+  }
+  client.clear();
+});
+
+it("a partner push starts a new request after an older foreground fetch is already in flight", async () => {
+  const client = createServerQueryClient();
+  let completeOld!: (value: string) => void;
+  const oldResponse = new Promise<string>(resolve => { completeOld = resolve; });
+  const request = vi.fn<() => Promise<string>>().mockResolvedValueOnce("cached")
+    .mockImplementationOnce(() => oldResponse).mockResolvedValueOnce("after push");
+  await client.fetchQuery({ queryKey: ["notes"], queryFn: request });
+  const foreground = refreshServerData(client);
+  await vi.dynamicImportSettled();
+  expect(request).toHaveBeenCalledTimes(2);
+  const push = refreshForPush(client, "notes");
+  await vi.dynamicImportSettled();
+  const callsAfterPush = request.mock.calls.length;
+  completeOld("before push");
+  await Promise.all([foreground, push]);
+  expect(callsAfterPush).toBe(3);
+  expect(client.getQueryData(["notes"])).toBe("after push");
   client.clear();
 });

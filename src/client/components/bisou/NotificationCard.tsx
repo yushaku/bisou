@@ -1,7 +1,8 @@
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
-import { api } from "@/api";
+import { useQuery } from "@tanstack/react-query";
+import { queries } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
@@ -21,19 +22,21 @@ export function NotificationCard() {
   const [busy, setBusy] = useState(false);
   const eligible = isStandalone() && pushSupport() === "ok" && Notification.permission === "default";
 
+  const { data: push } = useQuery({ ...queries.push, enabled: eligible && !dismissed });
+
   useEffect(() => {
     if (!eligible || dismissed) return;
     let active = true;
     void (async () => {
       try {
-        const [registration, res] = await Promise.all([navigator.serviceWorker.getRegistration(), api.push()]);
+        const registration = await navigator.serviceWorker.getRegistration();
         const subscription = registration?.pushManager ? await registration.pushManager.getSubscription() : null;
-        if (active) setReady(registration?.pushManager && !subscription && res.ok && res.data.publicKey
-          ? { registration, publicKey: res.data.publicKey } : null);
+        if (active) setReady(registration?.pushManager && !subscription && push?.publicKey
+          ? { registration, publicKey: push.publicKey } : null);
       } catch { if (active) setReady(null); }
     })();
     return () => { active = false; };
-  }, [eligible, dismissed, online]);
+  }, [eligible, dismissed, online, push]);
 
   if (!eligible || dismissed || !ready) return null;
 

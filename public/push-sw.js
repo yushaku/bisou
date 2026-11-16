@@ -8,9 +8,18 @@ self.addEventListener("push", (event) => {
       tag: typeof data.tag === "string" && data.tag ? data.tag : "bisou",
     };
   } catch { /* Every push must show a notification, even an unreadable one. */ }
-  event.waitUntil(self.registration.showNotification(message.title, {
-    tag: message.tag, renotify: true, icon: "/icons/icon-192.png", data: { url: message.url },
-  }));
+  event.waitUntil((async () => {
+    await self.registration.showNotification(message.title, {
+      tag: message.tag, renotify: true, icon: "/icons/icon-192.png", data: { url: message.url },
+    });
+    try {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const window of windows) {
+        try { window.postMessage({ type: "bisou:push", tag: message.tag }); }
+        catch { /* A closed window must not stop delivery to the others. */ }
+      }
+    } catch { /* The notification is already shown if window discovery fails. */ }
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {
