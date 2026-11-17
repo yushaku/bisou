@@ -32,7 +32,7 @@ Không đo được INP/LCP/CLS đại diện cho người dùng từ dữ liệ
 
 ## Cache dữ liệu và render với TanStack Query
 
-Áp dụng [ADR 0013](adr/0013-server-state-with-tanstack-query.md): Home/Garden dùng chung query Garden; Home/Journal dùng chung các trang nhật ký. Điều ước, lời nhắn, claims và hộp thẻ cũng dùng QueryClient riêng cho mỗi phiên. `TabMemory` chỉ giữ trạng thái giao diện. Query không còn component sử dụng được thu hồi sau 30 phút; đăng xuất dọn toàn bộ client của phiên.
+Áp dụng [ADR 0013](adr/0013-server-state-with-tanstack-query.md): Home/Garden dùng chung query Garden; Home/Journal dùng chung các trang nhật ký. Điều ước, lời nhắn, claims và hộp thẻ cũng dùng QueryClient riêng cho mỗi phiên. `TabMemory` chỉ giữ focus targets, bộ lọc và lựa chọn section; vị trí cuộn không được lưu. Query không còn component sử dụng được thu hồi sau 30 phút; đăng xuất dọn toàn bộ client của phiên.
 
 Test bằng QueryClient/QueryObserver thật xác nhận request đang chạy được gộp, dữ liệu còn mới không gọi lại, JSON không đổi giữ reference và không thông báo cho observer chỉ theo dõi data. Test cũng kiểm tra lỗi HTTP, lỗi làm mới vẫn giữ dữ liệu cũ, invalidation sau mutation, phân trang/cập nhật/xóa nhật ký và kết quả đến muộn sau đăng xuất. Các test component dùng adapter riêng vì bộ test hiện tại render SSR hoặc giả lập React hooks thủ công.
 

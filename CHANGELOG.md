@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Returning to a tab now starts at the top of the page.
+
 ### Added
 
 - Bị thương hay được phạt, an 18+ paid box of 30 cards: pick being cherished or being playfully punished.
