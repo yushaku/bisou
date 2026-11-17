@@ -9,7 +9,7 @@ import { TabFrame, type SessionProps } from "./SignedInShell";
 function tabScreen<P extends object>(tab: "journal" | "wishes" | "garden") {
   const Lazy = lazy(() => loadTab(tab).then((component) => ({ default: component as unknown as ComponentType<P> })));
   return function TabScreen(props: P) {
-    const Loaded = loadedTab(tab) as unknown as ComponentType<P> | undefined;
+    const [Loaded] = useState(() => loadedTab(tab) as unknown as ComponentType<P> | undefined);
     return Loaded ? <Loaded {...props} /> : <Lazy {...(props as object as ComponentProps<typeof Lazy>)} />;
   };
 }

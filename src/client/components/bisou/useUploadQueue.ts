@@ -78,7 +78,7 @@ export function useUploadQueue(existing: string[] = []) {
     [forget],
   );
 
-  // Draft resources survive Activity hiding; dispose only when the draft is removed.
+  // Draft resources survive hiding; removal is best effort, with server sweep for uploads whose response never arrived.
   useInsertionEffect(
     () => () => {
       for (const c of aborts.current.values()) c.abort();

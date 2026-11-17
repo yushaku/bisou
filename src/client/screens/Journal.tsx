@@ -41,7 +41,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
   const [section, setSection] = useState<"feed" | "notes">(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("section") === "notes" ? "notes" : memory?.journalSection ?? "feed");
-  useLayoutEffect(() => { if (memory) setSection(memory.journalSection); }, [memory]);
+  useLayoutEffect(() => { if (memory?.journalSection === "notes") setSection("notes"); }, [memory]);
   useEffect(() => {
     if (memory) memory.journalSection = section;
     const url = new URL(window.location.href);

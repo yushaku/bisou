@@ -273,3 +273,15 @@ it("returning from Home's notes shortcut selects notes in an already visited Jou
   for (const effect of hooks.effects.splice(0)) effect();
   expect(journal().find(n => n.type === Tabs)?.props.value).toBe("notes");
 });
+
+
+it("a notes deep link wins over the default feed memory without StrictMode replay", () => {
+  hooks.memory = { journalSection: "feed" };
+  vi.stubGlobal("window", { location: { href: "http://localhost/journal?section=notes", search: "?section=notes" } });
+  const replaceState = vi.fn();
+  vi.stubGlobal("history", { state: null, replaceState });
+  journal();
+  for (const effect of hooks.effects.splice(0)) effect();
+  expect(journal().find(n => n.type === Tabs)?.props.value).toBe("notes");
+  expect(replaceState).toHaveBeenCalledWith(null, "", new URL("http://localhost/journal"));
+});

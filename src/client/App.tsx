@@ -16,7 +16,7 @@ import { ServerDataProvider } from "./lib/serverQuery";
 
 const LazyTabScreens = lazy(() => loadTabScreens().then(m => ({ default: m.TabScreens })));
 function TabScreens(props: ComponentProps<typeof LazyTabScreens>) {
-  const Loaded = loadedTabScreens();
+  const [Loaded] = useState(loadedTabScreens);
   return Loaded ? <Loaded {...props} /> : <LazyTabScreens {...props} />;
 }
 const GardenDeck = lazy(() => import("./screens/GardenDeck").then(m => ({ default: m.GardenDeck })));

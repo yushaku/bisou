@@ -25,11 +25,10 @@ export function useTabNavigation() {
       history.back();
       return;
     }
-    const update = () => navigate(path, {
+    navigate(path, {
       replace: move === "replace",
       state: create ? { create } : null,
     });
-    update();
   }
 
   return {
