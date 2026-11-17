@@ -4,7 +4,8 @@
 
 ### Changed
 
-- Returning to a tab now starts at the top of the page.
+- Switching bottom tabs shows the page immediately, while the tab indicator slides into place.
+- Returning to a visited tab keeps its filters, loaded journal pages, and open views, including the Wishes gift draw, and starts at the top of the page.
 
 ### Added
 

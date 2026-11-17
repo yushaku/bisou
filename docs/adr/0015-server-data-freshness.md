@@ -1,6 +1,6 @@
 # ADR 0015: Server data refreshes on foreground, own changes and partner pushes, not on tab switch
 
-Status: accepted (November 2026). Supersedes the freshness rules of [ADR 0013](0013-server-state-with-tanstack-query.md) (tab-entry reuse windows, Garden polling, refetch on reconnect) and the "restored data revalidates on mount" point of [ADR 0014](0014-persist-server-data-on-device.md). TanStack Query and the persisted cache stay.
+Status: accepted (November 2026). Superseded in part by [0016](0016-instant-tab-switch-keeps-visited-tabs-mounted.md) (keep tab screens mounted). Supersedes the freshness rules of [ADR 0013](0013-server-state-with-tanstack-query.md) (tab-entry reuse windows, Garden polling, refetch on reconnect) and the "restored data revalidates on mount" point of [ADR 0014](0014-persist-server-data-on-device.md). TanStack Query and the persisted cache stay.
 
 ## Context
 Tab screens unmount on every switch. With `staleTime` 15 to 60 s and `refetchOnMount`, every return to a tab after that window fetched again; Home polled `/api/garden` every 15 s. `gcTime` (30 min) was far below the 30 day persist `maxAge`, so a tab not opened for 30 minutes, in memory or after a restore, lost its data and showed the skeleton again; TanStack Query says `gcTime` should be at least `maxAge`.

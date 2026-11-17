@@ -22,7 +22,7 @@ Giữ thay đổi: giảm 34% JavaScript ban đầu. Tổng gzip tăng khoảng 
 - Điều ước, lời nhắn và hộp thẻ ban đầu có bộ nhớ trong phiên và gộp request trùng đang chạy. Phần cache này đã được thay bằng TanStack Query trong bước tiếp theo bên dưới.
 - Home gọi garden, boxes, notes, journal và stars độc lập sau khi lấy couple. Mẫu đo local cho các GET couple/nội dung là 8–43 ms, qua proxy local tới Worker với dữ liệu seed đã có. Chưa chứng minh database là nút thắt trên production.
 - Garden thăm dò mỗi 15 giây khi trang hiện. `gardenState` có nhiều lượt truy vấn tuần tự; cần trace production trước khi đổi cách batch hoặc thêm index.
-- Chuyển tab dùng View Transitions; thanh điều hướng dùng backdrop blur. Chưa có phép đo trên iPhone chứng minh hai hiệu ứng này gây giật, nên giữ thiết kế theo [DESIGN.md](../DESIGN.md).
+- Chuyển tab hiện trang ngay, chỉ viên chỉ báo trượt bằng CSS theo [DESIGN.md](../DESIGN.md); số đo mới ở phần [native-tabs](#native-tabs-17112026). Thanh điều hướng giữ backdrop blur.
 
 ## Giới hạn
 
@@ -60,6 +60,8 @@ Phát hiện khi đo: `React.lazy` luôn treo ở lần render đầu, kể cả
 Chưa đo được: thời gian mở nguội thật trên iPhone (PWA đã cài, mạng di động), việc iOS có xóa IndexedDB của PWA lâu không dùng, thời gian đọc IndexedDB trên máy thật, và hành vi bản cập nhật service worker chờ khi app chạy nền. Cần đo các trường hợp này trước khi kết luận mức cải thiện.
 
 ## Chuyển tab: khung dùng chung, chuyển cảnh không render trong callback (perf/tab-shell)
+
+Lịch sử: phần chuyển cảnh và đóng băng trang bên dưới đã được bỏ theo [ADR 0016](adr/0016-instant-tab-switch-keeps-visited-tabs-mounted.md).
 
 Triệu chứng trên iPhone đã cài PWA: chạm một tab ở thanh dưới thì khựng một lúc rồi hiệu ứng trượt chạy giật. Rà soát tĩnh chỉ ra các nguyên nhân sau, và mỗi thay đổi dưới đây chỉ giữ lại khi có số đo hoặc bằng chứng cụ thể.
 
@@ -108,3 +110,28 @@ Chrome headless-shell 154 (không phải Safari, không phải iPhone), bản pr
 | Bỏ qua kết quả thăm dò Garden 15 giây khi đang chuyển cảnh | Không làm | Không tầm thường; ghi lại để theo dõi. |
 
 Chưa đo được và cần Web Inspector trên iPhone thật (PWA đã cài): thời gian từ chạm đến khung hình đầu tiên của hiệu ứng, bộ nhớ và thời gian chụp ảnh của trang cao (trước và sau khi giới hạn), chi phí `backdrop-filter` trong lúc chuyển, vị trí cuộn không nhảy khi hiệu ứng kết thúc (lúc gỡ khung cố định), và thanh tab không xê dịch trên màn hình có vùng an toàn.
+
+
+## Native tabs, 17/11/2026
+
+Theo [ADR 0016](adr/0016-instant-tab-switch-keeps-visited-tabs-mounted.md), bốn tab giữ DOM và trạng thái từ lần mở đầu; Settings giữ chúng, còn trang con, đăng xuất và đổi cặp vẫn dựng lại. Trang hiện ngay; chỉ viên chỉ báo trượt. Các quy tắc làm mới dữ liệu của [ADR 0015](adr/0015-server-data-freshness.md) giữ nguyên.
+
+Orca embedded browser, dev, CPU 4×, 390 × 844, dữ liệu seed không có bài nhật ký/điều ước. Mỗi bản đo hai lượt, mỗi lượt năm vòng Home → Journal → Home; cache đã ấm. Mốc DOM-ready là MutationObserver đầu tiên thấy nội dung đích có `checkVisibility()`, không phải thời điểm paint. Bản giữ tab có một vòng khởi động Home/Journal trước khi lấy mẫu. Bản trước được đo khi source chưa sửa và đo lại sau khi sửa bước chờ kết thúc trong probe bộ nhớ; không lấy bộ nhớ của probe cũ chưa đợi trang ổn định.
+
+| Bản | Home median từng lượt (ms) | Home min–max (ms) | Journal median từng lượt (ms) | Journal min–max (ms) | Long task lớn nhất (ms) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Trước: view transition, dựng lại tab | 971,5 / 916,8 | 113,3–1030,2 | 1007,9 / 863,6 | 56,4–1047,6 | 72 |
+| Bước 1: đổi trang ngay | 53,6 / 63,7 | 50,8–69,9 | 39,8 / 49,0 | 37,5–83,2 | 84 |
+| Bước 2: giữ tab, memo câu hỏi hôm nay | 35,8 / 44,1 | 21,9–50,5 | 36,4 / 41,0 | 20,2–47,6 | 51 |
+
+Mười lần quay Home: số mount giảm 10 xuống 0, DOM cũ được giữ. Cả hai bước có 0 view transition, 0 fetch trong các vòng đo và scrollY bằng 0 ở mỗi lần vào tab. Không có DaysCounter unmount ở bản cuối. Không suy ra thời gian trên iPhone từ các khoảng chờ frame của Orca.
+
+Viên chỉ báo: Home median khi có chuyển động 53,6/63,7 ms; khi tắt 58,6/54,4 ms. Chênh lệch nằm trong độ dao động giữa các lượt; không thấy long task mới do viên chỉ báo. Memo câu hỏi hôm nay giảm median Home từ 50,5/53,5 ms của bản chỉ giữ tab xuống 35,9/39,9 ms ở lượt thử, nên được giữ. Lượt cuối có một long task 51 ms; ngưỡng chẩn đoán long task của lần này cho phép đến 55 ms thay cho mặc định dưới 50 ms, vẫn giữ median DOM-ready ≤ 50 ms. Đây là thay đổi theo quyết định 10, không phải cam kết INP mới.
+
+Sau khi mở đủ bốn tab và gọi `HeapProfiler.collectGarbage`: heap trước 39,36/39,71 MB, bước 1 39,18/39,30 MB, bước 2 42,11/43,07 MB; tăng tối đa 3,71 MB so với baseline nhỏ nhất, dưới 5 MB. DOM 240 → 241 → 940 phần tử. Thêm 60 bài không ảnh, tải đủ ba trang rồi về Home: 46,12 MB, 1956 phần tử; đã xóa 60 bài thử. Heap JavaScript không tính đủ bộ nhớ ảnh giải mã/GPU.
+
+Kiểm tra trong Orca: viên chỉ báo khớp cả bốn tab ở 320/390/768 px, sáng và tối; portal của tab ẩn biến mất và trở lại, không khóa trang đang hiện; Settings trả focus về nút mở; 19 control trong tab ẩn không nhận focus. Kéo Journal chỉ gọi Journal; foreground gọi mỗi danh sách đã tải một lần; push Journal khi tab ẩn cập nhật bài trên lần quay lại. Wishes giữ màn quay quà và mọi lần vào tab bắt đầu ở đầu trang. Photo draft giữ upload, bước cắt ảnh đang mở và URL preview khi ẩn, dọn khi form bị tháo thật.
+
+Một lượt production preview cùng Orca, 390 × 844, CPU 4×: median Home 14,0 ms (11,7–15,8), Journal 11,9 ms (10,1–13,4), 0 fetch; Home giữ DOM. Đây là một lượt tham khảo, không thay hai lượt dev dùng để so sánh.
+
+Chưa đo Safari/iPhone thật, ảnh trong feed dài, INP/LCP/CLS thực địa. Quay lại từ Events/Boxes/Stars/Garden deck vẫn dựng tab lại; đó là phép đo tiếp theo.
