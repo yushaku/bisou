@@ -93,7 +93,7 @@
   }
 }
 
-.note-envelope-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--spacing) * 4); align-items: start; }
+.note-envelope-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(var(--spacing) * 3); align-items: start; }
 .note-envelope { min-width: 0; }
 .note-envelope-item { display: block; }
 .note-envelope-paper {
@@ -116,13 +116,20 @@
   --envelope-ink: var(--card);
   --envelope-wax: oklch(from var(--destructive) .52 c h);
 }
-.note-envelope-caption { display: block; padding-top: var(--spacing); line-height: 1.5; }
-.note-ready-button { margin-top: calc(var(--spacing) * 2); white-space: normal; height: auto; min-height: calc(var(--spacing) * 12); padding-inline: calc(var(--spacing) * 2); }
-.note-envelope-button { border-radius: var(--radius-sm); }
-.note-envelope-button:active { transform: translateY(var(--spacing)); }
-@media (prefers-reduced-motion: reduce) {
-  .note-envelope-button { transition: none; }
-  .note-envelope-button:active { transform: none; }
+.note-envelope-waiting {
+  display: grid;
+  grid-template-columns: calc(var(--spacing) * 28) minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--spacing) * 4);
+  padding: calc(var(--spacing) * 4);
+}
+.note-envelope-waiting .note-envelope-item { grid-column: 1; grid-row: 1 / 3; }
+.note-ready-button { white-space: normal; height: auto; min-height: calc(var(--spacing) * 12); padding-inline: calc(var(--spacing) * 2); font-size: var(--text-sm); }
+.note-envelope-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(var(--spacing) * 16);
+  align-items: center;
+  gap: calc(var(--spacing) * 3);
 }
 
 /* Floating chrome (the tab island): translucent frosted glass with a lit top rim,

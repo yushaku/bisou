@@ -45,3 +45,15 @@ it("journal R25: shows nothing at all when no entry is dated today", () => {
   expect(render([entry("c", "2026-11-07", "Hôm qua")])).toBe("");
   expect(render([])).toBe("");
 });
+
+it.each(["vi", "en"])("Home opens a long closed note from today's preview in %s", locale => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const memory = createTabMemory();
+  memory.journal = { entries: [{ ...entry("closed", "2026-11-08", ""), note: { id: "note", recipientId: "binh", happened: "A long event ".repeat(25), feel: "Sad", need: "Time", hope: "Talk", line: "I hear you" } }], nextCursor: null };
+  const html = renderToString(h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(TodayPosts, { couple, user, today: "2026-11-08", onSignedOut() {} }))));
+  expect(html).toContain(locale === "vi" ? "Đọc tiếp" : "Read more");
+  expect(html).toMatch(/<button[^>]*aria-label="[^"]*An/);
+  expect(html).not.toContain("note-envelope");
+  const header = html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? "";
+  expect(header).toMatch(new RegExp(`data-slot="badge"[^>]*>${locale === "vi" ? "Lời nhắn nhỏ" : "Kind note"}<`));
+});

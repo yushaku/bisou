@@ -163,9 +163,9 @@ it("notes AC33 AC40: an offline draft cannot save", async () => {
 it("notes-journal AC20, notes AC40: closed-note editing keeps fields but cannot submit offline", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const save = vi.spyOn(api, "updateClosedNote");
-  const noteEntry = { ...entry, note: { id: "note", recipientId: "binh", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", pick: "try" as const, line: "Understood" } };
+  const noteEntry = { ...entry, note: { id: "note", recipientId: "binh", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", line: "Understood" } };
   const { ClosedNoteSheet } = await import("../src/client/components/bisou/ClosedNoteSheet");
-  const nodes = elements(ClosedNoteSheet({ entry: noteEntry, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() }));
+  const nodes = elements(ClosedNoteSheet({ entry: noteEntry, recipient: { name: "Binh", tone: "secondary" }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() }));
   nodes.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() }); await flushQueryWork();
   expect(save).not.toHaveBeenCalled(); expect(nodes.find(n => n.props.children === "notes.save")!.props.disabled).toBe(true);
   expect(nodes.some(n => n.props.children === "offline.save")).toBe(true);

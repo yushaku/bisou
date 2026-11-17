@@ -137,7 +137,7 @@ export interface JournalEntry {
   date: string;
   text: string;
   source: "partner" | "wish";
-  note?: NoteInput & { id: string; recipientId: string; pick: NotePick; line: string };
+  note?: NoteInput & { id: string; recipientId: string; line: string };
   /** Ordered by position. */
   photoIds: string[];
   createdAt: number;
@@ -219,11 +219,10 @@ export interface PushSubscriptionInput extends PushDevice {
   keys: { p256dh: string; auth: string };
 }
 
-export type NotePick = "try" | "talk" | "differ";
 export interface NoteInput { happened: string; feel: string; need: string; hope: string }
 export interface NoteDelivery { delivery?: "now" | "eightHours" | "custom"; sendAt?: number }
 export interface WrittenNote extends NoteInput { id: string; state: "draft" | "sent" | "opened"; scheduledAt?: number }
 export type ReceivedNote = { id: string; state: "waiting" } | ({ id: string; state: "opened" } & NoteInput);
 export interface NoteLists { toMe: ReceivedNote[]; fromMe: WrittenNote[] }
-export interface CloseInput { pick: NotePick; line: string }
+export interface CloseInput { line: string }
 export interface ClosedNoteInput extends NoteInput, CloseInput { date: string }

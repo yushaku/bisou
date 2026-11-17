@@ -136,29 +136,29 @@ test.each([true, false])("notes AC10 AC11: open/withdraw race first winner is pr
 
 test("notes AC17 AC18, notes-journal AC19 AC21 AC22: close once moves structured words into both journal feeds at Vietnam close time", async () => {
   const { a, b, id } = await sentNote();
-  expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "try" } })).status).toBe(404);
+  expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line: "I understand" } })).status).toBe(404);
   await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
-  for (const body of [{}, { pick: "bad" }, { pick: "talk", line: "x".repeat(501) }]) expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body })).status).toBe(400);
-  expect((await call("POST", `/api/notes/${id}/close`, { cookie: a.cookie, body: { pick: "try" } })).status).toBe(404);
+  for (const body of [{}, { line: null }, { line: "x".repeat(501) }]) expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body })).status).toBe(400);
+  expect((await call("POST", `/api/notes/${id}/close`, { cookie: a.cookie, body: { line: "I understand" } })).status).toBe(404);
   vi.setSystemTime(new Date("2026-11-14T00:15:00+07:00"));
-  const response = await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "talk", line: "  I understand\nnow  " } });
+  const response = await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line: "  I understand\nnow  " } });
   expect(response.status).toBe(201);
   const { entry } = await response.json<{ entry: import("../src/shared/types").JournalEntry }>();
-  expect(entry).toMatchObject({ authorId: a.id, date: "2026-11-14", text: "", photoIds: [], createdAt: Date.now(), note: { id, recipientId: b.id, ...input, pick: "talk", line: "I understand\nnow" } });
+  expect(entry).toMatchObject({ authorId: a.id, date: "2026-11-14", text: "", photoIds: [], createdAt: Date.now(), note: { id, recipientId: b.id, ...input, line: "I understand\nnow" } });
   expect(await env.DB.prepare("SELECT body, note_id FROM journal_entries WHERE id = ?").bind(entry.id).first()).toEqual({ body: "", note_id: id });
   for (const person of [a, b]) {
     expect(await (await call("GET", "/api/notes", { cookie: person.cookie })).json()).toEqual({ fromMe: [], toMe: [] });
     const feed = await (await call("GET", "/api/journal", { cookie: person.cookie })).json<{ entries: unknown[] }>();
     expect(feed.entries).toEqual([entry]);
   }
-  expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "try" } })).status).toBe(404);
+  expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line: "I understand" } })).status).toBe(404);
   expect((await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie })).status).toBe(404);
   expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries WHERE note_id = ?").bind(id).first("n")).toBe(1);
 });
 
-test("notes AC17: a pick without a line closes and concurrent closes create exactly one entry", async () => {
+test("notes AC17: a message without a pick closes and concurrent closes create exactly one entry", async () => {
   const { b, id } = await sentNote(); await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
-  const responses = await Promise.all([1, 2].map(() => call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "try" } })));
+  const responses = await Promise.all([1, 2].map(() => call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line: "I understand" } })));
   expect(responses.map((r) => r.status).sort()).toEqual([201, 404]);
   const entry = await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries WHERE note_id = ?").bind(id).first("n"); expect(entry).toBe(1);
 });
@@ -187,7 +187,7 @@ test.each(["14:00:00", "23:00:00"])("notes-journal AC21: closing at %s never ann
   vi.setSystemTime(new Date(`2026-11-13T${time}+07:00`));
   const push = mockPush();
   try {
-    expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "talk" } })).status).toBe(201);
+    expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line: "Let us talk" } })).status).toBe(201);
     await waitForBackground(); await runPushCron("2026-11-14T07:00:00+07:00");
     expect(push.sent).toHaveLength(0);
   } finally { push.spy.mockRestore(); }
@@ -208,26 +208,26 @@ test("notes AC18, notes-journal AC19: a failed journal insert rolls back closing
   await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
   await env.DB.exec("CREATE TRIGGER reject_note_entry BEFORE INSERT ON journal_entries BEGIN SELECT RAISE(ABORT, 'fixture rejects entry'); END");
   try {
-    const res = await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { pick: "try" } });
+    const res = await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line: "I understand" } });
     expect(res.status).toBe(500);
     expect((await (await call("GET", "/api/notes", { cookie: a.cookie })).json<{ fromMe: { state: string }[] }>()).fromMe[0]?.state).toBe("opened");
-    expect(await env.DB.prepare("SELECT closed_at, pick FROM notes WHERE id = ?").bind(id).first()).toEqual({ closed_at: null, pick: null });
+    expect(await env.DB.prepare("SELECT closed_at, line FROM notes WHERE id = ?").bind(id).first()).toEqual({ closed_at: null, line: null });
   } finally { await env.DB.exec("DROP TRIGGER reject_note_entry"); }
 });
 
 async function closedNote() {
   const pair = await sentNote();
   await call("POST", `/api/notes/${pair.id}/open`, { cookie: pair.b.cookie });
-  const res = await call("POST", `/api/notes/${pair.id}/close`, { cookie: pair.b.cookie, body: { pick: "try" } });
+  const res = await call("POST", `/api/notes/${pair.id}/close`, { cookie: pair.b.cookie, body: { line: "I understand" } });
   const { entry } = await res.json<{ entry: import("../src/shared/types").JournalEntry }>();
   return { ...pair, entry };
 }
 test("notes-journal AC20 journal AC25 AC21: either partner edits all closed-note fields and day, normal journal routes hide it", async () => {
   const { a, b, id, entry } = await closedNote();
   for (const person of [a,b]) {
-    const body = { ...input, hope: `Talk with ${person.id}`, pick: "differ", line: "My understanding", date: "2026-11-12" };
+    const body = { ...input, hope: `Talk with ${person.id}`, line: "My understanding", date: "2026-11-12" };
     const res = await call("PUT", `/api/notes/${id}/closed`, { cookie: person.cookie, body }); expect(res.status).toBe(200);
-    expect((await res.json<{ entry: unknown }>()).entry).toMatchObject({ date: body.date, note: { hope: body.hope, pick: body.pick, line: body.line, recipientId: b.id } });
+    expect((await res.json<{ entry: unknown }>()).entry).toMatchObject({ date: body.date, note: { hope: body.hope, line: body.line, recipientId: b.id } });
     const other = person === a ? b : a;
     expect((await (await call("GET", "/api/journal", { cookie: other.cookie })).json<{ entries: unknown[] }>()).entries[0]).toMatchObject({ note: { hope: body.hope } });
     for (const method of ["PUT", "DELETE"]) expect((await call(method, `/api/journal/${entry.id}`, { cookie: person.cookie, body: { date: body.date, text: "Bypass", photoIds: [] } })).status).toBe(404);
@@ -235,9 +235,9 @@ test("notes-journal AC20 journal AC25 AC21: either partner edits all closed-note
 });
 test("notes-journal AC20: closed notes permit 2500 characters but reject bad parts, pick, day and photoIds", async () => {
   const { a, id } = await closedNote();
-  const body = { happened: "h".repeat(500), feel: "f".repeat(500), need: "n".repeat(500), hope: "r".repeat(500), line: "l".repeat(500), pick: "talk", date: "2026-11-12" };
+  const body = { happened: "h".repeat(500), feel: "f".repeat(500), need: "n".repeat(500), hope: "r".repeat(500), line: "l".repeat(500), date: "2026-11-12" };
   expect((await call("PUT", `/api/notes/${id}/closed`, { cookie: a.cookie, body })).status).toBe(200);
-  for (const change of [{ hope: "x".repeat(501) }, { line: "x".repeat(501) }, { pick: "other" }, { photoIds: [] }, { date: "2026-11-15" }]) {
+  for (const change of [{ hope: "x".repeat(501) }, { line: "x".repeat(501) }, { photoIds: [] }, { date: "2026-11-15" }]) {
     const res = await call("PUT", `/api/notes/${id}/closed`, { cookie: a.cookie, body: { ...body, ...change } }); expect(res.status).toBe(400);
     if ("date" in change) expect(await res.json()).toEqual({ error: "invalid_entry_date" });
   }
@@ -253,7 +253,7 @@ test.each(["writer", "recipient"])("notes-journal AC36: %s deletes the closed no
 test("notes-journal AC20 AC21: open notes refuse closed edits; closed edits and deletes never push at the next 07:00", async () => {
   const { a, b, id } = await closedNote();
   await subscribe(a, await device("writer")); await subscribe(b, await device("recipient"));
-  const body = { ...input, pick: "talk", line: "Understood", date: "2026-11-12" };
+  const body = { ...input, line: "Understood", date: "2026-11-12" };
   const { note } = await (await call("POST", "/api/notes", { cookie: a.cookie, body: { ...input, delivery: "custom", sendAt: Date.parse("2099-01-01T00:00:00Z") } })).json<{ note: { id: string } }>();
   for (const person of [a,b]) expect((await call("PUT", `/api/notes/${note.id}/closed`, { cookie: person.cookie, body })).status).toBe(404);
   const push = mockPush();
@@ -263,4 +263,17 @@ test("notes-journal AC20 AC21: open notes refuse closed edits; closed edits and 
     expect((await call("DELETE", `/api/notes/${id}`, { cookie: a.cookie })).status).toBe(200);
     await waitForBackground(); await runPushCron("2026-11-14T07:00:00+07:00"); expect(push.sent).toHaveLength(0);
   } finally { push.spy.mockRestore(); }
+});
+
+test("closing stores only the required message and refuses an empty message at the API and DB", async () => {
+  const { a, b, id } = await sentNote();
+  await call("POST", `/api/notes/${id}/open`, { cookie: b.cookie });
+  for (const line of ["", "   ", "x".repeat(501)]) expect((await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line } })).status).toBe(400);
+  await expect(env.DB.prepare("UPDATE notes SET closed_at = ? WHERE id = ?").bind(Date.now(), id).run()).rejects.toThrow();
+  const res = await call("POST", `/api/notes/${id}/close`, { cookie: b.cookie, body: { line: "  Let's talk tonight.  " } });
+  expect(res.status).toBe(201);
+  const { entry } = await res.json<{ entry: import("../src/shared/types").JournalEntry }>();
+  expect(entry.note).toMatchObject({ line: "Let's talk tonight." });
+  expect(entry.note).not.toHaveProperty("pick");
+  expect((await call("PUT", `/api/notes/${id}/closed`, { cookie: a.cookie, body: { ...input, line: "", date: "2026-11-12" } })).status).toBe(400);
 });

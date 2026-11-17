@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { createElement as h, type ComponentProps, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
@@ -82,12 +81,12 @@ it("notes AC12 AC13: Home shows only waiting notes with a mailbox and count", ()
   memory.notes.toMe = [{ id: "one", state: "opened", happened: "h", feel: "f", need: "n", hope: "r" }];
   expect(page()).not.toContain("mailbox-wait");
 });
-it("notes-journal AC19 journal AC22: feed keeps writer name/time and recipient above pick/line with a badge", () => {
+it("notes-journal AC19 journal AC22: feed keeps writer name/time and recipient above the message", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
-  const memory = createTabMemory(); memory.journal = { entries: [{ id: "e", authorId: "an", date: "2026-11-13", text: "", source: "partner", photoIds: [], createdAt: 1794556500000, updatedAt: 1794556500000, note: { id: "n", recipientId: "binh", happened: "What happened", feel: "Feelings", need: "Need", hope: "Hope", pick: "talk", line: "I understand" } }], nextCursor: null };
+  const memory = createTabMemory(); memory.journal = { entries: [{ id: "e", authorId: "an", date: "2026-11-13", text: "", source: "partner", photoIds: [], createdAt: 1794556500000, updatedAt: 1794556500000, note: { id: "n", recipientId: "binh", happened: "What happened", feel: "Feelings", need: "Need", hope: "Hope", line: "I understand" } }], nextCursor: null };
   const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, couple }))) }));
   expect(html).toContain("Lời nhắn nhỏ"); expect(html).toContain("What happened");
-  expect(html.indexOf("Bình", html.indexOf("What happened"))).toBeLessThan(html.indexOf("Mình muốn nói trực tiếp"));
+  expect(html.indexOf("Bình", html.indexOf("What happened"))).toBeLessThan(html.indexOf("I understand"));
   expect(html).toContain("I understand");
 });
 
@@ -95,7 +94,7 @@ it.each([0, 1])("notes-journal AC20 journal AC22: ordinary and note-entry option
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
   const user = { ...session.user, ...members[index]! };
   const base = { id: "normal", authorId: "an", date: "2026-11-13", text: "Normal", source: "partner" as const, photoIds: [], createdAt: 1794556500000, updatedAt: 1794556500000 };
-  const memory = createTabMemory(); memory.journal = { entries: [base, { ...base, id: "note-entry", text: "", note: { id: "n", recipientId: "binh", happened: "h", feel: "f", need: "n", hope: "r", pick: "try", line: "" } }], nextCursor: null };
+  const memory = createTabMemory(); memory.journal = { entries: [base, { ...base, id: "note-entry", text: "", note: { id: "n", recipientId: "binh", happened: "h", feel: "f", need: "n", hope: "r", line: "" } }], nextCursor: null };
   const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, user, couple }))) }));
   expect([...html.matchAll(/lucide-ellipsis/g)]).toHaveLength(2);
 });
@@ -108,10 +107,31 @@ it.each([[1, "1 note is waiting"], [2, "2 notes are waiting"]])("notes AC12: Eng
   expect(html).toContain(text);
 });
 
-it("card-box AC5: Home puts the box section directly after DailyQuestion and before notes", () => {
+it("card-box AC5: Home keeps the box section after the daily question", () => {
   const html = render(h(Home, { ...session, couple, onCouple() {}, celebrate: false, onCelebrated() {} }));
   expect(html).toContain("Deep talk");
-  const source = readFileSync("src/client/screens/Home.tsx", "utf8");
-  expect(source.indexOf("<DailyQuestion")).toBeLessThan(source.indexOf("<CardBoxBlock"));
-  expect(source.indexOf("<CardBoxBlock")).toBeLessThan(source.indexOf("<NotesInbox"));
+  const daily = html.indexOf('aria-labelledby="today-card"');
+  const shop = html.indexOf('aria-labelledby="card-box-title"');
+  expect(daily).toBeGreaterThan(-1);
+  expect(shop).toBeGreaterThan(daily);
+});
+
+it.each([["vi",0],["vi",1],["en",0],["en",1]] as const)("note card A shows four parts and the recipient pocket in %s for viewer %s", (locale, index) => {
+  vi.stubGlobal("localStorage", { getItem: () => locale });
+  const memory = createTabMemory();
+  const note = { id: "n", recipientId: "binh", happened: "What happened ".repeat(18), feel: "Feelings", need: "My need", hope: "My hope", line: "I will listen carefully. ".repeat(12) };
+  memory.journal = { entries: [{ id: "e", authorId: "an", date: "2026-11-17", text: "", source: "partner", photoIds: [], createdAt: 1794890000000, updatedAt: 1794890000000, note }], nextCursor: null };
+  const user = { ...session.user, ...members[index]! };
+  const html = renderToString(h(Router, { ssrPath: "/journal", children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, h(Journal, { ...session, user, couple }))) }));
+  expect(html.match(/<dt/g)).toHaveLength(4);
+  expect(html.match(/line-clamp-2/g)).toHaveLength(4);
+  expect(html).toContain("line-clamp-3");
+  expect(html).not.toContain('data-seal="broken"');
+  const header = html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? "";
+  expect(header).toMatch(new RegExp(`data-slot="badge"[^>]*>${locale === "vi" ? "Lời nhắn nhỏ" : "Kind note"}<`));
+  expect(header.indexOf('data-slot="badge"')).toBeGreaterThan(header.indexOf("tabular-nums"));
+  expect(html).not.toContain("lucide-mailbox");
+  expect(html.indexOf("An")).toBeLessThan(html.indexOf("What happened "));
+  expect(html.indexOf("Bình",html.indexOf("My hope"))).toBeLessThan(html.indexOf("I will listen carefully."));
+  expect(html).toContain("rounded-xl bg-muted p-4");
 });

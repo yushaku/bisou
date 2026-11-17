@@ -6,7 +6,7 @@ import type { JournalEntry, Wish } from "../../../shared/types";
 import { api } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/i18n";
 import { defaultDay, saveBlock, saveErrorKey, textLength } from "@/lib/compose";
@@ -86,7 +86,7 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 }
 
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
-export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, onDone }: ComposeFormProps) {
+export function ComposeForm({ entry, receiving, partnerName, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
   const { t, locale } = useI18n();
   const createEntry = useApiMutation(api.createEntry, ["journal"]);
   const updateEntry = useApiMutation(api.updateEntry, ["journal"]);
@@ -139,9 +139,13 @@ export function ComposeForm({ entry, receiving, onSaved, onSignedOut, onLock, on
   return (
     <>
       <form onSubmit={(e) => { e.preventDefault(); if (!online) return; if (receiving) setConfirmReceiving(true); else void save(); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
-        <DrawerTitle className="sr-only">{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
+        <DrawerHeader className="shrink-0 flex-row items-center justify-between text-left">
+          <DrawerTitle>{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
+          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>{t("common.close")}</Button>
+        </DrawerHeader>
 
         <ComposeBody>
+          <p className="text-sm text-muted-foreground">{t("compose.withPartner", { partner: partnerName })}</p>
           {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
           <DayField value={date} now={now} disabled={saving} label={receiving ? "received.day" : "compose.day"} onChange={(value) => { setDate(value); change(); }} />
 

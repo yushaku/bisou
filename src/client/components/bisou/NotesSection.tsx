@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n";
 import { useNotes } from "@/lib/useNotes";
 import { useOnline } from "@/lib/useOnline";
 import { formatDay, formatTime } from "@/lib/format";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./EmptyState";
@@ -35,31 +36,45 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref
     const res = await openNote(note.id); setOpening(null);
     if (res.ok && res.data.note.state === "opened") { setReceived(res.data.note); void refresh(); }
     else if (!res.ok && res.status === 401) onSignedOut();
-    else { toast.error(t("notes.loadError")); void refresh(); }
+    else { toast.error(t("notes.openError")); void refresh(); }
   }
-  return <div className="flex flex-col gap-4">
+  return <div className="flex flex-col gap-6">
     <p className="text-sm text-muted-foreground">{t("notes.invite")}</p>
     {!lists && (failed ? <EmptyState situation="error" title={t("notes.loadError")} action={{ label: t("journal.retry"), onClick: () => void refresh() }} /> : <><p role="status">{t("notes.loading")}</p><Skeleton className="h-44 rounded-xl" /></>)}
     {lists && failed && <p role="status">{t("notes.stale")} <Button variant="link" onClick={() => void refresh()}>{t("journal.retry")}</Button></p>}
     {lists && !lists.fromMe.length && !lists.toMe.length && <EmptyState title={t("notes.empty")} action={{ label: t("notes.write", { partner: partner.name }), onClick: () => write() }} />}
     {!!lists?.toMe.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("notes.toMe")}</h2><div className="note-envelope-grid">{lists.toMe.map((note) => {
       const address = t("notes.fromPartner", { partner: partner.name }), state = t(note.state === "opened" ? "notes.opened" : "notes.notOpened");
-      return <div key={note.id} className="note-envelope">
-        {note.state === "waiting" ? <>
-          <NoteEnvelope address={address} state={{ kind: "waiting", text: state }} />
-          <Button className="note-ready-button w-full" size="lg" aria-label={`${address}, ${state}, ${t("notes.readyToHear")}`} disabled={!online || opening !== null} onClick={() => void open(note)}>{t("notes.readyToHear")}</Button>
-          {!online && <p className="text-sm text-muted-foreground">{t("offline.continue")}</p>}
-        </> : <button type="button" aria-label={`${address}, ${state}, ${t("notes.readAgain")}`} className="note-envelope-button press w-full text-left focus-visible:outline-2 focus-visible:outline-ring" onClick={() => setReceived(note)}><NoteEnvelope address={address} state={{ kind: "opened", text: state }} preview={note.happened} /></button>}
-      </div>;
+      return note.state === "waiting" ? <Card key={note.id} className="note-envelope note-envelope-waiting gap-0 py-0">
+        <p className="col-start-2 min-w-0 self-end text-base font-semibold [overflow-wrap:anywhere]">{address}</p>
+        <Button className="note-ready-button col-start-2 w-full self-start" size="lg" aria-label={`${address}, ${t("notes.readyToHear")}`} disabled={!online || opening !== null} onClick={() => void open(note)}>{t("notes.readyToHear")}</Button>
+        <NoteEnvelope kind="waiting" />
+        {!online && <p className="col-start-2 text-sm text-muted-foreground">{t("offline.continue")}</p>}
+      </Card> : <Card key={note.id} className="note-envelope gap-0 py-0">
+        <button type="button" aria-label={`${address}, ${state}, ${note.happened}, ${t("notes.readAgain")}`} className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" onClick={() => setReceived(note)}>
+          <span className="flex min-w-0 flex-col gap-2">
+            <span className="note-preview line-clamp-2 text-base leading-6 font-semibold whitespace-normal break-words [overflow-wrap:anywhere]">{note.happened}</span>
+            <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground [overflow-wrap:anywhere]"><span className="font-semibold">{address}</span><span>{state}</span></span>
+          </span>
+          <NoteEnvelope kind="opened" />
+        </button>
+      </Card>;
     })}</div></section>}
     {!!lists?.fromMe.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("notes.fromMe")}</h2><div className="note-envelope-grid">{lists.fromMe.map((note) => {
       const state = note.state === "opened" ? t("notes.opened") : note.state === "sent" ? t("notes.notOpened") : note.scheduledAt ? t("notes.scheduled", { time: `${formatDay(new Date(note.scheduledAt), locale, "short")} ${formatTime(note.scheduledAt, locale)}` }) : t("notes.ready");
       const kind = note.state === "draft" ? note.scheduledAt ? "cooling" : "ready" : note.state;
-      return <div key={note.id} className="note-envelope"><button type="button" aria-label={`${t("notes.toPartner", { partner: partner.name })}, ${state}`} className="note-envelope-button press min-h-11 w-full p-0 text-left focus-visible:outline-2 focus-visible:outline-ring" onClick={() => note.state === "opened" ? setDetail(note) : write(note)}><NoteEnvelope address={t("notes.toPartner", { partner: partner.name })} state={{ kind, text: state }} preview={note.happened} /></button></div>;
+      const address = t("notes.toPartner", { partner: partner.name });
+      return <Card key={note.id} className="note-envelope gap-0 py-0"><button type="button" aria-label={`${address}, ${state}, ${note.happened}`} className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" onClick={() => note.state === "opened" ? setDetail(note) : write(note)}>
+        <span className="flex min-w-0 flex-col gap-2">
+          <span className="note-preview line-clamp-2 text-base leading-6 font-semibold whitespace-normal break-words [overflow-wrap:anywhere]">{note.happened}</span>
+          <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground [overflow-wrap:anywhere]"><span className="font-semibold">{address}</span><span>{state}</span></span>
+        </span>
+        <NoteEnvelope kind={kind} />
+      </button></Card>;
     })}</div></section>}
     <EntryActions title={t("notes.opened")} entry={detail && { id: detail.id, date: vnDay(Date.now()), photoIds: [] }} own={false} onClose={() => setDetail(null)} onEdit={() => {}} onDeleted={() => {}} onSignedOut={onSignedOut} detail={detail && <NoteParts note={detail} />} />
     <EntryActions title={partner.name} entry={received && { id: received.id, date: vnDay(Date.now()), photoIds: [] }} own={false} onClose={() => setReceived(null)} onEdit={() => {}} onDeleted={() => {}} onSignedOut={onSignedOut} detail={received && <><NoteParts note={received} /><Button size="lg" disabled={!online} onClick={() => { setClosing(received.id); setReceived(null); }}>{t("notes.readDone")}</Button>{!online && <p className="text-sm text-muted-foreground">{t("offline.continue")}</p>}</>} />
     {closing && <Suspense fallback={null}><NoteCloseSheet id={closing} onClose={() => setClosing(null)} onSignedOut={onSignedOut} onClosed={(entry) => { setClosing(null); void refresh(); toast.success(t("notes.closed")); onClosed?.(entry); }} /></Suspense>}
-    {loaded && <Suspense fallback={null}><NoteSheet open={composing} onOpenChange={setComposing} partnerName={partner.name} entry={editing} onSignedOut={onSignedOut} onRefresh={() => void refresh()} onSaved={(note) => { toast.success(t(note.state === "sent" ? "notes.sent" : "notes.saved")); void refresh(); }} /></Suspense>}
+    {loaded && <Suspense fallback={null}><NoteSheet open={composing} onOpenChange={setComposing} partnerName={partner.name} entry={editing} onSignedOut={onSignedOut} onRefresh={() => void refresh()} onSaved={() => { void refresh(); }} /></Suspense>}
   </div>;
 }

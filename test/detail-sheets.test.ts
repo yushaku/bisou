@@ -5,6 +5,10 @@ import { WishCard, type Wish } from "../src/client/components/bisou/WishCard";
 import { JournalDetailSheet } from "../src/client/components/bisou/JournalDetailSheet";
 import { WishDetailSheet } from "../src/client/components/bisou/WishDetailSheet";
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
+import { TodayPosts } from "../src/client/components/bisou/TodayPosts";
+import { Drawer } from "../src/client/components/ui/drawer";
+import { NoteParts } from "../src/client/components/bisou/NoteParts";
+import { NoteReply } from "../src/client/components/bisou/NoteReply";
 import { Journal } from "../src/client/screens/Journal";
 import type { JournalEntry } from "../src/shared/types";
 import { createQueryFixture as createTabMemory } from "./query-fixture";
@@ -77,7 +81,7 @@ const members = [
 ];
 it.each(["partner", "wish", "note"] as const)("journal AC23, AC24, AC25: %s feed options and details keep edit/delete permissions separate", kind => {
   const shared: JournalEntry = { id: "shared", authorId: "an", date: "2026-11-01", text: "Our story", source: kind === "wish" ? "wish" : "partner", photoIds: [], createdAt: 1, updatedAt: 1,
-    ...(kind === "note" ? { note: { id: "note", recipientId: "binh", happened: "h", feel: "f", need: "n", hope: "r", pick: "try" as const, line: "" } } : {}),
+    ...(kind === "note" ? { note: { id: "note", recipientId: "binh", happened: "h", feel: "f", need: "n", hope: "r", line: "" } } : {}),
   };
   for (const member of members) {
     for (const path of ["options", "details"]) {
@@ -98,4 +102,39 @@ it.each(["partner", "wish", "note"] as const)("journal AC23, AC24, AC25: %s feed
       expect(shows("entry.delete")).toBe(member.id === "an" || kind === "note");
     }
   }
+});
+
+it("note cards always offer visible reading when narrow wrapping can exceed the preview", () => {
+  // Each word wraps independently; no character threshold can know the available width.
+  const note = { ...entry, source: "note" as const, parts: { happened: "A wide word with another wide word and another wide word", feel: "Sad", need: "Time", hope: "Talk" }, reply: { person: { name: "Binh", tone: "secondary" as const }, line: "I hear you" } };
+  const onOpen = vi.fn();
+  const more = nodes(EntryCard({ entry: note, onOpen })).find(node => node.props.children === "entry.more");
+  expect(more).toBeDefined();
+  more!.props.onClick!();
+  expect(onOpen).toHaveBeenCalledOnce();
+  const full = nodes(EntryCard({ entry: note }));
+  expect((full.find(node => node.type === NoteParts)!.props as ComponentProps<typeof NoteParts>).preview).toBe(false);
+  expect((full.find(node => node.type === NoteReply)!.props as ComponentProps<typeof NoteReply>).preview).toBe(false);
+});
+
+it("Home opens the full shared note detail and closes back to the card", () => {
+  hooks.active = true;
+  const note = { id: "note", recipientId: "binh", happened: "An event ".repeat(50), feel: "Sad", need: "Time", hope: "Talk", line: "A response ".repeat(40) };
+  const memory = createTabMemory();
+  memory.journal = { entries: [{ id: "home-note", authorId: "an", date: "2026-11-01", text: "", source: "partner", photoIds: [], createdAt: 1, updatedAt: 1, note }], nextCursor: null };
+  hooks.memory = memory;
+  const render = () => {
+    hooks.index = 0;
+    return nodes(TodayPosts({ couple: { id: "c", startDate: null, members, events: [] }, user: { ...members[0]!, email: "an@example.com", locale: "vi", createdAt: 1 }, today: "2026-11-01", onSignedOut: vi.fn() }));
+  };
+  const card = render().find(node => node.type === EntryCard)! as ReactElement<ComponentProps<typeof EntryCard>>;
+  card.props.onOpen!();
+  const detail = render().find(node => node.type === JournalDetailSheet)! as ReactElement<ComponentProps<typeof JournalDetailSheet>>;
+  expect(detail.props.entry.parts?.happened).toBe(note.happened);
+  expect(detail.props.entry.reply?.line).toBe(note.line);
+  const contents = nodes(JournalDetailSheet(detail.props));
+  expect((contents.find(node => node.type === NoteParts)!.props as ComponentProps<typeof NoteParts>).preview).toBeUndefined();
+  expect((contents.find(node => node.type === NoteReply)!.props as ComponentProps<typeof NoteReply>).preview).toBeUndefined();
+  render().find(node => node.props.children === "common.close")!.props.onClick!();
+  expect((render().find(node => node.type === Drawer)!.props as ComponentProps<typeof Drawer>).open).toBe(false);
 });

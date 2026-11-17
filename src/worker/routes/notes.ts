@@ -63,7 +63,7 @@ notes.post("/:id/open", async (c) => {
   return c.json({ note: { ...row, state: "opened" } });
 });
 
-export const CLOSE_NOTE_SQL = "UPDATE notes SET pick = ?, line = ?, closed_at = ?, updated_at = ? WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL";
+export const CLOSE_NOTE_SQL = "UPDATE notes SET line = ?, closed_at = ?, updated_at = ? WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL";
 export const CLOSE_ENTRY_SQL = `INSERT INTO journal_entries (id, couple_id, author_id, entry_date, body, note_id, created_at, updated_at) SELECT ?, couple_id, writer_id, ?, '', id, ?, ? FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND closed_at IS NOT NULL AND NOT EXISTS (SELECT 1 FROM journal_entries WHERE note_id = ?)`;
 notes.post("/:id/close", limitBody, async (c) => {
   const db = c.env.DB, id = c.req.param("id"), user = c.get("user").id, couple = c.get("noteCouple"), now = Date.now();
@@ -74,7 +74,7 @@ notes.post("/:id/close", limitBody, async (c) => {
   }
   const entryId = crypto.randomUUID();
   const [closed] = await db.batch([
-    db.prepare(CLOSE_NOTE_SQL).bind(parsed.input.pick, parsed.input.line, now, now, id, user, couple),
+    db.prepare(CLOSE_NOTE_SQL).bind(parsed.input.line, now, now, id, user, couple),
     db.prepare(CLOSE_ENTRY_SQL).bind(entryId, vnDay(now), now, now, id, user, couple, id),
   ]);
   if (!closed!.meta.changes) return c.json({ error: "not_found" }, 404);
@@ -83,7 +83,7 @@ notes.post("/:id/close", limitBody, async (c) => {
   return c.json({ entry }, 201);
 });
 
-export const UPDATE_CLOSED_NOTE_SQL = "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, pick = ?, line = ?, updated_at = ? WHERE id = ? AND couple_id = ? AND closed_at IS NOT NULL";
+export const UPDATE_CLOSED_NOTE_SQL = "UPDATE notes SET happened = ?, feel = ?, need = ?, hope = ?, line = ?, updated_at = ? WHERE id = ? AND couple_id = ? AND closed_at IS NOT NULL";
 notes.put("/:id/closed", limitBody, async (c) => {
   const db = c.env.DB, id = c.req.param("id"), user = c.get("user").id, couple = c.get("noteCouple"), now = Date.now();
   const parsed = validateClosedNote(await c.req.json().catch(() => null), now);
@@ -91,9 +91,9 @@ notes.put("/:id/closed", limitBody, async (c) => {
     const visible = await db.prepare("SELECT id FROM notes WHERE id = ? AND couple_id = ? AND closed_at IS NOT NULL").bind(id, couple).first();
     return visible ? c.json(parsed, 400) : c.json({ error: "not_found" }, 404);
   }
-  const { happened, feel, need, hope, pick, line, date } = parsed.input;
+  const { happened, feel, need, hope, line, date } = parsed.input;
   const [updated] = await db.batch([
-    db.prepare(UPDATE_CLOSED_NOTE_SQL).bind(happened, feel, need, hope, pick, line, now, id, couple),
+    db.prepare(UPDATE_CLOSED_NOTE_SQL).bind(happened, feel, need, hope, line, now, id, couple),
     db.prepare("UPDATE journal_entries SET entry_date = ?, updated_at = ? WHERE note_id = ? AND couple_id = ?").bind(date, now, id, couple),
   ]);
   if (!updated!.meta.changes) return c.json({ error: "not_found" }, 404);

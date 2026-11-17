@@ -1,9 +1,8 @@
 import { isValidDay, latestDay } from "./days";
-import type { ApiError, CloseInput, ClosedNoteInput, NoteInput, NotePick } from "./types";
+import type { ApiError, CloseInput, ClosedNoteInput, NoteInput } from "./types";
 export const NOTE_FIELD_MAX = 500;
 export const NOTE_LINE_MAX = 500;
 export const NOTE_COOLDOWN = 8 * 3_600_000;
-export const NOTE_PICKS = ["try", "talk", "differ"] as const;
 export const NOTE_FIELDS = ["happened", "feel", "need", "hope"] as const;
 export function validateNote(raw: unknown): { input: NoteInput } | ApiError {
   if (!raw || typeof raw !== "object") return { error: "invalid_body" };
@@ -23,11 +22,12 @@ export function validateNote(raw: unknown): { input: NoteInput } | ApiError {
 
 export function validateClose(raw: unknown): { input: CloseInput } | ApiError {
   if (!raw || typeof raw !== "object") return { error: "invalid_body" };
-  const { pick, line = "" } = raw as Record<string, unknown>;
-  if (!NOTE_PICKS.includes(pick as NotePick) || typeof line !== "string") return { error: "invalid_body" };
+  const { line } = raw as Record<string, unknown>;
+  if (typeof line !== "string") return { error: "invalid_body" };
   if (/[\p{Cc}\u202a-\u202e\u2066-\u2069]/u.test(line.replace(/[\n\r\t]/g, ""))) return { error: "invalid_body" };
+  if (!line.replace(/\p{Cf}/gu, "").trim()) return { error: "note_empty" };
   if (Array.from(line.trim()).length > NOTE_LINE_MAX) return { error: "note_text_too_long" };
-  return { input: { pick: pick as NotePick, line: line.trim() } };
+  return { input: { line: line.trim() } };
 }
 
 export function validateClosedNote(raw: unknown, now: number): { input: ClosedNoteInput } | ApiError {

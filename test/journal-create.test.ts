@@ -2,7 +2,12 @@ import { flushQueryWork } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { Journal } from "../src/client/screens/Journal";
+import { EntryActions } from "../src/client/components/bisou/EntryActions";
+import { Card } from "../src/client/components/ui/card";
 import { NotesSection } from "../src/client/components/bisou/NotesSection";
+import { ClosedNoteSheet } from "../src/client/components/bisou/ClosedNoteSheet";
+import { CloseFields, NoteCloseSheet } from "../src/client/components/bisou/NoteCloseSheet";
+import type { NoteLists } from "../src/shared/types";
 import { NoteForm, NoteSheet } from "../src/client/components/bisou/NoteSheet";
 import { BottomBar } from "../src/client/components/bisou/AppShell";
 import { DrawerContent, DrawerHeader, DrawerTitle } from "../src/client/components/ui/drawer";
@@ -17,10 +22,12 @@ import { DayField } from "../src/client/components/bisou/DayField";
 import { Tabs, TabsContent, TabsTrigger } from "../src/client/components/ui/tabs";
 import { Dialog } from "../src/client/components/ui/dialog";
 import { ToggleGroup } from "../src/client/components/ui/toggle-group";
+import { Textarea } from "../src/client/components/ui/textarea";
 import { Input } from "../src/client/components/ui/input";
+import { toast } from "../src/client/components/ui/ding-toaster";
 import { api } from "../src/client/api";
 
-const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, refs: [] as { current: unknown }[], refIndex: 0, locale: "vi", effects: [] as (() => unknown)[], memory: null as null | { journalSection: "feed" | "notes" }, requests: new Map<string, () => void>() }));
+const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, refs: [] as { current: unknown }[], refIndex: 0, locale: "vi", notes: { fromMe: [], toMe: [] } as NoteLists, effects: [] as (() => unknown)[], memory: null as null | { journalSection: "feed" | "notes" }, requests: new Map<string, () => void>() }));
 const notesRefresh = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
@@ -37,14 +44,18 @@ vi.mock("react", async (original) => ({
   useImperativeHandle: (ref: { current: unknown } | undefined, create: () => unknown) => { if (ref) ref.current = create(); },
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
-vi.mock("../src/client/lib/useNotes", () => ({ useNotes: () => ({ lists: { fromMe: [], toMe: [] }, failed: false, refresh: notesRefresh }) }));
-vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: hooks.locale, t: (key: keyof typeof vietnamese) => (hooks.locale === "vi" ? vietnamese : english)[key] }) }));
+vi.mock("../src/client/lib/useNotes", () => ({ useNotes: () => ({ lists: hooks.notes, failed: false, refresh: notesRefresh }) }));
+vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: hooks.locale, t: (key: keyof typeof vietnamese, vars?: Record<string, string | number>) => {
+  let text: string = (hooks.locale === "vi" ? vietnamese : english)[key];
+  for (const [name, value] of Object.entries(vars ?? {})) text = text.replaceAll(`{${name}}`, String(value));
+  return text;
+} }) }));
 
 vi.mock("../src/client/lib/useTabNavigation", async (original) => ({ ...await original<typeof import("../src/client/lib/useTabNavigation")>(), useCreateRequest: (destination: string, onOpen: () => void) => { hooks.requests.set(destination, onOpen); } }));
 
 vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
 
-type Props = { onSubmit?: (event: { preventDefault: () => void }) => void; onChange?: (event: { target: { value: string } }) => void; type?: string; className?: string; id?: string; "aria-describedby"?: string; initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; inert?: boolean; "aria-hidden"?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: string; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
+type Props = { entry?: { id: string } | null; own?: boolean; onSubmit?: (event: { preventDefault: () => void }) => void; onChange?: (event: { target: { value: string } }) => void; type?: string; className?: string; id?: string; "aria-describedby"?: string; initialTab?: "feed" | "notes"; forceMount?: boolean; hidden?: boolean; inert?: boolean; "aria-hidden"?: boolean; disabled?: boolean; onLock?: (lock: "dirty" | "saving" | null) => void; onClose?: () => void; onDone?: () => void; onSaved?: (entry: never) => void; onNoteSaved?: (note: never) => void; onOpenChange?: (open: boolean) => void; onValueChange?: (value: string) => void; onPointerDownOutside?: (event: { preventDefault: () => void }) => void; onEscapeKeyDown?: (event: { preventDefault: () => void }) => void; ref?: { current: { refresh: () => Promise<void> } | null }; onRefresh?: () => Promise<void>; value?: unknown; partnerName?: string; fromMenu?: boolean; author?: unknown; children?: ReactNode; label?: string; "aria-label"?: string; "data-create-button"?: boolean; onClick?: () => void; open?: boolean; onAnimationEnd?: (open: boolean) => void; onCloseAutoFocus?: (event: { preventDefault: () => void }) => void };
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -54,7 +65,7 @@ function render(active: "journal" | "home" | "garden" | "wishes", onCreate = vi.
   hooks.index = 0; hooks.refIndex = 0;
   return nodes(BottomBar({ active, onCreate, onSelect: vi.fn() }));
 }
-afterEach(() => { hooks.values = []; hooks.refs = []; hooks.locale = "vi"; hooks.effects = []; hooks.requests.clear(); hooks.memory = null; vi.unstubAllGlobals(); vi.restoreAllMocks(); notesRefresh.mockReset(); });
+afterEach(() => { hooks.values = []; hooks.refs = []; hooks.locale = "vi"; hooks.effects = []; hooks.requests.clear(); hooks.memory = null; hooks.notes = { fromMe: [], toMe: [] }; vi.unstubAllGlobals(); vi.restoreAllMocks(); notesRefresh.mockReset(); });
 it.each(["vi", "en"])("Journal + opens the composer directly in %s", (locale) => {
   hooks.locale = locale;
   const create = vi.fn();
@@ -196,20 +207,25 @@ it("editing an entry and receiving a wish keep the single-form sheet", () => {
   expect(nodes(ComposeSheet({ ...props, receiving: wish })).some(n => n.type === Tabs)).toBe(false);
 });
 
-it.each(["vi", "en"])("shared composer forms keep only screen reader titles in %s", (locale) => {
+it.each(["vi", "en"])("composer forms expose a guarded exit and named writing context in %s", (locale) => {
   hooks.locale = locale;
   const props = { partnerName: "Linh", onSaved: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
   const journal = nodes(ComposeForm(props));
-  expect(journal.find(n => n.type === DrawerTitle)?.props).toMatchObject({ className: "sr-only", children: (locale === "vi" ? vietnamese : english)["compose.new"] });
-  expect(journal.some(n => n.type === DrawerHeader)).toBe(false);
+  expect(journal.find(n => n.type === DrawerTitle)?.props).toMatchObject({ children: (locale === "vi" ? vietnamese : english)["compose.new"] });
+  expect(journal.some(n => n.type === DrawerHeader)).toBe(true);
+  journal.find(n => n.props.children === (locale === "vi" ? "Đóng" : "Close"))!.props.onClick!();
+  expect(props.onClose).toHaveBeenCalledOnce();
+  expect(journal.some(n => typeof n.props.children === "string" && n.props.children.includes("Linh"))).toBe(true);
   expect(journal.some(n => n.props.id === "test-hint" || n.props.id === "test-counter")).toBe(false);
   expect(journal.some(n => n.props["aria-describedby"]?.includes("test-hint") || n.props["aria-describedby"]?.includes("test-counter"))).toBe(false);
   hooks.values = []; hooks.index = 0;
   const note = nodes(NoteForm({ ...props, onRefresh: vi.fn() }));
-  expect(note.find(n => n.type === DrawerTitle)?.props.className).toBe("sr-only");
-  expect(note.some(n => n.type === DrawerHeader)).toBe(false);
-  expect(note.some(n => n.props.children === (locale === "vi" ? vietnamese : english)["notes.emptyHint"])).toBe(false);
-  expect(note.some(n => n.props.children === (locale === "vi" ? vietnamese : english)["common.close"])).toBe(false);
+  expect(note.find(n => n.type === DrawerTitle)?.props.className).not.toBe("sr-only");
+  expect(note.some(n => n.type === DrawerHeader)).toBe(true);
+  expect(note.some(n => n.props.children === (locale === "vi" ? "Viết đủ bốn phần trước khi gửi nhé" : "Fill in all four parts before sending"))).toBe(true);
+  expect(note.some(n => typeof n.props.children === "string" && n.props.children.includes("Linh"))).toBe(true);
+  note.find(n => n.props.children === (locale === "vi" ? "Đóng" : "Close"))!.props.onClick!();
+  expect(props.onClose).toHaveBeenCalledTimes(2);
   expect(note.find(n => n.type === "form")?.props.className).toBe(journal.find(n => n.type === "form")?.props.className);
   for (const form of [journal, note]) {
     expect(form.filter(n => n.type === ComposeBody)).toHaveLength(1);
@@ -218,6 +234,7 @@ it.each(["vi", "en"])("shared composer forms keep only screen reader titles in %
 });
 
 it.each(["now", "eightHours", "custom"] as const)("note composer submits %s delivery", async (delivery) => {
+  vi.spyOn(Date, "now").mockReturnValue(new Date(2026, 10, 17, 20, 0).getTime());
   hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
   const created = vi.spyOn(api, "createNote").mockResolvedValue({ ok: true, data: { note: { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" } } });
   const props = { partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
@@ -284,4 +301,249 @@ it("a notes deep link wins over the default feed memory without StrictMode repla
   for (const effect of hooks.effects.splice(0)) effect();
   expect(journal().find(n => n.type === Tabs)?.props.value).toBe("notes");
   expect(replaceState).toHaveBeenCalledWith(null, "", new URL("http://localhost/journal"));
+});
+
+it.each([0, 1])("visible composer exit checks dirty form %s", (index) => {
+  composer().filter(n => n.props.onLock)[index]!.props.onLock!("dirty");
+  const child = composer().filter(n => n.props.onLock)[index]!;
+  const parentValues = hooks.values;
+  hooks.values = []; hooks.index = 0;
+  const props = { partnerName: "Linh", onSaved: vi.fn(), onSignedOut: vi.fn(), onRefresh: vi.fn(), onLock: child.props.onLock!, onClose: child.props.onClose!, onDone: child.props.onDone! };
+  const form = nodes(index ? NoteForm(props) : ComposeForm(props));
+  hooks.values = parentValues;
+  form.find(n => n.props.children === "Đóng")!.props.onClick!();
+  expect(composer().find(n => n.type === Dialog)?.props.open).toBe(true);
+  expect(composeProps.onOpenChange).not.toHaveBeenCalled();
+});
+
+it.each(["vi", "en"])("closing explains the shared journal, required message and later action in %s", locale => {
+  hooks.locale = locale;
+  const tree = nodes(NoteCloseSheet({ id: "n", onClose: vi.fn(), onClosed: vi.fn(), onSignedOut: vi.fn() }));
+  const copy = locale === "vi" ? ["Để sau", "Khép lại để lưu vào nhật ký chung. Cả hai có thể sửa bài sau đó."] : ["Later", "Close to save this in our shared journal. Either of you can edit the entry later."];
+  for (const text of copy) expect(tree.some(n => n.props.children === text)).toBe(true);
+  expect(tree.find(n => n.props.type === "submit")?.props.disabled).toBe(true);
+  const fields = nodes(CloseFields({ value: { line: "" }, onChange: vi.fn() }));
+  expect(fields.some(n => n.props.children === (locale === "vi" ? "Gợi ý nhanh" : "Quick replies"))).toBe(true);
+  expect(fields.some(n => n.props.children === (locale === "vi" ? "Lời nhắn" : "Message"))).toBe(true);
+  expect(fields.filter(n => n.props.onClick)).toHaveLength(3);
+});
+
+it.each(["button", "escape", "outside", "swipe"])("unfinished closing response survives %s dismissal until discard", route => {
+  const props = { id: "n", onClose: vi.fn(), onClosed: vi.fn(), onSignedOut: vi.fn() };
+  const render = () => { hooks.index = 0; return nodes(NoteCloseSheet(props)); };
+  const child: ReactNode = render().find(n => n.type === CloseFields);
+  if (!isValidElement<Parameters<typeof CloseFields>[0]>(child)) throw new Error("Missing close fields");
+  child.props.onChange({ line: "I hear you" });
+  const tree = render();
+  if (route === "button") tree.find(n => n.props.children === "Để sau")!.props.onClick!();
+  if (route === "escape") tree.find(n => n.type === DrawerContent)!.props.onEscapeKeyDown!({ preventDefault: vi.fn() });
+  if (route === "outside") tree.find(n => n.type === DrawerContent)!.props.onPointerDownOutside!({ preventDefault: vi.fn() });
+  if (route === "swipe") tree[0]!.props.onOpenChange!(false);
+  expect(props.onClose).not.toHaveBeenCalled();
+  expect(render().find(n => n.type === Dialog)?.props.open).toBe(true);
+  render().find(n => n.props.children === vietnamese["compose.keep"])!.props.onClick!();
+  expect(render().find(n => n.type === CloseFields)?.props.value).toEqual({ line: "I hear you" });
+  render().find(n => n.props.children === "Để sau")!.props.onClick!();
+  render().find(n => n.props.children === vietnamese["compose.discard"])!.props.onClick!();
+  expect(props.onClose).toHaveBeenCalledOnce();
+});
+
+it.each(["vi", "en"])("eight hours resolves locally before saving and success uses the server schedule in %s", async locale => {
+  hooks.locale = locale;
+  hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
+  vi.spyOn(Date, "now").mockReturnValue(new Date(2026, 10, 17, 20, 0).getTime());
+  const note = { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" as const, scheduledAt: new Date(2026, 10, 18, 4, 1).getTime() };
+  vi.spyOn(api, "createNote").mockResolvedValue({ ok: true, data: { note } });
+  const success = vi.spyOn(toast, "success").mockImplementation(() => "toast");
+  const props = { partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() };
+  const render = () => { hooks.index = 0; return nodes(NoteForm(props)); };
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("eightHours");
+  expect(render().some(n => n.props.children === (locale === "vi" ? "Hẹn gửi 18 tháng 11, 2026 04:00" : "Scheduled for 18 November 2026 04:00"))).toBe(true);
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await flushQueryWork();
+  expect(success).toHaveBeenCalledExactlyOnceWith(locale === "vi" ? "Đã hẹn gửi lúc 18 tháng 11, 2026 04:01" : "Scheduled for 18 November 2026 04:01");
+});
+
+it.each(["vi", "en"])("scheduled deletion names the scheduled note without calling it a draft in %s", locale => {
+  hooks.locale = locale;
+  const entry = { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" as const, scheduledAt: new Date(2099, 10, 18, 4, 0).getTime() };
+  const tree = nodes(NoteForm({ entry, partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() }));
+  expect(tree.some(n => n.props.children === (locale === "vi" ? "Xoá lời nhắn đã hẹn gửi này?" : "Delete this scheduled note?"))).toBe(true);
+  expect(tree.some(n => n.props.children === (locale === "vi" ? "Lời nhắn sẽ mất hẳn và không được gửi. Người ấy sẽ không biết về lời nhắn này." : "The note will be gone for good and will not be sent. Your partner will never know about it."))).toBe(true);
+  expect(tree.some(n => n.props.children === (locale === "vi" ? "Xoá bản nháp này?" : "Delete this draft?"))).toBe(false);
+});
+
+it.each(["vi", "en"])("schedule validation is beside and linked to the input, then scrolled into view in %s", locale => {
+  hooks.locale = locale;
+  hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
+  const create = vi.spyOn(api, "createNote");
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NoteForm({ partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() })); };
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("custom");
+  render().find(n => n.type === Input)!.props.onChange!({ target: { value: "2000-01-01T00:00" } });
+  const focus = vi.fn(), scrollIntoView = vi.fn();
+  hooks.refs[0]!.current = { querySelector: () => ({ focus }), scrollIntoView };
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  const tree = render();
+  expect(create).not.toHaveBeenCalled();
+  expect(tree.find(n => n.type === Input)?.props["aria-describedby"]).toBe("test-schedule-error");
+  const fieldset = tree.find(n => n.type === "fieldset")!;
+  expect(nodes(fieldset).find(n => n.props.id === "test-schedule-error")?.props.children).toBe((locale === "vi" ? vietnamese : english)["notes.scheduleError"]);
+
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  expect(focus).toHaveBeenCalledTimes(2);
+  expect(scrollIntoView).toHaveBeenCalledWith({ block: "center", behavior: "instant" });
+});
+
+it.each(["vi", "en"])("failed opening names the action and allows retry without asserting note state in %s", async locale => {
+  hooks.locale = locale;
+  hooks.notes = { fromMe: [], toMe: [{ id: "n", state: "waiting" }] };
+  const open = vi.spyOn(api, "openNote").mockResolvedValue({ ok: false, status: 503, error: null });
+  const error = vi.spyOn(toast, "error").mockImplementation(() => "toast");
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NotesSection({ user, couple, onSignedOut: vi.fn() })); };
+  const click = () => render().find(n => n.props.children === (locale === "vi" ? "Mình sẵn sàng nghe" : "I'm ready to listen"))!.props.onClick!();
+  click(); await flushQueryWork();
+  expect(error).toHaveBeenCalledWith(locale === "vi" ? "Chưa mở được lời nhắn. Thử lại nhé." : "Couldn't open the note. Please try again.");
+  expect(notesRefresh).toHaveBeenCalledOnce();
+  click(); await flushQueryWork();
+  expect(open).toHaveBeenCalledTimes(2);
+});
+
+it("eight-hour delivery remains server computed when submission is delayed", async () => {
+  hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
+  const now = vi.spyOn(Date, "now").mockReturnValue(new Date(2026, 10, 17, 20, 0).getTime());
+  const create = vi.spyOn(api, "createNote").mockResolvedValue({ ok: false, status: 503, error: null });
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NoteForm({ partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() })); };
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("eightHours");
+  now.mockReturnValue(new Date(2026, 10, 17, 20, 15).getTime());
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await flushQueryWork();
+  expect(create).toHaveBeenCalledWith({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", delivery: "eightHours" });
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("now");
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("eightHours");
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await flushQueryWork();
+  expect(create).toHaveBeenLastCalledWith({ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", delivery: "eightHours" });
+});
+
+it.each(["draft", "sent"] as const)("saving a %s edit uses its current state for feedback", async state => {
+  const note = { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state, scheduledAt: state === "draft" ? new Date(2099, 10, 18, 4, 0).getTime() : undefined };
+  vi.spyOn(api, "updateNote").mockResolvedValue({ ok: true, data: { note } });
+  const success = vi.spyOn(toast, "success").mockImplementation(() => "toast");
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NoteForm({ entry: note, partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() })); };
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await flushQueryWork();
+  expect(success).toHaveBeenCalledExactlyOnceWith(state === "draft" ? "Đã hẹn gửi lúc 18 tháng 11, 2099 04:00" : "Đã gửi lời nhắn");
+});
+
+it.each(["received", "scheduled", "draft", "sent", "opened"] as const)("A5 whole-card action preserves the %s destination", kind => {
+  const input = { happened: "Distinct note preview", feel: "Sad", need: "Time", hope: "Talk" };
+  hooks.notes = kind === "received" ? { fromMe: [], toMe: [{ ...input, id: "n", state: "opened" }] } : {
+    toMe: [], fromMe: [{ ...input, id: "n", state: kind === "scheduled" || kind === "draft" ? "draft" : kind, ...(kind === "scheduled" ? { scheduledAt: new Date(2099, 10, 18, 19, 30).getTime() } : {}) }],
+  };
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NotesSection({ user, couple, onSignedOut: vi.fn() })); };
+  render().find(n => n.type === "button" && n.props["aria-label"]?.includes(input.happened))!.props.onClick!();
+  const tree = render();
+  if (kind === "opened" || kind === "received") {
+    expect(tree.find(n => n.type === EntryActions && n.props.entry?.id === "n")?.props.own).toBe(false);
+    expect(tree.some(n => n.props.partnerName === "Linh" && n.props.open)).toBe(false);
+  } else expect(tree.find(n => n.props.partnerName === "Linh" && n.props.open)?.props.entry?.id).toBe("n");
+});
+
+it("A5 waiting card stays passive and only Ready intentionally opens the note", async () => {
+  hooks.notes = { fromMe: [], toMe: [{ id: "n", state: "waiting" }] };
+  const open = vi.spyOn(api, "openNote").mockResolvedValue({ ok: true, data: { note: { id: "n", state: "opened", happened: "Private", feel: "Sad", need: "Time", hope: "Talk" } } });
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NotesSection({ user, couple, onSignedOut: vi.fn() })); };
+  const tree = render();
+  expect(tree.find(n => n.type === Card)?.props.onClick).toBeUndefined();
+  expect(open).not.toHaveBeenCalled();
+  tree.find(n => n.props.children === "Mình sẵn sàng nghe")!.props.onClick!();
+  await flushQueryWork();
+  expect(open).toHaveBeenCalledExactlyOnceWith("n");
+  expect(render().find(n => n.type === EntryActions && n.props.entry?.id === "n")).toBeDefined();
+});
+
+it("rechoosing eight hours on a scheduled note sends the server delivery choice", async () => {
+  const entry = { id: "n", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", state: "draft" as const, scheduledAt: new Date(2099, 10, 18, 4, 0).getTime() };
+  const update = vi.spyOn(api, "updateNote").mockResolvedValue({ ok: false, status: 503, error: null });
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NoteForm({ entry, partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() })); };
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("eightHours");
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await flushQueryWork();
+  expect(update).toHaveBeenCalledExactlyOnceWith("n", { ...entry, delivery: "eightHours" });
+});
+
+it("schedule error placement survives switching locale after validation", () => {
+  hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NoteForm({ partnerName: "Linh", onSaved: vi.fn(), onRefresh: vi.fn(), onSignedOut: vi.fn(), onLock: vi.fn(), onClose: vi.fn(), onDone: vi.fn() })); };
+  render().find(n => n.type === ToggleGroup)!.props.onValueChange!("custom");
+  render().find(n => n.type === Input)!.props.onChange!({ target: { value: "2000-01-01T00:00" } });
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  hooks.locale = "en";
+  expect(render().find(n => n.type === Input)?.props["aria-describedby"]).toBe("test-schedule-error");
+  expect(render().some(n => n.props.id === "test-schedule-error")).toBe(true);
+  render().find(n => n.type === Input)!.props.onChange!({ target: { value: "2099-01-01T00:00" } });
+  expect(render().find(n => n.type === Input)?.props["aria-describedby"]).toBeUndefined();
+});
+
+it.each(["vi", "en"])("sample replies fill and append without replacing typed text in %s", locale => {
+  hooks.locale = locale;
+  let value = { line: "" };
+  const render = () => nodes(CloseFields({ value, onChange: next => { value = next; } }));
+  const sample = (locale === "vi" ? vietnamese : english)["notes.sample.talk"];
+  render().find(n => n.props.children === sample)!.props.onClick!();
+  expect(value.line).toBe(sample);
+  value = { line: "My own words" };
+  render().find(n => n.props.children === sample)!.props.onClick!();
+  expect(value.line).toBe(`My own words\n${sample}`);
+  render().find(n => n.type === Textarea)!.props.onChange!({ target: { value: "Edited freely" } });
+  expect(value.line).toBe("Edited freely");
+});
+
+it.each(["", "   ", "x".repeat(501), "My own reply"])("close validity depends on the required message: %s", async line => {
+  const close = vi.spyOn(api, "closeNote").mockResolvedValue({ ok: false, status: 503, error: null });
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NoteCloseSheet({ id: "n", onClose: vi.fn(), onClosed: vi.fn(), onSignedOut: vi.fn() })); };
+  const child: ReactNode = render().find(n => n.type === CloseFields);
+  if (!isValidElement<Parameters<typeof CloseFields>[0]>(child)) throw new Error("Missing fields");
+  child.props.onChange({ line });
+  expect(render().find(n => n.props.type === "submit")?.props.disabled).toBe(line.trim().length === 0 || line.length > 500);
+  render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+  await flushQueryWork();
+  if (line === "My own reply") expect(close).toHaveBeenCalledExactlyOnceWith("n", { line });
+  else expect(close).not.toHaveBeenCalled();
+});
+
+it("whitespace-only closing text dismisses without a dirty confirmation", () => {
+  const onClose = vi.fn();
+  const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NoteCloseSheet({ id: "n", onClose, onClosed: vi.fn(), onSignedOut: vi.fn() })); };
+  const child: ReactNode = render().find(n => n.type === CloseFields);
+  if (!isValidElement<Parameters<typeof CloseFields>[0]>(child)) throw new Error("Missing fields");
+  child.props.onChange({ line: "   " });
+  render().find(n => n.props.children === "Để sau")!.props.onClick!();
+  expect(onClose).toHaveBeenCalledOnce();
+  expect(render().find(n => n.type === Dialog)?.props.open).toBe(false);
+});
+
+it.each(["vi", "en"])("closing and closed editing explain a refused empty message in %s", async locale => {
+  hooks.locale = locale;
+  const note = { id: "n", recipientId: "b", happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", line: "I hear you" };
+  const entry = { id: "e", authorId: "a", date: "2026-11-01", text: "", source: "partner" as const, photoIds: [], createdAt: 1, updatedAt: 1, note };
+  const hint = locale === "vi" ? "Viết lời nhắn trước khi khép lại nhé." : "Write a message before closing the note.";
+  for (const editing of [false, true]) {
+    hooks.values = []; hooks.refs = [];
+    const refuse = vi.spyOn(api, editing ? "updateClosedNote" : "closeNote").mockResolvedValue({ ok: false, status: 400, error: { error: "note_empty" } });
+    const render = () => {
+      hooks.index = 0; hooks.refIndex = 0;
+      return nodes(editing ? ClosedNoteSheet({ entry, recipient: { name: "Linh", tone: "secondary" }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() }) : NoteCloseSheet({ id: "n", onClose: vi.fn(), onClosed: vi.fn(), onSignedOut: vi.fn() }));
+    };
+    if (!editing) {
+      const fields: ReactNode = render().find(n => n.type === CloseFields);
+      if (!isValidElement<Parameters<typeof CloseFields>[0]>(fields)) throw new Error("Missing closing fields");
+      fields.props.onChange({ line: "My own reply" });
+    }
+    render().find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
+    await flushQueryWork();
+    expect(refuse).toHaveBeenCalledOnce();
+    expect(render().some(n => n.props.children === hint)).toBe(true);
+    refuse.mockRestore();
+  }
 });

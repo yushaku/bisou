@@ -250,12 +250,12 @@ describe("notes query plans", () => {
 describe("notes recipient and joined feed query plans", () => {
   it.each([
     ["open", OPEN_NOTE_SQL, [1, "note", "recipient", "couple"]],
-    ["close", CLOSE_NOTE_SQL, ["try", "", 1, 1, "note", "recipient", "couple"]],
+    ["close", CLOSE_NOTE_SQL, ["Reply", 1, 1, "note", "recipient", "couple"]],
     ["close insert", CLOSE_ENTRY_SQL, ["entry", "2026-11-13", 1, 1, "note", "recipient", "couple", "note"]],
     ["invalid close visibility", "SELECT id FROM notes WHERE id = ? AND recipient_id = ? AND couple_id = ? AND opened_at IS NOT NULL AND closed_at IS NULL", ["note", "recipient", "couple"]],
-    ["note join feed", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", 21]],
-    ["note join next page", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? AND e.entry_date <= ? AND (e.entry_date < ? OR (e.entry_date = ? AND (e.created_at < ? OR (e.created_at = ? AND e.id < ?)))) ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", "2026-11-13", "2026-11-13", "2026-11-13", 1, 1, "entry", 21]],
-    ["joined find entry", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.id = ? AND e.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?)`, ["entry", "user"]],
+    ["note join feed", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", 21]],
+    ["note join next page", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.couple_id = ? AND e.entry_date <= ? AND (e.entry_date < ? OR (e.entry_date = ? AND (e.created_at < ? OR (e.created_at = ? AND e.id < ?)))) ORDER BY e.entry_date DESC, e.created_at DESC, e.id DESC LIMIT ?`, ["couple", "2026-11-13", "2026-11-13", "2026-11-13", 1, 1, "entry", 21]],
+    ["joined find entry", `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id WHERE e.id = ? AND e.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?)`, ["entry", "user"]],
   ])("%s uses indexed lookups without scans or temporary sorting", async (_name, sql, binds) => {
     expect((await explain(sql as string, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
@@ -273,7 +273,7 @@ describe("notes push query plans", () => {
 
 describe("closed-note edit and delete query plans", () => {
   it.each([
-    ["closed edit", UPDATE_CLOSED_NOTE_SQL, ["h", "f", "n", "r", "try", "", 1, "note", "couple"]],
+    ["closed edit", UPDATE_CLOSED_NOTE_SQL, ["h", "f", "n", "r", "Reply", 1, "note", "couple"]],
     ["entry day", "UPDATE journal_entries SET entry_date = ?, updated_at = ? WHERE note_id = ? AND couple_id = ?", ["2026-11-13", 1, "note", "couple"]],
     ["entry lookup", "SELECT id FROM journal_entries WHERE note_id = ? AND couple_id = ?", ["note", "couple"]],
     ["closed visibility", "SELECT id FROM notes WHERE id = ? AND couple_id = ? AND closed_at IS NOT NULL", ["note", "couple"]],

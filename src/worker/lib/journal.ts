@@ -14,10 +14,10 @@ export interface EntryRow {
   note_id: string | null;
   recipient_id: string | null;
   happened: string; feel: string; need: string; hope: string;
-  pick: NonNullable<JournalEntry["note"]>["pick"]; line: string;
+  line: string | null;
 }
 
-export const ENTRY_SELECT = `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.pick, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id`;
+export const ENTRY_SELECT = `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id`;
 
 export function validateEntry(raw: unknown, now: number): { input: EntryInput } | { error: ApiErrorCode } {
   if (!raw || typeof raw !== "object" || !("date" in raw) || typeof raw.date !== "string"
@@ -58,7 +58,7 @@ export async function entriesWithPhotos(db: D1Database, rows: EntryRow[]): Promi
   }
   return rows.map((row) => ({
     id: row.id, authorId: row.author_id, date: row.entry_date, text: row.body, source: row.source,
-    ...(row.note_id ? { note: { id: row.note_id, recipientId: row.recipient_id!, happened: row.happened, feel: row.feel, need: row.need, hope: row.hope, pick: row.pick, line: row.line } } : {}),
+    ...(row.note_id ? { note: { id: row.note_id, recipientId: row.recipient_id!, happened: row.happened, feel: row.feel, need: row.need, hope: row.hope, line: row.line! } } : {}),
     photoIds: photos.get(row.id) ?? [], createdAt: row.created_at, updatedAt: row.updated_at,
   }));
 }

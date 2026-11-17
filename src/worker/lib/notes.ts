@@ -1,11 +1,11 @@
 import type { Env } from "../env";
 import { notifyNote } from "./notify";
-import type { NoteInput, NoteLists, NotePick, ReceivedNote, WrittenNote } from "../../shared/types";
+import type { NoteInput, NoteLists, ReceivedNote, WrittenNote } from "../../shared/types";
 export interface NoteRow extends NoteInput {
   id: string; couple_id: string; writer_id: string; recipient_id: string;
   scheduled_at: number | null; created_at: number; updated_at: number; sent_at: number | null; opened_at: number | null;
   closed_at: number | null; reminded_at: number | null;
-  pick: NotePick | null; line: string;
+  line: string | null;
 }
 const parts = (row: NoteInput): NoteInput => ({ happened: row.happened, feel: row.feel, need: row.need, hope: row.hope });
 export function toWritten(row: NoteRow): WrittenNote {

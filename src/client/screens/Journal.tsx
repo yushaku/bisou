@@ -261,13 +261,13 @@ export function Journal({ couple, ...session }: JournalProps) {
         detail={detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={(index) => { setDetailId(null); setViewer({ entry: detail, index, open: true }); }} />} />
       <EntryActions remove={deleteItem} entry={acting} canDelete={acting?.authorId === user.id || !!acting?.note} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
 
-      {closedEditing && <Suspense fallback={null}><ClosedNoteSheet key={closedEditing.id} entry={closedEditing} onClose={() => setClosedEditing(null)} onSignedOut={onSignedOut} onSaved={(entry) => { onSaved(entry); setClosedEditing(null); }} /></Suspense>}
+      {closedEditing && <Suspense fallback={null}><ClosedNoteSheet key={closedEditing.id} entry={closedEditing} recipient={people.get(closedEditing.note.recipientId) ?? { name: displayName(undefined, t), tone: "secondary" }} onClose={() => setClosedEditing(null)} onSignedOut={onSignedOut} onSaved={(entry) => { onSaved(entry); setClosedEditing(null); }} /></Suspense>}
       </TabsContent></Tabs>
       {composeLoaded && (
         <Suspense fallback={null}>
           {fromMenu && !editing ? <JournalComposeSheet open={composing} onOpenChange={setComposing} initialTab={createTab} partnerName={partnerName} onSignedOut={onSignedOut}
             onSaved={(entry) => { onSaved(entry); setSection("feed"); }}
-            onNoteSaved={(note) => { setSection("notes"); void notesRef.current?.refresh(); toast.success(t(note.state === "sent" ? "notes.sent" : "notes.saved")); }} /> : <ComposeSheet
+            onNoteSaved={() => { setSection("notes"); void notesRef.current?.refresh(); }} /> : <ComposeSheet
             fromMenu={fromMenu}
             open={composing}
             onOpenChange={setComposing}

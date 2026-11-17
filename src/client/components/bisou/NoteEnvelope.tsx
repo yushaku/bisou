@@ -1,10 +1,10 @@
 import { useId } from "react";
 
-export function NoteEnvelope({ address, state, preview }: { address: string; state: { kind: "cooling" | "ready" | "sent" | "waiting" | "opened"; text: string }; preview?: string }) {
+export function NoteEnvelope({ kind }: { kind: "cooling" | "ready" | "sent" | "waiting" | "opened" }) {
   const id = useId();
-  const opened = state.kind === "opened", posted = opened || state.kind === "sent" || state.kind === "waiting";
+  const opened = kind === "opened", posted = opened || kind === "sent" || kind === "waiting";
   const body = "M9 39Q159 42 311 38L309 250Q160 247 10 251Z";
-  return <span className="note-envelope-item" data-envelope-state={state.kind}>
+  return <span className="note-envelope-item" data-envelope-state={kind} aria-hidden="true">
     <svg className="note-envelope-paper" viewBox="0 0 320 260" aria-hidden="true">
       <defs>
         <filter id={`${id}-ink`} x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".045" numOctaves="2" seed="8" result="noise" /><feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G" /></filter>
@@ -41,8 +41,6 @@ export function NoteEnvelope({ address, state, preview }: { address: string; sta
         {posted && <g className="note-postmark" fill="none" strokeWidth="1.5" opacity=".8"><path d="M149 67c18-12 32 12 51 0s30-9 43-1M148 76c18-12 32 12 51 0s30-9 43-1M148 85c18-12 32 12 51 0s30-9 43-1" /><path d="M155 58h1m6-2h1m7 1h1M154 94h1m8 2h1m7-1h1" /></g>}
         {opened ? <g data-seal="broken"><g transform="translate(150 151) rotate(-14)" clipPath={`url(#${id}-left)`}><use href={`#${id}-seal`} /></g><g transform="translate(174 165) rotate(17)" clipPath={`url(#${id}-right)`}><use href={`#${id}-seal`} /></g></g> : <g data-seal="intact" transform="translate(160 163)"><use href={`#${id}-seal`} /></g>}
       </g>
-      <text className="font-heading" fill="var(--envelope-ink)" x="160" y="225" textAnchor="middle" fontSize="27" textLength={address.length > 18 ? 260 : undefined} lengthAdjust="spacingAndGlyphs">{address}</text>
     </svg>
-    <span className="note-envelope-caption"><span className="text-xs font-semibold">{state.text}</span>{preview !== undefined && <span className="block truncate text-xs text-muted-foreground">{preview}</span>}</span>
   </span>;
 }
