@@ -16,7 +16,7 @@ A partner wants to tell the other something that bothers them, from a small habi
 - US2 (writer): choose when a note is delivered, so that it reaches my partner at a moment I picked. AC43, AC44, AC45, AC46
 - US3 (writer): correct, withdraw or delete a note until my partner opens it, so that a mistake never costs me the talk. AC9, AC10, AC11, AC37, AC39, AC40
 - US4 (recipient): see that a note waits and open it only when I am ready, so that I hear it calmly. AC12, AC13, AC14, AC15, AC16, AC32
-- US5 (recipient): close a note with one short answer, so that the real conversation happens in person. AC17, AC18
+- US5 (recipient): close a note with a short message, so that the real conversation happens in person. AC17, AC18
 - US6 (partner): rely on notes when the connection is poor, so that nothing is sent or changed later by surprise. AC31, AC32, AC33
 
 ## Business rules
@@ -66,11 +66,11 @@ Opening and closing
 - R24. The recipient sees a note's parts only after the ready-to-listen action on it; a note never opens by itself and has no deadline.
 - R25. A note is opened once: from then it leaves the count, and the writer sees "Đã mở".
 - R26. An opened note shows the recipient the writer's display name and the four parts, and the recipient can read it again until closing it.
-- R27. The recipient closes a note by picking exactly one of three answers (I understand, I'll try; I'd like to talk in person; I see it differently, let's talk) and may add one line after "Mình hiểu là..." (what I understand is...), up to 500 characters.
+- R27. The recipient closes a note with a required message of 1 to 500 characters, outer spaces ignored; the three sample replies (I understand, I'll try; I'd like to talk in person; I see it differently, let's talk) fill an empty message or append on a new line without replacing existing words, and the recipient can edit the result or write without a sample.
 - R28. There is no deadline to close; an opened note stays among the recipient's notes until closed.
-- R29. Closing is final as an act: the note cannot be reopened or closed again; the pick and the line afterwards change only as part of the journal entry (notes-journal R33).
-- R30. Bisou has no reply, thread, reaction or comment on a note beyond the pick and the line; the couple talks in person, as for the garden ([garden](garden.md) R16).
-- R31. The writer sees the pick and the line in the closed note's journal entry.
+- R29. Closing is final as an act: the note cannot be reopened or closed again; the message afterwards changes only as part of the journal entry (notes-journal R33).
+- R30. Bisou has no reply, thread, reaction or comment on a note beyond the closing message; the couple talks in person, as for the garden ([garden](garden.md) R16).
+- R31. The writer sees the recipient's message in the closed note's journal entry.
 
 Empty states and offline
 
@@ -85,7 +85,7 @@ Empty states and offline
 - Flow for US2: the writer picks now, in 8 hours or a custom time; now delivers at once, the others wait; a later change of delivery on a waiting note is allowed until delivery.
 - Flow for US3: after delivery the writer fixes a typo with no new message to the recipient; once the recipient opens it, changing, withdrawing and deleting stop.
 - Flow for US4: the recipient sees an indicator with a count, opens a note on purpose and can read it again; offline, opening says it needs a connection and the note stays unopened.
-- Flow for US5: the recipient picks one answer, may add a line and closes; nothing can be replied in Bisou; the note then continues as in [notes-journal](notes-journal.md).
+- Flow for US5: the recipient writes a message, optionally uses the sample replies, and closes; nothing can be replied in Bisou; the note then continues as in [notes-journal](notes-journal.md).
 - Flow for US6: with no notes yet the person is invited to write; offline, every action that changes a note says it needs a connection and does nothing later.
 
 ## Acceptance criteria
@@ -102,8 +102,8 @@ Empty states and offline
 - AC14 (R22). Given a note waits, then the recipient sees only that a note from the partner waits and the ready-to-listen action, nothing of its parts, length or day.
 - AC15 (R24). Given a note waits, then its parts stay hidden until the recipient takes the ready-to-listen action; given they never do, then weeks later it still waits.
 - AC16 (R25, R26). Given the recipient opens the note, then the indicator count drops, the writer sees "Đã mở", and the recipient can read it again before closing it.
-- AC17 (R27). Given the recipient tries to close without a pick, then it is refused; one pick without a line closes; a line of 501 characters is refused.
-- AC18 (R29, R30). Given a note is closed, then it cannot be reopened or closed again, and neither partner can reply to it in Bisou.
+- AC17 (R27). Given the message is empty or only spaces, or has 501 characters, then closing is refused; a trimmed message of 1 to 500 characters closes without choosing a sample; using a sample fills an empty message or appends on a new line and keeps it editable.
+- AC18 (R29, R30). Given a note is closed, then it cannot be reopened or closed again, and further changes to the closing message happen only in the shared journal entry, without a reply thread.
 - AC31 (R48, R49). Given no notes, then the person sees that there are none, the invitation and an offer to write to the partner by name.
 - AC32 (R50, R51). Given the recipient is offline with a note waiting, when they try to open it, then they are told it needs a connection, the note stays unopened and the writer still sees "Chưa mở".
 - AC33 (R51). Given the writer is offline, when they send or schedule a note, then they are told it needs a connection, nothing is sent, and nothing is sent later on its own.
@@ -124,7 +124,7 @@ Empty states and offline
 - **Draft** (bản nháp): a note with no delivery chosen.
 - **Not opened yet** (chưa mở), **opened** (đã mở), **closed** (đã khép lại).
 - **Withdraw** (rút lại): the writer taking back a delivered note before it is opened.
-- **Pick** (lựa chọn khép lại): one of the three answers in R27.
+- **Sample reply** (gợi ý nhanh): an optional sentence the recipient can use in the required closing message (R27).
 - **Inbox indicator** (hộp thư): what Home shows while notes wait (R19).
 
 ## Out of scope

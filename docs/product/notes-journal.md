@@ -20,9 +20,9 @@ Once a kind note is delivered ([notes](notes.md)), the couple needs it to become
 
 Closing into the journal
 
-- R32. When the recipient closes a note, it becomes at once a journal entry in the couple's feed, shown with both partners' names (the writer's with the time, the recipient's over the pick and the line), dated the day it was closed by the Vietnam calendar, marked as from a kind note, holding the four parts as delivered and the recipient's pick and line; it leaves the notes for both ([journal](journal.md) R26, R27).
-- R33. From then the [journal](journal.md) rules apply, with the exception [journal](journal.md) R26 makes to its R11: both partners see it, and either may change its four parts under [notes](notes.md) R2 to R5, the recipient's pick and line or its day, or delete it after confirming, when it is gone for both for good.
-- R34. The entry never gets photos; a changed pick or line keeps showing under the recipient's name, and the pick stays one of the three in [notes](notes.md) R27.
+- R32. When the recipient closes a note, it becomes at once a journal entry in the couple's feed, shown with both partners' names (the writer's with the time, the recipient's over their message), dated the day it was closed by the Vietnam calendar, marked as from a kind note, holding the four parts as delivered and the recipient's message; it leaves the notes for both ([journal](journal.md) R26, R27).
+- R33. From then the [journal](journal.md) rules apply, with the exception [journal](journal.md) R26 makes to its R11: both partners see it, and either may change its four parts under [notes](notes.md) R2 to R5, the recipient's message or its day, or delete it after confirming, when it is gone for both for good.
+- R34. The entry never gets photos; a changed message keeps showing under the recipient's name, new messages remain required under [notes](notes.md) R27.
 - R35. A note becoming a journal entry sends no notification to anyone.
 - R36. Undelivered, withdrawn, waiting and opened but not closed notes never reach the journal.
 - R37. Bisou never counts or lists closed notes: they appear only as journal entries, and nothing shows how many notes either partner has sent or received, beyond the waiting count in [notes](notes.md) R19.
@@ -31,7 +31,7 @@ Notifications
 
 - R38. When a note is delivered, each device of the recipient with the partner's journal kind on gets "Sơn có một lời nhắn nhỏ" / "Sơn left you a kind note" at any hour ([notifications](notifications.md) R3, R36).
 - R39. A note still unopened 3 days after it was delivered gets one reminder, "Lời nhắn nhỏ của Sơn vẫn ở đây" / "Sơn's kind note is still here", at 07:00 on the third Vietnam day after the delivery day; there is never a second reminder ([notifications](notifications.md) R35).
-- R41. No notification ever contains a part, the pick or the line; following one opens the notes.
+- R41. No notification ever contains any of the four parts or the closing message; following one opens the notes.
 - R42. The writer gets no notification when a note is delivered, opened or closed.
 - R43. A note opened or withdrawn before its message goes out is left out, and nothing is sent if none is left.
 
@@ -42,7 +42,7 @@ Privacy and data
 - R46. The recipient never sees an undelivered or withdrawn note, the hints the writer saw, or what the writer changed before the recipient opened it.
 - R47. An outsider learns nothing of a couple's notes.
 - R52. A note's parts are the writer's personal data; Bisou keeps them with when the note was first saved, when it is due, whether it was delivered and whether it was opened, only to show it to the writer, to deliver it to the recipient as these rules allow, and to show the writer its state.
-- R53. The pick and the line are the recipient's personal data, kept only in the closed note's journal entry.
+- R53. The closing message is the recipient's personal data, kept only in the closed note's journal entry.
 - R54. No outside service reads, scores or rewrites a note: hints come only from the fixed word list in [notes](notes.md) R5.
 - R55. While the couple exists, Bisou keeps a note until it is deleted, withdrawn or closed; a closed note is then kept and deleted as a journal entry ([journal](journal.md) R11, R17).
 - R56. The writer can read their notes at any time, change them until the recipient opens them, delete them before delivery and withdraw them until opened; the recipient sees a note only once opened; after closing, R33 and R34 apply to both partners.
@@ -57,20 +57,20 @@ Privacy and data
 
 ## Acceptance criteria
 
-- AC19 (R32). Given the recipient closes a note, then both feeds show on the closing day an entry with both names, marked as from a kind note, with the four parts as delivered and, under the recipient's name, the pick and the line; the notes no longer show it.
-- AC20 (R33, R34). Given that entry, then each partner can change the four parts, the recipient's pick, the line or the day, and can delete it after confirming, gone for both; nobody can add a photo.
+- AC19 (R32). Given the recipient closes a note, then both feeds show on the closing day an entry with both names, marked as from a kind note, with the four parts as delivered and, under the recipient's name, the message; the notes no longer show it.
+- AC20 (R33, R34). Given that entry, then each partner can change the four parts, the recipient's message or the day, and can delete it after confirming, gone for both; nobody can add a photo.
 - AC21 (R35). Given both have the partner's journal kind on, then neither gets a notification when the entry appears.
 - AC22 (R36, R37). Given a partner has an undelivered note and withdrew another, then neither is in the journal, and nothing shows a total of notes sent or received.
 - AC23 (R38). Given a note is sent now at 06:30, then the recipient gets the arrival message at 06:30; given it is sent at 15:00, then at 15:00.
 - AC24 (R39). Given a delivered note stays unopened, then the recipient gets one reminder at 07:00 on the third Vietnam day after the delivery day and nothing after; given it was opened, then no reminder comes.
-- AC26 (R41, R42). Given any note notification, then it shows no part, pick or line, and following it opens the notes; the writer gets nothing at delivery, opening or closing.
+- AC26 (R41, R42). Given any note notification, then it shows none of the four parts or the closing message, and following it opens the notes; the writer gets nothing at delivery, opening or closing.
 - AC27 (R38, R39). Given the recipient never turned notifications on or turned the partner's journal kind off, then no arrival message or reminder comes, and the inbox indicator still shows.
 - AC28 (R44, R46). Given a note not yet delivered, then nothing the recipient sees differs; after delivery and a later fix, the recipient never sees the earlier wording, the hint or that it changed.
 - AC29 (R45). Given a note waits, then the recipient cannot read any part, by any means in Bisou, before the ready-to-listen action.
 - AC30 (R47). Given a couple's notes, then an outsider learns nothing of them.
 - AC34 (R54). Given the writer types a phrase from the hint list, then the hint shows and no outside service receives the text.
 - AC35 (R52, R55). Given the writer withdraws a waiting note and confirms, then it is gone for good for both and Bisou keeps nothing of it.
-- AC36 (R53, R56). Given a closed note's entry, when either partner deletes it and confirms, then the four parts, the pick and the line are gone for both.
+- AC36 (R53, R56). Given a closed note's entry, when either partner deletes it and confirms, then the four parts and the message are gone for both.
 - AC47 (R69). Given two reminders for the same writer are due together, then the recipient gets one message with the count.
 
 ## Glossary

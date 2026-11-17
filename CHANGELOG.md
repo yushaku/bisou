@@ -4,6 +4,14 @@
 
 ### Changed
 
+- Kind note journal cards show all four labelled parts and the recipient message in a separate pocket. Detail shows the full text; the feed previews two lines per part and three for the message.
+
+- Closing a kind note now requires a short message. Quick replies fill the message or append on a new line; sample choices are not stored.
+
+- Kind notes use full-width cards with two-line previews, readable status text and small envelope artwork. Waiting notes keep a sealed invitation with only the sender and ready action.
+
+- Kind note composers have an exit button that asks before discarding changes and name the partner. Closing explains the shared journal and protects unfinished responses; waiting notes appear before Home's daily question and shop. Scheduling shows the local delivery time, confirms it after saving, and brings invalid times into view.
+
 - Switching bottom tabs shows the page immediately, while the tab indicator slides into place.
 - Returning to a visited tab keeps its filters, loaded journal pages, and open views, including the Wishes gift draw, and starts at the top of the page.
 

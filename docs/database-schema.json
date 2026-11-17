@@ -201,6 +201,7 @@
     },
     {
       "id": "notes",
+      "width": 316,
       "label": "notes",
       "tag": "notes",
       "row": 0,
@@ -214,14 +215,12 @@
         { "name": "feel", "type": "TEXT · 1-500 chars" },
         { "name": "need", "type": "TEXT · 1-500 chars" },
         { "name": "hope", "type": "TEXT · 1-500 chars" },
-        { "name": "pick", "type": "TEXT · enum" },
-        { "name": "line", "type": "TEXT · 0-500 chars" },
+        { "name": "line", "type": "TEXT · NULL until close; 1-500 chars" },
         { "name": "created_at", "type": "INTEGER · epoch ms" },
         { "name": "updated_at", "type": "INTEGER · epoch ms" },
         { "name": "sent_at", "type": "INTEGER · epoch ms" },
         { "name": "opened_at", "type": "INTEGER · epoch ms" },
         { "name": "closed_at", "type": "INTEGER · epoch ms" },
-        { "name": "notified_at", "type": "INTEGER · unused" },
         { "name": "reminded_at", "type": "INTEGER · epoch ms" },
         { "name": "scheduled_at", "type": "INTEGER · epoch ms" }
       ]
@@ -681,7 +680,7 @@
     {
       "dot": "rose",
       "title": "Unused leftovers",
-      "items": ["notes.notified_at, push_subscriptions.journal_slot and the index journal_entries_created still exist but no code reads them.", "Migrations are additive, so the columns and index stay; the quiet-hours and journal-slot features that used them were removed."]
+      "items": ["push_subscriptions.journal_slot and the index journal_entries_created still exist but no code reads them.", "Those populated tables keep their unused column and index; the notes closing message is NULL until close, and its four indexes cover open notes, delivery and reminders."]
     }
   ]
 }
