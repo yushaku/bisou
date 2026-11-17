@@ -125,7 +125,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
 
   return (
     <div className={cn("flex min-h-dvh flex-col", className)}>
-      <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)] [view-transition-name:tab-header]">
+      <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 w-full max-w-md items-center gap-2 px-4">
           <BrandMark className="size-6 shrink-0" />
           {title
@@ -140,7 +140,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
         </div>
       </header>
 
-      <main ref={mainRef} data-tab-page tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 [view-transition-name:tab-page]">
+      <main ref={mainRef} data-tab-page tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4">
         {canRefresh && <div className={cn("flex shrink-0 items-center justify-center overflow-hidden text-muted-foreground motion-reduce:transition-none", settling && "transition-[height] duration-(--duration) ease-(--ease)")} style={{ height: pull }}>
           {pull > 0 && <span role="status" aria-busy={refreshing}>
             <Loader2Icon aria-hidden="true" className={cn("size-5", refreshing && "animate-spin motion-reduce:animate-none")} />
@@ -161,6 +161,11 @@ interface BottomBarProps {
   onCreate: (destination: CreateDestination) => void;
 }
 
+export function pillColumn(tab: TabId): number {
+  const index = TABS.indexOf(tab);
+  return index < 2 ? index : index + 1;
+}
+
 export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -177,8 +182,11 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
         onCreate(destination);
       }
     }}>
-      <nav aria-label={t("nav.label")} data-tab-bar className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem] [view-transition-name:tab-bar]">
-        <ul className="mx-auto grid w-full max-w-md grid-cols-5">
+      <nav aria-label={t("nav.label")} data-tab-bar className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem]">
+        <ul className="relative mx-auto grid w-full max-w-md grid-cols-5">
+          {active && <li aria-hidden="true" data-tab-pill className="pointer-events-none absolute inset-y-0 left-0 w-1/5 p-1.5 transition-transform duration-[calc(var(--duration)*2)] ease-(--ease) motion-reduce:transition-none" style={{ transform: `translateX(${pillColumn(active) * 100}%)` }}>
+            <span className="block h-full rounded-control bg-accent elevate-sm" />
+          </li>}
           {TABS.map((id, index) => {
             const { icon: Icon, label } = TAB_META[id];
             const selected = active === id;
@@ -196,7 +204,6 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
                     onClick={() => onSelect(id)}
                     className={cn("press flex h-16 w-full items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset", selected ? "text-foreground" : "text-muted-foreground")}>
                     <span className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
-                      {selected && <span aria-hidden="true" className="absolute inset-0 rounded-control bg-accent elevate-sm [view-transition-name:tab-pill]" />}
                       <span className={cn("relative flex flex-col items-center gap-0.5", selected && "text-accent-foreground")}>
                         <Icon className="size-5" aria-hidden="true" />
                         {t(label)}

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
 import { test } from "node:test";
@@ -127,4 +128,11 @@ test("anniversaries include today and keep leap-day anniversaries on Feb 28", ()
   assert.deepEqual(nextMilestone("2024-02-29", "2025-02-28"), { kind: "anniversary", years: 1, date: "2025-02-28", daysLeft: 0 });
   assert.equal(formatVnd(450000, "vi"), "450.000\u00a0₫");
   assert.equal(formatVnd(450000, "en"), "₫450,000");
+});
+
+
+test("tab pages show immediately without browser view transitions", () => {
+  for (const path of ["src/client/styles.css", "src/client/components/bisou/AppShell.tsx"]) {
+    assert.doesNotMatch(readFileSync(path, "utf8"), /view-transition-name|::view-transition/);
+  }
 });

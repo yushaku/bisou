@@ -4,7 +4,6 @@ import type { User } from "../../shared/types";
 import { AppShell, type TabId } from "../components/bisou/AppShell";
 import { useI18n, type MessageKey } from "../i18n";
 import { attachTabScroll, TabMemory } from "../lib/tabMemory";
-import { notifyTabCommitted } from "../lib/tabTransition";
 import { useTabNavigation } from "../lib/useTabNavigation";
 
 export interface SessionProps {
@@ -59,13 +58,12 @@ export function TabFrame({ tab, children }: { tab: TabId; children: ReactNode })
   );
 }
 
-/* A tab screen inside TabFrame: hands its refresh to the frame and tells a running tab transition it has committed. */
-function TabContent({ tab, onRefresh, refresh, children }: { tab: TabId; onRefresh: Refresh; refresh: RefObject<Refresh>; children: ReactNode }) {
+/* A tab screen inside TabFrame: registers its refresh with the frame while visible. */
+function TabContent({ onRefresh, refresh, children }: { onRefresh: Refresh; refresh: RefObject<Refresh>; children: ReactNode }) {
   useEffect(() => {
     refresh.current = onRefresh;
     return () => { if (refresh.current === onRefresh) refresh.current = undefined; };
   });
-  useLayoutEffect(() => { notifyTabCommitted(); }, [tab]);
   return children;
 }
 
@@ -75,7 +73,7 @@ export function SignedInShell({
   children,
 }: SessionProps & { tab?: TabId; onRefresh?: () => void | Promise<void>; children: ReactNode }) {
   const frame = useContext(TabFrameContext);
-  if (frame && tab) return <TabContent tab={tab} onRefresh={onRefresh} refresh={frame}>{children}</TabContent>;
+  if (frame && tab) return <TabContent onRefresh={onRefresh} refresh={frame}>{children}</TabContent>;
   return <StandaloneShell tab={tab} onRefresh={onRefresh}>{children}</StandaloneShell>;
 }
 
@@ -85,7 +83,6 @@ function StandaloneShell({ tab, onRefresh, children }: { tab?: TabId; onRefresh?
   const titleKey = tab && TAB_TITLES[tab];
   const navigation = useTabNavigation();
   const memory = useScrollMemory(tab);
-  useLayoutEffect(() => { notifyTabCommitted(); }, []);
 
   return (
     <AppShell

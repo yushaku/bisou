@@ -1,5 +1,4 @@
 import { createContext } from "react";
-import { placeTabScroll } from "./tabTransition";
 
 export interface TabMemoryValue {
   journalSection: "feed" | "notes";
@@ -16,7 +15,7 @@ export const TabMemory = createContext<TabMemoryValue | null>(null);
 
 /* Reset the shared page position on entry; focus restoration remains independent. */
 export function attachTabScroll(memory: TabMemoryValue, tab: string | undefined): void {
-  if (tab) placeTabScroll(0);
+  if (tab) window.scrollTo({ top: 0, behavior: "instant" });
   if (memory.returnFocus) {
     document.getElementById(memory.returnFocus)?.focus({ preventScroll: true });
     memory.returnFocus = null;

@@ -1,6 +1,7 @@
 import { createElement as h, isValidElement, type ReactElement, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
+import { BottomBar, pillColumn } from "../src/client/components/bisou/AppShell";
 import { Router } from "wouter";
 import { TabScreens } from "../src/client/screens/TabScreens";
 import { I18nProvider } from "../src/client/i18n";
@@ -64,7 +65,7 @@ function fakeWindow(scrollY = 0) {
   const win = Object.assign(new EventTarget(), { scrollY, scrollTo: vi.fn((options: { top: number }) => { win.scrollY = options.top; }) });
   const focus = vi.fn();
   vi.stubGlobal("window", win);
-  vi.stubGlobal("document", { getElementById: vi.fn(() => ({ focus })), documentElement: { classList: { contains: () => false } } });
+  vi.stubGlobal("document", { getElementById: vi.fn(() => ({ focus })) });
   return { win, focus };
 }
 
@@ -95,4 +96,15 @@ it("a page without a tab neither scrolls nor listens", () => {
   const { win } = fakeWindow();
   expect(attachTabScroll(memory, undefined)).toBeUndefined();
   expect(win.scrollTo).not.toHaveBeenCalled();
+});
+
+
+it("the pill crosses the create column and renders only once for the active tab", () => {
+  for (const [tab, column] of [["home", 0], ["journal", 1], ["wishes", 3], ["garden", 4]] as const) {
+    expect(pillColumn(tab)).toBe(column);
+    const html = render(h(BottomBar, { active: tab, onSelect: () => {}, onCreate: () => {} }));
+    expect(html.match(/data-tab-pill/g)).toHaveLength(1);
+    expect(html).toContain(`translateX(${column * 100}%)`);
+  }
+  expect(render(h(BottomBar, { onSelect: () => {}, onCreate: () => {} }))).not.toContain("data-tab-pill");
 });

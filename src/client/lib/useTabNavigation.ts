@@ -4,16 +4,11 @@ import { useHistoryState } from "wouter/use-browser-location";
 import type { TabId } from "../components/bisou/AppShell";
 import { readCreateRequest, tabMove, TAB_PATH, type CreateDestination } from "./navigation";
 import { TabMemory } from "./tabMemory";
-import { browserHost, runTabTransition } from "./tabTransition";
-
-const LIVE_TABS = ["home", "journal", "wishes", "garden"] as const;
 
 export function useTabNavigation() {
   const [location, navigate] = useLocation();
   const state = useHistoryState<{ from?: string } | null>();
   const memory = useContext(TabMemory);
-  const origin = state?.from ?? location;
-  const current = LIVE_TABS.find((id) => TAB_PATH[id] === origin || (id === "garden" && origin.startsWith("/garden/"))) ?? "home";
 
   function go(next: TabId, create?: CreateDestination) {
     if (memory) memory.returnFocus = null;
@@ -34,8 +29,7 @@ export function useTabNavigation() {
       replace: move === "replace",
       state: create ? { create } : null,
     });
-    if (location === path) update();
-    else runTabTransition(update, LIVE_TABS.indexOf(next) > LIVE_TABS.indexOf(current) ? 1 : -1, browserHost(), matchMedia("(prefers-reduced-motion: reduce)").matches);
+    update();
   }
 
   return {
