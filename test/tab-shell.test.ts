@@ -69,12 +69,9 @@ function fakeWindow(scrollY = 0) {
 it("a revisited tab starts at scroll position zero", () => {
   const memory = createTabMemory();
   const { win } = fakeWindow();
-  const leaveJournal: unknown = attachTabScroll(memory, "journal");
+  attachTabScroll(memory, "journal");
   win.scrollY = 2400;
-  win.dispatchEvent(new Event("scroll"));
-  if (typeof leaveJournal === "function") leaveJournal();
-  const leaveWishes: unknown = attachTabScroll(memory, "wishes");
-  if (typeof leaveWishes === "function") leaveWishes();
+  attachTabScroll(memory, "wishes");
   attachTabScroll(memory, "journal");
   expect(win.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" });
 });
