@@ -31,7 +31,7 @@ export function TodayPosts({ couple, user, today, onSignedOut }: {
     <Drawer open={!!detail} onOpenChange={open => { if (!open) setDetailId(null); }}>
       <DrawerContent aria-describedby={undefined}>
         <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col gap-2 px-5 pb-5">
-          <DrawerHeader className="px-0 text-left"><DrawerTitle>{detail ? formatDay(detail.date, locale) : ""}</DrawerTitle></DrawerHeader>
+          <DrawerHeader className="px-0 text-left"><DrawerTitle className="font-heading text-xl">{detail ? formatDay(detail.date, locale) : ""}</DrawerTitle></DrawerHeader>
           <div className="min-h-0 flex-1 overflow-y-auto">{detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={() => {}} />}</div>
           <Button variant="ghost" size="lg" onClick={() => setDetailId(null)}>{t("common.close")}</Button>
         </div>

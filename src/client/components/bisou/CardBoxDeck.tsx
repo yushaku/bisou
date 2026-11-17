@@ -14,6 +14,7 @@ export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onP
   const canPrevious = !!previous;
   const drag = useRef<{ id: number; x: number; y: number; axis: "x" | "y" | null } | null>(null);
   const busy = useRef(false);
+  const shufflePending = useRef(false);
   const [offset, setOffset] = useState(0);
   const [leaving, setLeaving] = useState<{ card: BoxCard; offset: number; direction: "next" | "previous" | "random" } | null>(null);
   const [shuffling, setShuffling] = useState(false);
@@ -24,7 +25,7 @@ export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onP
     if (busy.current) return;
     if (direction === "previous" && !canPrevious) { cancel(); return; }
     busy.current = true;
-    if (direction === "random" && !reduced()) { cancel(); setShuffling(true); return; }
+    if (direction === "random" && !reduced()) { shufflePending.current = true; cancel(); setShuffling(true); return; }
     change(direction);
   };
   const change = (direction: "next" | "previous" | "random") => {
@@ -33,10 +34,15 @@ export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onP
     setTurn(turn => turn + 1);
     if (direction === "next") onNext(); else if (direction === "previous") onPrevious(); else onRandom();
   };
+  const finishShuffle = () => {
+    if (!shufflePending.current) return;
+    shufflePending.current = false;
+    setShuffling(false); change("random");
+  };
   useEffect(() => {
     if (!shuffling && !leaving) return;
     const timeout = setTimeout(() => {
-      if (shuffling) { setShuffling(false); change("random"); }
+      if (shuffling) finishShuffle();
       else { setLeaving(null); busy.current = false; }
     }, reduced() ? 0 : 400);
     return () => clearTimeout(timeout);
@@ -76,7 +82,7 @@ export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onP
         style={{ "--return-x": `${leaving?.offset ?? 0}px`, "--return-rotation": `${(leaving?.offset ?? 0) / 24}deg` } as CSSProperties}
         onAnimationEnd={event => {
           if (event.target !== event.currentTarget || !shuffling) return;
-          setShuffling(false); change("random");
+          finishShuffle();
         }}>
         <div style={{ transform: backDrag ? `translateY(${Math.min(offset / 12, 12)}px) scale(${1 - Math.min(offset / 4000, .06)})` : offset ? `translateX(${offset}px) rotate(${offset / 24}deg)` : undefined, transition: drag.current ? "none" : "transform 180ms var(--ease)" }}>
           <CardBoxCard card={card} boxId={boxId} boxName={boxName} adult={adult} />

@@ -29,10 +29,10 @@ export function Celebration({ open, onOpenChange, title, body }: CelebrationProp
   const { t } = useI18n();
 
   const played = useRef(false);
-  if (!open) played.current = false;
 
   useEffect(() => {
-    if (open && !played.current) {
+    if (!open) { played.current = false; return; }
+    if (!played.current) {
       played.current = true;
       fireConfetti();
     }

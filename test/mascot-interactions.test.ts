@@ -39,7 +39,7 @@ vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "vi", t: (key: 
 vi.mock("../src/client/lib/useTabNavigation", () => ({ useTabNavigation: () => ({}) }));
 afterEach(() => { hooks.values = []; hooks.index = 0; hooks.effects = []; vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
-type Props = { children?: ReactNode; onValueChange?: (id: string) => void; onNext?: () => void; onClick?: () => void; "aria-label"?: string; onConfirm?: () => void; open?: boolean };
+type Props = { className?: string; onAnimationEnd?: (event: { target: unknown; currentTarget: unknown }) => void; children?: ReactNode; onValueChange?: (id: string) => void; onNext?: () => void; onClick?: () => void; "aria-label"?: string; onConfirm?: () => void; open?: boolean };
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -93,6 +93,11 @@ it("celebration fires once across effect reconnection, then again on a new openi
   // Activity reconnects effects while retaining refs and the open dialog.
   for (const effect of hooks.effects) effect();
   expect(confetti).toHaveBeenCalledTimes(3);
+  const connectedEffects = [...hooks.effects];
+  render(() => Celebration({ open: false, onOpenChange() {} }));
+  // An uncommitted closing render must not reset the still-open celebration.
+  for (const effect of connectedEffects) effect();
+  expect(confetti).toHaveBeenCalledTimes(3);
   show(false); show(true);
   expect(confetti).toHaveBeenCalledTimes(6);
 });
@@ -123,4 +128,27 @@ it.each([false, true])("deck unlocks without animationend, reduced motion=%s", r
   vi.runOnlyPendingTimers();
   click("Thẻ tiếp").props.onClick!();
   expect(onNext).toHaveBeenCalledTimes(3);
+});
+
+it.each(["timer", "animation"])("shuffle draws once when %s finishes first before a rerender", first => {
+  vi.useFakeTimers();
+  vi.stubGlobal("matchMedia", () => ({ matches: false }));
+  const onRandom = vi.fn();
+  const deck = () => render(() => CardBoxDeck({ card: { id: "a", kind: "question", text: { vi: "A", en: "A" } }, boxId: "sample", boxName: "Box", onNext() {}, onPrevious() {}, onRandom }));
+  const shuffle = () => deck().find(node => node.props["aria-label"] === "Rút ngẫu nhiên")!.props.onClick!();
+  shuffle();
+  const animation = deck().find(node => node.props.className === "card-box-shuffling")!.props.onAnimationEnd!;
+  for (const effect of hooks.effects) effect();
+  const target = {};
+  const end = () => animation({ target, currentTarget: target });
+  if (first === "timer") { vi.runOnlyPendingTimers(); end(); }
+  else { end(); vi.runOnlyPendingTimers(); }
+  expect(onRandom).toHaveBeenCalledTimes(1);
+  deck();
+  for (const effect of hooks.effects) effect();
+  vi.runOnlyPendingTimers();
+  shuffle(); deck();
+  for (const effect of hooks.effects) effect();
+  vi.runOnlyPendingTimers();
+  expect(onRandom).toHaveBeenCalledTimes(2);
 });
