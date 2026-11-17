@@ -1,6 +1,6 @@
 import confetti from "canvas-confetti";
 import { Mascot } from "./Mascot";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useI18n } from "@/i18n";
@@ -28,8 +28,14 @@ interface CelebrationProps {
 export function Celebration({ open, onOpenChange, title, body }: CelebrationProps) {
   const { t } = useI18n();
 
+  const played = useRef(false);
+  if (!open) played.current = false;
+
   useEffect(() => {
-    if (open) fireConfetti();
+    if (open && !played.current) {
+      played.current = true;
+      fireConfetti();
+    }
   }, [open]);
 
   return (

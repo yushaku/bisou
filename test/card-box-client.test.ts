@@ -270,6 +270,7 @@ it.each(["vi", "en"])("PO18: player deck provides previous, labelled random and 
   const html = renderToString(h(I18nProvider, null, h(CardBoxDeck, {
     card: detail.cards[0]!, boxId: "sample", boxName: "Box", onNext() {}, onPrevious() {}, onRandom() {},
   })));
+  expect(html).toContain(`role="group" aria-label="${locale === "vi" ? "Bộ thẻ Box" : "Box card deck"}"`);
   expect(html).toContain(locale === "vi" ? "Thẻ trước" : "Previous card");
   expect(html).toContain(locale === "vi" ? "Thẻ tiếp" : "Next card");
   expect(html).toContain(`aria-label="${locale === "vi" ? "Rút ngẫu nhiên" : "Random card"}"`);

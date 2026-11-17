@@ -441,7 +441,9 @@ it.each(["received", "scheduled", "draft", "sent", "opened"] as const)("A5 whole
     toMe: [], fromMe: [{ ...input, id: "n", state: kind === "scheduled" || kind === "draft" ? "draft" : kind, ...(kind === "scheduled" ? { scheduledAt: new Date(2099, 10, 18, 19, 30).getTime() } : {}) }],
   };
   const render = () => { hooks.index = 0; hooks.refIndex = 0; return nodes(NotesSection({ user, couple, onSignedOut: vi.fn() })); };
-  render().find(n => n.type === "button" && n.props["aria-label"]?.includes(input.happened))!.props.onClick!();
+  const row = render().find(n => n.type === "button")!;
+  expect(row.props["aria-label"]).not.toContain(input.happened);
+  row.props.onClick!();
   const tree = render();
   if (kind === "opened" || kind === "received") {
     expect(tree.find(n => n.type === EntryActions && n.props.entry?.id === "n")?.props.own).toBe(false);

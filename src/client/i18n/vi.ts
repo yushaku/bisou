@@ -23,6 +23,7 @@ export const vi = {
   "cardBox.preview": "Xem thử",
   "cardBox.next": "Thẻ tiếp",
   "cardBox.random": "Rút ngẫu nhiên",
+  "cardBox.deck": "Bộ thẻ {name}",
   "cardBox.previous": "Thẻ trước",
   "cardBox.startOver": "Hai đứa đã xem hết hộp này, mình bắt đầu lại nhé",
   "cardBox.previewEnd": "Hết thẻ xem thử. Phần còn lại của hộp sẽ mở sau.",

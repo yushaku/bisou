@@ -1,3 +1,4 @@
+import confetti from "canvas-confetti";
 import { flushQueryWork } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -12,6 +13,8 @@ import { writeCache } from "../src/client/lib/cardBox";
 import { api } from "../src/client/api";
 import { vi as messages } from "../src/client/i18n/vi";
 import type { CardBoxDetail } from "../src/shared/cardBox";
+
+vi.mock("canvas-confetti", () => ({ default: vi.fn() }));
 
 const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as (() => unknown)[] }));
 vi.mock("react", async original => ({
@@ -34,9 +37,9 @@ vi.mock("react", async original => ({
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "vi", t: (key: keyof typeof messages) => messages[key] }) }));
 vi.mock("../src/client/lib/useTabNavigation", () => ({ useTabNavigation: () => ({}) }));
-afterEach(() => { hooks.values = []; hooks.index = 0; hooks.effects = []; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { hooks.values = []; hooks.index = 0; hooks.effects = []; vi.restoreAllMocks(); vi.unstubAllGlobals(); vi.useRealTimers(); });
 
-type Props = { children?: ReactNode; onValueChange?: (id: string) => void; onNext?: () => void; onConfirm?: () => void; open?: boolean };
+type Props = { children?: ReactNode; onValueChange?: (id: string) => void; onNext?: () => void; onClick?: () => void; "aria-label"?: string; onConfirm?: () => void; open?: boolean };
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -75,4 +78,49 @@ it.each([true, false])("gift unlock celebrates only after success (%s)", async s
   await flushQueryWork();
   expect(unlock).toHaveBeenCalledWith("sample");
   expect(render(player).find(node => node.type === Celebration)!.props.open).toBe(success);
+});
+
+it("celebration fires once across effect reconnection, then again on a new opening", () => {
+  vi.stubGlobal("matchMedia", () => ({ matches: false }));
+  vi.stubGlobal("document", { documentElement: {} });
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "#fff" }));
+  const show = (open: boolean) => {
+    render(() => Celebration({ open, onOpenChange() {} }));
+    for (const effect of hooks.effects) effect();
+  };
+  show(true);
+  expect(confetti).toHaveBeenCalledTimes(3);
+  // Activity reconnects effects while retaining refs and the open dialog.
+  for (const effect of hooks.effects) effect();
+  expect(confetti).toHaveBeenCalledTimes(3);
+  show(false); show(true);
+  expect(confetti).toHaveBeenCalledTimes(6);
+});
+
+it.each([false, true])("deck unlocks without animationend, reduced motion=%s", reduced => {
+  vi.useFakeTimers();
+  vi.stubGlobal("matchMedia", () => ({ matches: reduced }));
+  const onNext = vi.fn(), onRandom = vi.fn();
+  const deck = () => render(() => CardBoxDeck({ card: { id: "a", kind: "question", text: { vi: "A", en: "A" } }, boxId: "sample", boxName: "Box", onNext, onPrevious() {}, onRandom }));
+  const click = (label: string) => deck().find(node => node.props.children === label)!;
+  click("Thẻ tiếp").props.onClick!();
+  click("Thẻ tiếp").props.onClick!();
+  expect(onNext).toHaveBeenCalledTimes(1);
+  for (const effect of hooks.effects) effect();
+  vi.runOnlyPendingTimers();
+  click("Thẻ tiếp").props.onClick!();
+  expect(onNext).toHaveBeenCalledTimes(2);
+  deck();
+  for (const effect of hooks.effects) effect();
+  vi.runOnlyPendingTimers();
+  deck().find(node => node.props["aria-label"] === "Rút ngẫu nhiên")!.props.onClick!();
+  deck();
+  for (const effect of hooks.effects) effect();
+  vi.runOnlyPendingTimers();
+  expect(onRandom).toHaveBeenCalledTimes(1);
+  deck();
+  for (const effect of hooks.effects) effect();
+  vi.runOnlyPendingTimers();
+  click("Thẻ tiếp").props.onClick!();
+  expect(onNext).toHaveBeenCalledTimes(3);
 });

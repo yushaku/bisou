@@ -84,9 +84,7 @@ export function EntryCard({
         )}
         <div className="relative">{actions}</div>
       </header>
-
       {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}
-
       {parts ? <NoteParts note={parts} preview={!!onOpen} /> : entry.body && (
         <div>
           <p
@@ -101,7 +99,7 @@ export function EntryCard({
               size="sm"
               className="relative mt-1 h-9"
               aria-expanded={onOpen ? undefined : open}
-              aria-controls={bodyId}
+              aria-controls={onOpen ? undefined : bodyId}
               onClick={onOpen ?? (() => setOpen((v) => !v))}
             >
               {open ? t("entry.less") : t("entry.more")}

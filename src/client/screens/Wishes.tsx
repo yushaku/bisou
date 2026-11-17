@@ -171,9 +171,9 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
             {shownWish?.status === "open" && <Button size="lg" className="justify-start" onClick={() => { setReceiving(acting); setActing(null); }}><Check aria-hidden="true" />{t("received.action")}</Button>}
             {shownWish?.status === "open" && <Button variant="outline" size="lg" className="justify-start" onClick={() => { setFromMenu(false); setEditing(acting); setActing(null); }}><PencilLine aria-hidden="true" />{t("wish.edit")}</Button>}
             <Button aria-describedby={!online ? "wish-action-offline" : undefined} variant="outline" size="lg" disabled={!online} className="justify-start text-destructive" onClick={() => setDeleting(true)}><Trash2 aria-hidden="true" />{t("wish.delete")}</Button>
-            <Button variant="ghost" size="lg" onClick={() => setActing(null)}>{t("common.close")}</Button>
           </>}
           </div>
+          {!deleting && <Button variant="ghost" size="lg" onClick={() => setActing(null)}>{t("common.close")}</Button>}
         </div>
       </DrawerContent>
     </Drawer>

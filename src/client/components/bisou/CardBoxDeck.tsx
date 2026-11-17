@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import type { CardBoxCard as BoxCard } from "../../../shared/cardBox";
 import { cardSwipe } from "../../lib/cardBox";
 import { Shuffle } from "lucide-react";
@@ -33,6 +33,14 @@ export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onP
     setTurn(turn => turn + 1);
     if (direction === "next") onNext(); else if (direction === "previous") onPrevious(); else onRandom();
   };
+  useEffect(() => {
+    if (!shuffling && !leaving) return;
+    const timeout = setTimeout(() => {
+      if (shuffling) { setShuffling(false); change("random"); }
+      else { setLeaving(null); busy.current = false; }
+    }, reduced() ? 0 : 400);
+    return () => clearTimeout(timeout);
+  }, [shuffling, leaving]);
   const down = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0 || busy.current) return;
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, axis: null };
@@ -53,13 +61,15 @@ export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onP
     if (direction) go(direction); else cancel();
   };
   const backDrag = offset > 0 && canPrevious;
-  return <div className="flex flex-col gap-6" onKeyDown={event => {
-    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-      event.preventDefault();
-      go(event.key === "ArrowLeft" ? "next" : "previous");
-    }
-  }}>
+  return <div className="flex flex-col gap-6">
     <div data-box={boxId} className={`card-box-colour card-box-deck ${shuffling ? "card-box-shuffle-deck" : ""} touch-pan-y touch-pinch-zoom select-none`}
+      role="group" aria-label={t("cardBox.deck", { name: boxName })}
+      onKeyDown={event => {
+        if (event.target === event.currentTarget && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+          event.preventDefault();
+          go(event.key === "ArrowLeft" ? "next" : "previous");
+        }
+      }}
       tabIndex={0} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={cancel} onLostPointerCapture={cancel}>
       <div aria-live="polite" aria-atomic="true"><div key={turn}
         className={shuffling ? "card-box-shuffling" : leaving?.direction === "previous" ? "card-box-returning" : leaving ? "card-box-entering" : undefined}

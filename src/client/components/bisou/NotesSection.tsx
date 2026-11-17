@@ -45,13 +45,13 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref
     {lists && !lists.fromMe.length && !lists.toMe.length && <EmptyState title={t("notes.empty")} action={{ label: t("notes.write", { partner: partner.name }), onClick: () => write() }} />}
     {!!lists?.toMe.length && <section className="flex flex-col gap-3"><h2 className="font-heading text-xl">{t("notes.toMe")}</h2><div className="note-envelope-grid">{lists.toMe.map((note) => {
       const address = t("notes.fromPartner", { partner: partner.name }), state = t(note.state === "opened" ? "notes.opened" : "notes.notOpened");
-      return note.state === "waiting" ? <Card key={note.id} className="note-envelope note-envelope-waiting gap-0 py-0">
+      return note.state === "waiting" ? <Card key={note.id} className="note-envelope note-envelope-waiting">
         <p className="col-start-2 min-w-0 self-end text-base font-semibold [overflow-wrap:anywhere]">{address}</p>
         <Button className="note-ready-button col-start-2 w-full self-start" size="lg" aria-label={`${address}, ${t("notes.readyToHear")}`} disabled={!online || opening !== null} onClick={() => void open(note)}>{t("notes.readyToHear")}</Button>
         <NoteEnvelope kind="waiting" />
         {!online && <p className="col-start-2 text-sm text-muted-foreground">{t("offline.continue")}</p>}
       </Card> : <Card key={note.id} className="note-envelope gap-0 py-0">
-        <button type="button" aria-label={`${address}, ${state}, ${note.happened}, ${t("notes.readAgain")}`} className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" onClick={() => setReceived(note)}>
+        <button type="button" aria-label={`${address}, ${state}, ${t("notes.readAgain")}`} className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" onClick={() => setReceived(note)}>
           <span className="flex min-w-0 flex-col gap-2">
             <span className="note-preview line-clamp-2 text-base leading-6 font-semibold whitespace-normal break-words [overflow-wrap:anywhere]">{note.happened}</span>
             <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground [overflow-wrap:anywhere]"><span className="font-semibold">{address}</span><span>{state}</span></span>
@@ -64,7 +64,7 @@ export function NotesSection({ ref, couple, user, onSignedOut, onClosed }: { ref
       const state = note.state === "opened" ? t("notes.opened") : note.state === "sent" ? t("notes.notOpened") : note.scheduledAt ? t("notes.scheduled", { time: `${formatDay(new Date(note.scheduledAt), locale, "short")} ${formatTime(note.scheduledAt, locale)}` }) : t("notes.ready");
       const kind = note.state === "draft" ? note.scheduledAt ? "cooling" : "ready" : note.state;
       const address = t("notes.toPartner", { partner: partner.name });
-      return <Card key={note.id} className="note-envelope gap-0 py-0"><button type="button" aria-label={`${address}, ${state}, ${note.happened}`} className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" onClick={() => note.state === "opened" ? setDetail(note) : write(note)}>
+      return <Card key={note.id} className="note-envelope gap-0 py-0"><button type="button" aria-label={`${address}, ${state}`} className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring" onClick={() => note.state === "opened" ? setDetail(note) : write(note)}>
         <span className="flex min-w-0 flex-col gap-2">
           <span className="note-preview line-clamp-2 text-base leading-6 font-semibold whitespace-normal break-words [overflow-wrap:anywhere]">{note.happened}</span>
           <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground [overflow-wrap:anywhere]"><span className="font-semibold">{address}</span><span>{state}</span></span>

@@ -24,6 +24,7 @@ export const en: Messages = {
   "cardBox.preview": "Preview",
   "cardBox.next": "Next card",
   "cardBox.random": "Random card",
+  "cardBox.deck": "{name} card deck",
   "cardBox.previous": "Previous card",
   "cardBox.startOver": "You've seen the whole box, starting over",
   "cardBox.previewEnd": "That's all the preview cards. The rest of the box opens later.",

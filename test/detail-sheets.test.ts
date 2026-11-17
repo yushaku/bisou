@@ -30,7 +30,7 @@ vi.mock("../src/client/lib/useTabNavigation", () => ({ useCreateRequest: () => {
 afterEach(() => { hooks.active = false; hooks.index = 0; hooks.values = []; hooks.memory = null; });
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key, locale: "vi" }) }));
 vi.mock("../src/client/lib/useOnline", () => ({ useOnline: () => true }));
-type Props = { children?: ReactNode; onClick?: () => void; "aria-label"?: string; href?: string };
+type Props = { children?: ReactNode; onClick?: () => void; "aria-label"?: string; "aria-controls"?: string; href?: string };
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -137,4 +137,11 @@ it("Home opens the full shared note detail and closes back to the card", () => {
   expect((contents.find(node => node.type === NoteReply)!.props as ComponentProps<typeof NoteReply>).preview).toBeUndefined();
   render().find(node => node.props.children === "common.close")!.props.onClick!();
   expect((render().find(node => node.type === Drawer)!.props as ComponentProps<typeof Drawer>).open).toBe(false);
+});
+
+it("long entry sheet opener does not claim to control the clamped preview", () => {
+  const long = { ...entry, body: "A memory ".repeat(40) };
+  const more = (onOpen?: () => void) => nodes(EntryCard({ entry: long, onOpen })).find(node => node.props.children === "entry.more")!;
+  expect(more(vi.fn()).props["aria-controls"]).toBeUndefined();
+  expect(more().props["aria-controls"]).toBe("test");
 });

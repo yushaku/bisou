@@ -54,6 +54,7 @@ test("notes R26: an opened recipient note offers reading again", () => {
   expect(html).not.toContain('data-seal="intact"');
   expect(html).toContain("Từ Linh");
   expect(html).toContain("Yesterday");
+  expect(html).not.toMatch(/aria-label="[^"]*Yesterday/);
   expect(html).not.toContain("Viết cho Linh");
 });
 
@@ -167,6 +168,9 @@ test.each(["vi", "en"])("A5 option C uses text-first cards, trailing small art a
   expect(cards[0]).toContain("note-envelope-waiting");
   for (const card of cards.slice(1)) {
     expect(card.match(/<button/g)).toHaveLength(1);
+    const label = card.match(/aria-label="([^"]*)"/)?.[1];
+    expect(label).toBeDefined();
+    expect(label).not.toMatch(/preview|aaaa|Writer opened/);
     expect(card.indexOf("note-preview")).toBeLessThan(card.indexOf("note-metadata"));
     expect(card.indexOf("note-metadata")).toBeLessThan(card.indexOf("note-envelope-item"));
   }
