@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { COMMIT_TIMEOUT_MS, isTabSwitching, notifyTabCommitted, placeTabScroll, runTabTransition, SWITCHING_CLASS, whenTabCommitted, type TransitionHost } from "../src/client/lib/tabTransition";
+import { attachTabScroll, createTabMemory } from "../src/client/lib/tabMemory";
+import { COMMIT_TIMEOUT_MS, notifyTabCommitted, placeTabScroll, runTabTransition, SWITCHING_CLASS, whenTabCommitted, type TransitionHost } from "../src/client/lib/tabTransition";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => { vi.useRealTimers(); });
@@ -85,7 +86,7 @@ it("runs the update inside a view transition, sets the slide direction and freez
   expect(scrolled).toEqual([2400]); // nothing asked for another place: back where it was
 });
 
-it("puts the page at the new tab's remembered position when it thaws", async () => {
+it("a newly entered tab stays at the top when the frozen transition thaws", async () => {
   let finish!: () => void;
   const finished = new Promise<void>((resolve) => { finish = resolve; });
   const { host: h, classes, page, scrolled } = host(() => ({ finished }), 900);
@@ -94,13 +95,13 @@ it("puts the page at the new tab's remembered position when it thaws", async () 
   vi.stubGlobal("window", { scrollTo: vi.fn() });
   try {
     runTabTransition(() => {}, 1, h, false);
-    placeTabScroll(1500); // what the new tab's scroll restore asks for, while the page is frozen
-    expect(page.scrollTop).toBe(1500);
-    expect(isTabSwitching()).toBe(true);
+    expect(page.scrollTop).toBe(900);
+    attachTabScroll(createTabMemory(), "journal");
+    expect(page.scrollTop).toBe(0);
     expect(window.scrollTo).not.toHaveBeenCalled();
     finish();
     await flush();
-    expect(scrolled).toEqual([1500]);
+    expect(scrolled).toEqual([0]);
     placeTabScroll(40); // thawed: an ordinary scroll
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 40, behavior: "instant" });
   } finally {

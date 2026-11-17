@@ -17,7 +17,7 @@ export function GardenDeck({ deckId, couple, user, onSignedOut }: SessionProps &
   const { t, locale } = useI18n();
   const deck = DECKS.find((d) => d.id === deckId);
   const { data: state, failed, refresh } = useServerQuery(queries.gardenDeck(deckId), onSignedOut);
-  const navigation = useTabNavigation("garden");
+  const navigation = useTabNavigation();
   const names = { myName: user.displayName?.trim() || t("garden.me"), partnerName: couple.members.find((m) => m.id !== user.id)?.displayName?.trim() || t("garden.partner") };
   return <div className="flex min-h-dvh flex-col">
     <SubPageHeader title={deck?.name[locale] ?? t("garden.unknownDeck")} />

@@ -58,7 +58,7 @@ export function StarredBlock({ couple, user, onSignedOut, full = false }: Props 
   return <section aria-labelledby={full ? undefined : "starred-title"} className={full ? "flex flex-col gap-3" : "mt-5 flex flex-col gap-3"}>
     {!full && <div className="flex items-center justify-between gap-3"><h2 id="starred-title" className="font-heading text-xl">{t("home.starred")}</h2>
       {shown.length > 3 && <Button asChild variant="ghost" size="sm"><Link id="stars-see-all" href="/stars" state={{ from: "/" }} onClick={() => {
-        if (memory) { memory.scroll.set("home", window.scrollY); memory.returnFocus = "stars-see-all"; }
+        if (memory) { memory.returnFocus = "stars-see-all"; }
       }}>{t("home.seeAll")}</Link></Button>}
     </div>}
     {failed && <div role="alert" className="flex flex-col items-start gap-2"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}

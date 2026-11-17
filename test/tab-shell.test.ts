@@ -68,34 +68,17 @@ function fakeWindow(scrollY = 0) {
   return { win, focus };
 }
 
-it("restores each tab's own scroll position and keeps remembering under the right tab", () => {
+it("a revisited tab starts at scroll position zero", () => {
   const memory = createTabMemory();
   const { win } = fakeWindow();
-  let detach = attachTabScroll(memory, "journal");
-  expect(win.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" });
-  win.scrollY = 2400; win.dispatchEvent(new Event("scroll"));
-  expect(memory.scroll.get("journal")).toBe(2400);
-
-  detach?.(); // leaving Journal: the position was saved, and no longer follows the page
-  detach = attachTabScroll(memory, "wishes");
-  expect(win.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" });
-  win.scrollY = 150; win.dispatchEvent(new Event("scroll"));
-  expect(memory.scroll.get("wishes")).toBe(150);
-  expect(memory.scroll.get("journal")).toBe(2400);
-
-  detach?.();
+  const leaveJournal: unknown = attachTabScroll(memory, "journal");
+  win.scrollY = 2400;
+  win.dispatchEvent(new Event("scroll"));
+  if (typeof leaveJournal === "function") leaveJournal();
+  const leaveWishes: unknown = attachTabScroll(memory, "wishes");
+  if (typeof leaveWishes === "function") leaveWishes();
   attachTabScroll(memory, "journal");
-  expect(win.scrollTo).toHaveBeenLastCalledWith({ top: 2400, behavior: "instant" });
-});
-
-it("ignores the scroll events of a page frozen for a tab switch, so the tab keeps its real position", () => {
-  const memory = createTabMemory();
-  const { win } = fakeWindow();
-  const documentElement = { classList: { contains: (name: string) => name === "tab-switching" } };
-  vi.stubGlobal("document", { getElementById: vi.fn(), documentElement, querySelector: () => null });
-  attachTabScroll(memory, "journal");
-  win.scrollY = 0; win.dispatchEvent(new Event("scroll")); // the document collapsed under the frozen box
-  expect(memory.scroll.has("journal")).toBe(false);
+  expect(win.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" });
 });
 
 it("returns focus to the control that opened a sub-page, once", () => {

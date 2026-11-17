@@ -8,7 +8,7 @@ import { browserHost, runTabTransition } from "./tabTransition";
 
 const LIVE_TABS = ["home", "journal", "wishes", "garden"] as const;
 
-export function useTabNavigation(tab?: TabId) {
+export function useTabNavigation() {
   const [location, navigate] = useLocation();
   const state = useHistoryState<{ from?: string } | null>();
   const memory = useContext(TabMemory);
@@ -16,7 +16,6 @@ export function useTabNavigation(tab?: TabId) {
   const current = LIVE_TABS.find((id) => TAB_PATH[id] === origin || (id === "garden" && origin.startsWith("/garden/"))) ?? "home";
 
   function go(next: TabId, create?: CreateDestination) {
-    if (tab) memory?.scroll.set(tab, window.scrollY);
     if (memory) memory.returnFocus = null;
     const path = TAB_PATH[next];
     const move = tabMove(location, state?.from, path, create);

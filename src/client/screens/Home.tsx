@@ -57,7 +57,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
   const now = useNow();
   const memory = useContext(TabMemory);
   const { lists, failed: notesFailed } = useNotes(session.onSignedOut);
-  const navigation = useTabNavigation("home");
+  const navigation = useTabNavigation();
 
   // Creator first on both phones, so each partner keeps the same tint everywhere.
   const people = toPeople(couple.members.slice(0, 2), session.user, t) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
@@ -91,7 +91,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
       <DailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
       <CardBoxBlock scope={`${couple.id}:${session.user.id}`} onSignedOut={session.onSignedOut} />
 
-      {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; memory.scroll.set("journal", 0); } navigation.onSelect("journal"); }} />}
+      {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; } navigation.onSelect("journal"); }} />}
       <TodayPosts couple={couple} user={session.user} today={toDayString(now)} onSignedOut={session.onSignedOut} />
 
       <StarredBlock couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
@@ -102,7 +102,6 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
         <Button asChild variant="ghost" size="sm">
           <Link id="events-see-all" href="/events" state={{ from: "/" }} onClick={() => {
             if (memory) {
-              memory.scroll.set("home", window.scrollY);
               memory.returnFocus = "events-see-all";
             }
           }}>{t("home.seeAll")}</Link>

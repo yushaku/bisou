@@ -48,9 +48,6 @@ let pendingScroll: number | null = null;
 
 const frozen = () => document.documentElement.classList.contains(SWITCHING_CLASS);
 
-/* True while a tab switch holds the page still: scroll events then say nothing about where the reader is. */
-export const isTabSwitching = frozen;
-
 /* Scrolls the page to `top`; while frozen, scrolls the clipped box instead and applies it to the window afterwards. */
 export function placeTabScroll(top: number) {
   if (!frozen()) {

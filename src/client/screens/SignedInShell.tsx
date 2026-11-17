@@ -30,7 +30,7 @@ const TabFrameContext = createContext<RefObject<Refresh> | null>(null);
 
 function useScrollMemory(tab: TabId | undefined) {
   const memory = useContext(TabMemory);
-  useLayoutEffect(() => (memory ? attachTabScroll(memory, tab) : undefined), [tab, memory]);
+  useLayoutEffect(() => { if (memory) attachTabScroll(memory, tab); }, [tab, memory]);
   return memory;
 }
 
@@ -38,7 +38,7 @@ function useScrollMemory(tab: TabId | undefined) {
 export function TabFrame({ tab, children }: { tab: TabId; children: ReactNode }) {
   const { t } = useI18n();
   const [location, navigate] = useLocation();
-  const navigation = useTabNavigation(tab);
+  const navigation = useTabNavigation();
   const memory = useScrollMemory(tab);
   const refresh = useRef<Refresh>(undefined);
   const pull = useCallback(() => refresh.current?.(), []);
@@ -47,7 +47,6 @@ export function TabFrame({ tab, children }: { tab: TabId; children: ReactNode })
       <AppShell
         title={t(TAB_TITLES[tab]!)}
         onOpenSettings={() => {
-          memory?.scroll.set(tab, window.scrollY);
           if (memory) memory.returnFocus = "settings-button";
           navigate("/settings", { state: { from: location } });
         }}
@@ -84,7 +83,7 @@ function StandaloneShell({ tab, onRefresh, children }: { tab?: TabId; onRefresh?
   const { t } = useI18n();
   const [location, navigate] = useLocation();
   const titleKey = tab && TAB_TITLES[tab];
-  const navigation = useTabNavigation(tab);
+  const navigation = useTabNavigation();
   const memory = useScrollMemory(tab);
   useLayoutEffect(() => { notifyTabCommitted(); }, []);
 
@@ -92,7 +91,6 @@ function StandaloneShell({ tab, onRefresh, children }: { tab?: TabId; onRefresh?
     <AppShell
       title={titleKey ? t(titleKey) : undefined}
       onOpenSettings={() => {
-        if (tab) memory?.scroll.set(tab, window.scrollY);
         if (memory) memory.returnFocus = "settings-button";
         navigate("/settings", { state: { from: location } });
       }}
