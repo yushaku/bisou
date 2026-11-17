@@ -37,7 +37,6 @@ Phong cách chung của cả app. Chi tiết từng màn hình nằm trong code;
 ## Chuyển động
 
 - Đổi tab ở thanh dưới là tức thì: trang mới hiện ngay, không trượt hay mờ, như thanh tab iOS; chỉ viên chỉ báo trượt sang tab mới, không bao giờ làm trang chờ.
-
 - Nhẹ, ngắn, có lý do (mở, chuyển, ăn mừng); không lặp vô hạn để gây chú ý.
 - Luôn tôn trọng `prefers-reduced-motion`: thay bằng mờ chéo hoặc đứng yên.
 

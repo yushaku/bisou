@@ -26,6 +26,7 @@ React 19.3 ships `<Activity>`, which keeps a subtree's state and DOM while hidde
 ## Consequences
 - Orca dev, CPU 4×, two runs of five warm returns: Home DOM-ready median 971.5/916.8 ms before, 53.6/63.7 ms after removing the transition, 35.8/44.1 ms with retained tabs and a memoized daily question. Journal finishes at 36.4/41.0 ms; zero Home remounts and fetches. Seed heap grows by at most 3.71 MB; see [measurements](../performance.md#native-tabs-17112026).
 - Memory holds the DOM of up to four tabs, including a long loaded journal and its images, for as long as the tab screens stay open. The query data was already kept for the session (ADR 0015).
-- Passive and layout effects reconnect on reveal. `useNow` recomputes the day and schedules from the current time. Journal re-reads the notes shortcut before paint. Draft photo and crop ownership use insertion-effect cleanup so hiding does not delete uploaded photos, cancel a pending crop or revoke previews; actual removal still disposes them.
+- Passive and layout effects reconnect on reveal. `useNow` recomputes the day and schedules from the current time. Journal applies the Home notes shortcut before paint without overriding a notes deep link. Draft photo and crop ownership use insertion-effect cleanup so hiding does not delete uploaded photos, cancel a pending crop or revoke previews; actual removal still disposes them.
 - Page content appears immediately; [DESIGN.md](../../DESIGN.md) records the indicator motion.
+- Re-check Activity insertion-effect ownership when upgrading React: hiding must keep uploads and crop previews, and removal must dispose them even while hidden.
 - Not measured on Safari or an iPhone yet.
