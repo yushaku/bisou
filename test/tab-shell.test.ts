@@ -1,4 +1,4 @@
-import { createElement as h, isValidElement, type ReactElement, type ReactNode } from "react";
+import { createElement as h, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { BottomBar, pillColumn } from "../src/client/components/bisou/AppShell";
@@ -8,10 +8,10 @@ import { I18nProvider } from "../src/client/i18n";
 import { attachTabScroll, createTabMemory } from "../src/client/lib/tabMemory";
 import { SignedInShell, TabFrame } from "../src/client/screens/SignedInShell";
 
-vi.mock("../src/client/screens/Journal", () => ({ Journal: () => null }));
-vi.mock("../src/client/screens/Wishes", () => ({ Wishes: () => null }));
-vi.mock("../src/client/screens/Garden", () => ({ Garden: () => null }));
-vi.mock("../src/client/screens/Home", () => ({ Home: () => null }));
+vi.mock("../src/client/screens/Journal", () => ({ Journal: () => h("p", null, "journal-screen") }));
+vi.mock("../src/client/screens/Wishes", () => ({ Wishes: () => h("p", null, "wishes-screen") }));
+vi.mock("../src/client/screens/Garden", () => ({ Garden: () => h("p", null, "garden-screen") }));
+vi.mock("../src/client/screens/Home", () => ({ Home: () => h("p", null, "home-screen") }));
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -45,20 +45,17 @@ it("a screen without a tab keeps its own shell even inside the frame (sub-pages)
 });
 
 const props = { session, couple: {} as never, onCouple: () => {}, onRefresh: async () => {}, celebrate: false, onCelebrated: () => {} };
-function frameOf(location: string): ReactElement<{ tab: string }> {
-  const element = TabScreens({ location, ...props });
-  if (!isValidElement<{ tab: string }>(element)) throw new Error("expected an element");
-  return element;
-}
-
-it("switching tabs keeps the same frame element, so React keeps the header and tab bar mounted", () => {
-  const [home, journal, wishes, garden] = ["/", "/journal", "/wishes", "/garden"].map(frameOf);
-  for (const next of [journal, wishes, garden, home]) {
-    expect(next!.type).toBe(TabFrame);
-    expect(next!.key).toBe(home!.key);
-  }
-  expect([home, journal, wishes, garden].map((e) => e!.props.tab)).toEqual(["home", "journal", "wishes", "garden"]);
-  expect(frameOf("/unknown").props.tab).toBe("home");
+it("first visit mounts only the selected tab inside one frame", async () => {
+  const { loadTab } = await import("../src/client/lib/screens");
+  await loadTab("journal");
+  const html = render(h(TabScreens, { location: "/journal", ...props }));
+  expect(count(html, "header")).toBe(1);
+  expect(count(html, "nav")).toBe(1);
+  expect(count(html, "main")).toBe(1);
+  expect(html).toContain("journal-screen");
+  expect(html).not.toContain("home-screen");
+  expect(html).not.toContain("wishes-screen");
+  expect(html).not.toContain("garden-screen");
 });
 
 function fakeWindow(scrollY = 0) {

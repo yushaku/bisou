@@ -1,10 +1,12 @@
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { PhotoPicker } from "../src/client/components/bisou/PhotoPicker";
+import { decodePhoto, renderSquare } from "../src/client/lib/photo";
+import type { CropRequest } from "../src/client/components/bisou/PhotoCropDialog";
 import { toast } from "../src/client/components/ui/ding-toaster";
 import type { QueuedPhoto, useUploadQueue } from "../src/client/components/bisou/useUploadQueue";
 
-const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as (() => void | (() => void))[] }));
+const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, ownership: [] as (() => void | (() => void))[], effects: [] as (() => void | (() => void))[] }));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useId: () => "picker-toast",
@@ -17,15 +19,16 @@ vi.mock("react", async (original) => ({
     if (!(index in hooks.values)) hooks.values[index] = initial;
     return [hooks.values[index], (value: unknown) => { hooks.values[index] = value; }];
   },
+  useInsertionEffect: (effect: () => void | (() => void)) => { hooks.ownership.push(effect); },
   useEffect: (effect: () => void | (() => void)) => { hooks.effects.push(effect); },
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string, vars?: Record<string, unknown>) => vars ? `${key} ${JSON.stringify(vars)}` : key }) }));
 vi.mock("../src/client/components/ui/ding-toaster", () => ({ toast: { loading: vi.fn(), update: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn(), dismiss: vi.fn() } }));
 vi.mock("../src/client/components/bisou/PhotoCropDialog", () => ({ PhotoCropDialog: () => null }));
 vi.mock("../src/client/lib/photo", () => ({ decodePhoto: vi.fn().mockRejectedValue(new Error("unreadable")), renderSquare: vi.fn() }));
-afterEach(() => { hooks.values = []; hooks.effects = []; hooks.index = 0; vi.clearAllMocks(); });
+afterEach(() => { hooks.values = []; hooks.effects = []; hooks.ownership = []; hooks.index = 0; vi.clearAllMocks(); });
 
-type Props = { children?: ReactNode; role?: string; onClick?: () => void; onChange?: (event: { target: { files: File[]; value: string } }) => void; type?: string; "aria-label"?: string };
+type Props = { request?: CropRequest | null; children?: ReactNode; role?: string; onClick?: () => void; onChange?: (event: { target: { files: File[]; value: string } }) => void; type?: string; "aria-label"?: string };
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -41,7 +44,8 @@ function render(uploads: ReturnType<typeof useUploadQueue>, max = 4) {
   hooks.index = 0;
   const nodes = elements(PhotoPicker({ queue: uploads, max, saving: false, onChange: vi.fn() }));
   const cleanups = hooks.effects.splice(0).map((effect) => effect());
-  return { nodes, unmount: () => cleanups.forEach((cleanup) => cleanup?.()) };
+  const ownership = hooks.ownership.splice(0).map((effect) => effect());
+  return { nodes, hide: () => cleanups.forEach(cleanup => cleanup?.()), unmount: () => [...ownership, ...cleanups].forEach(cleanup => cleanup?.()) };
 }
 
 it("updates one queue toast with overall progress, excludes existing photos and finishes with success", () => {
@@ -110,4 +114,26 @@ it("retry-all uses the current failures after a failed photo is removed", () => 
   render(uploads);
   action.onClick();
   expect(vi.mocked(uploads.retry).mock.calls).toEqual([["b"]]);
+});
+
+
+it("a crop survives hiding the tab and can finish after returning", async () => {
+  vi.mocked(decodePhoto).mockResolvedValue({ close: vi.fn(), width: 100, height: 100 } as ImageBitmap);
+  const renditions = { full: new Blob(["full"]), thumb: new Blob(["thumb"]) };
+  vi.mocked(renderSquare).mockResolvedValue(renditions);
+  const revoke = vi.spyOn(URL, "revokeObjectURL");
+  const uploads = queue();
+  const first = render(uploads);
+  first.nodes.find(node => node.props.type === "file")!.props.onChange!({ target: { files: [new File(["photo"], "photo.jpg")], value: "" } });
+  await Promise.resolve();
+  const crop = render(uploads).nodes.find(node => node.props.request)?.props.request;
+  expect(crop).toBeTruthy();
+  first.hide();
+  expect(revoke).not.toHaveBeenCalled();
+  expect(render(uploads).nodes.find(node => node.props.request)?.props.request).toBe(crop);
+  crop!.done({ x: 0, y: 0, width: 100, height: 100 });
+  await Promise.resolve(); await Promise.resolve();
+  expect(uploads.add).toHaveBeenCalledWith(renditions);
+  first.unmount();
+  revoke.mockRestore();
 });

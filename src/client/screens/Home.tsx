@@ -1,5 +1,5 @@
 import { CardBoxBlock } from "../components/bisou/CardBoxBlock";
-import { lazy, Suspense, useCallback, useContext, useState } from "react";
+import { lazy, memo, Suspense, useCallback, useContext, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
 import { Link } from "wouter";
 import { toDayString } from "../../shared/days";
@@ -31,6 +31,8 @@ import { SignedInShell, type SessionProps } from "./SignedInShell";
 // The calendar (react-day-picker and its locales) loads on first use, outside the main bundle.
 const EventSheet = lazy(() => import("../components/bisou/EventSheet").then((m) => ({ default: m.EventSheet })));
 const DateSheet = lazy(() => import("../components/bisou/DateSheet").then((m) => ({ default: m.DateSheet })));
+
+const MemoDailyQuestion = memo(DailyQuestion);
 
 interface HomeProps extends SessionProps {
   couple: Couple;
@@ -88,7 +90,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
         />
       )}
 
-      <DailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
+      <MemoDailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
       <CardBoxBlock scope={`${couple.id}:${session.user.id}`} onSignedOut={session.onSignedOut} />
 
       {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; } navigation.onSelect("journal"); }} />}

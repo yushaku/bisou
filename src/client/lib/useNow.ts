@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 export function useNow(): Date {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const id = setTimeout(() => setNow(new Date()), tomorrow.getTime() - now.getTime() + 1000);
+    const current = new Date();
+    if (current.toDateString() !== now.toDateString()) setNow(current);
+    const tomorrow = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1);
+    const id = setTimeout(() => setNow(new Date()), tomorrow.getTime() - current.getTime() + 1000);
     const onVisibility = () => {
       if (document.visibilityState === "visible") setNow(new Date());
     };

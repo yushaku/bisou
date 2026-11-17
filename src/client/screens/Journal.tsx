@@ -1,5 +1,5 @@
 import { Ellipsis, Plus } from "lucide-react";
-import { lazy, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useJournal } from "../lib/useJournal";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, JournalEntry } from "../../shared/types";
@@ -41,6 +41,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
   const [section, setSection] = useState<"feed" | "notes">(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("section") === "notes" ? "notes" : memory?.journalSection ?? "feed");
+  useLayoutEffect(() => { if (memory) setSection(memory.journalSection); }, [memory]);
   useEffect(() => {
     if (memory) memory.journalSection = section;
     const url = new URL(window.location.href);

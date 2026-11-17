@@ -1,5 +1,4 @@
-import { lazy, Suspense, type ComponentProps, type ComponentType } from "react";
-import { Route, Switch } from "wouter";
+import { Activity, lazy, Suspense, useState, type ComponentProps, type ComponentType } from "react";
 import type { Couple } from "../../shared/types";
 import type { TabId } from "../components/bisou/AppShell";
 import { loadedTab, loadTab } from "../lib/screens";
@@ -20,9 +19,14 @@ const Garden = tabScreen<ComponentProps<typeof import("./Garden").Garden>>("gard
 
 const TAB_OF_PATH: Record<string, TabId> = { "/journal": "journal", "/wishes": "wishes", "/garden": "garden" };
 
+export function visitTab(visited: TabId[], location: string): TabId[] {
+  const tab = TAB_OF_PATH[location] ?? "home";
+  return visited.includes(tab) ? visited : [...visited, tab];
+}
+
 /*
  * The four main tabs share one TabFrame (header, tab bar, pull-to-refresh), so a switch only swaps
- * the screen inside it. A screen's own SignedInShell renders just its content within the frame.
+ * the visible screen inside it; visited screens keep their state in Activity. A screen's own SignedInShell renders just its content within the frame.
  * The Suspense is local: a tab chunk that is not loaded yet leaves the frame in place.
  */
 export function TabScreens({ location, session, couple, onCouple, onRefresh, celebrate, onCelebrated }: {
@@ -34,16 +38,20 @@ export function TabScreens({ location, session, couple, onCouple, onRefresh, cel
   celebrate: boolean;
   onCelebrated: () => void;
 }) {
+  const active = TAB_OF_PATH[location] ?? "home";
+  const [visited, setVisited] = useState(() => visitTab([], location));
+  const next = visitTab(visited, location);
+  if (next !== visited) setVisited(next);
   return (
-    <TabFrame tab={TAB_OF_PATH[location] ?? "home"}>
-      <Suspense fallback={null}>
-        <Switch location={location}>
-          <Route path="/wishes"><Wishes {...session} couple={couple} /></Route>
-          <Route path="/journal"><Journal {...session} couple={couple} /></Route>
-          <Route path="/garden"><Garden {...session} couple={couple} /></Route>
-          <Route><Home {...session} couple={couple} onCouple={onCouple} onRefresh={onRefresh} celebrate={celebrate} onCelebrated={onCelebrated} /></Route>
-        </Switch>
-      </Suspense>
+    <TabFrame tab={active}>
+      {next.map(tab => <Activity key={tab} mode={tab === active ? "visible" : "hidden"}>
+        <Suspense fallback={null}>
+          {tab === "home" ? <Home {...session} couple={couple} onCouple={onCouple} onRefresh={onRefresh} celebrate={celebrate} onCelebrated={onCelebrated} />
+            : tab === "journal" ? <Journal {...session} couple={couple} />
+            : tab === "wishes" ? <Wishes {...session} couple={couple} />
+            : <Garden {...session} couple={couple} />}
+        </Suspense>
+      </Activity>)}
     </TabFrame>
   );
 }

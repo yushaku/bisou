@@ -56,3 +56,14 @@ it("falls back to a timer when requestIdleCallback is missing", async () => {
     vi.unstubAllGlobals();
   }
 });
+
+
+it("visited tabs grow once in visit order and unknown paths select Home", async () => {
+  const { visitTab } = await import("../src/client/screens/TabScreens");
+  const first = visitTab([], "/journal");
+  expect(first).toEqual(["journal"]);
+  const next = visitTab(first, "/wishes");
+  expect(next).toEqual(["journal", "wishes"]);
+  expect(visitTab(next, "/journal")).toBe(next);
+  expect(visitTab(next, "/unknown")).toEqual(["journal", "wishes", "home"]);
+});

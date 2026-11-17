@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useInsertionEffect, useRef, useState } from "react";
 import { api, photoUrl } from "@/api";
 import type { MessageKey } from "@/i18n";
 import { startable, uploadErrorKey, type PhotoState } from "@/lib/compose";
@@ -78,8 +78,8 @@ export function useUploadQueue(existing: string[] = []) {
     [forget],
   );
 
-  // Cleanup is best effort; the server sweep handles uploads whose response never arrived.
-  useEffect(
+  // Draft resources survive Activity hiding; dispose only when the draft is removed.
+  useInsertionEffect(
     () => () => {
       for (const c of aborts.current.values()) c.abort();
       for (const photoId of uploaded.current.values()) void api.deletePhoto(photoId);

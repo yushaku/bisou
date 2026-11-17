@@ -1,5 +1,5 @@
 import { ImagePlus, RotateCw, X } from "lucide-react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useInsertionEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/ding-toaster";
 import { useI18n } from "@/i18n";
@@ -26,11 +26,15 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
   const fileInput = useRef<HTMLInputElement>(null);
   const mounted = useRef(true);
   const cancelCrop = useRef<(() => void) | null>(null);
-  useEffect(() => { onPreparingChange?.(preparing); }, [preparing, onPreparingChange]);
   useEffect(() => {
+    onPreparingChange?.(preparing);
+    return () => onPreparingChange?.(false);
+  }, [preparing, onPreparingChange]);
+  // Activity hiding keeps the crop and its preview until the draft is removed.
+  useInsertionEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; cancelCrop.current?.(); onPreparingChange?.(false); };
-  }, [onPreparingChange]);
+    return () => { mounted.current = false; cancelCrop.current?.(); };
+  }, []);
   useEffect(() => () => { toast.dismiss(toastId); }, [toastId]);
   useEffect(() => {
     const pending = queue.items.filter((item) => item.state === "queued" || item.state === "uploading");

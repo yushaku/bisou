@@ -20,7 +20,7 @@ import { ToggleGroup } from "../src/client/components/ui/toggle-group";
 import { Input } from "../src/client/components/ui/input";
 import { api } from "../src/client/api";
 
-const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, refs: [] as { current: unknown }[], refIndex: 0, locale: "vi", effects: [] as (() => unknown)[], requests: new Map<string, () => void>() }));
+const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, refs: [] as { current: unknown }[], refIndex: 0, locale: "vi", effects: [] as (() => unknown)[], memory: null as null | { journalSection: "feed" | "notes" }, requests: new Map<string, () => void>() }));
 const notesRefresh = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
@@ -30,9 +30,10 @@ vi.mock("react", async (original) => ({
     return [hooks.values[index], (value: unknown) => { hooks.values[index] = typeof value === "function" ? value(hooks.values[index]) : value; }];
   },
   useRef: (initial: unknown) => hooks.refs[hooks.refIndex++] ?? (hooks.refs[hooks.refIndex - 1] = { current: initial }),
+  useInsertionEffect: vi.fn(),
   useEffect: (effect: () => unknown) => { hooks.effects.push(effect); },
   useId: () => "test",
-  useLayoutEffect: vi.fn(), useContext: () => null, useCallback: <T,>(callback: T) => callback, useMemo: <T,>(create: () => T) => create(),
+  useLayoutEffect: (effect: () => unknown) => { hooks.effects.push(effect); }, useContext: () => hooks.memory, useCallback: <T,>(callback: T) => callback, useMemo: <T,>(create: () => T) => create(),
   useImperativeHandle: (ref: { current: unknown } | undefined, create: () => unknown) => { if (ref) ref.current = create(); },
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
@@ -53,7 +54,7 @@ function render(active: "journal" | "home" | "garden" | "wishes", onCreate = vi.
   hooks.index = 0; hooks.refIndex = 0;
   return nodes(BottomBar({ active, onCreate, onSelect: vi.fn() }));
 }
-afterEach(() => { hooks.values = []; hooks.refs = []; hooks.locale = "vi"; hooks.effects = []; hooks.requests.clear(); vi.unstubAllGlobals(); vi.restoreAllMocks(); notesRefresh.mockReset(); });
+afterEach(() => { hooks.values = []; hooks.refs = []; hooks.locale = "vi"; hooks.effects = []; hooks.requests.clear(); hooks.memory = null; vi.unstubAllGlobals(); vi.restoreAllMocks(); notesRefresh.mockReset(); });
 it.each(["vi", "en"])("Journal + opens the composer directly in %s", (locale) => {
   hooks.locale = locale;
   const create = vi.fn();
@@ -259,4 +260,16 @@ it.each([false, true])("editing a scheduled note preserves delivery unless chang
   form.find(n => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
   await flushQueryWork();
   expect(update).toHaveBeenCalledWith("n", { ...entry, ...(sendNow ? { delivery: "now" } : {}) });
+});
+
+
+it("returning from Home's notes shortcut selects notes in an already visited Journal", () => {
+  hooks.memory = { journalSection: "feed" };
+  vi.stubGlobal("window", { location: { href: "http://localhost/journal", search: "" } });
+  journal();
+  hooks.effects = [];
+  hooks.memory.journalSection = "notes";
+  journal();
+  for (const effect of hooks.effects.splice(0)) effect();
+  expect(journal().find(n => n.type === Tabs)?.props.value).toBe("notes");
 });
