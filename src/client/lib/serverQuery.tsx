@@ -1,4 +1,4 @@
-import { QueryClient, type InfiniteData, focusManager, mutationOptions, useIsRestoring, useMutation, useQuery, useQueryClient, type Query, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
+import { QueryClient, focusManager, mutationOptions, useIsRestoring, useMutation, useQuery, useQueryClient, type Query, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useCallback, useEffect, useState, type ReactNode, type SetStateAction } from "react";
 import type { ApiResult } from "../api";
@@ -37,17 +37,24 @@ async function refetchCachedQueries(client: QueryClient, predicate: (query: Quer
   // Persisted queries have data, but no fetch functions until their screens mount.
   const { queries: { journal, gardenDeck, gardenStage, gardenDecisions, box, ...lists } } = await import("./queries");
   await Promise.all(client.getQueryCache().findAll({ predicate }).filter(query => !query.isDisabled()).map(async query => {
-    if (query.queryKey[0] === "journal" && !query.getObserversCount() && query.state.fetchStatus === "idle") {
-      // An inactive journal only needs its first page; every loaded page would refetch on each foreground.
-      client.setQueryData<InfiniteData<unknown>>(query.queryKey, old => old && Array.isArray(old.pages) && old.pages.length > 1 ? { pages: old.pages.slice(0, 1), pageParams: old.pageParams.slice(0, 1) } : old);
+    const [root, part, id] = query.queryKey;
+    if (root === "journal" && query.queryKey.length === 1 && !query.getObserversCount() && query.state.fetchStatus === "idle"
+      && (client.getQueryData(journal.queryKey)?.pages?.length ?? 0) > 1) {
+      // Stop after the first page if the Journal is still closed when it arrives.
+      await client.fetchInfiniteQuery({
+        ...journal, staleTime: 0,
+        getNextPageParam: (...args: Parameters<typeof journal.getNextPageParam>) =>
+          query.getObserversCount() ? journal.getNextPageParam(...args) : undefined,
+      }).catch(() => {});
+      return;
     }
     if (!query.options.queryFn) {
-      const [root, part, id] = query.queryKey;
       if (root === "journal") {
         await client.fetchInfiniteQuery({ ...journal, staleTime: 0 }).catch(() => {});
         return;
       }
       const level = levelId(id);
+      if (root === "garden" && (part === "stage" || part === "decisions") && !level) return;
       const options = root === "boxes" && typeof part === "string" ? box(part)
         : root === "garden" && typeof id === "string" ? part === "deck" ? gardenDeck(id)
           : part === "stage" && level ? gardenStage(level)

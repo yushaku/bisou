@@ -377,14 +377,40 @@ it("a push refresh does not cancel a running journal load-more", async () => {
   leave(); client.clear();
 });
 
-it("a foreground refresh trims an inactive journal to its first page before refetching", async () => {
+it.each(["foreground", "push"])("a %s refresh trims the journal only after success while it is unobserved", async source => {
   const client = createServerQueryClient();
   const page = (nextCursor: string | null) => ({ entries: [], nextCursor });
-  client.setQueryData(["journal"], { pages: [page("c2"), page("c3"), page(null)], pageParams: [undefined, "c2", "c3"] });
-  const journal = vi.spyOn(api, "journal").mockResolvedValue({ ok: true, data: page("c2") });
-  await refreshServerData(client);
-  expect(journal).toHaveBeenCalledOnce();
-  expect(client.getQueryData<{ pages: unknown[] }>(["journal"])?.pages).toHaveLength(1);
+  const key = queries.journal.queryKey;
+  const cached = { pages: [page("c2"), page("c3"), page(null)], pageParams: [undefined, "c2", "c3"] };
+  client.setQueryData(key, cached);
+  const refresh = () => source === "foreground" ? refreshServerData(client) : refreshForPush(client, "journal");
+  const journal = vi.spyOn(api, "journal").mockResolvedValueOnce({ ok: false, status: 0, error: null })
+    .mockImplementation(async cursor => ({ ok: true, data: page(cursor === "c2" ? "c3" : cursor === "c3" ? null : "c2") }));
+  await refresh();
+  expect(journal.mock.calls).toEqual([[undefined]]);
+  expect(client.getQueryState(key)).toMatchObject({ status: "error", data: cached });
+
+  let finish!: (result: Awaited<ReturnType<typeof api.journal>>) => void;
+  journal.mockClear().mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const pending = refresh();
+  await vi.waitFor(() => expect(journal.mock.calls).toEqual([[undefined]]));
+  const observer = new InfiniteQueryObserver(client, queries.journal);
+  const leave = observer.subscribe(() => {});
+  expect(observer.getCurrentResult().data).toEqual(cached);
+  finish({ ok: true, data: page("c2") });
+  await pending;
+  expect(client.getQueryData(key)).toEqual(cached);
+
+  journal.mockClear();
+  await refresh();
+  expect(journal.mock.calls).toEqual([[undefined], ["c2"], ["c3"]]);
+  expect(client.getQueryData(key)).toEqual(cached);
+
+  leave();
+  journal.mockClear();
+  await refresh();
+  expect(journal.mock.calls).toEqual([[undefined]]);
+  expect(client.getQueryData(key)).toEqual({ pages: [page("c2")], pageParams: [undefined] });
   client.clear();
 });
 
@@ -398,6 +424,9 @@ it("restored garden queries with an unknown level id are not refetched", async (
   await refreshForPush(client, "garden");
   expect(stage.mock.calls).toEqual([["in_love"]]);
   expect(decisions).not.toHaveBeenCalled();
+  for (const part of ["stage", "decisions"]) {
+    expect(client.getQueryState(["garden", part, "bogus"])).toMatchObject({ status: "success", fetchStatus: "idle", error: null, data: { cached: true } });
+  }
   client.clear();
 });
 

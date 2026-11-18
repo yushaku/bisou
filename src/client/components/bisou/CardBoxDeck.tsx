@@ -88,10 +88,10 @@ export function CardBoxDeck({ card, boxId, boxName, adult, previous, onNext, onP
           <CardBoxCard card={card} boxId={boxId} boxName={boxName} adult={adult} />
         </div>
       </div></div>
-      {backDrag && <div aria-hidden="true" className="card-box-back-preview" style={{ transform: `translateX(calc(-100% + ${offset}px)) rotate(${-14 + Math.min(offset / 24, 14)}deg)` }}>
+      {backDrag && <div inert aria-hidden="true" className="card-box-back-preview" style={{ transform: `translateX(calc(-100% + ${offset}px)) rotate(${-14 + Math.min(offset / 24, 14)}deg)` }}>
         <CardBoxCard card={previous!} boxId={boxId} boxName={boxName} adult={adult} />
       </div>}
-      {leaving && <div aria-hidden="true" className={`card-box-leaving card-box-leaving-${leaving.direction}`} style={{
+      {leaving && <div inert aria-hidden="true" className={`card-box-leaving card-box-leaving-${leaving.direction}`} style={{
         "--drag-x": `${leaving.direction === "next" ? leaving.offset : 0}px`, "--drag-rotation": `${leaving.direction === "next" ? leaving.offset / 24 : 0}deg`,
         "--fly-x": "-130%", "--fly-rotation": "-14deg",
       } as CSSProperties} onAnimationEnd={() => { setLeaving(null); busy.current = false; }}>
