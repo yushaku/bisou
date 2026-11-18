@@ -29,7 +29,10 @@ export function shouldPersistQuery(query: Query): boolean {
   return query.queryKey[0] !== "push" && query.state.data !== undefined;
 }
 
-export function devicePersistOptions(store: ScopedStore, scope: string): Omit<PersistQueryClientOptions, "queryClient"> {
+export function devicePersistOptions(
+  store: ScopedStore,
+  scope: string,
+): Omit<PersistQueryClientOptions, "queryClient"> {
   const key = queryCacheKey(scope);
   return {
     persister: createAsyncStoragePersister({

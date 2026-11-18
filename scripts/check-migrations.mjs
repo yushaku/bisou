@@ -11,7 +11,10 @@ export function parsePendingMigrations(output) {
   if (empty && !text.includes(marker)) return [];
   const table = text.split(marker);
   if (empty || table.length !== 2) throw new Error("Unrecognized migration listing");
-  const lines = table[1].trim().split("\n").map((line) => line.trim());
+  const lines = table[1]
+    .trim()
+    .split("\n")
+    .map((line) => line.trim());
   const end = lines.findIndex((line) => /^└─+┘$/.test(line));
   if (!/^┌─+┐$/.test(lines[0]) || end < 3 || !/^│\s*Name\s*│$/.test(lines[1])) {
     throw new Error("Incomplete migration table");
@@ -31,10 +34,11 @@ function tokenize(sql) {
   const tokens = [];
   let line = 1;
   // Keep quoted names distinct from keywords, and preserve newlines in comments and strings.
-  const pattern = /--[^\n]*|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^\]]*\]|[\p{L}\p{N}_$]+|\s+|./gu;
+  const pattern =
+    /--[^\n]*|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|"(?:""|[^"])*"|`(?:``|[^`])*`|\[[^\]]*\]|[\p{L}\p{N}_$]+|\s+|./gu;
   for (const [text] of sql.matchAll(pattern)) {
     if (!/^\s|^--|^\/\*/.test(text)) {
-      const quoted = /^["`\[]/.test(text);
+      const quoted = /^["`[]/.test(text);
       const name = quoted ? text.slice(1, -1).replace(/""/g, '"').replace(/``/g, "`") : text;
       tokens.push({ word: quoted || text.startsWith("'") ? "" : text.toUpperCase(), name: name.toLowerCase(), line });
     }
@@ -100,10 +104,15 @@ export function detectDestructiveSql(sql) {
 
 function main(args) {
   const fixture = args[0] === "--fixture" && args.length === 3;
-  if (args.length && !fixture) throw new Error("Usage: node scripts/check-migrations.mjs [--fixture listing.txt migrations-dir]");
-  const output = fixture ? readFileSync(args[1], "utf8") : execFileSync("pnpm", [
-    "exec", "wrangler", "d1", "migrations", "list", "bisou", "--remote", "--config", "wrangler.jsonc",
-  ], { encoding: "utf8", env: { ...process.env, CI: "true", NO_COLOR: "1" }, stdio: ["ignore", "pipe", "inherit"] });
+  if (args.length && !fixture)
+    throw new Error("Usage: node scripts/check-migrations.mjs [--fixture listing.txt migrations-dir]");
+  const output = fixture
+    ? readFileSync(args[1], "utf8")
+    : execFileSync(
+        "pnpm",
+        ["exec", "wrangler", "d1", "migrations", "list", "bisou", "--remote", "--config", "wrangler.jsonc"],
+        { encoding: "utf8", env: { ...process.env, CI: "true", NO_COLOR: "1" }, stdio: ["ignore", "pipe", "inherit"] },
+      );
   const names = parsePendingMigrations(output);
   const violations = [];
   for (const name of names) {
@@ -112,7 +121,8 @@ function main(args) {
       violations.push(`${path}:${line}: ${reason}`);
     }
   }
-  if (violations.length) throw new Error(`${violations.join("\n")}\nDestructive migrations require PO review; nothing was applied`);
+  if (violations.length)
+    throw new Error(`${violations.join("\n")}\nDestructive migrations require PO review; nothing was applied`);
   console.log(`Checked ${names.length} pending migrations: ${names.join(", ") || "none"}`);
 }
 

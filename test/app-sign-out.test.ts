@@ -7,20 +7,27 @@ import { bootCacheNow, saveBootCache, startBoot } from "../src/client/lib/bootSe
 import { memoryBackend, scopedStore, useDeviceBackend } from "../src/client/lib/deviceStore";
 
 const hooks = vi.hoisted(() => ({ effects: [] as (() => unknown)[], setAuth: vi.fn() }));
-vi.mock("react", async original => ({
-  ...await original<typeof import("react")>(),
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
   useState: () => [{ status: "signedIn", user: { id: "u" }, coupleId: "c" }, hooks.setAuth],
   useEffect: (effect: () => unknown) => hooks.effects.push(effect),
   useCallback: (callback: unknown) => callback,
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
 
-afterEach(() => { hooks.effects = []; vi.restoreAllMocks(); vi.clearAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  hooks.effects = [];
+  vi.restoreAllMocks();
+  vi.clearAllMocks();
+  vi.unstubAllGlobals();
+});
 
 function signedIn() {
   const values = new Map<string, string>();
   vi.stubGlobal("localStorage", {
-    get length() { return values.size; },
+    get length() {
+      return values.size;
+    },
     key: (index: number) => [...values.keys()][index] ?? null,
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),

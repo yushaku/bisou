@@ -38,7 +38,13 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
   };
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (!e.isPrimary || e.button !== 0 || total < 2) return;
-    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, axis: null, reduced: matchMedia("(prefers-reduced-motion: reduce)").matches };
+    drag.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      axis: null,
+      reduced: matchMedia("(prefers-reduced-motion: reduce)").matches,
+    };
     e.currentTarget.setPointerCapture(e.pointerId);
     setDragging(true);
   };
@@ -56,7 +62,8 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
   const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
     const start = drag.current;
     if (!start || start.id !== e.pointerId) return;
-    if (start.axis === "x") go(swipedPhotoIndex(index, total, e.clientX - start.x, e.clientY - start.y, e.currentTarget.clientWidth));
+    if (start.axis === "x")
+      go(swipedPhotoIndex(index, total, e.clientX - start.x, e.clientY - start.y, e.currentTarget.clientWidth));
     else cancelDrag();
   };
   const onKeyDown = (e: KeyboardEvent) => {
@@ -65,12 +72,15 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
   };
 
   return (
-    <Dialog open={!!photo} onOpenChange={(open) => {
-      if (!open) {
-        cancelDrag();
-        onClose();
-      }
-    }}>
+    <Dialog
+      open={!!photo}
+      onOpenChange={(open) => {
+        if (!open) {
+          cancelDrag();
+          onClose();
+        }
+      }}
+    >
       <DialogContent
         showCloseButton={false}
         aria-describedby={undefined}
@@ -82,7 +92,9 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
         className="top-0 left-0 flex h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none bg-background p-0 sm:max-w-none"
       >
         <div className="flex items-center gap-2 px-4 pt-[env(safe-area-inset-top)]">
-          <DialogTitle className="flex h-14 min-w-0 flex-1 items-center font-heading text-xl">{t("viewer.title")}</DialogTitle>
+          <DialogTitle className="flex h-14 min-w-0 flex-1 items-center font-heading text-xl">
+            {t("viewer.title")}
+          </DialogTitle>
           <DialogClose asChild>
             <Button variant="ghost" size="icon-lg" aria-label={t("common.close")}>
               <X aria-hidden="true" />
@@ -120,13 +132,25 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
           </div>
         )}
         <div className="flex items-center justify-center gap-6 px-4 pt-2 pb-[max(--spacing(4),env(safe-area-inset-bottom))]">
-          <Button variant="outline" size="icon-lg" aria-label={t("viewer.previous")} disabled={index === 0} onClick={() => go(index - 1)}>
+          <Button
+            variant="outline"
+            size="icon-lg"
+            aria-label={t("viewer.previous")}
+            disabled={index === 0}
+            onClick={() => go(index - 1)}
+          >
             <ChevronLeft aria-hidden="true" />
           </Button>
           <span aria-live="polite" className="min-w-12 text-center tabular-nums">
             {t("viewer.count", { index: index + 1, total })}
           </span>
-          <Button variant="outline" size="icon-lg" aria-label={t("viewer.next")} disabled={index >= total - 1} onClick={() => go(index + 1)}>
+          <Button
+            variant="outline"
+            size="icon-lg"
+            aria-label={t("viewer.next")}
+            disabled={index >= total - 1}
+            onClick={() => go(index + 1)}
+          >
             <ChevronRight aria-hidden="true" />
           </Button>
         </div>

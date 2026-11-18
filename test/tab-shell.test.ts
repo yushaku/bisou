@@ -24,7 +24,12 @@ function render(children: ReactNode) {
 }
 
 it("a tab screen inside the frame draws only its content: one header, one tab bar, one main", () => {
-  const html = render(h(TabFrame, { tab: "journal", children: h(SignedInShell, { ...session, tab: "journal", children: h("p", { id: "screen" }, "feed") }) }));
+  const html = render(
+    h(TabFrame, {
+      tab: "journal",
+      children: h(SignedInShell, { ...session, tab: "journal", children: h("p", { id: "screen" }, "feed") }),
+    }),
+  );
   expect(count(html, "header")).toBe(1);
   expect(count(html, "nav")).toBe(1);
   expect(count(html, "main")).toBe(1);
@@ -39,12 +44,21 @@ it("outside the frame the same screen still draws its own shell", () => {
 });
 
 it("a screen without a tab keeps its own shell even inside the frame (sub-pages)", () => {
-  const html = render(h(TabFrame, { tab: "home", children: h(SignedInShell, { ...session, children: h("p", null, "events") }) }));
+  const html = render(
+    h(TabFrame, { tab: "home", children: h(SignedInShell, { ...session, children: h("p", null, "events") }) }),
+  );
   expect(count(html, "main")).toBe(2); // its own page, not folded into the frame
   expect(count(html, "nav")).toBe(1); // sub-pages have no tab bar
 });
 
-const props = { session, couple: {} as never, onCouple: () => {}, onRefresh: async () => {}, celebrate: false, onCelebrated: () => {} };
+const props = {
+  session,
+  couple: {} as never,
+  onCouple: () => {},
+  onRefresh: async () => {},
+  celebrate: false,
+  onCelebrated: () => {},
+};
 it("first visit mounts only the selected tab inside one frame", async () => {
   const { loadTab } = await import("../src/client/lib/screens");
   await loadTab("journal");
@@ -59,7 +73,12 @@ it("first visit mounts only the selected tab inside one frame", async () => {
 });
 
 function fakeWindow(scrollY = 0) {
-  const win = Object.assign(new EventTarget(), { scrollY, scrollTo: vi.fn((options: { top: number }) => { win.scrollY = options.top; }) });
+  const win = Object.assign(new EventTarget(), {
+    scrollY,
+    scrollTo: vi.fn((options: { top: number }) => {
+      win.scrollY = options.top;
+    }),
+  });
   const focus = vi.fn();
   vi.stubGlobal("window", win);
   vi.stubGlobal("document", { getElementById: vi.fn(() => ({ focus })) });
@@ -92,9 +111,13 @@ it("a page without a tab neither scrolls nor listens", () => {
   expect(win.scrollTo).not.toHaveBeenCalled();
 });
 
-
 it("the pill crosses the create column and renders only once for the active tab", () => {
-  for (const [tab, column] of [["home", 0], ["journal", 1], ["wishes", 3], ["garden", 4]] as const) {
+  for (const [tab, column] of [
+    ["home", 0],
+    ["journal", 1],
+    ["wishes", 3],
+    ["garden", 4],
+  ] as const) {
     expect(pillColumn(tab)).toBe(column);
     const html = render(h(BottomBar, { active: tab, onSelect: () => {}, onCreate: () => {} }));
     expect(html.match(/data-tab-pill/g)).toHaveLength(1);

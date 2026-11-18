@@ -1,9 +1,30 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 const imports = vi.hoisted(() => ({ journal: vi.fn(), wishes: vi.fn(), garden: vi.fn() }));
-vi.mock("../src/client/screens/Journal", () => { imports.journal(); return { Journal: function Journal() { return null; } }; });
-vi.mock("../src/client/screens/Wishes", () => { imports.wishes(); return { Wishes: function Wishes() { return null; } }; });
-vi.mock("../src/client/screens/Garden", () => { imports.garden(); return { Garden: function Garden() { return null; } }; });
+vi.mock("../src/client/screens/Journal", () => {
+  imports.journal();
+  return {
+    Journal: function Journal() {
+      return null;
+    },
+  };
+});
+vi.mock("../src/client/screens/Wishes", () => {
+  imports.wishes();
+  return {
+    Wishes: function Wishes() {
+      return null;
+    },
+  };
+});
+vi.mock("../src/client/screens/Garden", () => {
+  imports.garden();
+  return {
+    Garden: function Garden() {
+      return null;
+    },
+  };
+});
 
 const screens = () => import("../src/client/lib/screens");
 
@@ -15,7 +36,9 @@ beforeEach(async () => {
 it("prewarms the three other tab chunks one at a time through the idle scheduler, and keeps them for direct rendering", async () => {
   const { prewarmTabs, loadedTab } = await screens();
   const queue: (() => void)[] = [];
-  prewarmTabs((run) => { queue.push(run); });
+  prewarmTabs((run) => {
+    queue.push(run);
+  });
   expect(queue).toHaveLength(1); // nothing is fetched until the browser is idle
   expect(loadedTab("journal")).toBeUndefined();
   for (const tab of ["journal", "wishes", "garden"] as const) {
@@ -56,7 +79,6 @@ it("falls back to a timer when requestIdleCallback is missing", async () => {
     vi.unstubAllGlobals();
   }
 });
-
 
 it("visited tabs grow once in visit order and unknown paths select Home", async () => {
   const { visitTab } = await import("../src/client/screens/TabScreens");

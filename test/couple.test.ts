@@ -245,7 +245,9 @@ describe("POST /api/couple/join", () => {
     const res = await join(c3, "ZZZZZZ");
     expect(res.status).toBe(409);
     expect(await res.json()).toEqual({ error: "couple_full" });
-    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM couple_members WHERE couple_id = ?").bind(couple.id).first("n")).toBe(2);
+    expect(
+      await env.DB.prepare("SELECT COUNT(*) AS n FROM couple_members WHERE couple_id = ?").bind(couple.id).first("n"),
+    ).toBe(2);
   });
 
   it("rejects a user who is already paired", async () => {
@@ -337,7 +339,17 @@ describe("PATCH /api/couple (start date)", () => {
 
   it("validates the format and real calendar dates", async () => {
     const { a } = await paired();
-    for (const startDate of ["2023-2-14", "14/02/2023", "2023-02-30", "2023-13-01", "2025-02-29", "1899-12-31", "", null, 20230214]) {
+    for (const startDate of [
+      "2023-2-14",
+      "14/02/2023",
+      "2023-02-30",
+      "2023-13-01",
+      "2025-02-29",
+      "1899-12-31",
+      "",
+      null,
+      20230214,
+    ]) {
       const res = await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate } });
       expect(res.status, String(startDate)).toBe(400);
       expect(await res.json()).toEqual({ error: "invalid_start_date" });
@@ -349,11 +361,19 @@ describe("PATCH /api/couple (start date)", () => {
   it("rejects a future date, allowing today in the furthest time zone", async () => {
     const { a } = await paired();
     // T0 is 08:00 UTC on 2026-11-04, already 22:00 on the same day at UTC+14.
-    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2026-11-04" } })).status).toBe(200);
-    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2026-11-05" } })).status).toBe(400);
+    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2026-11-04" } })).status).toBe(
+      200,
+    );
+    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2026-11-05" } })).status).toBe(
+      400,
+    );
     vi.setSystemTime(T0 + 2 * HOUR); // 10:00 UTC: 2026-11-05 has begun at UTC+14.
-    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2026-11-05" } })).status).toBe(200);
-    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2027-01-01" } })).status).toBe(400);
+    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2026-11-05" } })).status).toBe(
+      200,
+    );
+    expect((await call("PATCH", "/api/couple", { cookie: a.cookie, body: { startDate: "2027-01-01" } })).status).toBe(
+      400,
+    );
   });
 
   it("needs a couple", async () => {
@@ -405,7 +425,10 @@ describe("GET /api/couple", () => {
     expect(await getCouple(outsider)).toBeNull();
     const byId = await call("GET", `/api/couple/${couple.id}`, { cookie: outsider.cookie });
     expect(byId.status).toBe(404);
-    const patch = await call("PATCH", "/api/couple", { cookie: outsider.cookie, body: { startDate: "2020-01-01", id: couple.id } });
+    const patch = await call("PATCH", "/api/couple", {
+      cookie: outsider.cookie,
+      body: { startDate: "2020-01-01", id: couple.id },
+    });
     expect(patch.status).toBe(404);
     expect((await getCouple(a))!.startDate).toBe("2023-02-14");
   });

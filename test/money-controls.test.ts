@@ -7,13 +7,20 @@ import { api } from "../src/client/api";
 import { parseVnd } from "../src/client/lib/wishes";
 
 vi.mock("react", async (original) => ({
-  ...await original<typeof import("react")>(),
-  useState: (value: unknown) => [value, vi.fn()], useId: () => "test", useRef: () => ({ current: null }),
+  ...(await original<typeof import("react")>()),
+  useState: (value: unknown) => [value, vi.fn()],
+  useId: () => "test",
+  useRef: () => ({ current: null }),
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "vi", t: (key: string) => key }) }));
-vi.mock("../src/client/components/bisou/useUploadQueue", () => ({ useUploadQueue: () => ({ items: [], saved: vi.fn() }) }));
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+vi.mock("../src/client/components/bisou/useUploadQueue", () => ({
+  useUploadQueue: () => ({ items: [], saved: vi.fn() }),
+}));
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 it("Delete at position zero leaves the caret at zero after regrouping", () => {
   const element = MoneyInput({ value: "1.250.000", onValueChange: vi.fn() });
@@ -25,21 +32,28 @@ it("Delete at position zero leaves the caret at zero after regrouping", () => {
   expect(input.setSelectionRange).toHaveBeenCalledWith(0, 0);
 });
 
-it.each(["5.000.000.000", "5000000000", "5 000 000 000", "5\u00a0000\u00a0000\u00a0000"])("MoneyInput sends a vi budget of 5 billion for %s", (raw) => {
-  const onValueChange = vi.fn();
-  const element = MoneyInput({ value: "0", onValueChange });
-  const input = { value: raw, selectionStart: raw.length, setSelectionRange: vi.fn() };
-  vi.stubGlobal("requestAnimationFrame", vi.fn());
-  element.props.onChange({ currentTarget: input });
-  expect(element.props.inputMode).toBe("numeric");
-  expect(onValueChange).toHaveBeenCalledWith("5.000.000.000");
-  expect(parseVnd(onValueChange.mock.calls[0]![0] as string)).toBe(5_000_000_000);
-});
+it.each(["5.000.000.000", "5000000000", "5 000 000 000", "5\u00a0000\u00a0000\u00a0000"])(
+  "MoneyInput sends a vi budget of 5 billion for %s",
+  (raw) => {
+    const onValueChange = vi.fn();
+    const element = MoneyInput({ value: "0", onValueChange });
+    const input = { value: raw, selectionStart: raw.length, setSelectionRange: vi.fn() };
+    vi.stubGlobal("requestAnimationFrame", vi.fn());
+    element.props.onChange({ currentTarget: input });
+    expect(element.props.inputMode).toBe("numeric");
+    expect(onValueChange).toHaveBeenCalledWith("5.000.000.000");
+    expect(parseVnd(onValueChange.mock.calls[0]![0] as string)).toBe(5_000_000_000);
+  },
+);
 
 it("MoneyInput treats a pasted unit suffix as digits only", () => {
   const onValueChange = vi.fn();
   const element = MoneyInput({ value: "0", onValueChange });
-  element.props.onPaste({ preventDefault: vi.fn(), clipboardData: { getData: () => "5 tỷ" }, currentTarget: { value: "0", selectionStart: 0, selectionEnd: 1 } });
+  element.props.onPaste({
+    preventDefault: vi.fn(),
+    clipboardData: { getData: () => "5 tỷ" },
+    currentTarget: { value: "0", selectionStart: 0, selectionEnd: 1 },
+  });
   expect(onValueChange).toHaveBeenCalledWith("5");
   expect(parseVnd(onValueChange.mock.calls[0]![0] as string)).toBe(5);
 });
@@ -47,7 +61,24 @@ it("MoneyInput treats a pasted unit suffix as digits only", () => {
 it("WishSheet submits zero price as null", async () => {
   const create = vi.spyOn(api, "createWish").mockResolvedValue({ ok: false, status: 0, error: null });
   const update = vi.spyOn(api, "updateWish").mockResolvedValue({ ok: false, status: 0, error: null });
-  const tree = WishSheet({ wish: { id: "wish", title: "A book", price: 0, link: null, priority: 2, photoId: null, status: "open", receivedOn: null, note: null, createdAt: 0, updatedAt: 0 }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const tree = WishSheet({
+    wish: {
+      id: "wish",
+      title: "A book",
+      price: 0,
+      link: null,
+      priority: 2,
+      photoId: null,
+      status: "open",
+      receivedOn: null,
+      note: null,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+    onClose: vi.fn(),
+    onSaved: vi.fn(),
+    onSignedOut: vi.fn(),
+  });
   function findForm(node: ReactNode): ReactElement<{ onSubmit: (event: unknown) => void }> | undefined {
     if (Array.isArray(node)) return node.map(findForm).find(Boolean);
     if (!isValidElement<{ children?: ReactNode }>(node)) return;
@@ -63,7 +94,11 @@ it("WishSheet submits zero price as null", async () => {
 it.each(["1.250.000,50", "1,250,000.00", "1.250.000 d"])("MoneyInput pastes %s as whole VND", (raw) => {
   const onValueChange = vi.fn();
   const element = MoneyInput({ value: "0", onValueChange });
-  element.props.onPaste({ preventDefault: vi.fn(), clipboardData: { getData: () => raw }, currentTarget: { value: "0", selectionStart: 0, selectionEnd: 1 } });
+  element.props.onPaste({
+    preventDefault: vi.fn(),
+    clipboardData: { getData: () => raw },
+    currentTarget: { value: "0", selectionStart: 0, selectionEnd: 1 },
+  });
   expect(onValueChange).toHaveBeenCalledWith("1.250.000");
 });
 it("deleting a digit inside a thousands group does not drop the rest as cents", () => {
@@ -77,7 +112,24 @@ it("deleting a digit inside a thousands group does not drop the rest as cents", 
 it("WishSheet refuses submission when offline", async () => {
   vi.stubGlobal("navigator", { onLine: false });
   const save = vi.spyOn(api, "updateWish");
-  const tree = WishSheet({ wish: { id: "wish", title: "A book", price: 0, link: null, priority: 2, photoId: null, status: "open", receivedOn: null, note: null, createdAt: 0, updatedAt: 0 }, onClose: vi.fn(), onSaved: vi.fn(), onSignedOut: vi.fn() });
+  const tree = WishSheet({
+    wish: {
+      id: "wish",
+      title: "A book",
+      price: 0,
+      link: null,
+      priority: 2,
+      photoId: null,
+      status: "open",
+      receivedOn: null,
+      note: null,
+      createdAt: 0,
+      updatedAt: 0,
+    },
+    onClose: vi.fn(),
+    onSaved: vi.fn(),
+    onSignedOut: vi.fn(),
+  });
   const form = tree.props.children[0].props.children.props.children;
   form.props.onSubmit({ preventDefault: vi.fn() });
   await flushQueryWork();

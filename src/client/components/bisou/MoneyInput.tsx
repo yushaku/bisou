@@ -4,7 +4,12 @@ import { useI18n } from "@/i18n";
 import { formatMoneyInput } from "@/lib/format";
 
 /* Money field in whole VND: shows grouped digits, starts at 0, and keeps the caret after the same digit while regrouping. */
-export function MoneyInput({ value, onValueChange, onFocus, ...props }: Omit<ComponentProps<typeof Input>, "value" | "onChange" | "type"> & {
+export function MoneyInput({
+  value,
+  onValueChange,
+  onFocus,
+  ...props
+}: Omit<ComponentProps<typeof Input>, "value" | "onChange" | "type"> & {
   value: string;
   onValueChange: (value: string) => void;
 }) {
@@ -18,17 +23,26 @@ export function MoneyInput({ value, onValueChange, onFocus, ...props }: Omit<Com
       inputMode="numeric"
       autoComplete="off"
       value={value}
-      onFocus={(e) => { if (value === "0") e.currentTarget.select(); onFocus?.(e); }}
+      onFocus={(e) => {
+        if (value === "0") e.currentTarget.select();
+        onFocus?.(e);
+      }}
       onPaste={(e) => {
         e.preventDefault();
         const el = e.currentTarget;
-        const pasted = el.value.slice(0, el.selectionStart ?? 0) + e.clipboardData.getData("text") + el.value.slice(el.selectionEnd ?? el.value.length);
+        const pasted =
+          el.value.slice(0, el.selectionStart ?? 0) +
+          e.clipboardData.getData("text") +
+          el.value.slice(el.selectionEnd ?? el.value.length);
         onValueChange(formatMoneyInput(pasted, locale));
       }}
       onChange={(e) => {
         const el = e.currentTarget;
         const atStart = el.selectionStart === 0;
-        const digitsBefore = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, "").replace(/^0+/, "").length;
+        const digitsBefore = el.value
+          .slice(0, el.selectionStart ?? el.value.length)
+          .replace(/\D/g, "")
+          .replace(/^0+/, "").length;
         const next = formatMoneyInput(el.value.replace(/\D/g, ""), locale);
         onValueChange(next);
         requestAnimationFrame(() => {

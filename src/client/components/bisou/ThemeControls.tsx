@@ -5,7 +5,16 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/theme/ThemeProvider";
-import { BACKGROUNDS, DARK_THEMES, LIGHT_THEMES, MODES, STYLES, type Mode, type ThemeDef, themeById } from "@/theme/themes";
+import {
+  BACKGROUNDS,
+  DARK_THEMES,
+  LIGHT_THEMES,
+  MODES,
+  STYLES,
+  type Mode,
+  type ThemeDef,
+  themeById,
+} from "@/theme/themes";
 import { LanguageSelect, LanguageToggle } from "./LanguageToggle";
 import { SettingsGroup, SettingsRow } from "./SettingsGroup";
 
@@ -35,7 +44,10 @@ function Swatches({ theme }: { theme: ThemeDef }) {
 }
 
 /* Shared by the Appearance page and the /design toolbar. */
-export function ThemeControls({ paletteByMode = false, className }: {
+export function ThemeControls({
+  paletteByMode = false,
+  className,
+}: {
   className?: string;
   /* Settings: one palette field for the mode in use, and no language (it has its own row). */
   paletteByMode?: boolean;
@@ -51,10 +63,22 @@ export function ThemeControls({ paletteByMode = false, className }: {
       {STYLES.length > 1 && (
         <Field label={t("settings.style")}>
           {(id) => (
-            <ToggleGroup type="single" variant="outline" spacing={1} className="w-full" aria-labelledby={id} value={prefs.style}
-              onValueChange={(v) => { const s = STYLES.find((x) => x.id === v); if (s) setPrefs({ style: s.id }); }}>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              spacing={1}
+              className="w-full"
+              aria-labelledby={id}
+              value={prefs.style}
+              onValueChange={(v) => {
+                const s = STYLES.find((x) => x.id === v);
+                if (s) setPrefs({ style: s.id });
+              }}
+            >
               {STYLES.map((s) => (
-                <ToggleGroupItem key={s.id} value={s.id} className={item}>{t(s.labelKey)}</ToggleGroupItem>
+                <ToggleGroupItem key={s.id} value={s.id} className={item}>
+                  {t(s.labelKey)}
+                </ToggleGroupItem>
               ))}
             </ToggleGroup>
           )}
@@ -63,8 +87,18 @@ export function ThemeControls({ paletteByMode = false, className }: {
 
       <Field label={t("settings.mode")}>
         {(id) => (
-          <ToggleGroup type="single" variant="outline" spacing={1} className="w-full" aria-labelledby={id} value={prefs.mode}
-            onValueChange={(v) => { const m = MODES.find((x) => x === v); if (m) setPrefs({ mode: m }); }}>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            spacing={1}
+            className="w-full"
+            aria-labelledby={id}
+            value={prefs.mode}
+            onValueChange={(v) => {
+              const m = MODES.find((x) => x === v);
+              if (m) setPrefs({ mode: m });
+            }}
+          >
             {MODES.map((m) => {
               const Icon = MODE_ICONS[m];
               return (
@@ -81,36 +115,73 @@ export function ThemeControls({ paletteByMode = false, className }: {
       {showLight && LIGHT_THEMES.length > 0 && (
         <Field label={t("settings.lightTheme")}>
           {(id) => (
-            <ToggleGroup type="single" variant="outline" spacing={1} className="w-full flex-wrap" aria-labelledby={id} value={prefs.lightTheme}
-              onValueChange={(v) => { const th = LIGHT_THEMES.find((x) => x.id === v); if (th) setPrefs({ lightTheme: th.id }); }}>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              spacing={1}
+              className="w-full flex-wrap"
+              aria-labelledby={id}
+              value={prefs.lightTheme}
+              onValueChange={(v) => {
+                const th = LIGHT_THEMES.find((x) => x.id === v);
+                if (th) setPrefs({ lightTheme: th.id });
+              }}
+            >
               {LIGHT_THEMES.map((th) => (
-                <ToggleGroupItem key={th.id} value={th.id} className={item}><Swatches theme={th} />{th.label}</ToggleGroupItem>
+                <ToggleGroupItem key={th.id} value={th.id} className={item}>
+                  <Swatches theme={th} />
+                  {th.label}
+                </ToggleGroupItem>
               ))}
             </ToggleGroup>
           )}
         </Field>
       )}
 
-      {showDark && <Field label={t("settings.darkTheme")}>
-        {(id) => (
-          <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-2" aria-labelledby={id} value={prefs.darkTheme}
-            onValueChange={(v) => { const th = DARK_THEMES.find((x) => x.id === v); if (th) setPrefs({ darkTheme: th.id }); }}>
-            {DARK_THEMES.map((th) => (
-              <ToggleGroupItem key={th.id} value={th.id} className={cn(item, "flex-col gap-1 py-1.5 h-14")}>
-                <Swatches theme={th} />
-                {th.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        )}
-      </Field>}
+      {showDark && (
+        <Field label={t("settings.darkTheme")}>
+          {(id) => (
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              spacing={1}
+              className="grid w-full grid-cols-2"
+              aria-labelledby={id}
+              value={prefs.darkTheme}
+              onValueChange={(v) => {
+                const th = DARK_THEMES.find((x) => x.id === v);
+                if (th) setPrefs({ darkTheme: th.id });
+              }}
+            >
+              {DARK_THEMES.map((th) => (
+                <ToggleGroupItem key={th.id} value={th.id} className={cn(item, "flex-col gap-1 py-1.5 h-14")}>
+                  <Swatches theme={th} />
+                  {th.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          )}
+        </Field>
+      )}
 
       <Field label={t("settings.background")}>
         {(id) => (
-          <ToggleGroup type="single" variant="outline" spacing={1} className="grid w-full grid-cols-3" aria-labelledby={id} value={prefs.background}
-            onValueChange={(v) => { const b = BACKGROUNDS.find((x) => x.id === v); if (b) setPrefs({ background: b.id }); }}>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            spacing={1}
+            className="grid w-full grid-cols-3"
+            aria-labelledby={id}
+            value={prefs.background}
+            onValueChange={(v) => {
+              const b = BACKGROUNDS.find((x) => x.id === v);
+              if (b) setPrefs({ background: b.id });
+            }}
+          >
             {BACKGROUNDS.map((b) => (
-              <ToggleGroupItem key={b.id} value={b.id} className="px-1">{t(b.labelKey)}</ToggleGroupItem>
+              <ToggleGroupItem key={b.id} value={b.id} className="px-1">
+                {t(b.labelKey)}
+              </ToggleGroupItem>
             ))}
           </ToggleGroup>
         )}
@@ -122,14 +193,26 @@ export function ThemeControls({ paletteByMode = false, className }: {
 }
 
 /* The Appearance group in Settings: one row to the appearance page, and the language on its own row. */
-export function AppearanceSettings({ onLocaleChange, onOpen }: { onLocaleChange?: (locale: Locale) => void; onOpen: () => void }) {
+export function AppearanceSettings({
+  onLocaleChange,
+  onOpen,
+}: {
+  onLocaleChange?: (locale: Locale) => void;
+  onOpen: () => void;
+}) {
   const { t } = useI18n();
   const { prefs, kind } = useTheme();
   const languageId = useId();
   const palette = themeById(kind === "dark" ? prefs.darkTheme : prefs.lightTheme).label;
   return (
     <SettingsGroup title={t("settings.appearance")}>
-      <SettingsRow id="appearance-row" icon={Paintbrush} label={t("settings.appearance")} value={`${t(`style.${prefs.style}`)} · ${palette}`} onClick={onOpen} />
+      <SettingsRow
+        id="appearance-row"
+        icon={Paintbrush}
+        label={t("settings.appearance")}
+        value={`${t(`style.${prefs.style}`)} · ${palette}`}
+        onClick={onOpen}
+      />
       <div className="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-base">
         <Languages className="size-5 shrink-0" aria-hidden="true" />
         <span id={languageId}>{t("language")}</span>

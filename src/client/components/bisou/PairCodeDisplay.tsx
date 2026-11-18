@@ -19,7 +19,11 @@ interface PairCodeDisplayProps {
 const MINUTE = 60_000;
 const TICK_MS = 15_000;
 
-function minutesLeft(expiresInMinutes: number | undefined, expiresAt: number | undefined, now: number): number | undefined {
+function minutesLeft(
+  expiresInMinutes: number | undefined,
+  expiresAt: number | undefined,
+  now: number,
+): number | undefined {
   if (expiresAt !== undefined) return Math.max(1, Math.ceil((expiresAt - now) / MINUTE));
   return expiresInMinutes;
 }
@@ -76,9 +80,7 @@ export function PairCodeDisplay({ code, expiresInMinutes, expiresAt, children, c
       </div>
       <div className="flex flex-col gap-0.5">
         <p className="text-base text-balance">{t("pair.send")}</p>
-        {minutes !== undefined && (
-          <p className="text-sm text-pretty text-muted-foreground">{expiryText(t, minutes)}</p>
-        )}
+        {minutes !== undefined && <p className="text-sm text-pretty text-muted-foreground">{expiryText(t, minutes)}</p>}
       </div>
       {/* Buttons share the row; when the labels do not fit, each takes a full row instead of leaving a gap. */}
       <div className="flex flex-wrap gap-2 *:flex-1">

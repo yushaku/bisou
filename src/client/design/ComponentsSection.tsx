@@ -40,10 +40,41 @@ export function ComponentsSection() {
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
       <Block title="CardBoxCard">
-        {(["question", "dare", "point", "rather", "scale"] as const).map(kind => <CardBoxCard key={kind} card={kind === "rather" ? { id: kind, kind, options: [{ vi: "Đi dạo", en: "A walk" }, { vi: "Ở nhà", en: "Stay home" }] } : kind === "scale" ? { id: kind, kind, text: { vi: "Hôm nay muốn đi chơi đến mức nào?", en: "How much do you feel like going out today?" }, low: { vi: "Ở nhà", en: "Stay in" }, high: { vi: "Đi ngay", en: "Go now" } } : { id: kind, kind, text: { vi: "Một khoảnh khắc vui hôm nay?", en: "A happy moment today?" } }} />)}
+        {(["question", "dare", "point", "rather", "scale"] as const).map((kind) => (
+          <CardBoxCard
+            key={kind}
+            card={
+              kind === "rather"
+                ? {
+                    id: kind,
+                    kind,
+                    options: [
+                      { vi: "Đi dạo", en: "A walk" },
+                      { vi: "Ở nhà", en: "Stay home" },
+                    ],
+                  }
+                : kind === "scale"
+                  ? {
+                      id: kind,
+                      kind,
+                      text: {
+                        vi: "Hôm nay muốn đi chơi đến mức nào?",
+                        en: "How much do you feel like going out today?",
+                      },
+                      low: { vi: "Ở nhà", en: "Stay in" },
+                      high: { vi: "Đi ngay", en: "Go now" },
+                    }
+                  : { id: kind, kind, text: { vi: "Một khoảnh khắc vui hôm nay?", en: "A happy moment today?" } }
+            }
+          />
+        ))}
       </Block>
       <Block title="PageHeader">
-        <PageHeader title={t("nav.journal")} description="Minh Anh và Quốc Bảo" action={<Button size="sm">{t("journal.new")}</Button>} />
+        <PageHeader
+          title={t("nav.journal")}
+          description="Minh Anh và Quốc Bảo"
+          action={<Button size="sm">{t("journal.new")}</Button>}
+        />
       </Block>
 
       <Block title="CoupleAvatars">
@@ -93,8 +124,18 @@ export function ComponentsSection() {
       </Block>
 
       <Block title="SpinCard">
-        <SpinCard partnerName={QUOC_BAO.name} onSpin={demoSpin} onClaim={async () => ({ ok: false, status: 0, error: null })} />
-        <SpinCard partnerName={QUOC_BAO.name} onSpin={demoSpin} onClaim={async () => ({ ok: false, status: 0, error: null })} initialBudget={100_000} initialState={{ step: "empty" }} />
+        <SpinCard
+          partnerName={QUOC_BAO.name}
+          onSpin={demoSpin}
+          onClaim={async () => ({ ok: false, status: 0, error: null })}
+        />
+        <SpinCard
+          partnerName={QUOC_BAO.name}
+          onSpin={demoSpin}
+          onClaim={async () => ({ ok: false, status: 0, error: null })}
+          initialBudget={100_000}
+          initialState={{ step: "empty" }}
+        />
       </Block>
 
       <Block title="EmptyState, Celebration">
@@ -112,7 +153,9 @@ export function ComponentsSection() {
         <OtpInput id="d-otp" value={code} onChange={(raw) => setCode(raw.replace(/\D/g, "").slice(0, 6))} />
         <Label htmlFor="d-otp-err" className="mt-2">{`${t("login.code")} (${d("stateError")})`}</Label>
         <OtpInput id="d-otp-err" value="123456" onChange={() => undefined} invalid aria-describedby="d-otp-err-msg" />
-        <span id="d-otp-err-msg" className="text-base text-destructive">{t("error.invalid_code_left", { count: 3 })}</span>
+        <span id="d-otp-err-msg" className="text-base text-destructive">
+          {t("error.invalid_code_left", { count: 3 })}
+        </span>
       </Block>
     </div>
   );

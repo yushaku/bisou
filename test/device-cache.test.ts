@@ -3,17 +3,38 @@ import { focusManager, type QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../src/client/api";
 import type { Couple, User } from "../src/shared/types";
-import { BUILD_ID, CACHE_MAX_AGE, devicePersistOptions, dropOtherScopes, queryCacheKey, queryScope } from "../src/client/lib/devicePersist";
+import {
+  BUILD_ID,
+  CACHE_MAX_AGE,
+  devicePersistOptions,
+  dropOtherScopes,
+  queryCacheKey,
+  queryScope,
+} from "../src/client/lib/devicePersist";
 import { memoryBackend, scopedStore, useDeviceBackend } from "../src/client/lib/deviceStore";
 import { meOutcome, readBootCache, saveBootCache, validBootCache, wipeDeviceData } from "../src/client/lib/bootSession";
 import { createServerQueryClient, ServerDataProvider, refreshServerData } from "../src/client/lib/serverQuery";
 
-const user = (id: string): User => ({ id, email: `${id}@example.com`, displayName: id, birthDate: null, avatarId: null, locale: "vi", createdAt: 1 });
+const user = (id: string): User => ({
+  id,
+  email: `${id}@example.com`,
+  displayName: id,
+  birthDate: null,
+  avatarId: null,
+  locale: "vi",
+  createdAt: 1,
+});
 const couple = (id: string): Couple => ({ id, startDate: null, events: [], members: [] });
-const options = (client: QueryClient, scope: string, store = scopedStore()) => ({ ...devicePersistOptions(store, scope), queryClient: client });
+const options = (client: QueryClient, scope: string, store = scopedStore()) => ({
+  ...devicePersistOptions(store, scope),
+  queryClient: client,
+});
 let backend = memoryBackend();
 
-beforeEach(() => { backend = memoryBackend(); useDeviceBackend(backend); });
+beforeEach(() => {
+  backend = memoryBackend();
+  useDeviceBackend(backend);
+});
 
 describe("persisted server data", () => {
   it("restores saved queries for the same scope", async () => {
@@ -65,7 +86,9 @@ describe("persisted server data", () => {
     a.setQueryData(["boxes"], { boxes: [] });
     await a.fetchQuery({ queryKey: ["garden"], queryFn: () => Promise.reject(new Error("boom")) }).catch(() => {});
     await persistQueryClientSave(options(a, "u1:c1"));
-    const keys = JSON.parse(backend.data.get(queryCacheKey("u1:c1"))!).clientState.queries.map((q: { queryKey: string[] }) => q.queryKey[0]);
+    const keys = JSON.parse(backend.data.get(queryCacheKey("u1:c1"))!).clientState.queries.map(
+      (q: { queryKey: string[] }) => q.queryKey[0],
+    );
     expect(keys).toEqual(["boxes"]);
   });
 
@@ -73,7 +96,9 @@ describe("persisted server data", () => {
     const client = createServerQueryClient();
     const cached = { wishes: ["saved wish"] };
     await client.fetchQuery({ queryKey: ["wishes"], queryFn: async () => cached });
-    await expect(client.fetchQuery({ queryKey: ["wishes"], queryFn: () => Promise.reject(new Error("offline")), staleTime: 0 })).rejects.toThrow("offline");
+    await expect(
+      client.fetchQuery({ queryKey: ["wishes"], queryFn: () => Promise.reject(new Error("offline")), staleTime: 0 }),
+    ).rejects.toThrow("offline");
     expect(client.getQueryState(["wishes"])?.status).toBe("error");
     await persistQueryClientSave(options(client, "u1:c1"));
     const provider = ServerDataProvider({ scope: "u1:c1", fallback: null, children: null });
@@ -81,16 +106,20 @@ describe("persisted server data", () => {
     await persistQueryClientRestore({ ...provider.props.persistOptions, queryClient: restored });
     let complete!: () => void;
     const fresh = { open: [], received: [], partnerJarEmpty: true };
-    const request = vi.spyOn(api, "wishes").mockImplementation(() => new Promise(resolve => {
-      complete = () => resolve({ ok: true, data: fresh });
-    }));
+    const request = vi.spyOn(api, "wishes").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          complete = () => resolve({ ok: true, data: fresh });
+        }),
+    );
     expect(provider.props.onSuccess()).toBeUndefined();
     expect(restored.getQueryData(["wishes"])).toEqual(cached);
     expect(restored.getQueryState(["wishes"])).toMatchObject({ status: "success", error: null, isInvalidated: true });
     await vi.waitFor(() => expect(request).toHaveBeenCalledOnce());
     complete();
     await vi.waitFor(() => expect(restored.getQueryData(["wishes"])).toEqual(fresh));
-    client.clear(); restored.clear();
+    client.clear();
+    restored.clear();
   });
 
   it("does not save push configuration to the device", async () => {
@@ -102,7 +131,8 @@ describe("persisted server data", () => {
     await persistQueryClientRestore(options(restored, "u1:c1"));
     expect(restored.getQueryData(["push"])).toBeUndefined();
     expect(restored.getQueryData(["wishes"])).toEqual({ wishes: [] });
-    client.clear(); restored.clear();
+    client.clear();
+    restored.clear();
   });
 
   it("never shows one user's or couple's cache to another", async () => {
@@ -154,8 +184,19 @@ describe("boot cache", () => {
 
 describe("wiping the device", () => {
   it("removes the boot cache, the query cache and card box data", async () => {
-    const values = new Map<string, string>([["bisou.cardBox.v1:c:u:list", "[]"], ["bisou.locale", "vi"]]);
-    const storage = { get length() { return values.size; }, key: (i: number) => [...values.keys()][i] ?? null, getItem: (k: string) => values.get(k) ?? null, setItem: () => {}, removeItem: (k: string) => values.delete(k) };
+    const values = new Map<string, string>([
+      ["bisou.cardBox.v1:c:u:list", "[]"],
+      ["bisou.locale", "vi"],
+    ]);
+    const storage = {
+      get length() {
+        return values.size;
+      },
+      key: (i: number) => [...values.keys()][i] ?? null,
+      getItem: (k: string) => values.get(k) ?? null,
+      setItem: () => {},
+      removeItem: (k: string) => values.delete(k),
+    };
     const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
     Object.defineProperty(globalThis, "localStorage", { value: storage, configurable: true });
     try {
@@ -166,7 +207,8 @@ describe("wiping the device", () => {
       expect(backend.data.size).toBe(0);
       expect([...values.keys()]).toEqual(["bisou.locale"]);
     } finally {
-      if (original) Object.defineProperty(globalThis, "localStorage", original); else delete (globalThis as { localStorage?: unknown }).localStorage;
+      if (original) Object.defineProperty(globalThis, "localStorage", original);
+      else delete (globalThis as { localStorage?: unknown }).localStorage;
     }
   });
 
@@ -211,12 +253,18 @@ describe("boot outcome from /api/me", () => {
 });
 
 const effects = vi.hoisted(() => [] as (() => void | (() => void))[]);
-vi.mock("react", async original => ({
-  ...await original<typeof import("react")>(),
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => [typeof initial === "function" ? initial() : initial, vi.fn()],
-  useEffect: (effect: () => void | (() => void)) => { effects.push(effect); },
+  useEffect: (effect: () => void | (() => void)) => {
+    effects.push(effect);
+  },
 }));
-afterEach(() => { effects.length = 0; vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  effects.length = 0;
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 it("provider refreshes once after restore and on foreground, and removes its listener on unmount", async () => {
   const provider = ServerDataProvider({ scope: "u1:c1", fallback: null, children: null });
@@ -226,16 +274,19 @@ it("provider refreshes once after restore and on foreground, and removes its lis
   expect(provider.props.onSuccess).toBeTypeOf("function");
   expect(provider.props.onSuccess()).toBeUndefined();
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
-  const cleanups = effects.map(effect => effect());
-  focusManager.setFocused(false); focusManager.setFocused(true);
+  const cleanups = effects.map((effect) => effect());
+  focusManager.setFocused(false);
+  focusManager.setFocused(true);
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(3));
   for (const cleanup of cleanups.reverse()) cleanup?.();
   await client.fetchQuery({ queryKey: ["wishes"], queryFn: request });
-  focusManager.setFocused(false); focusManager.setFocused(true);
+  focusManager.setFocused(false);
+  focusManager.setFocused(true);
   await vi.dynamicImportSettled();
-  await new Promise(resolve => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
   expect(request).toHaveBeenCalledTimes(4);
-  client.clear(); focusManager.setFocused(undefined);
+  client.clear();
+  focusManager.setFocused(undefined);
 });
 
 it("sign-out during foreground refresh cannot write private data back to the device", async () => {
@@ -244,11 +295,22 @@ it("sign-out during foreground refresh cannot write private data back to the dev
   let resolve!: (value: string) => void;
   await client.fetchQuery({ queryKey: ["wishes"], queryFn: async () => "cached" });
   // Update the cached query's fetch function, as its observer does on mount.
-  const pending = client.fetchQuery({ queryKey: ["wishes"], staleTime: 0, queryFn: () => new Promise<string>(done => { resolve = done; }) }).catch(() => {});
+  const pending = client
+    .fetchQuery({
+      queryKey: ["wishes"],
+      staleTime: 0,
+      queryFn: () =>
+        new Promise<string>((done) => {
+          resolve = done;
+        }),
+    })
+    .catch(() => {});
   const refresh = refreshServerData(client);
-  await wipeDeviceData(); client.clear();
+  await wipeDeviceData();
+  client.clear();
   resolve("old partner");
-  await pending; await refresh;
+  await pending;
+  await refresh;
   await persistQueryClientSave(options(client, "u1:c1", store));
   expect(backend.data.size).toBe(0);
   expect(client.getQueryData(["wishes"])).toBeUndefined();
@@ -261,12 +323,18 @@ it("provider accepts only push messages and removes its service worker listener 
   const client = provider.props.client as QueryClient;
   const request = vi.fn(async () => "notes");
   await client.fetchQuery({ queryKey: ["notes"], queryFn: request });
-  const cleanups = effects.map(effect => effect());
-  for (const data of [null, {}, { type: "other", tag: "notes" }, { type: "bisou:push", tag: 1 }, { type: "bisou:push", tag: "events" }]) {
+  const cleanups = effects.map((effect) => effect());
+  for (const data of [
+    null,
+    {},
+    { type: "other", tag: "notes" },
+    { type: "bisou:push", tag: 1 },
+    { type: "bisou:push", tag: "events" },
+  ]) {
     serviceWorker.dispatchEvent(new MessageEvent("message", { data }));
   }
   await vi.dynamicImportSettled();
-  await new Promise(resolve => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
   expect(request).toHaveBeenCalledOnce();
   serviceWorker.dispatchEvent(new MessageEvent("message", { data: { type: "bisou:push", tag: "notes" } }));
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
@@ -274,7 +342,7 @@ it("provider accepts only push messages and removes its service worker listener 
   await client.fetchQuery({ queryKey: ["notes"], queryFn: request });
   serviceWorker.dispatchEvent(new MessageEvent("message", { data: { type: "bisou:push", tag: "notes" } }));
   await vi.dynamicImportSettled();
-  await new Promise(resolve => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
   expect(request).toHaveBeenCalledTimes(3);
   client.clear();
 });

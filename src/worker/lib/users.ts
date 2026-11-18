@@ -30,7 +30,9 @@ export async function findOrCreateUser(env: Env, email: string, locale: Locale, 
   )
     .bind(crypto.randomUUID(), email, locale, now)
     .run();
-  const row = await env.DB.prepare("SELECT id, email, display_name, locale, birth_date, avatar_id, created_at FROM users WHERE email = ?")
+  const row = await env.DB.prepare(
+    "SELECT id, email, display_name, locale, birth_date, avatar_id, created_at FROM users WHERE email = ?",
+  )
     .bind(email)
     .first<UserRow>();
   if (!row) throw new Error("user row missing after insert");

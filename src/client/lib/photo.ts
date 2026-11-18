@@ -24,7 +24,8 @@ export function decodePhoto(file: File): Promise<ImageBitmap> {
 }
 
 export function avatarFileError(file: File): "avatar.wrongType" | "avatar.tooLarge" | null {
-  if (!AVATAR_PICK_TYPES.includes(file.type) && !(file.type === "" && /\.(jpe?g|png|heic|heif)$/i.test(file.name))) return "avatar.wrongType";
+  if (!AVATAR_PICK_TYPES.includes(file.type) && !(file.type === "" && /\.(jpe?g|png|heic|heif)$/i.test(file.name)))
+    return "avatar.wrongType";
   return file.size > AVATAR_PICK_MAX_BYTES ? "avatar.tooLarge" : null;
 }
 
@@ -32,7 +33,9 @@ export function avatarRetryWait(locale: Locale, seconds = 60): string {
   const hours = seconds >= 3600;
   const count = Math.max(1, Math.ceil(seconds / (hours ? 3600 : 60)));
   return new Intl.NumberFormat(locale, {
-    style: "unit", unit: hours ? "hour" : "minute", unitDisplay: "long",
+    style: "unit",
+    unit: hours ? "hour" : "minute",
+    unitDisplay: "long",
   }).format(count);
 }
 

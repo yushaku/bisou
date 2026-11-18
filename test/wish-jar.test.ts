@@ -11,10 +11,14 @@ it.each([
   ["en", "An&#x27;s jar, open my jar", "Bình&#x27;s jar, spin for a gift"],
 ])("wishes R25, R27: renders full %s names without a partner count and unique clip paths", (locale, mine, partner) => {
   vi.stubGlobal("localStorage", { getItem: () => locale });
-  const html = renderToString(h(I18nProvider, null,
-    h(WishJar, { person: { name: "An", tone: "primary" }, level: 4, mine: true, onOpen: () => {} }),
-    h(WishJar, { person: { name: "Bình", tone: "secondary" }, level: 2, onOpen: () => {} }),
-  ));
+  const html = renderToString(
+    h(
+      I18nProvider,
+      null,
+      h(WishJar, { person: { name: "An", tone: "primary" }, level: 4, mine: true, onOpen: () => {} }),
+      h(WishJar, { person: { name: "Bình", tone: "secondary" }, level: 2, onOpen: () => {} }),
+    ),
+  );
   expect(html).toContain(`aria-label="${mine}"`);
   expect(html).toContain(`aria-label="${partner}"`);
   const clips = [...html.matchAll(/<clipPath id="([^"]+)"/g)].map((match) => match[1]);
@@ -25,9 +29,14 @@ it.each([
 
 it("wishes AC15 (R27): labels only a confirmed empty jar, keeping loading and error jars available", () => {
   vi.stubGlobal("localStorage", { getItem: () => "vi" });
-  const render = (empty: boolean) => renderToString(h(I18nProvider, null,
-    h(WishJar, { person: { name: "Bình", tone: "secondary" }, level: 0, empty, onOpen: () => {} }),
-  ));
+  const render = (empty: boolean) =>
+    renderToString(
+      h(
+        I18nProvider,
+        null,
+        h(WishJar, { person: { name: "Bình", tone: "secondary" }, level: 0, empty, onOpen: () => {} }),
+      ),
+    );
   const empty = render(true);
   expect(empty).toContain('aria-disabled="true"');
   expect(empty).toContain('aria-label="Hũ của Bình, quay quà"');

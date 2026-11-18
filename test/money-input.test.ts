@@ -26,6 +26,9 @@ describe("formatMoneyInput", () => {
   });
 });
 
-it.each(["1.250.000,50", "1,250,000.00", "1.250.000 d", "1,250,000.5", "1.250.000"])("pasted %s stays in whole VND", (raw) => {
-  expect(formatMoneyInput(raw, "vi")).toBe("1.250.000");
-});
+it.each(["1.250.000,50", "1,250,000.00", "1.250.000 d", "1,250,000.5", "1.250.000"])(
+  "pasted %s stays in whole VND",
+  (raw) => {
+    expect(formatMoneyInput(raw, "vi")).toBe("1.250.000");
+  },
+);

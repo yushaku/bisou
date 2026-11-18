@@ -1,8 +1,8 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
-import { Loader2Icon } from "lucide-react"
-import { Slot } from "radix-ui"
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "cn";
+import { Loader2Icon } from "lucide-react";
+import { Slot } from "radix-ui";
 
 // Shape, outline, resting shadow and press feedback come from the personality
 // (rounded-control, edge-*, elevate-sm, press; see theme/personalities.css).
@@ -12,13 +12,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "edge-ink elevate-sm bg-primary text-primary-foreground hover:bg-primary/85",
-        outline:
-          "edge-control elevate-sm bg-(--outline-fill) text-foreground hover:bg-accent aria-expanded:bg-accent",
+        outline: "edge-control elevate-sm bg-(--outline-fill) text-foreground hover:bg-accent aria-expanded:bg-accent",
         secondary:
           "edge-ink elevate-sm bg-secondary text-secondary-foreground hover:bg-secondary/85 aria-expanded:bg-secondary",
         ghost: "text-foreground hover:bg-muted aria-expanded:bg-muted",
-        destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:ring-destructive/40",
+        destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:ring-destructive/40",
         link: "h-auto px-0 text-foreground underline decoration-primary decoration-2 underline-offset-4 hover:decoration-foreground",
       },
       size: {
@@ -36,8 +34,8 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
-)
+  },
+);
 
 function Button({
   className,
@@ -50,11 +48,11 @@ function Button({
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
     /** Shows a spinner, keeps the label, and blocks clicks. */
-    loading?: boolean
+    loading?: boolean;
   }) {
-  const Comp = asChild ? Slot.Root : "button"
+  const Comp = asChild ? Slot.Root : "button";
 
   return (
     <Comp
@@ -75,7 +73,7 @@ function Button({
         </>
       )}
     </Comp>
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

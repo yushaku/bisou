@@ -32,19 +32,35 @@ function transactionDone(tx: IDBTransaction): Promise<void> {
 
 export function indexedDbBackend(factory: () => IDBFactory | undefined = () => globalThis.indexedDB): KeyValueBackend {
   let opened: Promise<IDBDatabase | null> | undefined;
-  const open = () => opened ??= new Promise<IDBDatabase | null>((resolve) => {
-    try {
-      const idb = factory();
-      if (!idb) return resolve(null);
-      const timer = setTimeout(() => resolve(null), OPEN_TIMEOUT_MS);
-      const req = idb.open(DB_NAME, 1);
-      req.onupgradeneeded = () => req.result.createObjectStore(STORE);
-      req.onsuccess = () => { clearTimeout(timer); resolve(req.result); };
-      req.onerror = () => { clearTimeout(timer); resolve(null); };
-      req.onblocked = () => { clearTimeout(timer); resolve(null); };
-    } catch { resolve(null); }
-  });
-  async function run<T>(mode: IDBTransactionMode, fallback: T, work: (store: IDBObjectStore) => Promise<T> | T): Promise<T> {
+  const open = () =>
+    (opened ??= new Promise<IDBDatabase | null>((resolve) => {
+      try {
+        const idb = factory();
+        if (!idb) return resolve(null);
+        const timer = setTimeout(() => resolve(null), OPEN_TIMEOUT_MS);
+        const req = idb.open(DB_NAME, 1);
+        req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+        req.onsuccess = () => {
+          clearTimeout(timer);
+          resolve(req.result);
+        };
+        req.onerror = () => {
+          clearTimeout(timer);
+          resolve(null);
+        };
+        req.onblocked = () => {
+          clearTimeout(timer);
+          resolve(null);
+        };
+      } catch {
+        resolve(null);
+      }
+    }));
+  async function run<T>(
+    mode: IDBTransactionMode,
+    fallback: T,
+    work: (store: IDBObjectStore) => Promise<T> | T,
+  ): Promise<T> {
     try {
       const db = await open();
       if (!db) return fallback;
@@ -53,14 +69,32 @@ export function indexedDbBackend(factory: () => IDBFactory | undefined = () => g
       const result = await work(tx.objectStore(STORE));
       await done;
       return result;
-    } catch { return fallback; }
+    } catch {
+      return fallback;
+    }
   }
   return {
-    get: (key) => run("readonly", undefined, async (s) => { const v = await request(s.get(key)); return typeof v === "string" ? v : undefined; }),
-    set: (key, value) => run("readwrite", undefined, (s) => { s.put(value, key); }),
-    del: (key) => run("readwrite", undefined, (s) => { s.delete(key); }),
-    keys: () => run("readonly", [] as string[], async (s) => (await request(s.getAllKeys())).filter((k): k is string => typeof k === "string")),
-    clear: () => run("readwrite", undefined, (s) => { s.clear(); }),
+    get: (key) =>
+      run("readonly", undefined, async (s) => {
+        const v = await request(s.get(key));
+        return typeof v === "string" ? v : undefined;
+      }),
+    set: (key, value) =>
+      run("readwrite", undefined, (s) => {
+        s.put(value, key);
+      }),
+    del: (key) =>
+      run("readwrite", undefined, (s) => {
+        s.delete(key);
+      }),
+    keys: () =>
+      run("readonly", [] as string[], async (s) =>
+        (await request(s.getAllKeys())).filter((k): k is string => typeof k === "string"),
+      ),
+    clear: () =>
+      run("readwrite", undefined, (s) => {
+        s.clear();
+      }),
   };
 }
 
@@ -69,10 +103,16 @@ export function memoryBackend(): KeyValueBackend & { data: Map<string, string> }
   return {
     data,
     get: async (key) => data.get(key),
-    set: async (key, value) => { data.set(key, value); },
-    del: async (key) => { data.delete(key); },
+    set: async (key, value) => {
+      data.set(key, value);
+    },
+    del: async (key) => {
+      data.delete(key);
+    },
     keys: async () => [...data.keys()],
-    clear: async () => { data.clear(); },
+    clear: async () => {
+      data.clear();
+    },
   };
 }
 
@@ -105,11 +145,18 @@ export function scopedStore(): ScopedStore {
   return {
     get: async (key) => {
       const ahead = primed.get(key);
-      if (ahead !== undefined) { primed.delete(key); return live() ? ahead : undefined; }
+      if (ahead !== undefined) {
+        primed.delete(key);
+        return live() ? ahead : undefined;
+      }
       return live() ? backend.get(key) : undefined;
     },
-    set: async (key, value) => { if (live()) await backend.set(key, value); },
-    del: async (key) => { if (live()) await backend.del(key); },
+    set: async (key, value) => {
+      if (live()) await backend.set(key, value);
+    },
+    del: async (key) => {
+      if (live()) await backend.del(key);
+    },
     keys: async () => (live() ? backend.keys() : []),
   };
 }

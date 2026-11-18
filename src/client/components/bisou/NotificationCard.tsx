@@ -16,7 +16,11 @@ export function NotificationCard() {
   const { t } = useI18n();
   const online = useOnline();
   const [dismissed, setDismissed] = useState(() => {
-    try { return localStorage.getItem(DISMISSED) !== null; } catch { return false; }
+    try {
+      return localStorage.getItem(DISMISSED) !== null;
+    } catch {
+      return false;
+    }
   });
   const [ready, setReady] = useState<{ registration: ServiceWorkerRegistration; publicKey: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -31,11 +35,19 @@ export function NotificationCard() {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         const subscription = registration?.pushManager ? await registration.pushManager.getSubscription() : null;
-        if (active) setReady(registration?.pushManager && !subscription && push?.publicKey
-          ? { registration, publicKey: push.publicKey } : null);
-      } catch { if (active) setReady(null); }
+        if (active)
+          setReady(
+            registration?.pushManager && !subscription && push?.publicKey
+              ? { registration, publicKey: push.publicKey }
+              : null,
+          );
+      } catch {
+        if (active) setReady(null);
+      }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [eligible, dismissed, online, push]);
 
   if (!eligible || dismissed || !ready) return null;
@@ -43,7 +55,11 @@ export function NotificationCard() {
   function dismiss() {
     document.querySelector<HTMLElement>("main")?.focus({ preventScroll: true });
     setDismissed(true);
-    try { localStorage.setItem(DISMISSED, "1"); } catch { /* The dismissal still lasts for this visit. */ }
+    try {
+      localStorage.setItem(DISMISSED, "1");
+    } catch {
+      /* The dismissal still lasts for this visit. */
+    }
   }
 
   async function enable() {
@@ -52,15 +68,41 @@ export function NotificationCard() {
     try {
       await turnOn(ready.registration, ready.publicKey, { journal: true, reminders: true });
     } catch (e) {
-      if (Notification.permission !== "denied") toast.error(t(permissionPromptHidden(e) ? "push.askHidden" : "error.generic"));
-    } finally { dismiss(); setBusy(false); }
+      if (Notification.permission !== "denied")
+        toast.error(t(permissionPromptHidden(e) ? "push.askHidden" : "error.generic"));
+    } finally {
+      dismiss();
+      setBusy(false);
+    }
   }
 
-  return <Card className="relative mt-5 mb-5 gap-3 p-4">
-    <h2 className="pr-10 font-heading text-xl">{t("push.card.title")}</h2>
-    <Button variant="ghost" size="icon" className="absolute top-2 right-2" disabled={busy} aria-label={t("push.card.dismiss")} onClick={dismiss}><X aria-hidden="true" /></Button>
-    <p className="text-sm text-muted-foreground">{t("push.card.body")}</p>
-    {!online && <p id="push-card-offline" className="text-sm text-muted-foreground">{t("offline.save")}</p>}
-    <Button loading={busy} disabled={!online} aria-describedby={!online ? "push-card-offline" : undefined} onClick={enable}>{t("push.card.button")}</Button>
-  </Card>;
+  return (
+    <Card className="relative mt-5 mb-5 gap-3 p-4">
+      <h2 className="pr-10 font-heading text-xl">{t("push.card.title")}</h2>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-2"
+        disabled={busy}
+        aria-label={t("push.card.dismiss")}
+        onClick={dismiss}
+      >
+        <X aria-hidden="true" />
+      </Button>
+      <p className="text-sm text-muted-foreground">{t("push.card.body")}</p>
+      {!online && (
+        <p id="push-card-offline" className="text-sm text-muted-foreground">
+          {t("offline.save")}
+        </p>
+      )}
+      <Button
+        loading={busy}
+        disabled={!online}
+        aria-describedby={!online ? "push-card-offline" : undefined}
+        onClick={enable}
+      >
+        {t("push.card.button")}
+      </Button>
+    </Card>
+  );
 }

@@ -3,7 +3,13 @@ import { useI18n } from "../../i18n";
 import type { JarLevel } from "../../lib/wishes";
 import { PersonAvatar, type Person } from "./CoupleAvatars";
 
-export function WishJar({ person, level, mine = false, empty = false, onOpen }: {
+export function WishJar({
+  person,
+  level,
+  mine = false,
+  empty = false,
+  onOpen,
+}: {
   person: Person;
   level: JarLevel;
   mine?: boolean;
@@ -13,16 +19,31 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
   const id = useId();
   const { t } = useI18n();
   return (
-    <button type="button" aria-label={t(mine ? "wishes.jarMine" : "wishes.jarPartner", { name: person.name })}
+    <button
+      type="button"
+      aria-label={t(mine ? "wishes.jarMine" : "wishes.jarPartner", { name: person.name })}
       aria-describedby={empty ? `${id}-empty` : undefined}
-      aria-disabled={empty || undefined} onClick={() => { if (!empty) onOpen(); }}
-      className="flex min-w-0 flex-col items-center rounded-xl py-1 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-disabled:cursor-default">
+      aria-disabled={empty || undefined}
+      onClick={() => {
+        if (!empty) onOpen();
+      }}
+      className="flex min-w-0 flex-col items-center rounded-xl py-1 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-disabled:cursor-default"
+    >
       <span className="w-full break-words font-heading text-lg">{t("wishes.jarTitle", { name: person.name })}</span>
       <span className={`jar-wrap relative block w-35 max-w-full ${empty ? "[&>svg]:opacity-50" : ""}`}>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 160" className="jar block h-40 w-35 max-w-full" data-level={level} aria-hidden="true">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 140 160"
+          className="jar block h-40 w-35 max-w-full"
+          data-level={level}
+          aria-hidden="true"
+        >
           <defs>
             <path id={`${id}-s`} d="M0-9 2.5-3.5 8.6-2.8 4 1.3 5.3 7.3 0 4.3-5.3 7.3-4 1.3-8.6-2.8-2.5-3.5Z" />
-            <path id={`${id}-h`} d="M0 7.3C-7.3 2.6-9.1-1.8-7.8-4.9-6.5-8.1-2.3-8.6 0-4.9 2.3-8.6 6.5-8.1 7.8-4.9 9.1-1.8 7.3 2.6 0 7.3Z" />
+            <path
+              id={`${id}-h`}
+              d="M0 7.3C-7.3 2.6-9.1-1.8-7.8-4.9-6.5-8.1-2.3-8.6 0-4.9 2.3-8.6 6.5-8.1 7.8-4.9 9.1-1.8 7.3 2.6 0 7.3Z"
+            />
             <g id={`${id}-q`}>
               <rect x="-7" y="-7" width="14" height="14" rx="2" />
               <path className="jar-fold" d="M-7 7 7-7" />
@@ -33,7 +54,10 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
             </clipPath>
           </defs>
           <g transform="translate(10 8)">
-            <path className="jar-glass" d="M33 15V28C23 31 15.5 38 15 52L14.3 90 14 126C14 138 20 143.5 31 143.5H89C100 143.5 106 138 106 126L105.6 88 105 52C104.5 38 97 31 87 28V15Z" />
+            <path
+              className="jar-glass"
+              d="M33 15V28C23 31 15.5 38 15 52L14.3 90 14 126C14 138 20 143.5 31 143.5H89C100 143.5 106 138 106 126L105.6 88 105 52C104.5 38 97 31 87 28V15Z"
+            />
             <g className="jar-pc" clipPath={`url(#${id}-clip-a)`}>
               <g className="jar-l1">
                 <use href={`#${id}-h`} className="jar-p2" transform="translate(14 139)rotate(-11)" />
@@ -122,11 +146,29 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
               </g>
             </g>
             <path className="jar-shine" d="M21.5 60Q19.7 90 21.6 118M21.8 127v.1M99 66v16" />
-            <path className="jar-ink" style={{ strokeWidth: ".9", opacity: ".45", strokeDasharray: "34 8 20 11" }} d="M34 16V28C23 31 15.5 38 15 52L14.3 90 14 126C14 138 20 143.5 31 143.5H89C100 143.5 106 138 106 126L105.6 88 105 52C104.5 38 97 31 87 28V15" transform="translate(.8 .6)" />
-            <path className="jar-ink" d="M33 15V28C23 31 15.5 38 15 52L14.3 90 14 126C14 138 20 143.5 31 143.5H89C100 143.5 106 138 106 126L105.6 88 105 52C104.5 38 97 31 87 28V15" />
-            <path className="jar-glass" d="M31 15.5C29.5 15.5 28 14 28 12V9.5C28 7.2 29.5 5.8 32 5.8H88C90.5 5.8 92 7.2 92 9.5V12C92 14 90.5 15.5 89 15.5Z" />
-            <path className="jar-ink" d="M31 15.5C29.5 15.5 28 14 28 12V9.5C28 7.2 29.5 5.8 32 5.8H88C90.5 5.8 92 7.2 92 9.5V12C92 14 90.5 15.5 89 15.5Z" />
-            <path className="jar-ink" style={{ strokeWidth: "1.3" }} d="M36 20.4Q53 22.6 69 22M74 21.6Q80 21.3 84.5 20.4M37 25.3Q48 26.8 58 26.9" />
+            <path
+              className="jar-ink"
+              style={{ strokeWidth: ".9", opacity: ".45", strokeDasharray: "34 8 20 11" }}
+              d="M34 16V28C23 31 15.5 38 15 52L14.3 90 14 126C14 138 20 143.5 31 143.5H89C100 143.5 106 138 106 126L105.6 88 105 52C104.5 38 97 31 87 28V15"
+              transform="translate(.8 .6)"
+            />
+            <path
+              className="jar-ink"
+              d="M33 15V28C23 31 15.5 38 15 52L14.3 90 14 126C14 138 20 143.5 31 143.5H89C100 143.5 106 138 106 126L105.6 88 105 52C104.5 38 97 31 87 28V15"
+            />
+            <path
+              className="jar-glass"
+              d="M31 15.5C29.5 15.5 28 14 28 12V9.5C28 7.2 29.5 5.8 32 5.8H88C90.5 5.8 92 7.2 92 9.5V12C92 14 90.5 15.5 89 15.5Z"
+            />
+            <path
+              className="jar-ink"
+              d="M31 15.5C29.5 15.5 28 14 28 12V9.5C28 7.2 29.5 5.8 32 5.8H88C90.5 5.8 92 7.2 92 9.5V12C92 14 90.5 15.5 89 15.5Z"
+            />
+            <path
+              className="jar-ink"
+              style={{ strokeWidth: "1.3" }}
+              d="M36 20.4Q53 22.6 69 22M74 21.6Q80 21.3 84.5 20.4M37 25.3Q48 26.8 58 26.9"
+            />
           </g>
           <g transform="translate(124 32)scale(1.5)">
             <use href={`#${id}-k`} className="jar-sp jar-tw" style={{ animationDelay: "0s" }} />
@@ -144,7 +186,14 @@ export function WishJar({ person, level, mine = false, empty = false, onOpen }: 
             <use href={`#${id}-k`} className="jar-sp jar-tw" style={{ animationDelay: "-1.8s" }} />
           </g>
         </svg>
-        {empty && <span id={`${id}-empty`} className="absolute top-21 right-6 left-6 text-xs leading-snug font-semibold text-balance text-muted-foreground">{t("wishes.jarEmpty")}</span>}
+        {empty && (
+          <span
+            id={`${id}-empty`}
+            className="absolute top-21 right-6 left-6 text-xs leading-snug font-semibold text-balance text-muted-foreground"
+          >
+            {t("wishes.jarEmpty")}
+          </span>
+        )}
       </span>
       <PersonAvatar person={person} size="sm" className="mt-0.5" />
     </button>

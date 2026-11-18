@@ -47,7 +47,8 @@ const vi = {
   sampleNotePlaceholder: "Hôm nay hai đứa đã...",
   celebrate: "Thử hiệu ứng ăn mừng",
   photoCount: "{count} ảnh",
-  credits: "Ảnh mẫu: Vyacheslav Argenberg (CC BY 4.0), Prenn (CC BY-SA 3.0), Andy Li, DEBA PRASAD ROY, Jeong seolah (CC0), qua Wikimedia Commons.",
+  credits:
+    "Ảnh mẫu: Vyacheslav Argenberg (CC BY 4.0), Prenn (CC BY-SA 3.0), Andy Li, DEBA PRASAD ROY, Jeong seolah (CC0), qua Wikimedia Commons.",
 } as const;
 
 type DesignKey = keyof typeof vi;
@@ -97,7 +98,8 @@ const en: Record<DesignKey, string> = {
   sampleNotePlaceholder: "Today we...",
   celebrate: "Try the celebration",
   photoCount: "{count} photos",
-  credits: "Sample photos: Vyacheslav Argenberg (CC BY 4.0), Prenn (CC BY-SA 3.0), Andy Li, DEBA PRASAD ROY, Jeong seolah (CC0), via Wikimedia Commons.",
+  credits:
+    "Sample photos: Vyacheslav Argenberg (CC BY 4.0), Prenn (CC BY-SA 3.0), Andy Li, DEBA PRASAD ROY, Jeong seolah (CC0), via Wikimedia Commons.",
 };
 
 export function useDesignT() {

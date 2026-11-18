@@ -1,6 +1,13 @@
 import type { CardBoxDetail, CardBoxSummary } from "../shared/cardBox";
 import type {
-  ApiError, ClosedNoteInput, CloseInput, NoteDelivery, NoteInput, NoteLists, WrittenNote, ReceivedNote,
+  ApiError,
+  ClosedNoteInput,
+  CloseInput,
+  NoteDelivery,
+  NoteInput,
+  NoteLists,
+  WrittenNote,
+  ReceivedNote,
   PushState,
   PushDevice,
   PushSubscriptionInput,
@@ -20,7 +27,16 @@ import type {
   RequestCodeResponse,
   User,
 } from "../shared/types";
-import type { GardenState, GardenCardState, GardenDeckState, GardenLevels, GardenStageAnswers, LevelAction, GardenAnswerInput, RelationshipLevel } from "../shared/garden";
+import type {
+  GardenState,
+  GardenCardState,
+  GardenDeckState,
+  GardenLevels,
+  GardenStageAnswers,
+  LevelAction,
+  GardenAnswerInput,
+  RelationshipLevel,
+} from "../shared/garden";
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; status: number; error: ApiError | null };
 
@@ -36,7 +52,7 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
   } catch {
     return { ok: false, status: 0, error: null };
   }
-  let json: unknown = null;
+  let json: unknown;
   try {
     json = await res.json();
   } catch {
@@ -54,46 +70,67 @@ export const api = {
   gardenLevels: (body: LevelAction) => call<{ levels: GardenLevels }>("POST", "/api/garden/levels", body),
   notes: () => call<NoteLists>("GET", "/api/notes"),
   createNote: (input: NoteInput & NoteDelivery) => call<{ note: WrittenNote }>("POST", "/api/notes", input),
-  updateNote: (id: string, input: NoteInput & NoteDelivery) => call<{ note: WrittenNote }>("PUT", `/api/notes/${encodeURIComponent(id)}`, input),
+  updateNote: (id: string, input: NoteInput & NoteDelivery) =>
+    call<{ note: WrittenNote }>("PUT", `/api/notes/${encodeURIComponent(id)}`, input),
   deleteNote: (id: string) => call<{ ok: true }>("DELETE", `/api/notes/${encodeURIComponent(id)}`),
-  updateClosedNote: (id: string, input: ClosedNoteInput) => call<{ entry: JournalEntry }>("PUT", `/api/notes/${encodeURIComponent(id)}/closed`, input),
-  closeNote: (id: string, input: CloseInput) => call<{ entry: JournalEntry }>("POST", `/api/notes/${encodeURIComponent(id)}/close`, input),
+  updateClosedNote: (id: string, input: ClosedNoteInput) =>
+    call<{ entry: JournalEntry }>("PUT", `/api/notes/${encodeURIComponent(id)}/closed`, input),
+  closeNote: (id: string, input: CloseInput) =>
+    call<{ entry: JournalEntry }>("POST", `/api/notes/${encodeURIComponent(id)}/close`, input),
   openNote: (id: string) => call<{ note: ReceivedNote }>("POST", `/api/notes/${encodeURIComponent(id)}/open`),
   gardenStars: () => call<{ cards: GardenCardState[] }>("GET", "/api/garden/stars"),
   garden: () => call<GardenState>("GET", "/api/garden"),
   gardenDeck: (id: string) => call<GardenDeckState>("GET", `/api/garden/decks/${encodeURIComponent(id)}`),
-  gardenStage: (levelId: RelationshipLevel) => call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}`),
-  gardenStageDecisions: (levelId: RelationshipLevel) => call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}/decisions`),
+  gardenStage: (levelId: RelationshipLevel) =>
+    call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}`),
+  gardenStageDecisions: (levelId: RelationshipLevel) =>
+    call<GardenStageAnswers>("GET", `/api/garden/stages/${encodeURIComponent(levelId)}/decisions`),
   swapGarden: (cardId: string) => call<GardenState>("POST", "/api/garden/today/swap", { cardId }),
-  answerGarden: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("POST", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),
-  editGardenAnswer: (id: string, response: string | GardenAnswerInput) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/answer`, typeof response === "string" ? { text: response } : response),
-  starGarden: (id: string) => call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/star`),
-  unstarGarden: (id: string) => call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/star`),
-  deleteGardenAnswer: (id: string) => call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/answer`),
+  answerGarden: (id: string, response: string | GardenAnswerInput) =>
+    call<{ card: GardenCardState }>(
+      "POST",
+      `/api/garden/cards/${encodeURIComponent(id)}/answer`,
+      typeof response === "string" ? { text: response } : response,
+    ),
+  editGardenAnswer: (id: string, response: string | GardenAnswerInput) =>
+    call<{ card: GardenCardState }>(
+      "PUT",
+      `/api/garden/cards/${encodeURIComponent(id)}/answer`,
+      typeof response === "string" ? { text: response } : response,
+    ),
+  starGarden: (id: string) =>
+    call<{ card: GardenCardState }>("PUT", `/api/garden/cards/${encodeURIComponent(id)}/star`),
+  unstarGarden: (id: string) =>
+    call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/star`),
+  deleteGardenAnswer: (id: string) =>
+    call<{ card: GardenCardState }>("DELETE", `/api/garden/cards/${encodeURIComponent(id)}/answer`),
   setAvatar: (blob: Blob) => {
     const form = new FormData();
     form.set("photo", blob, blob.type === "image/webp" ? "avatar.webp" : "avatar.jpg");
     return call<{ user: User }>("PUT", "/api/me/avatar", form);
   },
   removeAvatar: () => call<{ user: User }>("DELETE", "/api/me/avatar"),
-  updateEvent: (id: string, input: CoupleEventInput) => call<CoupleResponse>("PUT", `/api/events/${encodeURIComponent(id)}`, input),
+  updateEvent: (id: string, input: CoupleEventInput) =>
+    call<CoupleResponse>("PUT", `/api/events/${encodeURIComponent(id)}`, input),
   deleteEvent: (id: string) => call<CoupleResponse>("DELETE", `/api/events/${encodeURIComponent(id)}`),
   createEvent: (input: CoupleEventInput) => call<CoupleResponse>("POST", "/api/events", input),
-  receiveWish: (id: string, input: ReceiveWishInput) => call<{ wish: Wish; entry: JournalEntry }>("POST", `/api/wishes/${encodeURIComponent(id)}/received`, input),
+  receiveWish: (id: string, input: ReceiveWishInput) =>
+    call<{ wish: Wish; entry: JournalEntry }>("POST", `/api/wishes/${encodeURIComponent(id)}/received`, input),
   spin: (budget: number) => call<{ wish: SpinWish | null }>("POST", "/api/wishes/spin", { budget }),
   claim: (id: string) => call<{ claim: Claim }>("POST", `/api/wishes/${encodeURIComponent(id)}/claim`),
   claims: () => call<{ claims: Claim[] }>("GET", "/api/wishes/claims"),
-  acknowledgeClaimNotice: (id: string) => call<{ ok: true }>("POST", `/api/wishes/claims/${encodeURIComponent(id)}/ack`),
+  acknowledgeClaimNotice: (id: string) =>
+    call<{ ok: true }>("POST", `/api/wishes/claims/${encodeURIComponent(id)}/ack`),
   releaseClaim: (id: string) => call<{ ok: true }>("DELETE", `/api/wishes/claims/${encodeURIComponent(id)}`),
   wishes: () => call<{ open: Wish[]; received: Wish[]; partnerJarEmpty: boolean }>("GET", "/api/wishes"),
   createWish: (input: WishInput) => call<{ wish: Wish }>("POST", "/api/wishes", input),
-  updateWish: (id: string, input: WishInput) => call<{ wish: Wish }>("PUT", `/api/wishes/${encodeURIComponent(id)}`, input),
+  updateWish: (id: string, input: WishInput) =>
+    call<{ wish: Wish }>("PUT", `/api/wishes/${encodeURIComponent(id)}`, input),
   deleteWish: (id: string) => call<{ ok: true }>("DELETE", `/api/wishes/${encodeURIComponent(id)}`),
   me: () => call<MeResponse>("GET", "/api/me"),
   updateMe: (patch: { displayName?: string; locale?: Locale; birthDate?: string | null }) =>
     call<{ user: User }>("PATCH", "/api/me", patch),
-  requestCode: (email: string, lang: Locale) =>
-    call<RequestCodeResponse>("POST", "/api/auth/request", { email, lang }),
+  requestCode: (email: string, lang: Locale) => call<RequestCodeResponse>("POST", "/api/auth/request", { email, lang }),
   verifyCode: (email: string, code: string, lang: Locale) =>
     call<{ user: User }>("POST", "/api/auth/verify", { email, code, lang }),
   logout: (endpoint?: string) => call<{ ok: true }>("POST", "/api/auth/logout", endpoint ? { endpoint } : undefined),

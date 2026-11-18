@@ -61,7 +61,10 @@ export function useUploadQueue(existing: string[] = []) {
   const add = useCallback((renditions: Renditions) => {
     const previewUrl = URL.createObjectURL(renditions.thumb);
     ownUrls.current.add(previewUrl);
-    setItems((list) => [...list, { localId: crypto.randomUUID(), previewUrl, state: "queued", progress: 0, renditions }]);
+    setItems((list) => [
+      ...list,
+      { localId: crypto.randomUUID(), previewUrl, state: "queued", progress: 0, renditions },
+    ]);
   }, []);
 
   const retry = useCallback((localId: string) => patch(localId, { state: "queued", error: undefined }), [patch]);

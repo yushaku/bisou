@@ -21,11 +21,20 @@ export function SubPageHeader({ title }: { title: string }) {
   return (
     <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
       <div className="mx-auto flex h-14 w-full max-w-md items-center gap-3 px-4">
-        <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => {
-          if (history.state?.from) history.back();
-          else navigate("/", { replace: true });
-        }}><ArrowLeft aria-hidden="true" /></Button>
-        <h1 ref={heading} tabIndex={-1} className="font-heading text-2xl outline-none">{title}</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t("common.back")}
+          onClick={() => {
+            if (history.state?.from) history.back();
+            else navigate("/", { replace: true });
+          }}
+        >
+          <ArrowLeft aria-hidden="true" />
+        </Button>
+        <h1 ref={heading} tabIndex={-1} className="font-heading text-2xl outline-none">
+          {title}
+        </h1>
       </div>
     </header>
   );

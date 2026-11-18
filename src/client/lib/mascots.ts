@@ -9,10 +9,18 @@ import boyError from "@/assets/mascots/boy-error.webp";
 import boyCelebrate from "@/assets/mascots/boy-celebrate.webp";
 
 export const MASCOTS = [
-  { id: "girl", name: "mascot.girl", images: { empty: girlEmpty, waiting: girlWaiting, error: girlError, celebrate: girlCelebrate } },
-  { id: "boy", name: "mascot.boy", images: { empty: boyEmpty, waiting: boyWaiting, error: boyError, celebrate: boyCelebrate } }
+  {
+    id: "girl",
+    name: "mascot.girl",
+    images: { empty: girlEmpty, waiting: girlWaiting, error: girlError, celebrate: girlCelebrate },
+  },
+  {
+    id: "boy",
+    name: "mascot.boy",
+    images: { empty: boyEmpty, waiting: boyWaiting, error: boyError, celebrate: boyCelebrate },
+  },
 ] as const;
-export type MascotSituation = keyof typeof MASCOTS[number]["images"];
+export type MascotSituation = keyof (typeof MASCOTS)[number]["images"];
 const KEY = "bisou.mascot";
 const CHANGE = "bisou:mascot";
 let sessionId: string | null = null;
@@ -20,21 +28,33 @@ let sessionId: string | null = null;
 export function readMascot() {
   let id = sessionId;
   if (id === null) {
-    try { id = localStorage.getItem(KEY); } catch { /* Storage may be blocked. */ }
+    try {
+      id = localStorage.getItem(KEY);
+    } catch {
+      /* Storage may be blocked. */
+    }
   }
-  return MASCOTS.find(mascot => mascot.id === id) ?? MASCOTS[0];
+  return MASCOTS.find((mascot) => mascot.id === id) ?? MASCOTS[0];
 }
 
 export function setMascot(id: string) {
-  const next = MASCOTS.find(mascot => mascot.id === id)?.id ?? MASCOTS[0].id;
-  try { localStorage.setItem(KEY, next); sessionId = null; } catch { sessionId = next; }
+  const next = MASCOTS.find((mascot) => mascot.id === id)?.id ?? MASCOTS[0].id;
+  try {
+    localStorage.setItem(KEY, next);
+    sessionId = null;
+  } catch {
+    sessionId = next;
+  }
   window.dispatchEvent(new Event(CHANGE));
 }
 
 function subscribe(onChange: () => void) {
   window.addEventListener(CHANGE, onChange);
   window.addEventListener("storage", onChange);
-  return () => { window.removeEventListener(CHANGE, onChange); window.removeEventListener("storage", onChange); };
+  return () => {
+    window.removeEventListener(CHANGE, onChange);
+    window.removeEventListener("storage", onChange);
+  };
 }
 export function useMascot() {
   return useSyncExternalStore(subscribe, readMascot, readMascot);

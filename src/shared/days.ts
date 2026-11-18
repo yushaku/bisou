@@ -116,7 +116,12 @@ export function nextMilestone(start: string, today: string): Milestone {
   const current = Math.max(1, daysTogether(start, today));
   const hundred = Math.ceil(current / MILESTONE_STEP) * MILESTONE_STEP;
   const hundredDate = addDays(start, hundred - 1);
-  const byDays: Milestone = { kind: "days", days: hundred, date: hundredDate, daysLeft: daysBetween(today, hundredDate) };
+  const byDays: Milestone = {
+    kind: "days",
+    days: hundred,
+    date: hundredDate,
+    daysLeft: daysBetween(today, hundredDate),
+  };
 
   // The anniversary in today's year, or the one after it when that has passed.
   let years = Math.max(1, Number(today.slice(0, 4)) - Number(start.slice(0, 4)));

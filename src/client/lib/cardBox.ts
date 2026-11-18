@@ -9,39 +9,74 @@ export function cardBoxEndMessage(open: boolean) {
 export function cardBoxLoadMessage(loaded: boolean, online: boolean, error: "notFound" | "loadError" | null) {
   return loaded ? null : !online ? "needsConnection" : error;
 }
-export function nextCard(detail: CardBoxDetail, play: Play, seen: string[], random = Math.random): { play: Play; seen: string[] } {
+export function nextCard(
+  detail: CardBoxDetail,
+  play: Play,
+  seen: string[],
+  random = Math.random,
+): { play: Play; seen: string[] } {
   if (play.index < play.stack.length - 1) return { play: { ...play, index: play.index + 1, startedOver: false }, seen };
   return randomCard(detail, play, seen, random);
 }
-export function randomCard(detail: CardBoxDetail, play: Play, seen: string[], random = Math.random): { play: Play; seen: string[] } {
-  const ids = detail.cards.map(card => card.id);
+export function randomCard(
+  detail: CardBoxDetail,
+  play: Play,
+  seen: string[],
+  random = Math.random,
+): { play: Play; seen: string[] } {
+  const ids = detail.cards.map((card) => card.id);
   if (!ids.length) return { play: { stack: [], index: -1, startedOver: false }, seen: [] };
-  let validSeen = seen.filter(id => ids.includes(id));
+  let validSeen = seen.filter((id) => ids.includes(id));
   const current = play.stack[play.index] ?? validSeen.at(-1);
-  let available = ids.filter(id => !validSeen.includes(id) && id !== current);
+  let available = ids.filter((id) => !validSeen.includes(id) && id !== current);
   const startedOver = available.length === 0;
   if (startedOver && !detail.box.open) return { play: { ...play, startedOver: true }, seen: validSeen };
-  if (startedOver) { validSeen = []; available = ids.filter(id => id !== current); }
+  if (startedOver) {
+    validSeen = [];
+    available = ids.filter((id) => id !== current);
+  }
   const id = available[Math.floor(random() * available.length)] ?? ids[0]!;
-  return { play: { stack: [...play.stack.slice(0, play.index + 1), id], index: play.index + 1, startedOver }, seen: [...validSeen, id] };
+  return {
+    play: { stack: [...play.stack.slice(0, play.index + 1), id], index: play.index + 1, startedOver },
+    seen: [...validSeen, id],
+  };
 }
-export function previousCard(play: Play): Play { return { ...play, index: Math.max(0, play.index - 1), startedOver: false }; }
+export function previousCard(play: Play): Play {
+  return { ...play, index: Math.max(0, play.index - 1), startedOver: false };
+}
 export function seenCardCount(detail: CardBoxDetail, seen: string[]): number {
-  return new Set(seen.filter(id => detail.cards.some(card => card.id === id))).size;
+  return new Set(seen.filter((id) => detail.cards.some((card) => card.id === id))).size;
 }
 export function readSeen(scope: string, boxId: string): string[] {
-  try { const value: unknown = JSON.parse(localStorage.getItem(`bisou.cardBox.v1:${scope}:seen:${boxId}`) ?? "[]"); return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []; } catch { return []; }
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(`bisou.cardBox.v1:${scope}:seen:${boxId}`) ?? "[]");
+    return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
 }
 export function writeSeen(scope: string, boxId: string, seen: string[]): void {
-  try { localStorage.setItem(`bisou.cardBox.v1:${scope}:seen:${boxId}`, JSON.stringify(seen)); } catch { /* Drawing still works in memory. */ }
+  try {
+    localStorage.setItem(`bisou.cardBox.v1:${scope}:seen:${boxId}`, JSON.stringify(seen));
+  } catch {
+    /* Drawing still works in memory. */
+  }
 }
 
 type CardBoxCache = { list: CardBoxSummary[]; [key: `box:${string}`]: CardBoxDetail };
 export function readCache<K extends keyof CardBoxCache>(scope: string, key: K): CardBoxCache[K] | null {
-  try { return JSON.parse(localStorage.getItem(`bisou.cardBox.v1:${scope}:${key}`) ?? "null") as CardBoxCache[K] | null; } catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem(`bisou.cardBox.v1:${scope}:${key}`) ?? "null") as CardBoxCache[K] | null;
+  } catch {
+    return null;
+  }
 }
 export function writeCache<K extends keyof CardBoxCache>(scope: string, key: K, value: CardBoxCache[K]): void {
-  try { localStorage.setItem(`bisou.cardBox.v1:${scope}:${key}`, JSON.stringify(value)); } catch { /* Play remains available without persistent storage. */ }
+  try {
+    localStorage.setItem(`bisou.cardBox.v1:${scope}:${key}`, JSON.stringify(value));
+  } catch {
+    /* Play remains available without persistent storage. */
+  }
 }
 export function clearCardBoxCache(): void {
   try {
@@ -49,7 +84,9 @@ export function clearCardBoxCache(): void {
       const key = localStorage.key(i);
       if (key?.startsWith("bisou.cardBox.")) localStorage.removeItem(key);
     }
-  } catch { /* Storage may be unavailable. */ }
+  } catch {
+    /* Storage may be unavailable. */
+  }
 }
 
 export function formatBoxPrice(price: number, locale: Locale): string {

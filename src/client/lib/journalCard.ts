@@ -15,7 +15,12 @@ export function toCard(e: JournalEntry, people: Map<string, Person>, t: Translat
     id: e.id,
     source: e.note ? "note" : e.source,
     parts: e.note,
-    reply: e.note ? { person: people.get(e.note.recipientId) ?? { name: displayName(undefined, t), tone: "secondary" }, line: e.note.line } : undefined,
+    reply: e.note
+      ? {
+          person: people.get(e.note.recipientId) ?? { name: displayName(undefined, t), tone: "secondary" },
+          line: e.note.line,
+        }
+      : undefined,
     date: e.date,
     author: people.get(e.authorId) ?? { name: displayName(undefined, t), tone: "secondary" },
     body: e.note ? "" : e.text,

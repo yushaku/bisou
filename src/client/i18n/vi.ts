@@ -237,7 +237,8 @@ export const vi = {
   "push.blocked": "Thông báo bị chặn. Bạn hãy cho phép Bisou gửi thông báo trong cài đặt điện thoại hoặc trình duyệt.",
   "push.needsInstall": "Thêm Bisou vào màn hình chính rồi mở app để bật thông báo.",
   "push.unsupported": "Thông báo chưa dùng được trong trình duyệt này.",
-  "push.askHidden": "Trình duyệt chưa hỏi quyền. Bấm biểu tượng chuông hoặc ổ khoá trên thanh địa chỉ, chọn Cho phép thông báo, rồi bật lại.",
+  "push.askHidden":
+    "Trình duyệt chưa hỏi quyền. Bấm biểu tượng chuông hoặc ổ khoá trên thanh địa chỉ, chọn Cho phép thông báo, rồi bật lại.",
   "push.unavailable": "Thông báo chưa sẵn sàng. Bạn thử lại sau nhé.",
   "push.deviceOnly": "Lựa chọn này chỉ áp dụng cho thiết bị đang dùng.",
   "install.title": "Mang Bisou về màn hình chính",
@@ -606,9 +607,11 @@ export const vi = {
   "viewer.count": "{index} / {total}",
   "crop.title": "Chọn phần ảnh giữ lại",
   "crop.step": "Ảnh {index} trên {total}",
-  "crop.help": "Kéo để dời ảnh. Chụm hai ngón, cuộn hoặc nhấn + hay - để thu phóng. Chỉ phần trong khung vuông được lưu.",
+  "crop.help":
+    "Kéo để dời ảnh. Chụm hai ngón, cuộn hoặc nhấn + hay - để thu phóng. Chỉ phần trong khung vuông được lưu.",
   "crop.area": "Khung ảnh vuông. Dùng phím mũi tên để dời ảnh. Chụm hai ngón, cuộn hoặc nhấn + hay - để thu phóng.",
-  "crop.roundHelp": "Kéo để dời ảnh. Chụm hai ngón, cuộn hoặc nhấn + hay - để thu phóng. Chỉ phần trong khung tròn được lưu.",
+  "crop.roundHelp":
+    "Kéo để dời ảnh. Chụm hai ngón, cuộn hoặc nhấn + hay - để thu phóng. Chỉ phần trong khung tròn được lưu.",
   "crop.roundArea": "Khung ảnh tròn. Dùng phím mũi tên để dời ảnh. Chụm hai ngón, cuộn hoặc nhấn + hay - để thu phóng.",
   "crop.use": "Dùng ảnh này",
   "crop.skip": "Bỏ ảnh này",

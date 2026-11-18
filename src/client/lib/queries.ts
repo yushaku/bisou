@@ -6,9 +6,12 @@ import { apiData } from "./serverQuery";
 export const queries = {
   push: queryOptions({ queryKey: ["push"], queryFn: () => apiData(api.push()) }),
   garden: queryOptions({ queryKey: ["garden"], queryFn: () => apiData(api.garden()) }),
-  gardenDeck: (id: string) => queryOptions({ queryKey: ["garden", "deck", id], queryFn: () => apiData(api.gardenDeck(id)) }),
-  gardenStage: (id: RelationshipLevel) => queryOptions({ queryKey: ["garden", "stage", id], queryFn: () => apiData(api.gardenStage(id)) }),
-  gardenDecisions: (id: RelationshipLevel) => queryOptions({ queryKey: ["garden", "decisions", id], queryFn: () => apiData(api.gardenStageDecisions(id)) }),
+  gardenDeck: (id: string) =>
+    queryOptions({ queryKey: ["garden", "deck", id], queryFn: () => apiData(api.gardenDeck(id)) }),
+  gardenStage: (id: RelationshipLevel) =>
+    queryOptions({ queryKey: ["garden", "stage", id], queryFn: () => apiData(api.gardenStage(id)) }),
+  gardenDecisions: (id: RelationshipLevel) =>
+    queryOptions({ queryKey: ["garden", "decisions", id], queryFn: () => apiData(api.gardenStageDecisions(id)) }),
   gardenStars: queryOptions({ queryKey: ["garden", "stars"], queryFn: () => apiData(api.gardenStars()) }),
   wishes: queryOptions({ queryKey: ["wishes"], queryFn: () => apiData(api.wishes()) }),
   notes: queryOptions({ queryKey: ["notes"], queryFn: () => apiData(api.notes()) }),
@@ -16,8 +19,9 @@ export const queries = {
   boxes: queryOptions({ queryKey: ["boxes"], queryFn: () => apiData(api.boxes()) }),
   box: (id: string) => queryOptions({ queryKey: ["boxes", id], queryFn: () => apiData(api.box(id)) }),
   journal: infiniteQueryOptions({
-    queryKey: ["journal"], initialPageParam: undefined as string | undefined,
+    queryKey: ["journal"],
+    initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => apiData(api.journal(pageParam)),
-    getNextPageParam: page => page.nextCursor ?? undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
   }),
 };

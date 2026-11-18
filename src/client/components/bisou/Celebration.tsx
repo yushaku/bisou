@@ -31,7 +31,10 @@ export function Celebration({ open, onOpenChange, title, body }: CelebrationProp
   const played = useRef(false);
 
   useEffect(() => {
-    if (!open) { played.current = false; return; }
+    if (!open) {
+      played.current = false;
+      return;
+    }
     if (!played.current) {
       played.current = true;
       fireConfetti();

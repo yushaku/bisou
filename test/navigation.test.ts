@@ -2,12 +2,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { readCreateRequest, readShortcutRequest, captureShortcut, tabMove } from "../src/client/lib/navigation";
 
 describe("creation requests carried by browser history", () => {
-  it.each(["journal", "wishes", "event", "notes"] as const)("custom-events AC9 R12: opens the requested %s editor", (create) => {
-    expect(readCreateRequest({ create })).toBe(create);
-  });
+  it.each(["journal", "wishes", "event", "notes"] as const)(
+    "custom-events AC9 R12: opens the requested %s editor",
+    (create) => {
+      expect(readCreateRequest({ create })).toBe(create);
+    },
+  );
 
   it.each([null, undefined, "journal", {}, { from: "/journal" }, { create: "garden" }, { create: true }])(
-    "ignores ordinary navigation or invalid state %j", (state) => {
+    "ignores ordinary navigation or invalid state %j",
+    (state) => {
       expect(readCreateRequest(state)).toBeNull();
     },
   );
@@ -34,9 +38,12 @@ describe("subpage and tab history", () => {
 
 afterEach(() => vi.unstubAllGlobals());
 it.each([
-  ["/journal", "?compose=1", "journal"], ["/wishes", "?spin=1", "spin"],
-  ["/journal", "?compose=0", null], ["/", "?compose=1", null],
-  ["/wishes", "?compose=1", null], ["/journal", "?spin=1", null],
+  ["/journal", "?compose=1", "journal"],
+  ["/wishes", "?spin=1", "spin"],
+  ["/journal", "?compose=0", null],
+  ["/", "?compose=1", null],
+  ["/wishes", "?compose=1", null],
+  ["/journal", "?spin=1", null],
 ])("reads shortcut %s%s", (path, search, expected) => {
   expect(readShortcutRequest(path, search)).toBe(expected);
 });

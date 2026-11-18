@@ -44,20 +44,42 @@ function initials(name: string): string {
   return last.slice(0, 1).toUpperCase();
 }
 
-export function PersonAvatar({ person, size = "md", className }: { person: Person; size?: keyof typeof SIZE; className?: string }) {
+export function PersonAvatar({
+  person,
+  size = "md",
+  className,
+}: {
+  person: Person;
+  size?: keyof typeof SIZE;
+  className?: string;
+}) {
   return (
     <Avatar className={cn(SIZE[size], "edge-ink after:hidden", className)}>
       {person.photoUrl && <AvatarImage src={person.photoUrl} alt="" />}
-      <AvatarFallback className={cn("font-heading", TONE[person.tone])}>{person.initial ?? initials(person.name)}</AvatarFallback>
+      <AvatarFallback className={cn("font-heading", TONE[person.tone])}>
+        {person.initial ?? initials(person.name)}
+      </AvatarFallback>
     </Avatar>
   );
 }
 
 /* Two partners side by side, overlapping; the accessible name reads "An and Minh". */
-export function CoupleAvatars({ people, size = "md", className }: { people: [Person, Person]; size?: keyof typeof SIZE; className?: string }) {
+export function CoupleAvatars({
+  people,
+  size = "md",
+  className,
+}: {
+  people: [Person, Person];
+  size?: keyof typeof SIZE;
+  className?: string;
+}) {
   const { t } = useI18n();
   return (
-    <div role="img" aria-label={t("couple.and", { a: people[0].name, b: people[1].name })} className={cn("flex items-center", className)}>
+    <div
+      role="img"
+      aria-label={t("couple.and", { a: people[0].name, b: people[1].name })}
+      className={cn("flex items-center", className)}
+    >
       <PersonAvatar person={people[0]} size={size} className="ring-3 ring-card" />
       <PersonAvatar person={people[1]} size={size} className="-ml-2 ring-3 ring-card" />
     </div>

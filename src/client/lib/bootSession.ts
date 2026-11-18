@@ -20,7 +20,8 @@ export function validBootCache(value: unknown, now = Date.now()): BootCache | nu
   if (!c || typeof c !== "object" || c.v !== BUILD_ID) return null;
   if (typeof c.savedAt !== "number" || now - c.savedAt > CACHE_MAX_AGE || c.savedAt > now + 60_000) return null;
   if (!c.user || typeof c.user.id !== "string") return null;
-  if (c.couple !== null && !(c.couple && typeof c.couple.id === "string" && Array.isArray(c.couple.members))) return null;
+  if (c.couple !== null && !(c.couple && typeof c.couple.id === "string" && Array.isArray(c.couple.members)))
+    return null;
   return c as BootCache;
 }
 
@@ -29,18 +30,32 @@ export async function readBootCache(store: ScopedStore = scopedStore(), now = Da
     const raw = await store.get(BOOT_KEY);
     if (!raw) return null;
     const cache = validBootCache(JSON.parse(raw), now);
-    if (!cache) { await store.del(BOOT_KEY); return null; }
+    if (!cache) {
+      await store.del(BOOT_KEY);
+      return null;
+    }
     // Read the query cache of this user and couple now, so React can restore it without waiting again.
     const key = queryCacheKey(queryScope(cache.user.id, cache.couple?.id ?? null));
     const queries = await store.get(key);
     if (queries) primeDeviceValue(key, queries);
     return cache;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
-export async function saveBootCache(store: ScopedStore, user: User, couple: Couple | null, now = Date.now()): Promise<void> {
+export async function saveBootCache(
+  store: ScopedStore,
+  user: User,
+  couple: Couple | null,
+  now = Date.now(),
+): Promise<void> {
   const cache: BootCache = { v: BUILD_ID, savedAt: now, user, couple };
-  try { await store.set(BOOT_KEY, JSON.stringify(cache)); } catch { /* The next boot just waits for the network. */ }
+  try {
+    await store.set(BOOT_KEY, JSON.stringify(cache));
+  } catch {
+    /* The next boot just waits for the network. */
+  }
 }
 
 /** Sign-out, an expired session or a different user: remove every copy of private data on this device. */
@@ -59,7 +74,13 @@ export type MeOutcome =
  * server error; only a 401 or a different user removes it.
  */
 export function meOutcome(res: ApiResult<MeResponse>, cached: BootCache | null): MeOutcome {
-  if (res.ok) return { kind: "signedIn", user: res.data.user, coupleId: res.data.coupleId, wipe: Boolean(cached && cached.user.id !== res.data.user.id) };
+  if (res.ok)
+    return {
+      kind: "signedIn",
+      user: res.data.user,
+      coupleId: res.data.coupleId,
+      wipe: Boolean(cached && cached.user.id !== res.data.user.id),
+    };
   if (res.status === 401) return { kind: "signedOut", wipe: true };
   if (cached) return { kind: "keepCached" };
   return { kind: "signedOut", wipe: res.status !== 0 };

@@ -17,20 +17,40 @@ interface OtpInputProps {
 
 const INPUT_ATTRS = {
   digits: { inputMode: "numeric", autoComplete: "one-time-code", pattern: "[0-9]*" },
-  pairCode: { inputMode: "text", autoComplete: "off", autoCapitalize: "characters", autoCorrect: "off", spellCheck: false },
+  pairCode: {
+    inputMode: "text",
+    autoComplete: "off",
+    autoCapitalize: "characters",
+    autoCorrect: "off",
+    spellCheck: false,
+  },
 } as const;
 
 /*
  * Six boxes drawn over one real input. One input keeps iOS one-time-code autofill, paste,
  * select-all and screen readers working; the boxes are only the picture of its value.
  */
-export function OtpInput({ id, value, onChange, length = 6, disabled, invalid, kind = "digits", ref, ...aria }: OtpInputProps) {
+export function OtpInput({
+  id,
+  value,
+  onChange,
+  length = 6,
+  disabled,
+  invalid,
+  kind = "digits",
+  ref,
+  ...aria
+}: OtpInputProps) {
   const chars = value.slice(0, length).split("");
   const caret = Math.min(chars.length, length - 1);
 
   return (
     <div className="group/otp relative" data-disabled={disabled || undefined}>
-      <div aria-hidden="true" className="grid gap-2" style={{ gridTemplateColumns: `repeat(${length}, minmax(0, 1fr))` }}>
+      <div
+        aria-hidden="true"
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${length}, minmax(0, 1fr))` }}
+      >
         {Array.from({ length }, (_, i) => (
           <span
             key={i}

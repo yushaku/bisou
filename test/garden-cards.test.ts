@@ -12,7 +12,9 @@ it("garden R2 R3 R4 R17 AC21: approved stable bilingual cards retain deck, purpo
     expect(deck.purpose.en).toBeTruthy();
     const cards = CARDS.filter((c) => c.deckId === deck.id && !c.id.startsWith("L"));
     expect(cards).toHaveLength(10);
-    expect(cards.map((c) => ({ light: 0, medium: 1, deep: 2 })[c.depth])).toEqual(cards.map((c) => ({ light: 0, medium: 1, deep: 2 })[c.depth]).sort());
+    expect(cards.map((c) => ({ light: 0, medium: 1, deep: 2 })[c.depth])).toEqual(
+      cards.map((c) => ({ light: 0, medium: 1, deep: 2 })[c.depth]).sort(),
+    );
     for (const card of cards) {
       expect(card.id).toMatch(new RegExp(`^${deck.id}-\\d{2}$`));
       expect(card.text.vi).toBeTruthy();
@@ -28,12 +30,20 @@ it("garden-stages R41 R52 AC24: new catalog has unique bilingual stage/category/
     expect(DECKS.some((deck) => deck.id === card.deckId)).toBe(true);
     expect(card.levelId).toBeTruthy();
     expect(["ordinary", "decision"]).toContain(card.kind);
-    expect(card.text.vi).toBeTruthy(); expect(card.text.en).toBeTruthy();
+    expect(card.text.vi).toBeTruthy();
+    expect(card.text.en).toBeTruthy();
   }
 });
 
 it("garden-stages R52 AC26: all 60 original IDs, texts, categories, depths and ordering remain byte-for-byte compatible", async () => {
-  const legacy = CARDS.filter((card) => !card.id.startsWith("L")).map(({id, deckId, depth, text}) => ({id, deckId, depth, text}));
+  const legacy = CARDS.filter((card) => !card.id.startsWith("L")).map(({ id, deckId, depth, text }) => ({
+    id,
+    deckId,
+    depth,
+    text,
+  }));
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(legacy)));
-  expect(Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")).toBe("5d160a5f8e43fd0e9e3ca1e6ab6e293a684241c96ea2328bf230f48639315c57");
+  expect(Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")).toBe(
+    "5d160a5f8e43fd0e9e3ca1e6ab6e293a684241c96ea2328bf230f48639315c57",
+  );
 });

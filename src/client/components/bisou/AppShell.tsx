@@ -2,7 +2,14 @@ import { BookHeart, Gift, House, Loader2Icon, Plus, Settings, Sprout, type Lucid
 import { toast } from "@/components/ui/ding-toaster";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import type { CreateDestination } from "@/lib/navigation";
 import { SettingsRow } from "./SettingsGroup";
 import { useI18n, type MessageKey } from "@/i18n";
@@ -71,7 +78,8 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
       if (event.target instanceof Element) {
         if (event.target.closest("input, textarea, select, [contenteditable], [role=slider]")) return;
         for (let target: Element | null = event.target; target && target !== main; target = target.parentElement) {
-          if (target.scrollHeight > target.clientHeight && /auto|scroll/.test(getComputedStyle(target).overflowY)) return;
+          if (target.scrollHeight > target.clientHeight && /auto|scroll/.test(getComputedStyle(target).overflowY))
+            return;
         }
       }
       const touch = event.touches[0]!;
@@ -79,10 +87,16 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
     };
     const move = (event: TouchEvent) => {
       if (!start) return;
-      if (event.touches.length !== 1 || window.scrollY > 0) { cancel(); return; }
+      if (event.touches.length !== 1 || window.scrollY > 0) {
+        cancel();
+        return;
+      }
       const touch = event.touches[0]!;
       const dy = touch.clientY - start.y;
-      if (dy <= 0 || Math.abs(touch.clientX - start.x) > dy || !event.cancelable) { cancel(); return; }
+      if (dy <= 0 || Math.abs(touch.clientX - start.x) > dy || !event.cancelable) {
+        cancel();
+        return;
+      }
       event.preventDefault();
       distance = dy;
       setSettling(false);
@@ -97,16 +111,24 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
       setPull(48);
       const minimum = new Promise<void>((resolve) => setTimeout(resolve, 300));
       void (async () => {
-        try { await onRefresh(); }
-        catch { if (!disposed) toast.error(t("error.generic")); }
-        finally {
+        try {
+          await onRefresh();
+        } catch {
+          if (!disposed) toast.error(t("error.generic"));
+        } finally {
           await minimum;
           busy = false;
-          if (!disposed) { setRefreshing(false); setSettling(true); setPull(0); }
+          if (!disposed) {
+            setRefreshing(false);
+            setSettling(true);
+            setPull(0);
+          }
         }
       })();
     };
-    const scroll = () => { if (window.scrollY > 0) cancel(); };
+    const scroll = () => {
+      if (window.scrollY > 0) cancel();
+    };
     main.addEventListener("touchstart", begin, { passive: true });
     main.addEventListener("touchmove", move, { passive: false });
     main.addEventListener("touchend", end);
@@ -128,25 +150,51 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
       <header className="sticky top-0 z-30 bg-background pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 w-full max-w-md items-center gap-2 px-4">
           <BrandMark className="size-6 shrink-0" />
-          {title
-            ? <h1 className="min-w-0 flex-1 truncate font-heading text-2xl">{title}</h1>
-            : <span className="min-w-0 flex-1 truncate font-heading text-2xl">{t("appName")}</span>}
+          {title ? (
+            <h1 className="min-w-0 flex-1 truncate font-heading text-2xl">{title}</h1>
+          ) : (
+            <span className="min-w-0 flex-1 truncate font-heading text-2xl">{t("appName")}</span>
+          )}
           {action}
           {onOpenSettings && (
-            <Button id="settings-button" variant="ghost" size="icon" aria-label={t("settings.open")} onClick={onOpenSettings}>
+            <Button
+              id="settings-button"
+              variant="ghost"
+              size="icon"
+              aria-label={t("settings.open")}
+              onClick={onOpenSettings}
+            >
               <Settings />
             </Button>
           )}
         </div>
       </header>
 
-      <main ref={mainRef} data-tab-page tabIndex={-1} className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4">
-        {canRefresh && <div className={cn("flex shrink-0 items-center justify-center overflow-hidden text-muted-foreground motion-reduce:transition-none", settling && "transition-[height] duration-(--duration) ease-(--ease)")} style={{ height: pull }}>
-          {pull > 0 && <span role="status" aria-busy={refreshing}>
-            <Loader2Icon aria-hidden="true" className={cn("size-5", refreshing && "animate-spin motion-reduce:animate-none")} />
-            <span className="sr-only">{t("loading")}</span>
-          </span>}
-        </div>}
+      <main
+        ref={mainRef}
+        data-tab-page
+        tabIndex={-1}
+        className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4"
+      >
+        {canRefresh && (
+          <div
+            className={cn(
+              "flex shrink-0 items-center justify-center overflow-hidden text-muted-foreground motion-reduce:transition-none",
+              settling && "transition-[height] duration-(--duration) ease-(--ease)",
+            )}
+            style={{ height: pull }}
+          >
+            {pull > 0 && (
+              <span role="status" aria-busy={refreshing}>
+                <Loader2Icon
+                  aria-hidden="true"
+                  className={cn("size-5", refreshing && "animate-spin motion-reduce:animate-none")}
+                />
+                <span className="sr-only">{t("loading")}</span>
+              </span>
+            )}
+          </div>
+        )}
         {children}
       </main>
 
@@ -170,41 +218,83 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   // Open the current screen's composer directly.
-  const direct: CreateDestination | null = active === "home" ? "event" : active === "wishes" || active === "journal" ? active : null;
+  const direct: CreateDestination | null =
+    active === "home" ? "event" : active === "wishes" || active === "journal" ? active : null;
   // Open the editor after the menu closes, unless the user has left this screen.
   const pending = useRef<CreateDestination | null>(null);
-  useEffect(() => () => { pending.current = null; }, []);
+  useEffect(
+    () => () => {
+      pending.current = null;
+    },
+    [],
+  );
   return (
-    <Drawer open={open} onOpenChange={setOpen} onAnimationEnd={(isOpen) => {
-      if (!isOpen && pending.current) {
-        const destination = pending.current;
-        pending.current = null;
-        onCreate(destination);
-      }
-    }}>
-      <nav aria-label={t("nav.label")} data-tab-bar className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem]">
+    <Drawer
+      open={open}
+      onOpenChange={setOpen}
+      onAnimationEnd={(isOpen) => {
+        if (!isOpen && pending.current) {
+          const destination = pending.current;
+          pending.current = null;
+          onCreate(destination);
+        }
+      }}
+    >
+      <nav
+        aria-label={t("nav.label")}
+        data-tab-bar
+        className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem]"
+      >
         <ul className="relative mx-auto grid w-full max-w-md grid-cols-5">
-          {active && <li aria-hidden="true" data-tab-pill className="pointer-events-none absolute inset-y-0 left-0 w-1/5 p-1.5 transition-transform duration-[calc(var(--duration)*2)] ease-(--ease) motion-reduce:transition-none" style={{ transform: `translateX(${pillColumn(active) * 100}%)` }}>
-            <span className="block h-full rounded-control bg-accent elevate-sm" />
-          </li>}
+          {active && (
+            <li
+              aria-hidden="true"
+              data-tab-pill
+              className="pointer-events-none absolute inset-y-0 left-0 w-1/5 p-1.5 transition-transform duration-[calc(var(--duration)*2)] ease-(--ease) motion-reduce:transition-none"
+              style={{ transform: `translateX(${pillColumn(active) * 100}%)` }}
+            >
+              <span className="block h-full rounded-control bg-accent elevate-sm" />
+            </li>
+          )}
           {TABS.map((id, index) => {
             const { icon: Icon, label } = TAB_META[id];
             const selected = active === id;
             return (
               <Fragment key={id}>
-                {index === 2 && <li className="flex items-center justify-center">
-                  <Button data-create-button size="icon" className="size-14 -translate-y-3 rounded-full ring-4 ring-[color-mix(in_oklab,var(--card)_55%,transparent)] elevate"
-                    aria-label={direct ? t(direct === "event" ? "events.add" : direct === "journal" ? "nav.create" : "wishes.add") : t("nav.create")}
-                    onClick={() => direct ? onCreate(direct) : setOpen(true)}>
-                    <Plus className="size-6" aria-hidden="true" />
-                  </Button>
-                </li>}
+                {index === 2 && (
+                  <li className="flex items-center justify-center">
+                    <Button
+                      data-create-button
+                      size="icon"
+                      className="size-14 -translate-y-3 rounded-full ring-4 ring-[color-mix(in_oklab,var(--card)_55%,transparent)] elevate"
+                      aria-label={
+                        direct
+                          ? t(direct === "event" ? "events.add" : direct === "journal" ? "nav.create" : "wishes.add")
+                          : t("nav.create")
+                      }
+                      onClick={() => (direct ? onCreate(direct) : setOpen(true))}
+                    >
+                      <Plus className="size-6" aria-hidden="true" />
+                    </Button>
+                  </li>
+                )}
                 <li>
-                  <button type="button" aria-current={selected ? "page" : undefined}
+                  <button
+                    type="button"
+                    aria-current={selected ? "page" : undefined}
                     onClick={() => onSelect(id)}
-                    className={cn("press flex h-16 w-full items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset", selected ? "text-foreground" : "text-muted-foreground")}>
+                    className={cn(
+                      "press flex h-16 w-full items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset",
+                      selected ? "text-foreground" : "text-muted-foreground",
+                    )}
+                  >
                     <span className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5">
-                      <span className={cn("relative flex flex-col items-center gap-0.5", selected && "text-accent-foreground")}>
+                      <span
+                        className={cn(
+                          "relative flex flex-col items-center gap-0.5",
+                          selected && "text-accent-foreground",
+                        )}
+                      >
                         <Icon className="size-5" aria-hidden="true" />
                         {t(label)}
                       </span>
@@ -216,7 +306,12 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
           })}
         </ul>
       </nav>
-      <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); focusCreateButton(); }}>
+      <DrawerContent
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          focusCreateButton();
+        }}
+      >
         <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
           <DrawerHeader className="px-0 text-left">
             <DrawerTitle className="font-heading text-2xl">{t("nav.create")}</DrawerTitle>
@@ -224,13 +319,27 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
           </DrawerHeader>
           <div className="overflow-hidden rounded-xl edge bg-card divide-y divide-border">
             <DrawerClose asChild>
-              <SettingsRow icon={BookHeart} label={t("journal.new")} onClick={() => { pending.current = "journal"; }} />
+              <SettingsRow
+                icon={BookHeart}
+                label={t("journal.new")}
+                onClick={() => {
+                  pending.current = "journal";
+                }}
+              />
             </DrawerClose>
             <DrawerClose asChild>
-              <SettingsRow icon={Gift} label={t("wishes.add")} onClick={() => { pending.current = "wishes"; }} />
+              <SettingsRow
+                icon={Gift}
+                label={t("wishes.add")}
+                onClick={() => {
+                  pending.current = "wishes";
+                }}
+              />
             </DrawerClose>
           </div>
-          <Button variant="outline" className="mt-3 w-full" onClick={() => setOpen(false)}>{t("common.close")}</Button>
+          <Button variant="outline" className="mt-3 w-full" onClick={() => setOpen(false)}>
+            {t("common.close")}
+          </Button>
         </div>
       </DrawerContent>
     </Drawer>

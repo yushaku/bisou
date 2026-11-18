@@ -1,0 +1,17 @@
+dist
+dev-dist
+.wrangler
+coverage
+node_modules
+pnpm-lock.yaml
+migrations
+public
+test/__snapshots__
+**/*.md
+.codegraph
+.team
+.claude
+.commandcode
+worker-configuration.d.ts
+*.html
+docs

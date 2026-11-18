@@ -1,13 +1,27 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { useNow } from "../src/client/lib/useNow";
 
-const hooks = vi.hoisted(() => ({ value: undefined as Date | undefined, effect: undefined as (() => (() => void)) | undefined }));
-vi.mock("react", async (original) => ({
-  ...await original<typeof import("react")>(),
-  useState: (initial: () => Date) => [hooks.value ??= initial(), (value: Date) => { hooks.value = value; }],
-  useEffect: (effect: () => (() => void)) => { hooks.effect = effect; },
+const hooks = vi.hoisted(() => ({
+  value: undefined as Date | undefined,
+  effect: undefined as (() => () => void) | undefined,
 }));
-afterEach(() => { hooks.value = undefined; vi.useRealTimers(); vi.unstubAllGlobals(); });
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  useState: (initial: () => Date) => [
+    (hooks.value ??= initial()),
+    (value: Date) => {
+      hooks.value = value;
+    },
+  ],
+  useEffect: (effect: () => () => void) => {
+    hooks.effect = effect;
+  },
+}));
+afterEach(() => {
+  hooks.value = undefined;
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 
 it("revealing Home after midnight refreshes today and schedules the following midnight", () => {
   vi.useFakeTimers();

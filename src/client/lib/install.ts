@@ -1,7 +1,8 @@
 import { useSyncExternalStore } from "react";
 
-export const isStandalone = () => (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches)
-  || (typeof navigator !== "undefined" && (navigator as Navigator & { standalone?: boolean }).standalone === true);
+export const isStandalone = () =>
+  (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches) ||
+  (typeof navigator !== "undefined" && (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
 export interface InstallPrompt extends Event {
   prompt: () => Promise<void>;
@@ -26,9 +27,17 @@ export function captureInstallPrompt() {
 
 function subscribe(listener: () => void) {
   listeners.add(listener);
-  return () => { listeners.delete(listener); };
+  return () => {
+    listeners.delete(listener);
+  };
 }
 export function useInstallPrompt() {
-  return useSyncExternalStore(subscribe, () => pending, () => null);
+  return useSyncExternalStore(
+    subscribe,
+    () => pending,
+    () => null,
+  );
 }
-export function clearInstallPrompt() { update(null); }
+export function clearInstallPrompt() {
+  update(null);
+}

@@ -3,14 +3,30 @@ import { validateEvent } from "../src/shared/events";
 import { validateWish } from "../src/shared/wishes";
 
 const controls = [
-  ["NUL", "\u0000"], ["newline", "\n"], ["tab", "\t"], ["carriage return", "\r"],
-  ["DEL", "\u007f"], ["C1 control", "\u0085"],
-  ["LRE", "\u202a"], ["RLE", "\u202b"], ["PDF", "\u202c"], ["LRO", "\u202d"], ["RLO", "\u202e"],
-  ["LRI", "\u2066"], ["RLI", "\u2067"], ["FSI", "\u2068"], ["PDI", "\u2069"],
+  ["NUL", "\u0000"],
+  ["newline", "\n"],
+  ["tab", "\t"],
+  ["carriage return", "\r"],
+  ["DEL", "\u007f"],
+  ["C1 control", "\u0085"],
+  ["LRE", "\u202a"],
+  ["RLE", "\u202b"],
+  ["PDF", "\u202c"],
+  ["LRO", "\u202d"],
+  ["RLO", "\u202e"],
+  ["LRI", "\u2066"],
+  ["RLI", "\u2067"],
+  ["FSI", "\u2068"],
+  ["PDI", "\u2069"],
 ];
 
 describe.each([
-  { feature: "event", error: "event_title_invalid", validate: (title: string) => validateEvent({ title, date: "2026-12-20", repeat: "once", icon: "heart" }, "2026-11-06") },
+  {
+    feature: "event",
+    error: "event_title_invalid",
+    validate: (title: string) =>
+      validateEvent({ title, date: "2026-12-20", repeat: "once", icon: "heart" }, "2026-11-06"),
+  },
   { feature: "wish", error: "wish_title_invalid", validate: (title: string) => validateWish({ title }) },
 ])("$feature title validation", ({ validate, error }) => {
   it.each(controls)("rejects %s before trimming", (_name, control) => {
@@ -30,13 +46,19 @@ describe.each([
 
 describe("wish link validation", () => {
   it.each(controls)("rejects %s before URL parsing", (_name, control) => {
-    for (const link of [`${control}https://example.com`, `https://example.com/${control}gift`, `https://example.com${control}`]) {
+    for (const link of [
+      `${control}https://example.com`,
+      `https://example.com/${control}gift`,
+      `https://example.com${control}`,
+    ]) {
       expect(validateWish({ title: "Scarf", link })).toEqual({ error: "wish_link_invalid" });
     }
   });
   it("keeps ordinary links and ZWJ emoji in paths valid", () => {
     for (const link of ["https://example.com", "https://example.com/👩‍❤️‍👨"]) {
-      expect(validateWish({ title: "Scarf", link: ` ${link} ` })).toMatchObject({ input: { link: new URL(link).href } });
+      expect(validateWish({ title: "Scarf", link: ` ${link} ` })).toMatchObject({
+        input: { link: new URL(link).href },
+      });
     }
   });
 });

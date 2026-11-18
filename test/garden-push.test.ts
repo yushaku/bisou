@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { gateIds, type GardenDeckState, type GardenState } from "../src/shared/garden";
 import { call, paired, resetDb, waitForBackground, type TestUser } from "./helpers";
-import { decrypt, device, mockPush, runPushCron, subscribe } from "./push-helpers";
+import { decrypt, device, mockPush, subscribe } from "./push-helpers";
 
 const DAY = Date.parse("2026-11-09T15:00:00+07:00");
 async function today(who: TestUser) {
@@ -11,14 +11,28 @@ async function save(who: TestUser, id: string, text = "ANSWER SECRET") {
   const res = await call("POST", `/api/garden/cards/${id}/answer`, { cookie: who.cookie, body: { text } });
   expect(res.status).toBe(201);
 }
-beforeEach(async () => { await resetDb(); vi.spyOn(Date, "now").mockReturnValue(DAY); });
-afterEach(async () => { await waitForBackground(); vi.restoreAllMocks(); });
+beforeEach(async () => {
+  await resetDb();
+  vi.spyOn(Date, "now").mockReturnValue(DAY);
+});
+afterEach(async () => {
+  await waitForBackground();
+  vi.restoreAllMocks();
+});
 
 it("garden R32 R33 AC9 AC20: each daily answer notifies only the other partner's journal-enabled devices, privately in their language", async () => {
   const { a, b } = await paired();
   await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale: "en" } });
-  const devices = [await device("a"), await device("a2"), await device("b"), await device("off", { journal: false, reminders: true })];
-  await subscribe(a, devices[0]!); await subscribe(a, devices[1]!); await subscribe(b, devices[2]!); await subscribe(b, devices[3]!);
+  const devices = [
+    await device("a"),
+    await device("a2"),
+    await device("b"),
+    await device("off", { journal: false, reminders: true }),
+  ];
+  await subscribe(a, devices[0]!);
+  await subscribe(a, devices[1]!);
+  await subscribe(b, devices[2]!);
+  await subscribe(b, devices[3]!);
   const id = await today(a);
   const send = mockPush();
   await save(a, id);
@@ -47,13 +61,16 @@ it("garden R32 R33 AC9 AC20: each daily answer notifies only the other partner's
 
 it("garden R32 R33: concurrent answers notify each partner only once; retries, edits and deletion send nothing", async () => {
   const { a, b } = await paired();
-  await subscribe(a, await device("a")); await subscribe(b, await device("b"));
+  await subscribe(a, await device("a"));
+  await subscribe(b, await device("b"));
   const id = await today(a);
   const send = mockPush();
   await Promise.all([save(a, id), save(b, id)]);
   await waitForBackground();
   expect(send.sent).toHaveLength(2);
-  expect((await call("POST", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "retry" } })).status).toBe(409);
+  expect(
+    (await call("POST", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "retry" } })).status,
+  ).toBe(409);
   await call("PUT", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "edit" } });
   await call("DELETE", `/api/garden/cards/${id}/answer`, { cookie: a.cookie });
   await waitForBackground();
@@ -62,11 +79,14 @@ it("garden R32 R33: concurrent answers notify each partner only once; retries, e
 
 it("garden R22 R33 AC11 AC20: swap, extra play and an old daily card answered on a later day never notify", async () => {
   const { a, b } = await paired();
-  await subscribe(a, await device("a")); await subscribe(b, await device("b"));
+  await subscribe(a, await device("a"));
+  await subscribe(b, await device("b"));
   const old = await today(a);
   const send = mockPush();
   await call("POST", "/api/garden/today/swap", { cookie: a.cookie, body: { cardId: old } });
-  const extra = (await (await call("GET", `/api/garden/decks/${old.split("-")[0]}`, { cookie: a.cookie })).json<GardenDeckState>()).active!.cardId;
+  const extra = (
+    await (await call("GET", `/api/garden/decks/${old.split("-")[0]}`, { cookie: a.cookie })).json<GardenDeckState>()
+  ).active!.cardId;
   await save(a, extra);
   await save(b, extra);
   await waitForBackground();
@@ -82,13 +102,19 @@ it("garden R22 R33 AC11 AC20: swap, extra play and an old daily card answered on
   expect(send.sent).toHaveLength(1);
 });
 
-it.each(["2026-11-09T21:59:59+07:00", "2026-11-09T22:00:00+07:00", "2026-11-10T06:59:59+07:00", "2026-11-10T07:00:00+07:00"])("garden R32 R33 AC49: daily answers notify at once at any hour, such as %s", async (time) => {
+it.each([
+  "2026-11-09T21:59:59+07:00",
+  "2026-11-09T22:00:00+07:00",
+  "2026-11-10T06:59:59+07:00",
+  "2026-11-10T07:00:00+07:00",
+])("garden R32 R33 AC49: daily answers notify at once at any hour, such as %s", async (time) => {
   const { a, b } = await paired();
   await subscribe(a, await device("a"));
   vi.mocked(Date.now).mockReturnValue(Date.parse(time));
   const id = await today(a);
   const send = mockPush();
-  await save(a, id); await save(b, id);
+  await save(a, id);
+  await save(b, id);
   await waitForBackground();
   expect(send.sent).toHaveLength(1);
 });
@@ -100,7 +126,8 @@ it("garden R13 R36 R37: request and failed-push logs never include questions, an
   const log = vi.spyOn(console, "log").mockImplementation(() => {});
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   mockPush(500);
-  await save(a, id, "VERY SECRET BODY"); await save(b, id, "OTHER SECRET BODY");
+  await save(a, id, "VERY SECRET BODY");
+  await save(b, id, "OTHER SECRET BODY");
   await waitForBackground();
   const output = JSON.stringify([...log.mock.calls, ...error.mock.calls]);
   expect(output).not.toContain("SECRET BODY");
@@ -111,13 +138,19 @@ it("garden R13 R36 R37: request and failed-push logs never include questions, an
 
 it("garden-stages R55 AC31: targets, decision reveals and opening a stage never notify or water", async () => {
   const { a, b } = await paired();
-  await subscribe(a, await device("stage-a")); await subscribe(b, await device("stage-b"));
+  await subscribe(a, await device("stage-a"));
+  await subscribe(b, await device("stage-b"));
   const send = mockPush();
   const act = (who: TestUser, body: unknown) => call("POST", "/api/garden/levels", { cookie: who.cookie, body });
   await act(a, { action: "propose", kind: "target", levelId: "in_love", revision: 0 });
   await act(b, { action: "accept", revision: 1 });
-  for (const id of gateIds(0)) { await save(a, id); await save(b, id); }
-  await waitForBackground(); expect(send.sent).toHaveLength(0);
+  for (const id of gateIds(0)) {
+    await save(a, id);
+    await save(b, id);
+  }
+  await waitForBackground();
+  expect(send.sent).toHaveLength(0);
   const state = await (await call("GET", "/api/garden", { cookie: a.cookie })).json<GardenState>();
-  expect(state.levels.furthestLevelId).toBe("in_love"); expect(state.plants.every((p) => p.stage === 0)).toBe(true);
+  expect(state.levels.furthestLevelId).toBe("in_love");
+  expect(state.plants.every((p) => p.stage === 0)).toBe(true);
 });

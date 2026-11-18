@@ -5,15 +5,25 @@ import { ErrorBoundary } from "../src/client/components/bisou/ErrorBoundary";
 import { useOnline } from "../src/client/lib/useOnline";
 
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
-vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useSyncExternalStore: vi.fn((_subscribe, snapshot) => snapshot()) }));
-afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+vi.mock("react", async (original) => ({
+  ...(await original<typeof import("react")>()),
+  useSyncExternalStore: vi.fn((_subscribe, snapshot) => snapshot()),
+}));
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 it("renders the friendly fallback and logs a child render error", () => {
   const error = new Error("private stack details");
-  function Broken(): never { throw error; }
+  function Broken(): never {
+    throw error;
+  }
   const boundary = new ErrorBoundary({ children: h(Broken) });
   const log = vi.spyOn(console, "error").mockImplementation(() => {});
-  try { renderToString(boundary.render()); } catch (caught) {
+  try {
+    renderToString(boundary.render());
+  } catch (caught) {
     boundary.state = ErrorBoundary.getDerivedStateFromError();
     boundary.componentDidCatch(caught as Error);
   }

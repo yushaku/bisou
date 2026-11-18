@@ -7,7 +7,12 @@ import { app } from "../src/worker/app";
 import { call, ORIGIN, paired, resetDb, testContext, upload, user, type TestUser } from "./helpers";
 
 const NOW = Date.parse("2026-11-07T09:00:00Z");
-const input = (overrides: Partial<EntryInput> = {}): EntryInput => ({ date: "2026-11-05", text: "Our evening", photoIds: [], ...overrides });
+const input = (overrides: Partial<EntryInput> = {}): EntryInput => ({
+  date: "2026-11-05",
+  text: "Our evening",
+  photoIds: [],
+  ...overrides,
+});
 const post = (who: TestUser, body: unknown = input()) => call("POST", "/api/journal", { cookie: who.cookie, body });
 async function create(who: TestUser, body = input()): Promise<JournalEntry> {
   const res = await post(who, body);
@@ -15,7 +20,9 @@ async function create(who: TestUser, body = input()): Promise<JournalEntry> {
   return (await res.json<{ entry: JournalEntry }>()).entry;
 }
 async function page(who: TestUser, cursor?: string): Promise<JournalPage> {
-  const res = await call("GET", `/api/journal${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, { cookie: who.cookie });
+  const res = await call("GET", `/api/journal${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, {
+    cookie: who.cookie,
+  });
   expect(res.status).toBe(200);
   return res.json<JournalPage>();
 }
@@ -31,17 +38,23 @@ beforeEach(async () => {
 });
 
 describe("journal edit and delete", () => {
-  it.each(["author", "partner"])("journal AC23 (R28): %s edits preserve exact authorship, creation time and origin", async (editor) => {
-    const { a, b } = await paired();
-    const entry = await create(a);
-    vi.setSystemTime(NOW + HOUR);
-    const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: (editor === "author" ? a : b).cookie, body: input({ date: "2023-02-12", text: "  Fixed typo  " }) });
-    expect(res.status).toBe(200);
-    const changed = (await res.json<{ entry: JournalEntry }>()).entry;
-    expect(changed).toEqual({ ...entry, date: "2023-02-12", text: "Fixed typo", updatedAt: NOW + HOUR });
-    expect((await page(a)).entries[0]).toEqual(changed);
-    expect((await page(b)).entries[0]).toEqual(changed);
-  });
+  it.each(["author", "partner"])(
+    "journal AC23 (R28): %s edits preserve exact authorship, creation time and origin",
+    async (editor) => {
+      const { a, b } = await paired();
+      const entry = await create(a);
+      vi.setSystemTime(NOW + HOUR);
+      const res = await call("PUT", `/api/journal/${entry.id}`, {
+        cookie: (editor === "author" ? a : b).cookie,
+        body: input({ date: "2023-02-12", text: "  Fixed typo  " }),
+      });
+      expect(res.status).toBe(200);
+      const changed = (await res.json<{ entry: JournalEntry }>()).entry;
+      expect(changed).toEqual({ ...entry, date: "2023-02-12", text: "Fixed typo", updatedAt: NOW + HOUR });
+      expect((await page(a)).entries[0]).toEqual(changed);
+      expect((await page(b)).entries[0]).toEqual(changed);
+    },
+  );
 
   it("journal AC26, AC10 (R1, R2, R28, R11): foreign, unpaired, missing-session and unknown callers reveal nothing", async () => {
     const { a } = await paired();
@@ -50,16 +63,38 @@ describe("journal edit and delete", () => {
     const other = await user("Hoa");
     const unpaired = await user("Lone");
     const created = await call("POST", "/api/couple", { cookie: outsider.cookie });
-    const { couple: { pendingCode } } = await created.json<{ couple: { pendingCode: { code: string } } }>();
-    expect((await call("POST", "/api/couple/join", { cookie: other.cookie, body: { code: pendingCode.code } })).status).toBe(200);
+    const {
+      couple: { pendingCode },
+    } = await created.json<{ couple: { pendingCode: { code: string } } }>();
+    expect(
+      (await call("POST", "/api/couple/join", { cookie: other.cookie, body: { code: pendingCode.code } })).status,
+    ).toBe(200);
     for (const method of ["PUT", "DELETE"]) {
       for (const id of [entry.id, "unknown"]) {
-        const res = await call(method, `/api/journal/${id}`, { cookie: outsider.cookie, body: method === "PUT" ? input() : undefined });
+        const res = await call(method, `/api/journal/${id}`, {
+          cookie: outsider.cookie,
+          body: method === "PUT" ? input() : undefined,
+        });
         await error(res, 404, "not_found");
-        await error(await call(method, `/api/journal/${id}`, { body: method === "PUT" ? input() : undefined }), 401, "unauthorized");
-        await error(await call(method, `/api/journal/${id}`, { cookie: unpaired.cookie, body: method === "PUT" ? input() : undefined }), 404, "not_in_couple");
+        await error(
+          await call(method, `/api/journal/${id}`, { body: method === "PUT" ? input() : undefined }),
+          401,
+          "unauthorized",
+        );
+        await error(
+          await call(method, `/api/journal/${id}`, {
+            cookie: unpaired.cookie,
+            body: method === "PUT" ? input() : undefined,
+          }),
+          404,
+          "not_in_couple",
+        );
       }
-      await error(await call(method, "/api/journal/unknown", { cookie: a.cookie, body: method === "PUT" ? input() : undefined }), 404, "not_found");
+      await error(
+        await call(method, "/api/journal/unknown", { cookie: a.cookie, body: method === "PUT" ? input() : undefined }),
+        404,
+        "not_found",
+      );
     }
     expect((await page(a)).entries[0]).toEqual(entry);
   });
@@ -68,16 +103,21 @@ describe("journal edit and delete", () => {
     const { a } = await paired();
     const entry = await create(a);
     for (const [body, code] of [
-      [{}, "invalid_body"], [input({ date: "2026-11-08" }), "invalid_entry_date"],
-      [input({ date: "1899-12-31" }), "invalid_entry_date"], [input({ text: "x".repeat(2001) }), "entry_text_too_long"],
-      [input({ text: " " }), "entry_empty"], [input({ photoIds: ["a", "b", "c", "d", "e"] }), "too_many_photos"],
+      [{}, "invalid_body"],
+      [input({ date: "2026-11-08" }), "invalid_entry_date"],
+      [input({ date: "1899-12-31" }), "invalid_entry_date"],
+      [input({ text: "x".repeat(2001) }), "entry_text_too_long"],
+      [input({ text: " " }), "entry_empty"],
+      [input({ photoIds: ["a", "b", "c", "d", "e"] }), "too_many_photos"],
       [input({ photoIds: ["a", "a"] }), "invalid_body"],
     ] as const) {
       await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body }), 400, code);
     }
     expect((await page(a)).entries[0]).toEqual(entry);
     for (const date of ["1900-01-01", "2026-11-07"]) {
-      expect((await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ date }) })).status).toBe(200);
+      expect((await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: input({ date }) })).status).toBe(
+        200,
+      );
     }
   });
 
@@ -87,7 +127,10 @@ describe("journal edit and delete", () => {
     const second = await upload(a);
     const added = await upload(b);
     const entry = await create(a, input({ photoIds: [first, second] }));
-    const reordered = await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ photoIds: [second, first] }) });
+    const reordered = await call("PUT", `/api/journal/${entry.id}`, {
+      cookie: b.cookie,
+      body: input({ photoIds: [second, first] }),
+    });
     expect(reordered.status).toBe(200);
     expect((await reordered.json<{ entry: JournalEntry }>()).entry.photoIds).toEqual([second, first]);
     const photoIds = [added, second];
@@ -105,47 +148,76 @@ describe("journal edit and delete", () => {
     expect((await page(b)).entries[0]?.photoIds).toEqual([]);
     for (const id of [added, second]) {
       expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(id).first()).toBeNull();
-      for (const size of ["full", "thumb"] as const) expect(await env.PHOTOS.head(photoKey(couple.id, id, size))).toBeNull();
+      for (const size of ["full", "thumb"] as const)
+        expect(await env.PHOTOS.head(photoKey(couple.id, id, size))).toBeNull();
     }
   });
 
-  it.each(["author", "partner"])("journal AC26, AC23, AC12 (R1, R28, R17): %s rejects unauthorized and expired photos without changes", async (editor) => {
-    const { a, b } = await paired();
-    const who = editor === "author" ? a : b;
-    const partner = await upload(editor === "author" ? b : a);
-    const attached = await upload(a);
-    const expired = await upload(who);
-    const wishPhoto = await upload(who);
-    expect((await call("POST", "/api/wishes", { cookie: who.cookie, body: { title: "Present", photoId: wishPhoto } })).status).toBe(201);
-    const foreign = await user("Foreign");
-    const foreignPartner = await user("ForeignPartner");
-    const created = await call("POST", "/api/couple", { cookie: foreign.cookie });
-    const { couple: { pendingCode } } = await created.json<{ couple: { pendingCode: { code: string } } }>();
-    expect((await call("POST", "/api/couple/join", { cookie: foreignPartner.cookie, body: { code: pendingCode.code } })).status).toBe(200);
-    const foreignPhoto = await upload(foreign);
-    await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?").bind(NOW - PENDING_PHOTO_TTL, expired).run();
-    await create(a, input({ photoIds: [attached] }));
-    const retained = await upload(a);
-    const entry = await create(a, input({ photoIds: [retained] }));
-    const photos = await env.DB.prepare("SELECT * FROM photos ORDER BY id").all();
-    for (const photoId of [partner, attached, wishPhoto, foreignPhoto, expired, "unknown"]) {
-      await error(await call("PUT", `/api/journal/${entry.id}`, { cookie: who.cookie, body: input({ photoIds: [retained, photoId] }) }), 400, "photo_invalid");
-      expect((await page(b)).entries.find((row) => row.id === entry.id)).toEqual(entry);
-      expect((await env.DB.prepare("SELECT * FROM photos ORDER BY id").all()).results).toEqual(photos.results);
-    }
-    expect((await page(a)).entries.find((row) => row.id === entry.id)).toEqual(entry);
-  });
+  it.each(["author", "partner"])(
+    "journal AC26, AC23, AC12 (R1, R28, R17): %s rejects unauthorized and expired photos without changes",
+    async (editor) => {
+      const { a, b } = await paired();
+      const who = editor === "author" ? a : b;
+      const partner = await upload(editor === "author" ? b : a);
+      const attached = await upload(a);
+      const expired = await upload(who);
+      const wishPhoto = await upload(who);
+      expect(
+        (await call("POST", "/api/wishes", { cookie: who.cookie, body: { title: "Present", photoId: wishPhoto } }))
+          .status,
+      ).toBe(201);
+      const foreign = await user("Foreign");
+      const foreignPartner = await user("ForeignPartner");
+      const created = await call("POST", "/api/couple", { cookie: foreign.cookie });
+      const {
+        couple: { pendingCode },
+      } = await created.json<{ couple: { pendingCode: { code: string } } }>();
+      expect(
+        (await call("POST", "/api/couple/join", { cookie: foreignPartner.cookie, body: { code: pendingCode.code } }))
+          .status,
+      ).toBe(200);
+      const foreignPhoto = await upload(foreign);
+      await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?")
+        .bind(NOW - PENDING_PHOTO_TTL, expired)
+        .run();
+      await create(a, input({ photoIds: [attached] }));
+      const retained = await upload(a);
+      const entry = await create(a, input({ photoIds: [retained] }));
+      const photos = await env.DB.prepare("SELECT * FROM photos ORDER BY id").all();
+      for (const photoId of [partner, attached, wishPhoto, foreignPhoto, expired, "unknown"]) {
+        await error(
+          await call("PUT", `/api/journal/${entry.id}`, {
+            cookie: who.cookie,
+            body: input({ photoIds: [retained, photoId] }),
+          }),
+          400,
+          "photo_invalid",
+        );
+        expect((await page(b)).entries.find((row) => row.id === entry.id)).toEqual(entry);
+        expect((await env.DB.prepare("SELECT * FROM photos ORDER BY id").all()).results).toEqual(photos.results);
+      }
+      expect((await page(a)).entries.find((row) => row.id === entry.id)).toEqual(entry);
+    },
+  );
 
   it("journal AC27 (R30): the later valid save replaces the earlier save under the original author", async () => {
     const { a, b } = await paired();
     const entry = await create(a);
     expect((await page(a)).entries).toEqual([entry]);
     expect((await page(b)).entries).toEqual([entry]);
-    for (const [who, text, date] of [[a, "First correction", "2023-02-12"], [b, "Later correction", "2023-02-13"]] as const) {
+    for (const [who, text, date] of [
+      [a, "First correction", "2023-02-12"],
+      [b, "Later correction", "2023-02-13"],
+    ] as const) {
       vi.setSystemTime(Date.now() + HOUR);
       const res = await call("PUT", `/api/journal/${entry.id}`, { cookie: who.cookie, body: input({ text, date }) });
       expect(res.status).toBe(200);
-      expect((await res.json<{ entry: JournalEntry }>()).entry).toEqual({ ...entry, text, date, updatedAt: Date.now() });
+      expect((await res.json<{ entry: JournalEntry }>()).entry).toEqual({
+        ...entry,
+        text,
+        date,
+        updatedAt: Date.now(),
+      });
     }
     const expected = { ...entry, text: "Later correction", date: "2023-02-13", updatedAt: NOW + 2 * HOUR };
     expect((await page(a)).entries).toEqual([expected]);
@@ -156,7 +228,10 @@ describe("journal edit and delete", () => {
     const { a, b, couple } = await paired();
     const photoIds = [await upload(a), await upload(a)];
     const entry = await create(a, input({ photoIds }));
-    const edited = await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: input({ text: "Partner correction", photoIds }) });
+    const edited = await call("PUT", `/api/journal/${entry.id}`, {
+      cookie: b.cookie,
+      body: input({ text: "Partner correction", photoIds }),
+    });
     expect(edited.status).toBe(200);
     const changed = (await edited.json<{ entry: JournalEntry }>()).entry;
     await error(await call("DELETE", `/api/journal/${entry.id}`, { cookie: b.cookie }), 403, "not_author");
@@ -182,9 +257,11 @@ describe("journal edit and delete", () => {
     vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
     expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie })).status).toBe(200);
     expect(log).toHaveBeenCalledWith("[bisou] photo purge failed", 1);
-    for (const size of ["full", "thumb"]) await error(await call("GET", `/api/photos/${photoId}/${size}`, { cookie: b.cookie }), 404, "not_found");
-    expect(await env.DB.prepare("SELECT entry_id, position, created_at FROM photos WHERE id = ?").bind(photoId).first())
-      .toEqual({ entry_id: null, position: null, created_at: 0 });
+    for (const size of ["full", "thumb"])
+      await error(await call("GET", `/api/photos/${photoId}/${size}`, { cookie: b.cookie }), 404, "not_found");
+    expect(
+      await env.DB.prepare("SELECT entry_id, position, created_at FROM photos WHERE id = ?").bind(photoId).first(),
+    ).toEqual({ entry_id: null, position: null, created_at: 0 });
   });
 
   it("journal AC23, AC10 (R28, R11): a concurrent delete and edit cannot resurrect the entry or attach a new photo to it", async () => {
@@ -201,37 +278,53 @@ describe("journal edit and delete", () => {
     await error(await call("GET", `/api/photos/${photoId}/full`, { cookie: a.cookie }), 404, "not_found");
   });
 });
-afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 describe("journal create and feed", () => {
-  it.each(["POST", "PUT"])("journal R4: %s accepts 16 KB JSON and rejects larger bodies before saving", async (method) => {
-    const { a } = await paired();
-    const entry = await create(a);
-    const path = method === "POST" ? "/api/journal" : `/api/journal/${entry.id}`;
-    const json = JSON.stringify(input({ text: "😀".repeat(2000) }));
-    const body = json + " ".repeat(16 * 1024 - new TextEncoder().encode(json).length);
-    for (const contentLength of [true, false]) {
-      for (const extra of [0, 1]) {
-        const bytes = new TextEncoder().encode(body + " ".repeat(extra));
-        const headers = new Headers({ Cookie: a.cookie, Origin: ORIGIN, "Content-Type": "application/json" });
-        if (contentLength) headers.set("Content-Length", String(bytes.length));
-        const res = await app.request(`${ORIGIN}${path}`, {
-          method, headers,
-          body: contentLength ? bytes : new ReadableStream({ start(controller) {
-            controller.enqueue(bytes.subarray(0, 8192));
-            controller.enqueue(bytes.subarray(8192));
-            controller.close();
-          } }),
-        }, env, testContext);
-        if (extra) await error(res, 413, "body_too_large");
-        else expect(res.status).toBe(method === "POST" ? 201 : 200);
-        expect(res.headers.get("Cache-Control")).toBe("no-store");
+  it.each(["POST", "PUT"])(
+    "journal R4: %s accepts 16 KB JSON and rejects larger bodies before saving",
+    async (method) => {
+      const { a } = await paired();
+      const entry = await create(a);
+      const path = method === "POST" ? "/api/journal" : `/api/journal/${entry.id}`;
+      const json = JSON.stringify(input({ text: "😀".repeat(2000) }));
+      const body = json + " ".repeat(16 * 1024 - new TextEncoder().encode(json).length);
+      for (const contentLength of [true, false]) {
+        for (const extra of [0, 1]) {
+          const bytes = new TextEncoder().encode(body + " ".repeat(extra));
+          const headers = new Headers({ Cookie: a.cookie, Origin: ORIGIN, "Content-Type": "application/json" });
+          if (contentLength) headers.set("Content-Length", String(bytes.length));
+          const res = await app.request(
+            `${ORIGIN}${path}`,
+            {
+              method,
+              headers,
+              body: contentLength
+                ? bytes
+                : new ReadableStream({
+                    start(controller) {
+                      controller.enqueue(bytes.subarray(0, 8192));
+                      controller.enqueue(bytes.subarray(8192));
+                      controller.close();
+                    },
+                  }),
+            },
+            env,
+            testContext,
+          );
+          if (extra) await error(res, 413, "body_too_large");
+          else expect(res.status).toBe(method === "POST" ? 201 : 200);
+          expect(res.headers.get("Cache-Control")).toBe("no-store");
+        }
       }
-    }
-    const entries = (await page(a)).entries;
-    expect(entries).toHaveLength(method === "POST" ? 3 : 1);
-    expect(entries.find((row) => row.id === entry.id)?.text).toBe(method === "POST" ? entry.text : "😀".repeat(2000));
-  });
+      const entries = (await page(a)).entries;
+      expect(entries).toHaveLength(method === "POST" ? 3 : 1);
+      expect(entries.find((row) => row.id === entry.id)?.text).toBe(method === "POST" ? entry.text : "😀".repeat(2000));
+    },
+  );
 
   it("journal AC1 (R1, R2): requires a session and a paired couple, isolating another couple's feed", async () => {
     await error(await call("GET", "/api/journal"), 401, "unauthorized");
@@ -245,10 +338,18 @@ describe("journal create and feed", () => {
     await create(a);
     const other = await user("Hoa");
     const ownCouple = await call("GET", "/api/couple", { cookie: lone.cookie });
-    const { couple: { pendingCode: { code } } } = await ownCouple.json<{ couple: { pendingCode: { code: string } } }>();
+    const {
+      couple: {
+        pendingCode: { code },
+      },
+    } = await ownCouple.json<{ couple: { pendingCode: { code: string } } }>();
     await call("POST", "/api/couple/join", { cookie: other.cookie, body: { code } });
     expect(await page(lone)).toEqual({ entries: [], nextCursor: null });
-    await error(await call("POST", "/api/journal", { cookie: a.cookie, origin: "https://elsewhere.example", body: input() }), 403, "forbidden_origin");
+    await error(
+      await call("POST", "/api/journal", { cookie: a.cookie, origin: "https://elsewhere.example", body: input() }),
+      403,
+      "forbidden_origin",
+    );
   });
 
   it("journal AC2 (R3): refuses empty and whitespace-only entries", async () => {
@@ -283,7 +384,16 @@ describe("journal create and feed", () => {
     const yesterday = await create(a);
     expect((await page(a)).entries.map((entry) => entry.id)).toEqual([evening.id, lunch.id, yesterday.id, past.id]);
     expect((await page(b)).entries).toEqual((await page(a)).entries);
-    expect(evening).toEqual({ id: evening.id, authorId: b.id, date: "2026-11-06", text: "Rain", source: "partner", photoIds: [], createdAt: Date.now(), updatedAt: Date.now() });
+    expect(evening).toEqual({
+      id: evening.id,
+      authorId: b.id,
+      date: "2026-11-06",
+      text: "Rain",
+      source: "partner",
+      photoIds: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 
   it("journal AC7 (R7, R8): accepts the date boundaries and refuses future or invalid calendar days", async () => {
@@ -298,7 +408,16 @@ describe("journal create and feed", () => {
 
   it("journal AC2, AC3, AC4 (R3, R4, R5): validates JSON shape before entry values", async () => {
     const { a } = await paired();
-    for (const body of [null, [], {}, { ...input(), date: 1 }, { ...input(), text: null }, { ...input(), photoIds: "id" }, { ...input(), photoIds: [1] }, input({ photoIds: ["id", "id"] })]) {
+    for (const body of [
+      null,
+      [],
+      {},
+      { ...input(), date: 1 },
+      { ...input(), text: null },
+      { ...input(), photoIds: "id" },
+      { ...input(), photoIds: [1] },
+      input({ photoIds: ["id", "id"] }),
+    ]) {
       await error(await post(a, body), 400, "invalid_body");
     }
   });
@@ -307,7 +426,9 @@ describe("journal create and feed", () => {
     const { a, b } = await paired();
     const partner = await upload(b);
     const expired = await upload(a);
-    await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?").bind(NOW - PENDING_PHOTO_TTL, expired).run();
+    await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?")
+      .bind(NOW - PENDING_PHOTO_TTL, expired)
+      .run();
     const attached = await upload(a);
     await create(a, input({ photoIds: [attached] }));
     for (const id of ["missing", partner, expired, attached]) {
@@ -319,7 +440,10 @@ describe("journal create and feed", () => {
   it("journal AC3 (R3, R5): concurrent saves of one pending photo leave only the successful entry", async () => {
     const { a } = await paired();
     const photoId = await upload(a);
-    const responses = await Promise.all([post(a, input({ text: "", photoIds: [photoId] })), post(a, input({ text: "", photoIds: [photoId] }))]);
+    const responses = await Promise.all([
+      post(a, input({ text: "", photoIds: [photoId] })),
+      post(a, input({ text: "", photoIds: [photoId] })),
+    ]);
     expect(responses.map((res) => res.status).sort()).toEqual([201, 400]);
     expect((await page(a)).entries).toHaveLength(1);
     expect((await page(a)).entries[0]?.photoIds).toEqual([photoId]);
@@ -328,8 +452,14 @@ describe("journal create and feed", () => {
   it("journal AC15 (R12, R13, R21): pages a split day with tied timestamps without duplicates or gaps", async () => {
     const { a, couple } = await paired();
     const ids = Array.from({ length: 25 }, (_, i) => `entry-${String(i).padStart(2, "0")}`);
-    await env.DB.batch(ids.map((id) => env.DB.prepare(`INSERT INTO journal_entries (id, couple_id, author_id, entry_date, created_at, updated_at)
-      VALUES (?, ?, ?, '2026-11-05', ?, ?)`).bind(id, couple.id, a.id, NOW, NOW)));
+    await env.DB.batch(
+      ids.map((id) =>
+        env.DB.prepare(
+          `INSERT INTO journal_entries (id, couple_id, author_id, entry_date, created_at, updated_at)
+      VALUES (?, ?, ?, '2026-11-05', ?, ?)`,
+        ).bind(id, couple.id, a.id, NOW, NOW),
+      ),
+    );
     const first = await page(a);
     expect(first.entries).toHaveLength(20);
     expect(first.nextCursor).toMatch(/^[A-Za-z0-9_-]+$/);
@@ -341,8 +471,20 @@ describe("journal create and feed", () => {
 
   it("journal AC15 (R21): rejects malformed cursors", async () => {
     const { a } = await paired();
-    for (const cursor of ["", "bad!", btoa("{}"), btoa('["2026-02-30",1,"id"]'), btoa('["2026-11-05",1.5,"id"]'), btoa('["2026-11-05",1,2]'), btoa('["2026-11-05",1,"id",4]')]) {
-      await error(await call("GET", `/api/journal?cursor=${encodeURIComponent(cursor)}`, { cookie: a.cookie }), 400, "invalid_body");
+    for (const cursor of [
+      "",
+      "bad!",
+      btoa("{}"),
+      btoa('["2026-02-30",1,"id"]'),
+      btoa('["2026-11-05",1.5,"id"]'),
+      btoa('["2026-11-05",1,2]'),
+      btoa('["2026-11-05",1,"id",4]'),
+    ]) {
+      await error(
+        await call("GET", `/api/journal?cursor=${encodeURIComponent(cursor)}`, { cookie: a.cookie }),
+        400,
+        "invalid_body",
+      );
     }
   });
 });

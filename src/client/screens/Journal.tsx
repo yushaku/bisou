@@ -25,8 +25,12 @@ import { useOnline } from "../lib/useOnline";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 // The compose sheet, its calendar and photo tools load on first write, outside the feed bundle.
-const ClosedNoteSheet = lazy(() => import("../components/bisou/ClosedNoteSheet").then((m) => ({ default: m.ClosedNoteSheet })));
-const JournalComposeSheet = lazy(() => import("../components/bisou/JournalComposeSheet").then((m) => ({ default: m.JournalComposeSheet })));
+const ClosedNoteSheet = lazy(() =>
+  import("../components/bisou/ClosedNoteSheet").then((m) => ({ default: m.ClosedNoteSheet })),
+);
+const JournalComposeSheet = lazy(() =>
+  import("../components/bisou/JournalComposeSheet").then((m) => ({ default: m.JournalComposeSheet })),
+);
 const ComposeSheet = lazy(() => import("../components/bisou/ComposeSheet").then((m) => ({ default: m.ComposeSheet })));
 
 interface JournalProps extends SessionProps {
@@ -40,15 +44,33 @@ export function Journal({ couple, ...session }: JournalProps) {
   const { user, onSignedOut } = session;
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
-  const [section, setSection] = useState<"feed" | "notes">(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("section") === "notes" ? "notes" : memory?.journalSection ?? "feed");
-  useLayoutEffect(() => { if (memory?.journalSection === "notes") setSection("notes"); }, [memory]);
+  const [section, setSection] = useState<"feed" | "notes">(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("section") === "notes"
+      ? "notes"
+      : (memory?.journalSection ?? "feed"),
+  );
+  useLayoutEffect(() => {
+    if (memory?.journalSection === "notes") setSection("notes");
+  }, [memory]);
   useEffect(() => {
     if (memory) memory.journalSection = section;
     const url = new URL(window.location.href);
-    if (url.searchParams.get("section") === "notes") { url.searchParams.delete("section"); history.replaceState(history.state, "", url); }
+    if (url.searchParams.get("section") === "notes") {
+      url.searchParams.delete("section");
+      history.replaceState(history.state, "", url);
+    }
   }, [memory, section]);
   // null until the first page arrives; never shown as an empty journal while loading or failed.
-  const { feed, refresh, loadMore, failed, moreFailed, loadingMore, saveEntry, removeEntry: removeCachedEntry } = useJournal(onSignedOut);
+  const {
+    feed,
+    refresh,
+    loadMore,
+    failed,
+    moreFailed,
+    loadingMore,
+    saveEntry,
+    removeEntry: removeCachedEntry,
+  } = useJournal(onSignedOut);
   const firstLoad = failed ? "error" : "loading";
   const more = loadingMore ? "loading" : moreFailed ? "error" : "idle";
   const stale = failed && !moreFailed;
@@ -57,12 +79,18 @@ export function Journal({ couple, ...session }: JournalProps) {
   const notesRef = useRef<{ refresh: () => Promise<void> }>(null);
 
   // Creator first, as on Home, so each partner keeps one tint everywhere.
-  const people = useMemo(() => new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person])), [couple.members, user, t]);
+  const people = useMemo(
+    () => new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person])),
+    [couple.members, user, t],
+  );
   const partner = couple.members.find((m) => m.id !== user.id);
   const partnerName = displayName(partner, t);
 
-  const groups = useMemo(() => feed ? groupByDay(feed.entries) : [], [feed]);
-  const cards = useMemo(() => new Map((feed?.entries ?? []).map((e) => [e.id, toCard(e, people, t, locale)])), [feed, people, t, locale]);
+  const groups = useMemo(() => (feed ? groupByDay(feed.entries) : []), [feed]);
+  const cards = useMemo(
+    () => new Map((feed?.entries ?? []).map((e) => [e.id, toCard(e, people, t, locale)])),
+    [feed, people, t, locale],
+  );
 
   const [fromMenu, setFromMenu] = useState(false);
   const [composing, setComposing] = useState(false);
@@ -75,11 +103,18 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [acting, setActing] = useState<JournalEntry | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const detail = feed?.entries.find((e) => e.id === detailId);
-  useEffect(() => { if (!detail) setDetailId(null); }, [detail]);
-  const [closedEditing, setClosedEditing] = useState<(JournalEntry & { note: NonNullable<JournalEntry["note"]> }) | null>(null);
+  useEffect(() => {
+    if (!detail) setDetailId(null);
+  }, [detail]);
+  const [closedEditing, setClosedEditing] = useState<
+    (JournalEntry & { note: NonNullable<JournalEntry["note"]> }) | null
+  >(null);
   const write = (entry: JournalEntry | null = null, fromMenu = false) => {
     setSection("feed");
-    if (entry?.note) { setClosedEditing({ ...entry, note: entry.note }); return; }
+    if (entry?.note) {
+      setClosedEditing({ ...entry, note: entry.note });
+      return;
+    }
     setFromMenu(fromMenu);
     setEditing(entry);
     setComposeLoaded(true);
@@ -87,7 +122,13 @@ export function Journal({ couple, ...session }: JournalProps) {
   };
 
   const [createTab, setCreateTab] = useState<"feed" | "notes">("feed");
-  const create = (tab: "feed" | "notes") => { setCreateTab(tab); setFromMenu(true); setEditing(null); setComposeLoaded(true); setComposing(true); };
+  const create = (tab: "feed" | "notes") => {
+    setCreateTab(tab);
+    setFromMenu(true);
+    setEditing(null);
+    setComposeLoaded(true);
+    setComposing(true);
+  };
   useCreateRequest("notes", () => create("notes"));
   useCreateRequest("journal", () => create(section));
 
@@ -132,150 +173,249 @@ export function Journal({ couple, ...session }: JournalProps) {
   useEffect(() => {
     const el = sentinel.current;
     if (!autoLoad || !el || more !== "idle") return;
-    const io = new IntersectionObserver((items) => {
-      if (items.some((i) => i.isIntersecting)) void loadMore();
-    }, { rootMargin: PREFETCH_MARGIN });
+    const io = new IntersectionObserver(
+      (items) => {
+        if (items.some((i) => i.isIntersecting)) void loadMore();
+      },
+      { rootMargin: PREFETCH_MARGIN },
+    );
     io.observe(el);
     return () => io.disconnect();
   }, [autoLoad, loadMore, more, feed]);
 
   return (
     <SignedInShell {...session} tab="journal" onRefresh={pullRefresh}>
-      <Tabs value={section} onValueChange={(value) => { const next = value === "notes" ? "notes" : "feed"; setSection(next); if (memory) memory.journalSection = next; }}>
-        <TabsList className="mb-4 w-full"><TabsTrigger value="feed">{t("journal.sectionFeed")}</TabsTrigger><TabsTrigger value="notes">{t("journal.sectionNotes")}</TabsTrigger></TabsList>
-        <TabsContent value="notes"><NotesSection ref={notesRef} onClosed={(entry) => { onSaved(entry); setSection("feed"); }} couple={couple} user={user} onSignedOut={onSignedOut} /></TabsContent>
+      <Tabs
+        value={section}
+        onValueChange={(value) => {
+          const next = value === "notes" ? "notes" : "feed";
+          setSection(next);
+          if (memory) memory.journalSection = next;
+        }}
+      >
+        <TabsList className="mb-4 w-full">
+          <TabsTrigger value="feed">{t("journal.sectionFeed")}</TabsTrigger>
+          <TabsTrigger value="notes">{t("journal.sectionNotes")}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="notes">
+          <NotesSection
+            ref={notesRef}
+            onClosed={(entry) => {
+              onSaved(entry);
+              setSection("feed");
+            }}
+            couple={couple}
+            user={user}
+            onSignedOut={onSignedOut}
+          />
+        </TabsContent>
         <TabsContent value="feed">
-
-      {feed && online && stale && (
-        <div role="status" className="mb-4 rounded-control bg-warning px-4 py-3 text-base text-warning-foreground">
-          {t("journal.stale")}{" "}
-          <Button variant="link" size="sm" className="h-auto text-warning-foreground" onClick={() => void refresh()}>
-            {t("journal.retry")}
-          </Button>
-        </div>
-      )}
-
-      {!feed && firstLoad === "loading" && (
-        <div className="flex flex-col gap-3">
-          <p role="status" className="text-base text-muted-foreground">
-            {t("journal.loading")}
-          </p>
-          <Skeleton className="h-7 w-48" aria-hidden="true" />
-          <Skeleton className="h-44 rounded-xl" aria-hidden="true" />
-          <Skeleton className="h-44 rounded-xl" aria-hidden="true" />
-        </div>
-      )}
-
-      {!feed && firstLoad === "error" && (
-        <EmptyState
-          situation="error"
-          title={t("journal.loadError")}
-          description={t("journal.loadErrorBody")}
-          action={{ label: t("journal.retry"), onClick: retryFirst }}
-        />
-      )}
-
-      {feed && feed.entries.length === 0 && (
-        <EmptyState
-          title={t("journal.emptyTitle")}
-          description={t("journal.emptyBody")}
-          action={{ label: t("compose.first"), onClick: () => write(), icon: Plus }}
-        />
-      )}
-
-      {feed && feed.entries.length > 0 && (
-        <>
-          {groups.map((group) => (
-            <section key={group.date} aria-labelledby={`day-${group.date}`} className="mb-8 flex flex-col gap-3">
-              <h2 id={`day-${group.date}`} className="font-heading text-xl">
-                <time dateTime={group.date}>{formatDay(group.date, locale)}</time>
-              </h2>
-              {group.entries.map((e) => {
-                const card = cards.get(e.id)!;
-                return (
-                  <EntryCard
-                    key={e.id}
-                    id={`entry-${e.id}`}
-                    entry={card}
-                    showDate={false}
-                    onOpen={() => setDetailId(e.id)}
-                    onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
-                    actions={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="-my-2 -mr-2"
-                        aria-label={t("entry.options", { name: card.author.name, time: card.time ?? "" })}
-                        onClick={() => setActing(e)}
-                      >
-                        <Ellipsis aria-hidden="true" />
-                      </Button>
-                    }
-                  />
-                );
-              })}
-            </section>
-          ))}
-
-          {feed.nextCursor ? (
-            <div ref={sentinel} className="flex min-h-11 flex-col items-center gap-2 pb-4">
-              {more === "loading" && (
-                <p role="status" className="flex items-center gap-2 text-base text-muted-foreground">
-                  <span className="size-2 animate-pulse rounded-full bg-muted-foreground motion-reduce:animate-none" aria-hidden="true" />
-                  {t("journal.loadingMore")}
-                </p>
-              )}
-              {more === "error" && (
-                <>
-                  <p role="alert" className="text-base text-destructive">
-                    {t("journal.moreError")}
-                  </p>
-                  <Button variant="outline" onClick={() => void loadMore()}>
-                    {t("journal.retry")}
-                  </Button>
-                </>
-              )}
-              {more === "idle" && !autoLoad && (
-                <Button variant="outline" onClick={() => void loadMore()}>
-                  {t("journal.loadMore")}
-                </Button>
-              )}
+          {feed && online && stale && (
+            <div role="status" className="mb-4 rounded-control bg-warning px-4 py-3 text-base text-warning-foreground">
+              {t("journal.stale")}{" "}
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto text-warning-foreground"
+                onClick={() => void refresh()}
+              >
+                {t("journal.retry")}
+              </Button>
             </div>
-          ) : (
-            <p className="pb-4 text-sm text-muted-foreground">{t("journal.end")}</p>
           )}
-        </>
-      )}
 
-      <PhotoViewer
-        photos={viewed && viewed.map((id, i) => ({ src: photoUrl(id, "full"), alt: t("entry.photo", { index: i + 1, count: viewed.length }) }))}
-        index={viewer?.index ?? 0}
-        onIndex={(index) => setViewer((v) => v && { ...v, index })}
-        onClose={() => setViewer((v) => v && { ...v, open: false })}
-        onReturnFocus={(index) =>
-          document.getElementById(`entry-${viewer?.entry.id}`)?.querySelector<HTMLElement>(`[data-photo="${index}"]`)?.focus()
-        }
-      />
+          {!feed && firstLoad === "loading" && (
+            <div className="flex flex-col gap-3">
+              <p role="status" className="text-base text-muted-foreground">
+                {t("journal.loading")}
+              </p>
+              <Skeleton className="h-7 w-48" aria-hidden="true" />
+              <Skeleton className="h-44 rounded-xl" aria-hidden="true" />
+              <Skeleton className="h-44 rounded-xl" aria-hidden="true" />
+            </div>
+          )}
 
-      <EntryActions entry={detail ?? null} canDelete={detail?.authorId === user.id || !!detail?.note} remove={deleteItem} onClose={() => setDetailId(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut}
-        detail={detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={(index) => { setDetailId(null); setViewer({ entry: detail, index, open: true }); }} />} />
-      <EntryActions remove={deleteItem} entry={acting} canDelete={acting?.authorId === user.id || !!acting?.note} onClose={() => setActing(null)} onEdit={write} onDeleted={onDeleted} onSignedOut={onSignedOut} />
+          {!feed && firstLoad === "error" && (
+            <EmptyState
+              situation="error"
+              title={t("journal.loadError")}
+              description={t("journal.loadErrorBody")}
+              action={{ label: t("journal.retry"), onClick: retryFirst }}
+            />
+          )}
 
-      {closedEditing && <Suspense fallback={null}><ClosedNoteSheet key={closedEditing.id} entry={closedEditing} recipient={people.get(closedEditing.note.recipientId) ?? { name: displayName(undefined, t), tone: "secondary" }} onClose={() => setClosedEditing(null)} onSignedOut={onSignedOut} onSaved={(entry) => { onSaved(entry); setClosedEditing(null); }} /></Suspense>}
-      </TabsContent></Tabs>
+          {feed && feed.entries.length === 0 && (
+            <EmptyState
+              title={t("journal.emptyTitle")}
+              description={t("journal.emptyBody")}
+              action={{ label: t("compose.first"), onClick: () => write(), icon: Plus }}
+            />
+          )}
+
+          {feed && feed.entries.length > 0 && (
+            <>
+              {groups.map((group) => (
+                <section key={group.date} aria-labelledby={`day-${group.date}`} className="mb-8 flex flex-col gap-3">
+                  <h2 id={`day-${group.date}`} className="font-heading text-xl">
+                    <time dateTime={group.date}>{formatDay(group.date, locale)}</time>
+                  </h2>
+                  {group.entries.map((e) => {
+                    const card = cards.get(e.id)!;
+                    return (
+                      <EntryCard
+                        key={e.id}
+                        id={`entry-${e.id}`}
+                        entry={card}
+                        showDate={false}
+                        onOpen={() => setDetailId(e.id)}
+                        onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
+                        actions={
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="-my-2 -mr-2"
+                            aria-label={t("entry.options", { name: card.author.name, time: card.time ?? "" })}
+                            onClick={() => setActing(e)}
+                          >
+                            <Ellipsis aria-hidden="true" />
+                          </Button>
+                        }
+                      />
+                    );
+                  })}
+                </section>
+              ))}
+
+              {feed.nextCursor ? (
+                <div ref={sentinel} className="flex min-h-11 flex-col items-center gap-2 pb-4">
+                  {more === "loading" && (
+                    <p role="status" className="flex items-center gap-2 text-base text-muted-foreground">
+                      <span
+                        className="size-2 animate-pulse rounded-full bg-muted-foreground motion-reduce:animate-none"
+                        aria-hidden="true"
+                      />
+                      {t("journal.loadingMore")}
+                    </p>
+                  )}
+                  {more === "error" && (
+                    <>
+                      <p role="alert" className="text-base text-destructive">
+                        {t("journal.moreError")}
+                      </p>
+                      <Button variant="outline" onClick={() => void loadMore()}>
+                        {t("journal.retry")}
+                      </Button>
+                    </>
+                  )}
+                  {more === "idle" && !autoLoad && (
+                    <Button variant="outline" onClick={() => void loadMore()}>
+                      {t("journal.loadMore")}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <p className="pb-4 text-sm text-muted-foreground">{t("journal.end")}</p>
+              )}
+            </>
+          )}
+
+          <PhotoViewer
+            photos={
+              viewed &&
+              viewed.map((id, i) => ({
+                src: photoUrl(id, "full"),
+                alt: t("entry.photo", { index: i + 1, count: viewed.length }),
+              }))
+            }
+            index={viewer?.index ?? 0}
+            onIndex={(index) => setViewer((v) => v && { ...v, index })}
+            onClose={() => setViewer((v) => v && { ...v, open: false })}
+            onReturnFocus={(index) =>
+              document
+                .getElementById(`entry-${viewer?.entry.id}`)
+                ?.querySelector<HTMLElement>(`[data-photo="${index}"]`)
+                ?.focus()
+            }
+          />
+
+          <EntryActions
+            entry={detail ?? null}
+            canDelete={detail?.authorId === user.id || !!detail?.note}
+            remove={deleteItem}
+            onClose={() => setDetailId(null)}
+            onEdit={write}
+            onDeleted={onDeleted}
+            onSignedOut={onSignedOut}
+            detail={
+              detail && (
+                <JournalDetailSheet
+                  entry={toCard(detail, people, t, locale)}
+                  onOpenPhoto={(index) => {
+                    setDetailId(null);
+                    setViewer({ entry: detail, index, open: true });
+                  }}
+                />
+              )
+            }
+          />
+          <EntryActions
+            remove={deleteItem}
+            entry={acting}
+            canDelete={acting?.authorId === user.id || !!acting?.note}
+            onClose={() => setActing(null)}
+            onEdit={write}
+            onDeleted={onDeleted}
+            onSignedOut={onSignedOut}
+          />
+
+          {closedEditing && (
+            <Suspense fallback={null}>
+              <ClosedNoteSheet
+                key={closedEditing.id}
+                entry={closedEditing}
+                recipient={
+                  people.get(closedEditing.note.recipientId) ?? { name: displayName(undefined, t), tone: "secondary" }
+                }
+                onClose={() => setClosedEditing(null)}
+                onSignedOut={onSignedOut}
+                onSaved={(entry) => {
+                  onSaved(entry);
+                  setClosedEditing(null);
+                }}
+              />
+            </Suspense>
+          )}
+        </TabsContent>
+      </Tabs>
       {composeLoaded && (
         <Suspense fallback={null}>
-          {fromMenu && !editing ? <JournalComposeSheet open={composing} onOpenChange={setComposing} initialTab={createTab} partnerName={partnerName} onSignedOut={onSignedOut}
-            onSaved={(entry) => { onSaved(entry); setSection("feed"); }}
-            onNoteSaved={() => { setSection("notes"); void notesRef.current?.refresh(); }} /> : <ComposeSheet
-            fromMenu={fromMenu}
-            open={composing}
-            onOpenChange={setComposing}
-            partnerName={partnerName}
-            entry={editing ?? undefined}
-            onSaved={onSaved}
-            onSignedOut={onSignedOut}
-          />}
+          {fromMenu && !editing ? (
+            <JournalComposeSheet
+              open={composing}
+              onOpenChange={setComposing}
+              initialTab={createTab}
+              partnerName={partnerName}
+              onSignedOut={onSignedOut}
+              onSaved={(entry) => {
+                onSaved(entry);
+                setSection("feed");
+              }}
+              onNoteSaved={() => {
+                setSection("notes");
+                void notesRef.current?.refresh();
+              }}
+            />
+          ) : (
+            <ComposeSheet
+              fromMenu={fromMenu}
+              open={composing}
+              onOpenChange={setComposing}
+              partnerName={partnerName}
+              entry={editing ?? undefined}
+              onSaved={onSaved}
+              onSignedOut={onSignedOut}
+            />
+          )}
         </Suspense>
       )}
     </SignedInShell>

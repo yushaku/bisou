@@ -11,11 +11,13 @@ describe("wish forms", () => {
     for (const input of ["abc", "1.5", "450,000.00", "45,00", "-1"]) expect(parseVnd(input)).toBeNaN();
     expect(wishSaveBlock(form, [])).toBeNull();
     expect(wishSaveBlock({ ...form, title: " " }, [])).toBe("wish.titleInvalid");
-    for (const price of [0, -1, 1.5, NaN, Number.MAX_SAFE_INTEGER + 1]) expect(wishSaveBlock({ ...form, price }, [])).toBe("wish.priceInvalid");
+    for (const price of [0, -1, 1.5, NaN, Number.MAX_SAFE_INTEGER + 1])
+      expect(wishSaveBlock({ ...form, price }, [])).toBe("wish.priceInvalid");
     expect(wishSaveBlock({ ...form, link: "javascript:alert(1)" }, [])).toBe("wish.linkInvalid");
   });
   it("wishes AC13 (R6): refuses saving a photo still uploading or failed", () => {
-    for (const state of ["queued", "uploading", "failed"] as const) expect(wishSaveBlock(form, [{ state }])).toBe("compose.waitPhotos");
+    for (const state of ["queued", "uploading", "failed"] as const)
+      expect(wishSaveBlock(form, [{ state }])).toBe("compose.waitPhotos");
     expect(wishSaveBlock(form, [{ state: "done" }])).toBeNull();
   });
   it("wishes AC12 (R20): includes prefix and title in the 2000 code point limit, in both languages", () => {

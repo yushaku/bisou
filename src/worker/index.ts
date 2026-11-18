@@ -20,16 +20,23 @@ export default {
 
   // Check scheduled notes every minute; other jobs keep their hourly Vietnam slots.
   scheduled(controller, env, ctx) {
-    ctx.waitUntil(sendScheduledNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] scheduled notes failed")));
+    ctx.waitUntil(
+      sendScheduledNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] scheduled notes failed")),
+    );
     if (new Date(controller.scheduledTime).getUTCMinutes() !== 0) return;
     switch (vnHour(controller.scheduledTime)) {
       case 8:
       case 20:
-        ctx.waitUntil(remindEvents(env, controller.scheduledTime, vnHour(controller.scheduledTime) === 20 ? 1 : 0)
-          .catch(() => console.error("[bisou] event push failed")));
+        ctx.waitUntil(
+          remindEvents(env, controller.scheduledTime, vnHour(controller.scheduledTime) === 20 ? 1 : 0).catch(() =>
+            console.error("[bisou] event push failed"),
+          ),
+        );
         return;
       case 7:
-        ctx.waitUntil(remindNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] note push failed")));
+        ctx.waitUntil(
+          remindNotes(env, controller.scheduledTime).catch(() => console.error("[bisou] note push failed")),
+        );
         return;
       case 3:
         break;

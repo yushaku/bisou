@@ -28,7 +28,9 @@ async function count(table: string): Promise<number> {
 async function seed() {
   const db = env.DB;
   const user = (id: string) =>
-    db.prepare("INSERT INTO users (id, email, created_at) VALUES (?, ?, ?)").bind(id, `${id}@example.com`, NOW - 100 * HOUR);
+    db
+      .prepare("INSERT INTO users (id, email, created_at) VALUES (?, ?, ?)")
+      .bind(id, `${id}@example.com`, NOW - 100 * HOUR);
   const otp = (email: string, expiresAt: number) =>
     db
       .prepare("INSERT INTO otp_codes (email, code_hash, expires_at, attempts, created_at) VALUES (?, 'h', ?, 0, ?)")
@@ -42,9 +44,13 @@ async function seed() {
   const joinAttempt = (id: number, createdAt: number) =>
     db.prepare("INSERT INTO join_attempts (id, user_id, created_at) VALUES (?, 'u2', ?)").bind(id, createdAt);
   const coupleRow = (id: string) =>
-    db.prepare("INSERT INTO couples (id, start_date, created_by, created_at) VALUES (?, NULL, NULL, ?)").bind(id, NOW - 100 * HOUR);
+    db
+      .prepare("INSERT INTO couples (id, start_date, created_by, created_at) VALUES (?, NULL, NULL, ?)")
+      .bind(id, NOW - 100 * HOUR);
   const member = (coupleId: string, userId: string) =>
-    db.prepare("INSERT INTO couple_members (couple_id, user_id, joined_at) VALUES (?, ?, ?)").bind(coupleId, userId, NOW - 99 * HOUR);
+    db
+      .prepare("INSERT INTO couple_members (couple_id, user_id, joined_at) VALUES (?, ?, ?)")
+      .bind(coupleId, userId, NOW - 99 * HOUR);
   const pairCode = (code: string, coupleId: string, expiresAt: number) =>
     db
       .prepare("INSERT INTO pair_codes (code, couple_id, expires_at, created_at) VALUES (?, ?, ?, ?)")
@@ -110,7 +116,9 @@ describe("runCleanup", () => {
       const res = await call("POST", "/api/wishes", { cookie: b.cookie, body: { title, price: 100 } });
       const { wish } = await res.json<{ wish: { id: string } }>();
       await call("POST", `/api/wishes/${wish.id}/claim`, { cookie: a.cookie });
-      await env.DB.prepare("UPDATE wish_claims SET created_at = ? WHERE wish_id = ?").bind(NOW - 60 * DAY, wish.id).run();
+      await env.DB.prepare("UPDATE wish_claims SET created_at = ? WHERE wish_id = ?")
+        .bind(NOW - 60 * DAY, wish.id)
+        .run();
       if (title === "Deleted") {
         vi.useFakeTimers({ toFake: ["Date"] });
         vi.setSystemTime(NOW);
@@ -128,7 +136,15 @@ describe("runCleanup", () => {
   it("deletes only expired rows and reports the counts per table", async () => {
     await seed();
     const counts = await runCleanup(env.DB, NOW);
-    expect(counts).toEqual({ otp_codes: 2, sessions: 2, otp_requests: 2, join_attempts: 2, pair_codes: 2, wish_spins: 0, wish_notices: 0 });
+    expect(counts).toEqual({
+      otp_codes: 2,
+      sessions: 2,
+      otp_requests: 2,
+      join_attempts: 2,
+      pair_codes: 2,
+      wish_spins: 0,
+      wish_notices: 0,
+    });
     await expectOnlyLiveRowsLeft();
   });
 
@@ -191,21 +207,35 @@ describe("scheduled handler", () => {
 
 async function scheduled() {
   const pending: Promise<unknown>[] = [];
-  const ctx = { waitUntil: (promise: Promise<unknown>) => pending.push(promise), passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
+  const ctx = {
+    waitUntil: (promise: Promise<unknown>) => pending.push(promise),
+    passThroughOnException: () => {},
+    props: {},
+  } as unknown as ExecutionContext;
   await worker.scheduled({ scheduledTime: NOW, cron: "* * * * *", noRetry: () => {} } as ScheduledController, env, ctx);
   await Promise.all(pending);
 }
 
 async function seedPhotos() {
   await seed();
-  await env.DB.prepare(`INSERT INTO journal_entries (id, couple_id, author_id, entry_date, created_at, updated_at)
-    VALUES ('entry', 'c4', 'u4', '2026-11-05', ?, ?)`).bind(NOW, NOW).run();
+  await env.DB.prepare(
+    `INSERT INTO journal_entries (id, couple_id, author_id, entry_date, created_at, updated_at)
+    VALUES ('entry', 'c4', 'u4', '2026-11-05', ?, ?)`,
+  )
+    .bind(NOW, NOW)
+    .run();
   for (const [id, createdAt, entryId] of [
-    ["expired", NOW - 25 * HOUR, null], ["edge", NOW - 24 * HOUR, null], ["detached", 0, null],
-    ["recent", NOW - HOUR, null], ["attached", NOW - 25 * HOUR, "entry"],
+    ["expired", NOW - 25 * HOUR, null],
+    ["edge", NOW - 24 * HOUR, null],
+    ["detached", 0, null],
+    ["recent", NOW - HOUR, null],
+    ["attached", NOW - 25 * HOUR, "entry"],
   ] as const) {
-    await env.DB.prepare("INSERT INTO photos (id, couple_id, uploader_id, entry_id, created_at) VALUES (?, 'c4', 'u4', ?, ?)")
-      .bind(id, entryId, createdAt).run();
+    await env.DB.prepare(
+      "INSERT INTO photos (id, couple_id, uploader_id, entry_id, created_at) VALUES (?, 'c4', 'u4', ?, ?)",
+    )
+      .bind(id, entryId, createdAt)
+      .run();
     for (const size of ["full", "thumb"] as const) await env.PHOTOS.put(photoKey("c4", id, size), "fixture");
   }
 }
@@ -216,7 +246,9 @@ describe("scheduled photo sweep", () => {
     vi.setSystemTime(NOW);
     const { a } = await paired();
     const photoId = await upload(a);
-    await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?").bind(NOW - PENDING_PHOTO_TTL + 1, photoId).run();
+    await env.DB.prepare("UPDATE photos SET created_at = ? WHERE id = ?")
+      .bind(NOW - PENDING_PHOTO_TTL + 1, photoId)
+      .run();
     const batch = env.DB.batch.bind(env.DB);
     const removeObjects = env.PHOTOS.delete.bind(env.PHOTOS);
     vi.spyOn(env.DB, "batch").mockImplementationOnce(async (statements) => {
@@ -228,7 +260,10 @@ describe("scheduled photo sweep", () => {
       await sweepPhotos(env, NOW + 2);
       return saved;
     });
-    const res = await call("POST", "/api/journal", { cookie: a.cookie, body: { date: "2026-11-05", text: "", photoIds: [photoId] } });
+    const res = await call("POST", "/api/journal", {
+      cookie: a.cookie,
+      body: { date: "2026-11-05", text: "", photoIds: [photoId] },
+    });
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "photo_invalid" });
     expect(await count("journal_entries")).toBe(0);
@@ -279,7 +314,13 @@ describe("scheduled photo sweep", () => {
   it("journal AC12 (R17): limits each sweep to 500 photos and 1000 R2 keys within D1 parameter limits", async () => {
     await seed();
     const ids = Array.from({ length: 501 }, (_, i) => `pending-${i}`);
-    await env.DB.batch(ids.map((id) => env.DB.prepare("INSERT INTO photos (id, couple_id, uploader_id, created_at) VALUES (?, 'c4', 'u4', 0)").bind(id)));
+    await env.DB.batch(
+      ids.map((id) =>
+        env.DB.prepare("INSERT INTO photos (id, couple_id, uploader_id, created_at) VALUES (?, 'c4', 'u4', 0)").bind(
+          id,
+        ),
+      ),
+    );
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const deleted = vi.spyOn(env.PHOTOS, "delete");
     await scheduled();
@@ -293,11 +334,13 @@ describe("scheduled photo sweep", () => {
   });
 });
 
-
 it("wishes AC10 (R24): daily cleanup retains only the last 24 hours of spin times", async () => {
   await seed();
-  await env.DB.batch([NOW - 24 * HOUR - 1, NOW - 24 * HOUR, NOW - 24 * HOUR + 1].map((at) =>
-    env.DB.prepare("INSERT INTO wish_spins (user_id, created_at) VALUES ('u1', ?)").bind(at)));
+  await env.DB.batch(
+    [NOW - 24 * HOUR - 1, NOW - 24 * HOUR, NOW - 24 * HOUR + 1].map((at) =>
+      env.DB.prepare("INSERT INTO wish_spins (user_id, created_at) VALUES ('u1', ?)").bind(at),
+    ),
+  );
   expect((await runCleanup(env.DB, NOW)).wish_spins).toBe(2);
   expect(await count("wish_spins")).toBe(1);
 });

@@ -1,5 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { parsePrefs, resolveTheme, THEME_STORAGE_KEY, themeById, type ThemeId, type ThemeKind, type ThemePrefs } from "./themes";
+import {
+  parsePrefs,
+  resolveTheme,
+  THEME_STORAGE_KEY,
+  themeById,
+  type ThemeId,
+  type ThemeKind,
+  type ThemePrefs,
+} from "./themes";
 
 interface ThemeValue {
   prefs: ThemePrefs;
@@ -71,10 +79,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const value = useMemo(
-    () => ({ prefs, setPrefs, theme, kind: themeById(theme).kind }),
-    [prefs, setPrefs, theme],
-  );
+  const value = useMemo(() => ({ prefs, setPrefs, theme, kind: themeById(theme).kind }), [prefs, setPrefs, theme]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 

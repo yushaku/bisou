@@ -14,7 +14,13 @@ import pkg from "./package.json" with { type: "json" };
 function buildId(): string {
   let commit = process.env.GITHUB_SHA?.slice(0, 7) ?? "";
   if (!commit) {
-    try { commit = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); } catch { commit = "nogit"; }
+    try {
+      commit = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+        .toString()
+        .trim();
+    } catch {
+      commit = "nogit";
+    }
   }
   return `${pkg.version}-${commit}-${Date.now().toString(36)}`;
 }
@@ -33,54 +39,60 @@ export default defineConfig({
     { name: "bisou-palettes", transformIndexHtml: () => themeHead(palettes) },
     react(),
     tailwindcss(),
-    cloudflare(process.env.BISOU_LOCAL_CONFIG ? {
-      configPath: process.env.BISOU_LOCAL_CONFIG,
-      persistState: { path: process.env.BISOU_LOCAL_STATE! },
-      remoteBindings: false,
-      inspectorPort: false,
-    } : undefined),
+    cloudflare(
+      process.env.BISOU_LOCAL_CONFIG
+        ? {
+            configPath: process.env.BISOU_LOCAL_CONFIG,
+            persistState: { path: process.env.BISOU_LOCAL_STATE! },
+            remoteBindings: false,
+            inspectorPort: false,
+          }
+        : undefined,
+    ),
     // The PWA plugin only concerns the browser build, not the Worker bundle.
-    ...clientOnly(VitePWA({
-      registerType: "autoUpdate",
-      injectRegister: false,
-      // The glob below already precaches every icon.
-      includeManifestIcons: false,
-      manifest: {
-        name: "Bisou",
-        short_name: "Bisou",
-        description: "Góc nhỏ của hai đứa: lưu kỷ niệm, viết nhật ký và gửi gắm điều ước.",
-        id: "/",
-        shortcuts: [
-          { name: "Viết nhật ký", url: "/journal?compose=1" },
-          { name: "Quay quà", url: "/wishes?spin=1" },
-        ],
-        lang: "vi",
-        start_url: "/",
-        scope: "/",
-        display: "standalone",
-        orientation: "portrait",
-        background_color: palettes.peach.tokens.background,
-        theme_color: palettes.peach.tokens.background,
-        icons: [
-          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-          { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
-        ],
-      },
-      workbox: {
-        importScripts: ["/push-sw.js"],
-        // A new deploy takes over at once; updateReload.ts reloads the open page only when it is hidden.
-        skipWaiting: true,
-        clientsClaim: true,
-        // App shell only (fonts included, for offline): never cache the API.
-        globPatterns: ["**/*.{js,css,html,svg,png,jpg,webp,webmanifest,woff2}"],
-        globIgnores: ["splash/**"],
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [],
-        cleanupOutdatedCaches: true,
-      },
-    })),
+    ...clientOnly(
+      VitePWA({
+        registerType: "autoUpdate",
+        injectRegister: false,
+        // The glob below already precaches every icon.
+        includeManifestIcons: false,
+        manifest: {
+          name: "Bisou",
+          short_name: "Bisou",
+          description: "Góc nhỏ của hai đứa: lưu kỷ niệm, viết nhật ký và gửi gắm điều ước.",
+          id: "/",
+          shortcuts: [
+            { name: "Viết nhật ký", url: "/journal?compose=1" },
+            { name: "Quay quà", url: "/wishes?spin=1" },
+          ],
+          lang: "vi",
+          start_url: "/",
+          scope: "/",
+          display: "standalone",
+          orientation: "portrait",
+          background_color: palettes.peach.tokens.background,
+          theme_color: palettes.peach.tokens.background,
+          icons: [
+            { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+            { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+            { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          ],
+        },
+        workbox: {
+          importScripts: ["/push-sw.js"],
+          // A new deploy takes over at once; updateReload.ts reloads the open page only when it is hidden.
+          skipWaiting: true,
+          clientsClaim: true,
+          // App shell only (fonts included, for offline): never cache the API.
+          globPatterns: ["**/*.{js,css,html,svg,png,jpg,webp,webmanifest,woff2}"],
+          globIgnores: ["splash/**"],
+          navigateFallback: "/index.html",
+          navigateFallbackDenylist: [/^\/api\//],
+          runtimeCaching: [],
+          cleanupOutdatedCaches: true,
+        },
+      }),
+    ),
   ],
 });
 

@@ -33,7 +33,10 @@ auth.post("/request", async (c) => {
   const db = c.env.DB;
 
   // Rate limit per email (same rule for known and unknown addresses, so it reveals nothing).
-  await db.prepare("DELETE FROM otp_requests WHERE email = ? AND created_at <= ?").bind(email, now - HOUR).run();
+  await db
+    .prepare("DELETE FROM otp_requests WHERE email = ? AND created_at <= ?")
+    .bind(email, now - HOUR)
+    .run();
   const recent = await db
     .prepare("SELECT COUNT(*) AS n, MAX(created_at) AS last FROM otp_requests WHERE email = ?")
     .bind(email)
@@ -103,12 +106,13 @@ auth.post("/verify", async (c) => {
     .first<{ code_hash: string; attempts: number }>();
   if (!row) return c.json({ error: "too_many_attempts" }, 429);
 
-  const devLogin = c.env.ENVIRONMENT === "development"
-    && typeof c.env.DEV_LOGIN_CODE === "string"
-    && c.env.DEV_LOGIN_CODE.length === 6
-    && /^\d{6}$/.test(c.env.DEV_LOGIN_CODE)
-    && body?.code === c.env.DEV_LOGIN_CODE;
-  const ok = devLogin || await verifyOtp(pepper(c.env), email, code, row.code_hash);
+  const devLogin =
+    c.env.ENVIRONMENT === "development" &&
+    typeof c.env.DEV_LOGIN_CODE === "string" &&
+    c.env.DEV_LOGIN_CODE.length === 6 &&
+    /^\d{6}$/.test(c.env.DEV_LOGIN_CODE) &&
+    body?.code === c.env.DEV_LOGIN_CODE;
+  const ok = devLogin || (await verifyOtp(pepper(c.env), email, code, row.code_hash));
   if (!ok) {
     const attemptsLeft = OTP_MAX_ATTEMPTS - row.attempts;
     if (attemptsLeft <= 0) return c.json({ error: "too_many_attempts" }, 429);
@@ -135,9 +139,14 @@ auth.post("/logout", async (c) => {
     const tokenHash = await sha256Hex(token);
     const endpoint = typeof body?.endpoint === "string" && body.endpoint.length <= 2048 ? body.endpoint : null;
     await c.env.DB.batch([
-      ...(endpoint ? [c.env.DB.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?
-        AND user_id = (SELECT user_id FROM sessions WHERE token_hash = ?)`)
-        .bind(endpoint, tokenHash)] : []),
+      ...(endpoint
+        ? [
+            c.env.DB.prepare(
+              `DELETE FROM push_subscriptions WHERE endpoint = ?
+        AND user_id = (SELECT user_id FROM sessions WHERE token_hash = ?)`,
+            ).bind(endpoint, tokenHash),
+          ]
+        : []),
       c.env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash),
     ]);
   }

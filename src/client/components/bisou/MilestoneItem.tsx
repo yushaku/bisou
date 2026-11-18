@@ -24,7 +24,15 @@ export interface Milestone {
 }
 
 /* One row of the milestone timeline: a marker on the rail, then the date and the title. */
-export function MilestoneItem({ milestone, last = false, className }: { milestone: Milestone; last?: boolean; className?: string }) {
+export function MilestoneItem({
+  milestone,
+  last = false,
+  className,
+}: {
+  milestone: Milestone;
+  last?: boolean;
+  className?: string;
+}) {
   const { locale } = useI18n();
   const Icon = MILESTONE_ICONS[milestone.icon];
   return (

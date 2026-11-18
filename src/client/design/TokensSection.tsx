@@ -3,11 +3,35 @@ import { useTheme } from "@/theme/ThemeProvider";
 import { useDesignT } from "./messages";
 
 const COLOR_TOKENS = [
-  "background", "foreground", "card", "card-foreground", "popover", "popover-foreground",
-  "primary", "primary-foreground", "secondary", "secondary-foreground", "muted", "muted-foreground",
-  "accent", "accent-foreground", "destructive", "border", "input", "ring",
-  "success", "success-foreground", "warning", "warning-foreground", "info", "info-foreground",
-  "chart-1", "chart-2", "chart-3", "chart-4", "chart-5",
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "destructive",
+  "border",
+  "input",
+  "ring",
+  "success",
+  "success-foreground",
+  "warning",
+  "warning-foreground",
+  "info",
+  "info-foreground",
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "chart-5",
 ] as const;
 
 /* Text pairs that must reach 4.5:1 (the ring and field edges need 3:1). */
@@ -83,7 +107,10 @@ export function TokensSection() {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {COLOR_TOKENS.map((name) => (
             <li key={name} className="flex items-center gap-3">
-              <span className="edge size-11 shrink-0 rounded-md border-border" style={{ backgroundColor: `var(--${name})` }} />
+              <span
+                className="edge size-11 shrink-0 rounded-md border-border"
+                style={{ backgroundColor: `var(--${name})` }}
+              />
               <span className="min-w-0 text-sm break-words">{name}</span>
             </li>
           ))}
@@ -105,7 +132,9 @@ export function TokensSection() {
               <tr key={r.pair} className="border-t">
                 <td className="py-2">{r.pair}</td>
                 <td className="py-2 text-right tabular-nums">{r.ratio.toFixed(2)}</td>
-                <td className="py-2 text-right">{r.ratio >= r.need ? d("pass") : <strong className="text-destructive">{d("fail")}</strong>}</td>
+                <td className="py-2 text-right">
+                  {r.ratio >= r.need ? d("pass") : <strong className="text-destructive">{d("fail")}</strong>}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -121,7 +150,9 @@ export function TokensSection() {
           <p className="font-heading text-2xl">Hũ điều ước của Quốc Bảo</p>
           <p className="font-heading text-xl">Thứ Hai, 2 tháng 11</p>
           <p className="text-lg">Sáng chủ nhật đi bộ quanh Hồ Gươm, gió đầu đông lạnh mà vui.</p>
-          <p className="text-base">Bảo mua hai cốc cà phê trứng ở phố Hàng Gai, hai đứa ngồi ghế nhựa nhìn người qua lại.</p>
+          <p className="text-base">
+            Bảo mua hai cốc cà phê trứng ở phố Hàng Gai, hai đứa ngồi ghế nhựa nhìn người qua lại.
+          </p>
           <p className="text-sm text-muted-foreground">Ảnh 1 trên 3 · 450.000 ₫ · Đặng Thị Huyền Trâm</p>
         </div>
       </div>

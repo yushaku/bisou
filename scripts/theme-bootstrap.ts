@@ -5,14 +5,35 @@ export function themeHead(palettes: Palettes) {
   const ids = (kind: string) => Object.keys(palettes).filter((id) => palettes[id]?.kind === kind);
   return [
     { tag: "meta", attrs: { charset: "UTF-8" }, injectTo: "head-prepend" as const },
-    { tag: "meta", attrs: { name: "theme-color", content: palettes.peach!.tokens.background!, media: "(prefers-color-scheme: light)" }, injectTo: "head-prepend" as const },
-    { tag: "meta", attrs: { name: "theme-color", content: palettes.cocoa!.tokens.background!, media: "(prefers-color-scheme: dark)" }, injectTo: "head-prepend" as const },
+    {
+      tag: "meta",
+      attrs: {
+        name: "theme-color",
+        content: palettes.peach!.tokens.background!,
+        media: "(prefers-color-scheme: light)",
+      },
+      injectTo: "head-prepend" as const,
+    },
+    {
+      tag: "meta",
+      attrs: {
+        name: "theme-color",
+        content: palettes.cocoa!.tokens.background!,
+        media: "(prefers-color-scheme: dark)",
+      },
+      injectTo: "head-prepend" as const,
+    },
     {
       tag: "style",
       attrs: { id: "bisou-palettes" },
-      children: Object.entries(palettes).map(([id, theme]) =>
-        `:root[data-theme="${id}"]{color-scheme:${theme.kind};${Object.entries(theme.tokens).map(([key, value]) => `--${key}:${value};`).join("")}}`,
-      ).join("\n"),
+      children: Object.entries(palettes)
+        .map(
+          ([id, theme]) =>
+            `:root[data-theme="${id}"]{color-scheme:${theme.kind};${Object.entries(theme.tokens)
+              .map(([key, value]) => `--${key}:${value};`)
+              .join("")}}`,
+        )
+        .join("\n"),
       injectTo: "head-prepend" as const,
     },
     {

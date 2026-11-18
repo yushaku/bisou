@@ -1,7 +1,13 @@
 import { queries } from "../../lib/queries";
 import { useServerQuery } from "../../lib/serverQuery";
 import { Route } from "lucide-react";
-import { levelRank, type Freshness, type GardenLevels as Levels, type GardenPlant, type RelationshipLevel } from "../../../shared/garden";
+import {
+  levelRank,
+  type Freshness,
+  type GardenLevels as Levels,
+  type GardenPlant,
+  type RelationshipLevel,
+} from "../../../shared/garden";
 import { useI18n } from "../../i18n";
 import { GARDEN_STAGE_LABEL, gardenStageState } from "../../lib/gardenStages";
 import { Button } from "../ui/button";
@@ -11,7 +17,20 @@ import { GardenStageDecisions } from "./GardenStageDecisions";
 import { Planter } from "./Planter";
 
 /* The main Garden view: the shared six-plant garden for the stage being viewed. */
-export function GardenStageView({ levels, plants, freshness, stageId, myName, partnerName, memoryScope, onOpenMap, onSelectStage, onOpenDeck, onChanged, onSignedOut }: {
+export function GardenStageView({
+  levels,
+  plants,
+  freshness,
+  stageId,
+  myName,
+  partnerName,
+  memoryScope,
+  onOpenMap,
+  onSelectStage,
+  onOpenDeck,
+  onChanged,
+  onSignedOut,
+}: {
   levels: Levels;
   plants: GardenPlant[];
   freshness: Freshness;
@@ -31,43 +50,85 @@ export function GardenStageView({ levels, plants, freshness, stageId, myName, pa
   const furthest = levels.furthestLevelId ? levelRank(levels.furthestLevelId) : -1;
   const open = levels.placementComplete && rank <= furthest;
   const current = levels.selectedLevelId === stageId;
-  const { data, failed, refresh: load } = useServerQuery({ ...queries.gardenStage(stageId), enabled: open }, onSignedOut);
+  const {
+    data,
+    failed,
+    refresh: load,
+  } = useServerQuery({ ...queries.gardenStage(stageId), enabled: open }, onSignedOut);
   const cards = data?.cards ?? null;
 
-  return <div className="garden-stage-view">
-    <div className="garden-view-head">
-      <div className="min-w-0">
-        <p className="garden-view-kicker">{t(current ? "garden.currentStage" : "garden.viewingStage")}</p>
-        <h2 className="font-heading text-2xl">{t(`level.${stageId}`)}</h2>
-        <p className="garden-view-state">{t(GARDEN_STAGE_LABEL[state])}</p>
+  return (
+    <div className="garden-stage-view">
+      <div className="garden-view-head">
+        <div className="min-w-0">
+          <p className="garden-view-kicker">{t(current ? "garden.currentStage" : "garden.viewingStage")}</p>
+          <h2 className="font-heading text-2xl">{t(`level.${stageId}`)}</h2>
+          <p className="garden-view-state">{t(GARDEN_STAGE_LABEL[state])}</p>
+        </div>
+        <Button variant="outline" size="sm" className="shrink-0" onClick={onOpenMap}>
+          <Route className="size-4" aria-hidden="true" />
+          {t("garden.journey")}
+        </Button>
       </div>
-      <Button variant="outline" size="sm" className="shrink-0" onClick={onOpenMap}>
-        <Route className="size-4" aria-hidden="true" />{t("garden.journey")}
-      </Button>
+
+      {levels.selectedLevelId && !current && (
+        <div className="garden-view-current">
+          <span>
+            {t("garden.currentStage")}: {t(`level.${levels.selectedLevelId}`)}
+          </span>
+          <Button variant="ghost" size="xs" onClick={() => onSelectStage(levels.selectedLevelId!)}>
+            {t("garden.viewCurrentStage")}
+          </Button>
+        </div>
+      )}
+
+      {!open && <p className="text-sm text-muted-foreground">{t("garden.stageLockedHint")}</p>}
+
+      <Planter plants={plants} freshness={freshness} onOpen={onOpenDeck} />
+
+      {open && rank === furthest && (
+        <GardenStageDecisions
+          stageId={stageId}
+          myName={myName}
+          partnerName={partnerName}
+          memoryScope={memoryScope}
+          onChanged={() => {
+            onChanged();
+            void load();
+          }}
+          onSignedOut={onSignedOut}
+        />
+      )}
+
+      {open && (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-heading text-xl">{t("garden.answeredQuestions")}</h2>
+          {!cards && !failed && <Skeleton className="h-40" aria-label={t("loading")} />}
+          {failed && (
+            <div role="alert" className="flex flex-col items-start gap-2">
+              <p className="text-sm text-muted-foreground">{t("garden.loadError")}</p>
+              <Button variant="outline" onClick={() => void load()}>
+                {t("journal.retry")}
+              </Button>
+            </div>
+          )}
+          {cards && !cards.length && <p className="text-sm text-muted-foreground">{t("garden.noAnsweredQuestions")}</p>}
+          {cards?.map((card) => (
+            <GardenCard
+              memoryScope={memoryScope}
+              key={card.cardId}
+              card={card}
+              myName={myName}
+              partnerName={partnerName}
+              onChanged={() => {
+                onChanged();
+                void load();
+              }}
+              onSignedOut={onSignedOut}
+            />
+          ))}
+        </section>
+      )}
     </div>
-
-    {levels.selectedLevelId && !current && <div className="garden-view-current">
-      <span>{t("garden.currentStage")}: {t(`level.${levels.selectedLevelId}`)}</span>
-      <Button variant="ghost" size="xs" onClick={() => onSelectStage(levels.selectedLevelId!)}>{t("garden.viewCurrentStage")}</Button>
-    </div>}
-
-    {!open && <p className="text-sm text-muted-foreground">{t("garden.stageLockedHint")}</p>}
-
-    <Planter plants={plants} freshness={freshness} onOpen={onOpenDeck} />
-
-    {open && rank === furthest && <GardenStageDecisions stageId={stageId} myName={myName} partnerName={partnerName}
-      memoryScope={memoryScope} onChanged={() => { onChanged(); void load(); }} onSignedOut={onSignedOut} />}
-
-    {open && <section className="flex flex-col gap-3">
-      <h2 className="font-heading text-xl">{t("garden.answeredQuestions")}</h2>
-      {!cards && !failed && <Skeleton className="h-40" aria-label={t("loading")} />}
-      {failed && <div role="alert" className="flex flex-col items-start gap-2">
-        <p className="text-sm text-muted-foreground">{t("garden.loadError")}</p>
-        <Button variant="outline" onClick={() => void load()}>{t("journal.retry")}</Button>
-      </div>}
-      {cards && !cards.length && <p className="text-sm text-muted-foreground">{t("garden.noAnsweredQuestions")}</p>}
-      {cards?.map((card) => <GardenCard memoryScope={memoryScope} key={card.cardId} card={card} myName={myName} partnerName={partnerName}
-        onChanged={() => { onChanged(); void load(); }} onSignedOut={onSignedOut} />)}
-    </section>}
-  </div>;
+  );
 }

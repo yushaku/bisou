@@ -1,5 +1,10 @@
 import { expect, it, vi } from "vitest";
-import { createUpdatePolicy, reloadOnNewVersion, shouldCheckForUpdate, UPDATE_CHECK_INTERVAL } from "../src/client/lib/updateReload";
+import {
+  createUpdatePolicy,
+  reloadOnNewVersion,
+  shouldCheckForUpdate,
+  UPDATE_CHECK_INTERVAL,
+} from "../src/client/lib/updateReload";
 
 function setup(controller: unknown, visibilityState: DocumentVisibilityState) {
   const worker = Object.assign(new EventTarget(), { controller }) as unknown as ServiceWorkerContainer;
@@ -7,9 +12,13 @@ function setup(controller: unknown, visibilityState: DocumentVisibilityState) {
   const reload = vi.fn();
   const policy = reloadOnNewVersion(worker, reload, doc);
   return {
-    reload, policy,
+    reload,
+    policy,
     takeover: () => worker.dispatchEvent(new Event("controllerchange")),
-    show: (state: DocumentVisibilityState) => { Object.assign(doc, { visibilityState: state }); doc.dispatchEvent(new Event("visibilitychange")); },
+    show: (state: DocumentVisibilityState) => {
+      Object.assign(doc, { visibilityState: state });
+      doc.dispatchEvent(new Event("visibilitychange"));
+    },
   };
 }
 

@@ -152,17 +152,22 @@ describe("POST /api/auth/verify", () => {
     const email = "dev-login@example.com";
     const bindings = { ENVIRONMENT: "development", DEV_LOGIN_CODE: "111111" };
     const verify = (code = "111111", overrides: { ENVIRONMENT?: string; DEV_LOGIN_CODE?: string } = {}) =>
-      app.request(`${ORIGIN}/api/auth/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: ORIGIN },
-        body: JSON.stringify({ email, code }),
-      }, { ...env, ...bindings, ...overrides });
+      app.request(
+        `${ORIGIN}/api/auth/verify`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Origin: ORIGIN },
+          body: JSON.stringify({ email, code }),
+        },
+        { ...env, ...bindings, ...overrides },
+      );
 
     beforeEach(async () => {
       await requestCode(email);
       // Keep the real OTP distinct from the shortcut and wrong-code fixtures.
       await env.DB.prepare("UPDATE otp_codes SET code_hash = ? WHERE email = ?")
-        .bind(await hashOtp(env.OTP_PEPPER!, email, "654321"), email).run();
+        .bind(await hashOtp(env.OTP_PEPPER!, email, "654321"), email)
+        .run();
     });
 
     it("signs in after a request, sets a working cookie, logs usage and consumes the OTP", async () => {
@@ -282,7 +287,10 @@ describe("POST /api/auth/verify", () => {
           ctx,
         );
       await post("/api/auth/request", { email });
-      const match = log.mock.calls.flat().join(" ").match(new RegExp(`${email.replace(".", "\\.")}: (\\d{6})`));
+      const match = log.mock.calls
+        .flat()
+        .join(" ")
+        .match(new RegExp(`${email.replace(".", "\\.")}: (\\d{6})`));
       const res = await post("/api/auth/verify", { email, code: match![1] });
       expect(res.status).toBe(200);
       return res.headers.get("Set-Cookie")!;
@@ -397,11 +405,15 @@ describe("GET /api/me", () => {
 
   it("returns the same shape with coupleId null before pairing and the couple id after", async () => {
     const { cookie } = await user("Shape");
-    const alone = await (await call("GET", "/api/me", { cookie })).json<{ user: { email: string }; coupleId: string | null }>();
+    const alone = await (
+      await call("GET", "/api/me", { cookie })
+    ).json<{ user: { email: string }; coupleId: string | null }>();
     expect(Object.keys(alone).sort()).toEqual(["coupleId", "user"]);
     expect(alone.coupleId).toBeNull();
     const created = await (await call("POST", "/api/couple", { cookie })).json<{ couple: { id: string } }>();
-    const paired = await (await call("GET", "/api/me", { cookie })).json<{ user: { email: string }; coupleId: string | null }>();
+    const paired = await (
+      await call("GET", "/api/me", { cookie })
+    ).json<{ user: { email: string }; coupleId: string | null }>();
     expect(paired).toEqual({ user: alone.user, coupleId: created.couple.id });
   });
 
@@ -450,28 +462,43 @@ describe("sliding session expiry", () => {
 });
 
 describe("PATCH /api/me", () => {
-  it.each([true, false])("accepts 16 KB JSON and rejects larger bodies with Content-Length %s", async (contentLength) => {
-    const { cookie } = await login("body-limit@example.com");
-    for (const extra of [0, 1]) {
-      const json = JSON.stringify({ displayName: extra ? "Changed" : "Mai" });
-      const bytes = new TextEncoder().encode(json + " ".repeat(16 * 1024 - json.length + extra));
-      const headers = new Headers({ Cookie: cookie, Origin: ORIGIN, "Content-Type": "application/json" });
-      if (contentLength) headers.set("Content-Length", String(bytes.length));
-      const res = await app.request(`${ORIGIN}/api/me`, {
-        method: "PATCH", headers,
-        body: contentLength ? bytes : new ReadableStream({ start(controller) {
-          controller.enqueue(bytes.subarray(0, 8192));
-          controller.enqueue(bytes.subarray(8192));
-          controller.close();
-        } }),
-      }, env);
-      expect(res.status).toBe(extra ? 413 : 200);
-      if (extra) expect(await res.json()).toEqual({ error: "body_too_large" });
-      expect(res.headers.get("Cache-Control")).toBe("no-store");
-      expect(await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
-        .bind("body-limit@example.com").first("display_name")).toBe("Mai");
-    }
-  });
+  it.each([true, false])(
+    "accepts 16 KB JSON and rejects larger bodies with Content-Length %s",
+    async (contentLength) => {
+      const { cookie } = await login("body-limit@example.com");
+      for (const extra of [0, 1]) {
+        const json = JSON.stringify({ displayName: extra ? "Changed" : "Mai" });
+        const bytes = new TextEncoder().encode(json + " ".repeat(16 * 1024 - json.length + extra));
+        const headers = new Headers({ Cookie: cookie, Origin: ORIGIN, "Content-Type": "application/json" });
+        if (contentLength) headers.set("Content-Length", String(bytes.length));
+        const res = await app.request(
+          `${ORIGIN}/api/me`,
+          {
+            method: "PATCH",
+            headers,
+            body: contentLength
+              ? bytes
+              : new ReadableStream({
+                  start(controller) {
+                    controller.enqueue(bytes.subarray(0, 8192));
+                    controller.enqueue(bytes.subarray(8192));
+                    controller.close();
+                  },
+                }),
+          },
+          env,
+        );
+        expect(res.status).toBe(extra ? 413 : 200);
+        if (extra) expect(await res.json()).toEqual({ error: "body_too_large" });
+        expect(res.headers.get("Cache-Control")).toBe("no-store");
+        expect(
+          await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
+            .bind("body-limit@example.com")
+            .first("display_name"),
+        ).toBe("Mai");
+      }
+    },
+  );
 
   it("pairing R4 / AC2: sets and renames a display name, trimming outer spaces", async () => {
     const { cookie } = await login("patch@example.com");
@@ -484,24 +511,33 @@ describe("PATCH /api/me", () => {
     const renamed = await call("PATCH", "/api/me", { cookie, body: { displayName: "  An Nguyen  " } });
     expect(renamed.status).toBe(200);
     expect((await renamed.json<{ user: { displayName: string } }>()).user.displayName).toBe("An Nguyen");
-    expect(await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
-      .bind("patch@example.com").first("display_name")).toBe("An Nguyen");
+    expect(
+      await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
+        .bind("patch@example.com")
+        .first("display_name"),
+    ).toBe("An Nguyen");
   });
 
   describe.each([null, "Mai"])("with stored display name %j", (storedName) => {
-    it.each([null, "", "   ", "x".repeat(41)])("pairing R4 / AC2: rejects displayName %j without changing the stored name", async (displayName) => {
-      const { cookie } = await login("invalid-name@example.com");
-      if (storedName !== null) {
-        const setup = await call("PATCH", "/api/me", { cookie, body: { displayName: storedName } });
-        expect(setup.status).toBe(200);
-      }
+    it.each([null, "", "   ", "x".repeat(41)])(
+      "pairing R4 / AC2: rejects displayName %j without changing the stored name",
+      async (displayName) => {
+        const { cookie } = await login("invalid-name@example.com");
+        if (storedName !== null) {
+          const setup = await call("PATCH", "/api/me", { cookie, body: { displayName: storedName } });
+          expect(setup.status).toBe(200);
+        }
 
-      const res = await call("PATCH", "/api/me", { cookie, body: { displayName } });
-      expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: "invalid_body" });
-      expect(await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
-        .bind("invalid-name@example.com").first("display_name")).toBe(storedName);
-    });
+        const res = await call("PATCH", "/api/me", { cookie, body: { displayName } });
+        expect(res.status).toBe(400);
+        expect(await res.json()).toEqual({ error: "invalid_body" });
+        expect(
+          await env.DB.prepare("SELECT display_name FROM users WHERE email = ?")
+            .bind("invalid-name@example.com")
+            .first("display_name"),
+        ).toBe(storedName);
+      },
+    );
   });
 
   it.each([1, 40])("pairing R4 / AC2: accepts a %i character name after trimming", async (length) => {

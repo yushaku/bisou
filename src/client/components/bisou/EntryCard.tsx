@@ -61,8 +61,19 @@ export function EntryCard({
   const long = entry.body.length > CLAMP_AT;
 
   return (
-    <Card id={id} tabIndex={id ? -1 : undefined} className={cn("relative gap-4 px-4 py-4 outline-none focus-visible:ring-3 focus-visible:ring-ring", className)}>
-      {onOpen && <button type="button" className="absolute inset-0 rounded-xl focus-visible:ring-3 focus-visible:ring-ring" aria-label={t("entry.open", { name: entry.author.name, time: entry.time ?? "" })} onClick={onOpen} />}
+    <Card
+      id={id}
+      tabIndex={id ? -1 : undefined}
+      className={cn("relative gap-4 px-4 py-4 outline-none focus-visible:ring-3 focus-visible:ring-ring", className)}
+    >
+      {onOpen && (
+        <button
+          type="button"
+          className="absolute inset-0 rounded-xl focus-visible:ring-3 focus-visible:ring-ring"
+          aria-label={t("entry.open", { name: entry.author.name, time: entry.time ?? "" })}
+          onClick={onOpen}
+        />
+      )}
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <PersonAvatar person={entry.author} size="sm" />
         <div className="min-w-0 flex-1">
@@ -73,9 +84,16 @@ export function EntryCard({
           </p>
         </div>
         {showDate && (
-          <time dateTime={entry.date} className="text-sm text-muted-foreground">{formatDay(entry.date, locale, "numeric")}</time>
+          <time dateTime={entry.date} className="text-sm text-muted-foreground">
+            {formatDay(entry.date, locale, "numeric")}
+          </time>
         )}
-        {entry.source === "wish" && <Badge variant="secondary"><Gift aria-hidden="true" />{t("entry.fromWish")}</Badge>}
+        {entry.source === "wish" && (
+          <Badge variant="secondary">
+            <Gift aria-hidden="true" />
+            {t("entry.fromWish")}
+          </Badge>
+        )}
         {entry.milestone && (
           <Badge variant="secondary" className="shrink-0">
             <Flag aria-hidden="true" />
@@ -85,31 +103,42 @@ export function EntryCard({
         <div className="relative">{actions}</div>
       </header>
       {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}
-      {parts ? <NoteParts note={parts} preview={!!onOpen} /> : entry.body && (
-        <div>
-          <p
-            id={bodyId}
-            className={cn("text-base leading-relaxed whitespace-pre-line wrap-anywhere", long && !open && "line-clamp-5")}
-          >
-            {entry.body}
-          </p>
-          {long && (
-            <Button
-              variant="link"
-              size="sm"
-              className="relative mt-1 h-9"
-              aria-expanded={onOpen ? undefined : open}
-              aria-controls={onOpen ? undefined : bodyId}
-              onClick={onOpen ?? (() => setOpen((v) => !v))}
+      {parts ? (
+        <NoteParts note={parts} preview={!!onOpen} />
+      ) : (
+        entry.body && (
+          <div>
+            <p
+              id={bodyId}
+              className={cn(
+                "text-base leading-relaxed whitespace-pre-line wrap-anywhere",
+                long && !open && "line-clamp-5",
+              )}
             >
-              {open ? t("entry.less") : t("entry.more")}
-            </Button>
-          )}
-        </div>
+              {entry.body}
+            </p>
+            {long && (
+              <Button
+                variant="link"
+                size="sm"
+                className="relative mt-1 h-9"
+                aria-expanded={onOpen ? undefined : open}
+                aria-controls={onOpen ? undefined : bodyId}
+                onClick={onOpen ?? (() => setOpen((v) => !v))}
+              >
+                {open ? t("entry.less") : t("entry.more")}
+              </Button>
+            )}
+          </div>
+        )
       )}
 
       {entry.reply && <NoteReply reply={entry.reply} preview={!!onOpen} />}
-      {parts && onOpen && <Button variant="link" className="relative h-11 self-start" onClick={onOpen}>{t("entry.more")}</Button>}
+      {parts && onOpen && (
+        <Button variant="link" className="relative h-11 self-start" onClick={onOpen}>
+          {t("entry.more")}
+        </Button>
+      )}
       <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="relative px-1" />
     </Card>
   );

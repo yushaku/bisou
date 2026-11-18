@@ -183,7 +183,13 @@ export function Login({ onSignedIn }: { onSignedIn: (user: User) => void }) {
               >
                 {t("login.changeEmail")}
               </Button>
-              <Button type="button" variant="link" className="h-11" disabled={busy || cooldown > 0} onClick={() => void requestCode()}>
+              <Button
+                type="button"
+                variant="link"
+                className="h-11"
+                disabled={busy || cooldown > 0}
+                onClick={() => void requestCode()}
+              >
                 {cooldown > 0 ? t("login.resendIn", { seconds: cooldown }) : t("login.resend")}
               </Button>
             </div>

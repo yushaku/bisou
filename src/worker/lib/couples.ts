@@ -46,19 +46,37 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
          WHERE m.couple_id = ${mine} ORDER BY m.joined_at, m.rowid`,
       )
       .bind(userId),
-    db.prepare(`SELECT code, expires_at FROM pair_codes WHERE couple_id = ${mine} AND expires_at > ?`).bind(userId, now),
-    db.prepare(`SELECT id, title, event_date AS date, repeats AS repeat, icon, created_at AS createdAt
-      FROM couple_events WHERE couple_id = ${mine} AND (repeats = 'yearly' OR event_date >= ?)`).bind(userId, earliestDay(now)),
+    db
+      .prepare(`SELECT code, expires_at FROM pair_codes WHERE couple_id = ${mine} AND expires_at > ?`)
+      .bind(userId, now),
+    db
+      .prepare(
+        `SELECT id, title, event_date AS date, repeats AS repeat, icon, created_at AS createdAt
+      FROM couple_events WHERE couple_id = ${mine} AND (repeats = 'yearly' OR event_date >= ?)`,
+      )
+      .bind(userId, earliestDay(now)),
   ]);
   const row = (coupleRes?.results as { id: string; start_date: string | null }[] | undefined)?.[0];
   if (!row) return null;
-  const members = ((membersRes?.results ?? []) as { id: string; display_name: string | null; birth_date: string | null; avatar_id: string | null }[]).map((m) => ({
+  const members = (
+    (membersRes?.results ?? []) as {
+      id: string;
+      display_name: string | null;
+      birth_date: string | null;
+      avatar_id: string | null;
+    }[]
+  ).map((m) => ({
     id: m.id,
     displayName: m.display_name,
     birthDate: m.birth_date,
     avatarId: m.avatar_id,
   }));
-  const couple: Couple = { id: row.id, startDate: row.start_date, members, events: (eventsRes?.results ?? []) as unknown as CoupleEvent[] };
+  const couple: Couple = {
+    id: row.id,
+    startDate: row.start_date,
+    members,
+    events: (eventsRes?.results ?? []) as unknown as CoupleEvent[],
+  };
   const code = (codeRes?.results as { code: string; expires_at: number }[] | undefined)?.[0];
   if (members.length === 1 && code) couple.pendingCode = { code: code.code, expiresAt: code.expires_at };
   return couple;

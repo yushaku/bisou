@@ -15,13 +15,21 @@ export function useTabNavigation() {
     const path = TAB_PATH[next];
     const move = tabMove(location, state?.from, path, create);
     if (move === "scroll") {
-      window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      window.scrollTo({
+        top: 0,
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      });
       return;
     }
     if (move === "back") {
-      if (create) window.addEventListener("popstate", () => {
-        navigate(path, { replace: true, state: { create } });
-      }, { once: true });
+      if (create)
+        window.addEventListener(
+          "popstate",
+          () => {
+            navigate(path, { replace: true, state: { create } });
+          },
+          { once: true },
+        );
       history.back();
       return;
     }
@@ -33,7 +41,17 @@ export function useTabNavigation() {
 
   return {
     onSelect: (next: TabId) => go(next),
-    onCreate: (destination: CreateDestination) => go(destination === "event" ? "home" : destination === "spin" ? "wishes" : destination === "notes" ? "journal" : destination, destination),
+    onCreate: (destination: CreateDestination) =>
+      go(
+        destination === "event"
+          ? "home"
+          : destination === "spin"
+            ? "wishes"
+            : destination === "notes"
+              ? "journal"
+              : destination,
+        destination,
+      ),
   };
 }
 

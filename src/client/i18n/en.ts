@@ -154,7 +154,8 @@ export const en: Messages = {
   "notes.saveLater": "Save for later",
   "notes.scheduledSaved": "Scheduled for {time}",
   "notes.deleteScheduledTitle": "Delete this scheduled note?",
-  "notes.deleteScheduledBody": "The note will be gone for good and will not be sent. Your partner will never know about it.",
+  "notes.deleteScheduledBody":
+    "The note will be gone for good and will not be sent. Your partner will never know about it.",
   "notes.openError": "Couldn't open the note. Please try again.",
   "notes.saved": "Note saved",
   "notes.sent": "Note sent",
@@ -237,7 +238,8 @@ export const en: Messages = {
   "push.blocked": "Notifications are blocked. Allow Bisou to send notifications in your phone or browser settings.",
   "push.needsInstall": "Add Bisou to your home screen, then open the app to turn on notifications.",
   "push.unsupported": "Notifications are not available in this browser.",
-  "push.askHidden": "Your browser did not show the permission prompt. Click the bell or lock icon in the address bar, allow notifications, then turn this on again.",
+  "push.askHidden":
+    "Your browser did not show the permission prompt. Click the bell or lock icon in the address bar, allow notifications, then turn this on again.",
   "push.unavailable": "Notifications are not ready yet. Please try again later.",
   "push.deviceOnly": "These choices apply only to the device you are using.",
   "install.title": "Keep Bisou on your home screen",
@@ -606,9 +608,11 @@ export const en: Messages = {
   "viewer.count": "{index} / {total}",
   "crop.title": "Choose the part to keep",
   "crop.step": "Photo {index} of {total}",
-  "crop.help": "Drag to move the photo. Pinch, scroll or press + or - to zoom. Only the part inside the square is saved.",
+  "crop.help":
+    "Drag to move the photo. Pinch, scroll or press + or - to zoom. Only the part inside the square is saved.",
   "crop.area": "Square frame. Use the arrow keys to move the photo. Pinch, scroll or press + or - to zoom.",
-  "crop.roundHelp": "Drag to move the photo. Pinch, scroll or press + or - to zoom. Only the part inside the circle is saved.",
+  "crop.roundHelp":
+    "Drag to move the photo. Pinch, scroll or press + or - to zoom. Only the part inside the circle is saved.",
   "crop.roundArea": "Round frame. Use the arrow keys to move the photo. Pinch, scroll or press + or - to zoom.",
   "crop.use": "Use photo",
   "crop.skip": "Skip this photo",

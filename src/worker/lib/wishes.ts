@@ -20,21 +20,35 @@ export interface WishRow {
 export const WISH_SELECT = "SELECT w.*, p.id AS photo_id FROM wishes w LEFT JOIN photos p ON p.wish_id = w.id";
 
 export function toWish(row: WishRow): Wish {
-  return { id: row.id, title: row.title, price: row.price, link: row.link, priority: row.priority,
-    photoId: row.photo_id, status: row.status, receivedOn: row.received_on, note: row.note,
-    createdAt: row.created_at, updatedAt: row.updated_at };
+  return {
+    id: row.id,
+    title: row.title,
+    price: row.price,
+    link: row.link,
+    priority: row.priority,
+    photoId: row.photo_id,
+    status: row.status,
+    receivedOn: row.received_on,
+    note: row.note,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export function findWish(db: D1Database, id: string, owner: string, couple: string) {
-  return db.prepare(`${WISH_SELECT} WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ?`)
-    .bind(id, owner, couple).first<WishRow>();
+  return db
+    .prepare(`${WISH_SELECT} WHERE w.id = ? AND w.owner_id = ? AND w.couple_id = ?`)
+    .bind(id, owner, couple)
+    .first<WishRow>();
 }
 
 export function randomInt(max: number): number {
   const range = 0x100000000;
-  const limit = range - range % max;
+  const limit = range - (range % max);
   const value = new Uint32Array(1);
-  do { crypto.getRandomValues(value); } while (value[0]! >= limit);
+  do {
+    crypto.getRandomValues(value);
+  } while (value[0]! >= limit);
   return value[0]! % max;
 }
 
@@ -76,6 +90,13 @@ export const CLAIM_SELECT = `SELECT c.id, c.gone_title, c.created_at, w.title, w
   FROM wish_claims c LEFT JOIN wishes w ON w.id = c.wish_id LEFT JOIN photos p ON p.wish_id = w.id`;
 
 export function toClaim(row: ClaimRow): Claim {
-  return { id: row.id, status: row.status ?? "gone", title: row.title ?? row.gone_title ?? "",
-    price: row.price, link: row.link, photoId: row.photo_id, createdAt: row.created_at };
+  return {
+    id: row.id,
+    status: row.status ?? "gone",
+    title: row.title ?? row.gone_title ?? "",
+    price: row.price,
+    link: row.link,
+    photoId: row.photo_id,
+    createdAt: row.created_at,
+  };
 }

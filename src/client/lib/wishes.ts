@@ -5,7 +5,10 @@ import type { PhotoState } from "./compose";
 
 export type JarLevel = 0 | 1 | 2 | 3 | 4;
 
-export function wishJarLevels(jar: { open: { length: number }; partnerJarEmpty: boolean } | null): { mine: JarLevel; partner: JarLevel } {
+export function wishJarLevels(jar: { open: { length: number }; partnerJarEmpty: boolean } | null): {
+  mine: JarLevel;
+  partner: JarLevel;
+} {
   const count = jar?.open.length ?? 0;
   return {
     mine: count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4,
@@ -28,12 +31,19 @@ export function wishSaveBlock(input: WishInput, photos: { state: PhotoState }[])
 
 export function wishErrorKey(code?: ApiErrorCode): MessageKey {
   switch (code) {
-    case "wish_title_invalid": return "wish.titleInvalid";
-    case "wish_price_invalid": return "wish.priceInvalid";
-    case "wish_link_invalid": return "wish.linkInvalid";
-    case "photo_invalid": return "compose.photoExpired";
-    case "not_found": return "compose.gone";
-    case "wish_received": return "wish.alreadyReceived";
-    default: return "compose.saveError";
+    case "wish_title_invalid":
+      return "wish.titleInvalid";
+    case "wish_price_invalid":
+      return "wish.priceInvalid";
+    case "wish_link_invalid":
+      return "wish.linkInvalid";
+    case "photo_invalid":
+      return "compose.photoExpired";
+    case "not_found":
+      return "compose.gone";
+    case "wish_received":
+      return "wish.alreadyReceived";
+    default:
+      return "compose.saveError";
   }
 }

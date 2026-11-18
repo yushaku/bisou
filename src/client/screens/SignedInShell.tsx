@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { useLocation } from "wouter";
 import type { User } from "../../shared/types";
 import { AppShell, type TabId } from "../components/bisou/AppShell";
@@ -17,7 +26,12 @@ export interface SessionProps {
  * `tab` shows the bottom tab bar with that tab active; onboarding and pairing leave it out.
  */
 // Each tab's name replaces the app name in the top bar.
-const TAB_TITLES: Partial<Record<TabId, MessageKey>> = { home: "home.ourCorner", journal: "journal.title", wishes: "nav.wishes", garden: "garden.title" };
+const TAB_TITLES: Partial<Record<TabId, MessageKey>> = {
+  home: "home.ourCorner",
+  journal: "journal.title",
+  wishes: "nav.wishes",
+  garden: "garden.title",
+};
 
 type Refresh = (() => void | Promise<void>) | undefined;
 
@@ -29,7 +43,9 @@ const TabFrameContext = createContext<RefObject<Refresh> | null>(null);
 
 function useScrollMemory(tab: TabId | undefined) {
   const memory = useContext(TabMemory);
-  useLayoutEffect(() => { if (memory) attachTabScroll(memory, tab); }, [tab, memory]);
+  useLayoutEffect(() => {
+    if (memory) attachTabScroll(memory, tab);
+  }, [tab, memory]);
   return memory;
 }
 
@@ -59,10 +75,20 @@ export function TabFrame({ tab, children }: { tab: TabId; children: ReactNode })
 }
 
 /* A tab screen inside TabFrame: registers its refresh with the frame while visible. */
-function TabContent({ onRefresh, refresh, children }: { onRefresh: Refresh; refresh: RefObject<Refresh>; children: ReactNode }) {
+function TabContent({
+  onRefresh,
+  refresh,
+  children,
+}: {
+  onRefresh: Refresh;
+  refresh: RefObject<Refresh>;
+  children: ReactNode;
+}) {
   useEffect(() => {
     refresh.current = onRefresh;
-    return () => { if (refresh.current === onRefresh) refresh.current = undefined; };
+    return () => {
+      if (refresh.current === onRefresh) refresh.current = undefined;
+    };
   });
   return children;
 }
@@ -73,11 +99,28 @@ export function SignedInShell({
   children,
 }: SessionProps & { tab?: TabId; onRefresh?: () => void | Promise<void>; children: ReactNode }) {
   const frame = useContext(TabFrameContext);
-  if (frame && tab) return <TabContent onRefresh={onRefresh} refresh={frame}>{children}</TabContent>;
-  return <StandaloneShell tab={tab} onRefresh={onRefresh}>{children}</StandaloneShell>;
+  if (frame && tab)
+    return (
+      <TabContent onRefresh={onRefresh} refresh={frame}>
+        {children}
+      </TabContent>
+    );
+  return (
+    <StandaloneShell tab={tab} onRefresh={onRefresh}>
+      {children}
+    </StandaloneShell>
+  );
 }
 
-function StandaloneShell({ tab, onRefresh, children }: { tab?: TabId; onRefresh?: () => void | Promise<void>; children: ReactNode }) {
+function StandaloneShell({
+  tab,
+  onRefresh,
+  children,
+}: {
+  tab?: TabId;
+  onRefresh?: () => void | Promise<void>;
+  children: ReactNode;
+}) {
   const { t } = useI18n();
   const [location, navigate] = useLocation();
   const titleKey = tab && TAB_TITLES[tab];

@@ -6,7 +6,12 @@ export function avatarKey(userId: string, id: string): string {
   return `users/${userId}/avatar/${id}`;
 }
 
-export async function reserveAvatarUpload(db: D1Database, userId: string, id: string, now: number): Promise<number | null> {
+export async function reserveAvatarUpload(
+  db: D1Database,
+  userId: string,
+  id: string,
+  now: number,
+): Promise<number | null> {
   const [, , counted] = await db.batch([
     db.prepare("DELETE FROM avatar_uploads WHERE user_id = ? AND created_at <= ?").bind(userId, now - DAY),
     db.prepare("INSERT INTO avatar_uploads (id, user_id, created_at) VALUES (?, ?, ?)").bind(id, userId, now),
@@ -26,9 +31,14 @@ export async function purgeAvatars(env: Env, userId: string, completedId?: strin
       const page = await env.PHOTOS.list({ prefix: avatarKey(userId, ""), cursor });
       // Read after listing and keep pending uploads that could commit during cleanup.
       const [, kept] = await env.DB.batch<{ id: string | null }>([
-        env.DB.prepare("DELETE FROM avatar_uploads WHERE user_id = ? AND pending = 1 AND created_at <= ?").bind(userId, Date.now() - DAY),
-        env.DB.prepare(`SELECT avatar_id AS id FROM users WHERE id = ?
-          UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`).bind(userId, userId),
+        env.DB.prepare("DELETE FROM avatar_uploads WHERE user_id = ? AND pending = 1 AND created_at <= ?").bind(
+          userId,
+          Date.now() - DAY,
+        ),
+        env.DB.prepare(
+          `SELECT avatar_id AS id FROM users WHERE id = ?
+          UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`,
+        ).bind(userId, userId),
       ]);
       const results = kept!.results;
       const keep = new Set(results.map((row) => avatarKey(userId, row.id ?? "")));
@@ -55,8 +65,14 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
   let width = 0;
   let height = 0;
   if (type === "image/jpeg") {
-    if (bytes[0] !== 0xff || bytes[1] !== 0xd8 || bytes[2] !== 0xff
-      || bytes[bytes.length - 2] !== 0xff || bytes[bytes.length - 1] !== 0xd9) return null;
+    if (
+      bytes[0] !== 0xff ||
+      bytes[1] !== 0xd8 ||
+      bytes[2] !== 0xff ||
+      bytes[bytes.length - 2] !== 0xff ||
+      bytes[bytes.length - 1] !== 0xd9
+    )
+      return null;
     const kept: Uint8Array[] = [];
     let start = 0;
     let removed = 0;
@@ -83,8 +99,10 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
         scanned = true;
         break;
       }
-      const icc = marker === 0xe2 && length >= 16
-        && String.fromCharCode(...bytes.subarray(offset + 2, offset + 14)) === "ICC_PROFILE\0";
+      const icc =
+        marker === 0xe2 &&
+        length >= 16 &&
+        String.fromCharCode(...bytes.subarray(offset + 2, offset + 14)) === "ICC_PROFILE\0";
       if (icc) {
         iccBytes += length - 2;
         if (iccBytes > 65_536) return null;
@@ -117,14 +135,15 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
     }
   } else if (type === "image/webp") {
     const tag = (offset: number) => String.fromCharCode(...bytes.subarray(offset, offset + 4));
-    if (bytes.length < 12 || tag(0) !== "RIFF" || tag(8) !== "WEBP" || view.getUint32(4, true) + 8 !== bytes.length) return null;
+    if (bytes.length < 12 || tag(0) !== "RIFF" || tag(8) !== "WEBP" || view.getUint32(4, true) + 8 !== bytes.length)
+      return null;
     let offset = 12;
     while (offset < bytes.length) {
       if (offset + 8 > bytes.length) return null;
       const kind = tag(offset);
       const length = view.getUint32(offset + 4, true);
       const data = offset + 8;
-      const end = data + length + length % 2;
+      const end = data + length + (length % 2);
       if (end > bytes.length || kind === "EXIF" || kind === "XMP ") return null;
       let w = 0;
       let h = 0;
@@ -133,7 +152,14 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
         w = 1 + bytes[data + 4]! + (bytes[data + 5]! << 8) + (bytes[data + 6]! << 16);
         h = 1 + bytes[data + 7]! + (bytes[data + 8]! << 8) + (bytes[data + 9]! << 16);
       } else if (kind === "VP8 ") {
-        if (length < 10 || (bytes[data]! & 1) !== 0 || bytes[data + 3] !== 0x9d || bytes[data + 4] !== 1 || bytes[data + 5] !== 0x2a) return null;
+        if (
+          length < 10 ||
+          (bytes[data]! & 1) !== 0 ||
+          bytes[data + 3] !== 0x9d ||
+          bytes[data + 4] !== 1 ||
+          bytes[data + 5] !== 0x2a
+        )
+          return null;
         w = view.getUint16(data + 6, true) & 0x3fff;
         h = view.getUint16(data + 8, true) & 0x3fff;
       } else if (kind === "VP8L") {
@@ -160,8 +186,11 @@ export async function purgePhotos(env: Env, rows: { id: string; couple_id: strin
   if (!rows.length) return;
   try {
     await env.PHOTOS.delete(rows.flatMap(photoKeys));
-    await env.DB.prepare(`DELETE FROM photos WHERE id IN (${rows.map(() => "?").join(",")}) AND entry_id IS NULL AND wish_id IS NULL`)
-      .bind(...rows.map((row) => row.id)).run();
+    await env.DB.prepare(
+      `DELETE FROM photos WHERE id IN (${rows.map(() => "?").join(",")}) AND entry_id IS NULL AND wish_id IS NULL`,
+    )
+      .bind(...rows.map((row) => row.id))
+      .run();
   } catch {
     console.error("[bisou] photo purge failed", rows.length);
   }

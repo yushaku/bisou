@@ -7,8 +7,18 @@ import type { PushJob } from "../src/worker/lib/pushQueue";
 
 export async function runPushCron(time: string) {
   const pending: Promise<unknown>[] = [];
-  const ctx = { waitUntil: (p: Promise<unknown>) => { pending.push(p); }, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
-  worker.scheduled({ scheduledTime: Date.parse(time), cron: "* * * * *", noRetry: () => {} } as ScheduledController, env, ctx);
+  const ctx = {
+    waitUntil: (p: Promise<unknown>) => {
+      pending.push(p);
+    },
+    passThroughOnException: () => {},
+    props: {},
+  } as unknown as ExecutionContext;
+  worker.scheduled(
+    { scheduledTime: Date.parse(time), cron: "* * * * *", noRetry: () => {} } as ScheduledController,
+    env,
+    ctx,
+  );
   await Promise.all(pending);
 }
 
@@ -18,7 +28,11 @@ export async function device(id: string, kinds = { journal: true, reminders: tru
   const auth = crypto.getRandomValues(new Uint8Array(16));
   return {
     privateKey: keys.privateKey,
-    body: { endpoint: `https://fcm.googleapis.com/fcm/send/${id}`, keys: { p256dh: toBase64Url(publicKey), auth: toBase64Url(auth) }, ...kinds },
+    body: {
+      endpoint: `https://fcm.googleapis.com/fcm/send/${id}`,
+      keys: { p256dh: toBase64Url(publicKey), auth: toBase64Url(auth) },
+      ...kinds,
+    },
   };
 }
 
@@ -32,16 +46,22 @@ export async function subscribe(who: TestUser, d: Awaited<ReturnType<typeof devi
 export async function runPushQueue(jobs: PushJob[], attempts = 1) {
   const results = [];
   for (let i = 0; i < jobs.length; i += 5) {
-    const batch = createMessageBatch<PushJob>("bisou", jobs.slice(i, i + 5).map((body, n) => ({ id: `msg-${i + n}`, timestamp: Date.now(), attempts, body })));
+    const batch = createMessageBatch<PushJob>(
+      "bisou",
+      jobs.slice(i, i + 5).map((body, n) => ({ id: `msg-${i + n}`, timestamp: Date.now(), attempts, body })),
+    );
     // The plugin's QueueResult drops the per message delay, so record the retry calls here.
     const retries: { msgId: string; delaySeconds?: number }[] = [];
     for (const message of batch.messages) {
       const retry = message.retry.bind(message);
-      message.retry = (options) => { retries.push({ msgId: message.id, delaySeconds: options?.delaySeconds }); retry(options); };
+      message.retry = (options) => {
+        retries.push({ msgId: message.id, delaySeconds: options?.delaySeconds });
+        retry(options);
+      };
     }
     const ctx = createExecutionContext();
     await worker.queue(batch, env, ctx);
-    results.push({ ...await getQueueResult(batch, ctx), retries });
+    results.push({ ...(await getQueueResult(batch, ctx)), retries });
   }
   return results;
 }
@@ -63,7 +83,11 @@ export function mockPush(status = 201) {
     expect(init?.redirect).toBe("manual");
     // workerd rejects redirect "error" here, as the real fetch does at the edge.
     new Request(String(input), { method: init?.method, redirect: init?.redirect });
-    sent.push({ endpoint: String(input), headers: new Headers(init?.headers), body: new Uint8Array(await new Response(init?.body).arrayBuffer()) });
+    sent.push({
+      endpoint: String(input),
+      headers: new Headers(init?.headers),
+      body: new Uint8Array(await new Response(init?.body).arrayBuffer()),
+    });
     return new Response(null, { status });
   });
   return { sent, queued, spy, queue };
@@ -82,7 +106,10 @@ export async function decrypt(body: Uint8Array<ArrayBuffer>, d: Awaited<ReturnTy
   const key = await crypto.subtle.importKey("raw", asPublic, { name: "ECDH", namedCurve: "P-256" }, false, []);
   const shared = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: key }, d.privateKey, 256));
   const prkKey = await hmac(fromBase64Url(d.body.keys.auth), shared);
-  const ikm = await hmac(prkKey, new Uint8Array([...encode("WebPush: info\0"), ...fromBase64Url(d.body.keys.p256dh), ...asPublic, 1]));
+  const ikm = await hmac(
+    prkKey,
+    new Uint8Array([...encode("WebPush: info\0"), ...fromBase64Url(d.body.keys.p256dh), ...asPublic, 1]),
+  );
   const prk = await hmac(body.slice(0, 16), ikm);
   const cek = (await hmac(prk, new Uint8Array([...encode("Content-Encoding: aes128gcm\0"), 1]))).slice(0, 16);
   const nonce = (await hmac(prk, new Uint8Array([...encode("Content-Encoding: nonce\0"), 1]))).slice(0, 12);

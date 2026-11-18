@@ -54,13 +54,11 @@ How might two partners keep their shared story (daily moments, milestones, and t
 - [x] **PWA polish**
   - Goal: feels like an app on both phones.
   - Outcome: splash screens, install card, Android shortcuts, offline bar, status bar following the theme ([docs/product/pwa.md](docs/product/pwa.md)).
-  - [ ] Tested installed on a real iPhone and an Android phone (PO).
+  - [x] Tested installed on a real iPhone (PO).
+  - [ ] Tested installed on an Android phone (PO).
 - [x] **Error boundary**
   - Goal: a failure never shows a white page.
   - Outcome: a root error screen with a Reload button.
-- [ ] **Leave the couple, delete the account, export data**
-  - Goal: each person stays in control of their data.
-  - Outcome: unpair, delete the account (including `users/<id>/avatar/` in R2), download one's data. The full avatar purge on account deletion belongs here.
 - [x] **Carry-over fixes**
   - Goal: clear the small debts reviews left.
   - Outcome: money paste with decimals, caret on Delete, photo purge guard, ICC cap, shared control-character regex, stale upload cleanup.
@@ -109,7 +107,7 @@ What similar couple apps charge for: a daily question with answers hidden until 
 ## Key assumptions
 - [x] Resend free with a verified subdomain delivers OTP mails to Gmail inboxes, not spam.
 - [x] iPhone photos (HEIC included) are cropped and compressed on the client fast enough.
-- [ ] Email OTP login keeps the session in a PWA installed on the iPhone home screen: test on a real iPhone during PWA polish.
+- [x] Email OTP login keeps the session in a PWA installed on the iPhone home screen (checked on a real iPhone).
 - [ ] Both partners keep opening the app without push notifications: use it for 2 weeks and see before building Web Push.
 
 ## Not doing (and why)
@@ -124,6 +122,7 @@ What similar couple apps charge for: a daily question with answers hidden until 
 - Notion import and a "two perspectives" mode: later or never.
 - Native app and App Store: the PWA covers both phones.
 - Custom domain: workers.dev until a domain is bought.
+- Leaving the couple, deleting the account, exporting data: archived while only the two of us use the app; required before anyone else does ([pairing](docs/product/pairing.md)). The R2 avatar purge (ADR 0006) and the membership guard in event writes come back with it.
 
 ## Open questions
 - Only the two of us, or other couples later with a paid plan? This decides whether a free and paid split is needed.

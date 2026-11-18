@@ -62,8 +62,11 @@
   --surface-highlight: color-mix(in oklab, var(--card) 45%, white);
   --surface-shade: color-mix(in oklab, var(--foreground) 9%, transparent);
   --material-wash: color-mix(in oklab, var(--card) 90%, transparent);
-  --shadow-rest: inset 0 1px 1px var(--surface-highlight), 0 2px 3px var(--surface-shade), 0 8px 20px var(--surface-shade);
-  --shadow-rest-sm: inset 0 1px 1px color-mix(in oklab, var(--surface-highlight) 50%, transparent), inset 0 -2px 2px var(--surface-shade), 0 3px 5px var(--surface-shade);
+  --shadow-rest:
+    inset 0 1px 1px var(--surface-highlight), 0 2px 3px var(--surface-shade), 0 8px 20px var(--surface-shade);
+  --shadow-rest-sm:
+    inset 0 1px 1px color-mix(in oklab, var(--surface-highlight) 50%, transparent),
+    inset 0 -2px 2px var(--surface-shade), 0 3px 5px var(--surface-shade);
   --press-transform: translateY(1px) scale(0.98);
   --press-shadow: inset 0 2px 3px var(--surface-shade);
   --ease: cubic-bezier(0.2, 0, 0, 1);
@@ -134,7 +137,9 @@
 @layer components {
   :root[data-style="soft"] [data-slot="card"] {
     background-image: linear-gradient(var(--material-wash), var(--material-wash)), url("../assets/linen.webp");
-    background-size: auto, 256px 256px;
+    background-size:
+      auto,
+      256px 256px;
   }
 
   /* Display type: titles, the counter, the pair code. */
@@ -180,7 +185,9 @@
     --duration: 0ms;
     --press-transform: none;
   }
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

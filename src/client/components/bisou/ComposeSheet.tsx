@@ -5,7 +5,14 @@ import { receivedText } from "../../../shared/wishes";
 import type { JournalEntry, Wish } from "../../../shared/types";
 import { api } from "@/api";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/i18n";
@@ -53,11 +60,25 @@ export function ComposeSheet({ open, onOpenChange, fromMenu, ...form }: ComposeS
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} dismissible={!lock}>
-      <DrawerContent onCloseAutoFocus={(event) => {
-        if (fromMenu) { event.preventDefault(); focusCreateButton(); }
-      }} aria-describedby={undefined} onEscapeKeyDown={guard} onPointerDownOutside={guard}>
+      <DrawerContent
+        onCloseAutoFocus={(event) => {
+          if (fromMenu) {
+            event.preventDefault();
+            focusCreateButton();
+          }
+        }}
+        aria-describedby={undefined}
+        onEscapeKeyDown={guard}
+        onPointerDownOutside={guard}
+      >
         {/* Keyed by entry, so switching between new and edit never carries a form over. */}
-        <ComposeForm key={form.receiving?.id ?? form.entry?.id ?? "new"} {...form} onLock={setLock} onClose={requestClose} onDone={() => onOpenChange(false)} />
+        <ComposeForm
+          key={form.receiving?.id ?? form.entry?.id ?? "new"}
+          {...form}
+          onLock={setLock}
+          onClose={requestClose}
+          onDone={() => onOpenChange(false)}
+        />
       </DrawerContent>
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent showCloseButton={false}>
@@ -66,7 +87,13 @@ export function ComposeSheet({ open, onOpenChange, fromMenu, ...form }: ComposeS
             <DialogDescription className="text-base">{t("compose.discardBody")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="destructive" onClick={() => { setConfirming(false); onOpenChange(false); }}>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setConfirming(false);
+                onOpenChange(false);
+              }}
+            >
               {t("compose.discard")}
             </Button>
             <Button autoFocus onClick={() => setConfirming(false)}>
@@ -86,7 +113,16 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 }
 
 /* Lives inside the drawer content, so its state and uploads end when the sheet closes. */
-export function ComposeForm({ entry, receiving, partnerName, onSaved, onSignedOut, onLock, onClose, onDone }: ComposeFormProps) {
+export function ComposeForm({
+  entry,
+  receiving,
+  partnerName,
+  onSaved,
+  onSignedOut,
+  onLock,
+  onClose,
+  onDone,
+}: ComposeFormProps) {
   const { t, locale } = useI18n();
   const createEntry = useApiMutation(api.createEntry, ["journal"]);
   const updateEntry = useApiMutation(api.updateEntry, ["journal"]);
@@ -121,8 +157,11 @@ export function ComposeForm({ entry, receiving, partnerName, onSaved, onSignedOu
     setSaving(true);
     setFormError(null);
     const input = { date, text: entryText(text), photoIds: queue.items.map((i) => i.photoId ?? "") };
-    const res = receiving ? await receiveWish(receiving.id, { date, note: text.trim(), photoIds: input.photoIds, locale })
-      : entry ? await updateEntry(entry.id, input) : await createEntry(input);
+    const res = receiving
+      ? await receiveWish(receiving.id, { date, note: text.trim(), photoIds: input.photoIds, locale })
+      : entry
+        ? await updateEntry(entry.id, input)
+        : await createEntry(input);
     setConfirmReceiving(false);
     setSaving(false);
     if (res.ok) {
@@ -138,16 +177,35 @@ export function ComposeForm({ entry, receiving, partnerName, onSaved, onSignedOu
 
   return (
     <>
-      <form onSubmit={(e) => { e.preventDefault(); if (!online) return; if (receiving) setConfirmReceiving(true); else void save(); }} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!online) return;
+          if (receiving) setConfirmReceiving(true);
+          else void save();
+        }}
+        className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col"
+      >
         <DrawerHeader className="shrink-0 flex-row items-center justify-between text-left">
           <DrawerTitle>{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
-          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>{t("common.close")}</Button>
+          <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>
+            {t("common.close")}
+          </Button>
         </DrawerHeader>
 
         <ComposeBody>
           <p className="text-sm text-muted-foreground">{t("compose.withPartner", { partner: partnerName })}</p>
           {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
-          <DayField value={date} now={now} disabled={saving} label={receiving ? "received.day" : "compose.day"} onChange={(value) => { setDate(value); change(); }} />
+          <DayField
+            value={date}
+            now={now}
+            disabled={saving}
+            label={receiving ? "received.day" : "compose.day"}
+            onChange={(value) => {
+              setDate(value);
+              change();
+            }}
+          />
 
           <div className="flex flex-1 flex-col gap-2">
             <label htmlFor={`${ids}-text`} className="font-semibold">
@@ -168,7 +226,13 @@ export function ComposeForm({ entry, receiving, partnerName, onSaved, onSignedOu
           </div>
 
           {receiving && <p className="rounded-lg bg-muted p-3 text-sm whitespace-pre-line">{journalText}</p>}
-          <PhotoPicker queue={queue} onPreparingChange={setPreparing} max={ENTRY_PHOTOS_MAX} saving={saving} onChange={change} />
+          <PhotoPicker
+            queue={queue}
+            onPreparingChange={setPreparing}
+            max={ENTRY_PHOTOS_MAX}
+            saving={saving}
+            onChange={change}
+          />
 
           <p role="alert" className="text-base text-destructive empty:hidden">
             {formError}
@@ -181,10 +245,25 @@ export function ComposeForm({ entry, receiving, partnerName, onSaved, onSignedOu
           </Button>
         </ComposeFooter>
       </form>
-      <Dialog open={confirmReceiving} onOpenChange={(open) => { if (!saving) setConfirmReceiving(open); }}>
+      <Dialog
+        open={confirmReceiving}
+        onOpenChange={(open) => {
+          if (!saving) setConfirmReceiving(open);
+        }}
+      >
         <DialogContent showCloseButton={!saving}>
-          <DialogHeader><DialogTitle>{t("received.action")}</DialogTitle><DialogDescription>{t("received.confirm")}</DialogDescription></DialogHeader>
-          <DialogFooter><Button variant="outline" disabled={saving} onClick={() => setConfirmReceiving(false)}>{t("common.close")}</Button><Button disabled={!online} loading={saving} onClick={() => void save()}>{t("received.save")}</Button></DialogFooter>
+          <DialogHeader>
+            <DialogTitle>{t("received.action")}</DialogTitle>
+            <DialogDescription>{t("received.confirm")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={saving} onClick={() => setConfirmReceiving(false)}>
+              {t("common.close")}
+            </Button>
+            <Button disabled={!online} loading={saving} onClick={() => void save()}>
+              {t("received.save")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

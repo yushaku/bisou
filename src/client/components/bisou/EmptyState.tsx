@@ -23,9 +23,7 @@ export function EmptyState({ title, description, situation = "empty", action, cl
       )}
     >
       <Mascot situation={situation} />
-      <p className="text-lg text-pretty">
-        {title}
-      </p>
+      <p className="text-lg text-pretty">{title}</p>
       {description && <p className="-mt-2 text-base text-pretty text-muted-foreground">{description}</p>}
       {action && (
         <Button onClick={action.onClick}>

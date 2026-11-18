@@ -53,13 +53,29 @@ export function DaysCounter({ startDate, people, today = new Date(), onEditStart
             <p className="mt-2 flex items-center gap-1 text-sm text-muted-foreground">
               {t("days.since", { date: formatDay(startDate, locale, "numeric") })}
               {onEditStartDate && (
-                <Button variant="ghost" size="icon-sm" className="-my-2" aria-label={t("startDate.edit")} onClick={onEditStartDate}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="-my-2"
+                  aria-label={t("startDate.edit")}
+                  onClick={onEditStartDate}
+                >
                   <PencilLine aria-hidden="true" />
                 </Button>
               )}
             </p>
           </div>
-          {next.daysLeft === 0 ? <Mascot situation="celebrate" className="absolute right-0 bottom-0 size-36" /> : <img src={couple} alt="" width={640} height={466} className="absolute -right-5 bottom-0 h-36 w-[66%] max-w-56 object-contain object-bottom" />}
+          {next.daysLeft === 0 ? (
+            <Mascot situation="celebrate" className="absolute right-0 bottom-0 size-36" />
+          ) : (
+            <img
+              src={couple}
+              alt=""
+              width={640}
+              height={466}
+              className="absolute -right-5 bottom-0 h-36 w-[66%] max-w-56 object-contain object-bottom"
+            />
+          )}
         </div>
         <p className="mt-3 flex items-start gap-2 border-t border-border/70 pt-3 text-sm text-pretty">
           <CalendarHeart className="size-5 shrink-0 text-primary" aria-hidden="true" />

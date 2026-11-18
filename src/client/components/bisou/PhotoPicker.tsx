@@ -8,7 +8,13 @@ import { decodePhoto, renderSquare, type Area } from "@/lib/photo";
 import { PhotoCropDialog, type CropRequest } from "./PhotoCropDialog";
 import type { useUploadQueue } from "./useUploadQueue";
 
-export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingChange }: {
+export function PhotoPicker({
+  queue,
+  max,
+  saving,
+  onChange: change,
+  onPreparingChange,
+}: {
   queue: ReturnType<typeof useUploadQueue>;
   max: number;
   saving: boolean;
@@ -33,9 +39,17 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
   // Activity hiding keeps the crop and its preview until the draft is removed.
   useInsertionEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; cancelCrop.current?.(); };
+    return () => {
+      mounted.current = false;
+      cancelCrop.current?.();
+    };
   }, []);
-  useEffect(() => () => { toast.dismiss(toastId); }, [toastId]);
+  useEffect(
+    () => () => {
+      toast.dismiss(toastId);
+    },
+    [toastId],
+  );
   useEffect(() => {
     const pending = queue.items.filter((item) => item.state === "queued" || item.state === "uploading");
     for (const item of pending) batch.current.add(item.localId);
@@ -43,7 +57,11 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
     if (pending.length) {
       const settled = photos.filter((item) => item.state === "done" || item.state === "failed").length;
       const title = t("compose.uploadProgress", { index: Math.min(settled + 1, photos.length), total: photos.length });
-      const progress = photos.reduce((sum, item) => sum + (item.state === "done" ? 1 : item.state === "uploading" ? item.progress : 0), 0) / photos.length;
+      const progress =
+        photos.reduce(
+          (sum, item) => sum + (item.state === "done" ? 1 : item.state === "uploading" ? item.progress : 0),
+          0,
+        ) / photos.length;
       toast.loading(title, { id: toastId, progress });
       loading.current = true;
     } else if (loading.current) {
@@ -51,12 +69,15 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
       if (failed.length) {
         toast.error(t(failed[0]!.error ?? "compose.photoFailed"), {
           id: toastId,
-          action: { label: t("journal.retry"), onClick: () => {
-            if (!mounted.current) return;
-            for (const item of latestQueue.current.items) {
-              if (item.state === "failed") latestQueue.current.retry(item.localId);
-            }
-          } },
+          action: {
+            label: t("journal.retry"),
+            onClick: () => {
+              if (!mounted.current) return;
+              for (const item of latestQueue.current.items) {
+                if (item.state === "failed") latestQueue.current.retry(item.localId);
+              }
+            },
+          },
         });
       } else if (photos.some((item) => item.state === "done")) {
         toast.success(t("compose.photosUploaded"), { id: toastId });
@@ -97,7 +118,10 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
         if (mounted.current) toast.error(t("compose.photoUnreadable", { name: file.name }));
         continue;
       }
-      if (!mounted.current) { bitmap.close(); break; }
+      if (!mounted.current) {
+        bitmap.close();
+        break;
+      }
       const area = await frame(file, bitmap, index, chosen.length);
       if (!area) {
         bitmap.close();
@@ -114,82 +138,88 @@ export function PhotoPicker({ queue, max, saving, onChange: change, onPreparingC
     setPreparing(false);
   }
 
-  return <>
-          <div className="flex flex-col gap-3">
-            <p className="flex items-center justify-between">
-              <span className="font-semibold">{t("compose.photos")}</span>
-              <span className="text-sm text-muted-foreground tabular-nums">
-                {t("compose.count", { count: queue.items.length, max: max })}
-              </span>
-            </p>
+  return (
+    <>
+      <div className="flex flex-col gap-3">
+        <p className="flex items-center justify-between">
+          <span className="font-semibold">{t("compose.photos")}</span>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {t("compose.count", { count: queue.items.length, max: max })}
+          </span>
+        </p>
 
-            {queue.items.length > 0 && (
-              <ul className="grid grid-cols-2 gap-3">
-                {queue.items.map((item, i) => (
-                  <li key={item.localId} className="overflow-hidden rounded-(--photo-radius) edge bg-background">
-                    <img src={item.previewUrl} alt={t("compose.photo", { index: i + 1 })} className={`aspect-square w-full object-cover${item.state === "uploading" || item.state === "queued" ? " opacity-60" : ""}`} />
-                    <div className="flex items-center justify-between pl-2 text-sm">
-                      <span>{t("compose.photo", { index: i + 1 })}</span>
-                      {item.state === "failed" && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={t("compose.retryPhoto", { index: i + 1 })}
-                          disabled={saving}
-                          onClick={() => queue.retry(item.localId)}
-                        >
-                          <RotateCw aria-hidden="true" />
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={t("compose.remove", { index: i + 1 })}
-                        disabled={saving}
-                        onClick={() => {
-                          queue.remove(item);
-                          change();
-                        }}
-                      >
-                        <X aria-hidden="true" />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+        {queue.items.length > 0 && (
+          <ul className="grid grid-cols-2 gap-3">
+            {queue.items.map((item, i) => (
+              <li key={item.localId} className="overflow-hidden rounded-(--photo-radius) edge bg-background">
+                <img
+                  src={item.previewUrl}
+                  alt={t("compose.photo", { index: i + 1 })}
+                  className={`aspect-square w-full object-cover${item.state === "uploading" || item.state === "queued" ? " opacity-60" : ""}`}
+                />
+                <div className="flex items-center justify-between pl-2 text-sm">
+                  <span>{t("compose.photo", { index: i + 1 })}</span>
+                  {item.state === "failed" && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("compose.retryPhoto", { index: i + 1 })}
+                      disabled={saving}
+                      onClick={() => queue.retry(item.localId)}
+                    >
+                      <RotateCw aria-hidden="true" />
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("compose.remove", { index: i + 1 })}
+                    disabled={saving}
+                    onClick={() => {
+                      queue.remove(item);
+                      change();
+                    }}
+                  >
+                    <X aria-hidden="true" />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
 
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12"
-              loading={preparing}
-              disabled={saving}
-              onClick={() => {
-                if (queue.items.length >= max) toast.warning(t(max === 1 ? "wish.photoLimit" : "compose.limit"));
-                else fileInput.current?.click();
-              }}
-            >
-              {!preparing && <ImagePlus aria-hidden="true" />}
-              {preparing ? t("compose.preparing") : t("compose.add")}
-            </Button>
-            {/* image/* lets iOS hand over a JPEG for a HEIC photo. */}
-            <input
-              ref={fileInput}
-              type="file"
-              accept="image/*"
-              multiple={max > 1}
-              hidden
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? []);
-                e.target.value = "";
-                void addFiles(files);
-              }}
-            />
-            <p className="text-sm text-muted-foreground">{t("compose.photoHelp")}</p>
-          </div>
-    <PhotoCropDialog request={cropping} />
-  </>;
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12"
+          loading={preparing}
+          disabled={saving}
+          onClick={() => {
+            if (queue.items.length >= max) toast.warning(t(max === 1 ? "wish.photoLimit" : "compose.limit"));
+            else fileInput.current?.click();
+          }}
+        >
+          {!preparing && <ImagePlus aria-hidden="true" />}
+          {preparing ? t("compose.preparing") : t("compose.add")}
+        </Button>
+        {/* image/* lets iOS hand over a JPEG for a HEIC photo. */}
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          multiple={max > 1}
+          hidden
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            e.target.value = "";
+            void addFiles(files);
+          }}
+        />
+        <p className="text-sm text-muted-foreground">{t("compose.photoHelp")}</p>
+      </div>
+      <PhotoCropDialog request={cropping} />
+    </>
+  );
 }

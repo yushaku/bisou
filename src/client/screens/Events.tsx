@@ -14,7 +14,17 @@ import { useTabNavigation } from "../lib/useTabNavigation";
 
 const EventSheet = lazy(() => import("../components/bisou/EventSheet").then((m) => ({ default: m.EventSheet })));
 
-export function Events({ couple, user, onCouple, onSignedOut }: { couple: Couple; user: User; onCouple: (couple: Couple | null) => void; onSignedOut: () => void }) {
+export function Events({
+  couple,
+  user,
+  onCouple,
+  onSignedOut,
+}: {
+  couple: Couple;
+  user: User;
+  onCouple: (couple: Couple | null) => void;
+  onSignedOut: () => void;
+}) {
   const [editing, setEditing] = useState<CoupleEvent | null>();
   const openEvent = (id: string) => setEditing(couple.events.find((event) => event.id === id));
   const { t, locale } = useI18n();
@@ -24,7 +34,10 @@ export function Events({ couple, user, onCouple, onSignedOut }: { couple: Couple
   const later: UpcomingEvent[] = [];
   const months = new Map<string, UpcomingEvent[]>();
   for (const event of upcomingEvents(couple.startDate, people, toDayString(now), couple.events)) {
-    if (event.kind === "custom" && event.later) { later.push(event); continue; }
+    if (event.kind === "custom" && event.later) {
+      later.push(event);
+      continue;
+    }
     const month = event.date.slice(0, 7);
     const group = months.get(month);
     if (group) group.push(event);
@@ -40,15 +53,38 @@ export function Events({ couple, user, onCouple, onSignedOut }: { couple: Couple
               <time dateTime={month}>{formatDay(`${month}-01`, locale, "month")}</time>
             </h2>
             <Card className="gap-0 py-0">
-              <ul className="divide-y divide-border">{events.map((event, index) => <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={openEvent} />)}</ul>
+              <ul className="divide-y divide-border">
+                {events.map((event, index) => (
+                  <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={openEvent} />
+                ))}
+              </ul>
             </Card>
           </section>
         ))}
-        {later.length > 0 && <section aria-labelledby="events-later" className="flex flex-col gap-3">
-          <h2 id="events-later" className="font-heading text-xl">{t("events.later")}</h2>
-          <Card className="gap-0 py-0"><ul className="divide-y divide-border">{later.map((event, index) => <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={openEvent} />)}</ul></Card>
-        </section>}
-        {editing !== undefined && <Suspense fallback={null}><EventSheet event={editing} onClose={() => setEditing(undefined)} onCouple={onCouple} onSignedOut={onSignedOut} /></Suspense>}
+        {later.length > 0 && (
+          <section aria-labelledby="events-later" className="flex flex-col gap-3">
+            <h2 id="events-later" className="font-heading text-xl">
+              {t("events.later")}
+            </h2>
+            <Card className="gap-0 py-0">
+              <ul className="divide-y divide-border">
+                {later.map((event, index) => (
+                  <EventRow key={event.kind === "custom" ? event.id : index} event={event} onOpen={openEvent} />
+                ))}
+              </ul>
+            </Card>
+          </section>
+        )}
+        {editing !== undefined && (
+          <Suspense fallback={null}>
+            <EventSheet
+              event={editing}
+              onClose={() => setEditing(undefined)}
+              onCouple={onCouple}
+              onSignedOut={onSignedOut}
+            />
+          </Suspense>
+        )}
       </main>
       <BottomBar active="home" {...navigation} onCreate={() => setEditing(null)} />
     </div>

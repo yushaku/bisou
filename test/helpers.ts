@@ -7,15 +7,20 @@ export const ORIGIN = "https://bisou.example";
 
 const background: Promise<unknown>[] = [];
 export const testContext = {
-  waitUntil: (promise: Promise<unknown>) => { background.push(promise); },
-  passThroughOnException: () => {}, props: {},
+  waitUntil: (promise: Promise<unknown>) => {
+    background.push(promise);
+  },
+  passThroughOnException: () => {},
+  props: {},
 } as unknown as ExecutionContext;
 export async function waitForBackground() {
   await Promise.all(background.splice(0));
 }
 
 export async function explain(sql: string, ...binds: unknown[]): Promise<string[]> {
-  const { results } = await env.DB.prepare(`EXPLAIN QUERY PLAN ${sql}`).bind(...binds).all<{ detail: string }>();
+  const { results } = await env.DB.prepare(`EXPLAIN QUERY PLAN ${sql}`)
+    .bind(...binds)
+    .all<{ detail: string }>();
   return results.map((row) => row.detail);
 }
 
@@ -133,15 +138,43 @@ export async function paired(): Promise<{ a: TestUser; b: TestUser; couple: Coup
 // Header-only fixtures for server validation, not decodable pixel data.
 export function jpeg({ width, height, exif = false }: { width: number; height: number; exif?: boolean }) {
   return new Uint8Array([
-    0xff, 0xd8,
+    0xff,
+    0xd8,
     ...(exif ? [0xff, 0xe1, 0, 8, 69, 120, 105, 102, 0, 0] : []),
-    0xff, 0xc0, 0, 11, 8, height >> 8, height & 255, width >> 8, width & 255, 1, 1, 0x11, 0,
-    0xff, 0xda, 0, 8, 1, 1, 0, 0, 63, 0,
-    0xff, 0xd9,
+    0xff,
+    0xc0,
+    0,
+    11,
+    8,
+    height >> 8,
+    height & 255,
+    width >> 8,
+    width & 255,
+    1,
+    1,
+    0x11,
+    0,
+    0xff,
+    0xda,
+    0,
+    8,
+    1,
+    1,
+    0,
+    0,
+    63,
+    0,
+    0xff,
+    0xd9,
   ]);
 }
 
-export function webp({ width, height, kind, exif = false }: {
+export function webp({
+  width,
+  height,
+  kind,
+  exif = false,
+}: {
   width: number;
   height: number;
   kind: "VP8" | "VP8L" | "VP8X";
@@ -158,12 +191,19 @@ export function webp({ width, height, kind, exif = false }: {
     dimensions.setUint32(1, (width - 1) | ((height - 1) << 14), true);
   } else {
     header[0] = exif ? 0x08 : 0;
-    header.set([
-      (width - 1) & 255, ((width - 1) >> 8) & 255, ((width - 1) >> 16) & 255,
-      (height - 1) & 255, ((height - 1) >> 8) & 255, ((height - 1) >> 16) & 255,
-    ], 4);
+    header.set(
+      [
+        (width - 1) & 255,
+        ((width - 1) >> 8) & 255,
+        ((width - 1) >> 16) & 255,
+        (height - 1) & 255,
+        ((height - 1) >> 8) & 255,
+        ((height - 1) >> 16) & 255,
+      ],
+      4,
+    );
   }
-  const chunkEnd = 20 + header.length + header.length % 2;
+  const chunkEnd = 20 + header.length + (header.length % 2);
   const bytes = new Uint8Array(chunkEnd + (exif ? 14 : 0));
   const view = new DataView(bytes.buffer);
   const encoder = new TextEncoder();
@@ -191,9 +231,10 @@ export function photoForm(
   return form;
 }
 
-export async function upload(who: TestUser, form = photoForm(
-  jpeg({ width: 1440, height: 1440 }), jpeg({ width: 480, height: 480 }),
-)): Promise<string> {
+export async function upload(
+  who: TestUser,
+  form = photoForm(jpeg({ width: 1440, height: 1440 }), jpeg({ width: 480, height: 480 })),
+): Promise<string> {
   const res = await call("POST", "/api/photos", { cookie: who.cookie, form });
   expect(res.status).toBe(201);
   return (await res.json<{ photo: { id: string } }>()).photo.id;

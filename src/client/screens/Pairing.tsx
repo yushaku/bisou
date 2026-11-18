@@ -66,9 +66,7 @@ export function Pairing({ couple: current, onCouple, ...session }: PairingProps)
 
   return (
     <SignedInShell {...session}>
-      {shown === "choose" && (
-        <ChooseView busy={busy} onCreate={() => void create()} onEnter={() => setView("enter")} />
-      )}
+      {shown === "choose" && <ChooseView busy={busy} onCreate={() => void create()} onEnter={() => setView("enter")} />}
       {shown === "waiting" && current && (
         <WaitingView couple={current} onCouple={onCouple} onEnter={() => setView("enter")} />
       )}
@@ -126,7 +124,8 @@ function usePartnerPolling(onCouple: (couple: Couple | null) => void) {
       if (res.ok) latest.current(res.data.couple);
     };
     const start = () => {
-      if (timer === undefined && document.visibilityState === "visible") timer = setInterval(() => void tick(), POLL_MS);
+      if (timer === undefined && document.visibilityState === "visible")
+        timer = setInterval(() => void tick(), POLL_MS);
     };
     const stop = () => {
       clearInterval(timer);
@@ -263,7 +262,11 @@ function EnterView({ onCouple, onBack }: { onCouple: (couple: Couple | null) => 
 
   function onChange(raw: string) {
     // Keep letters and digits only, uppercase: pasted "abc-def" or "ABC DEF" become "ABCDEF".
-    setCode(normalizePairCode(raw).replace(/[^A-Z0-9]/g, "").slice(0, PAIR_CODE_LENGTH));
+    setCode(
+      normalizePairCode(raw)
+        .replace(/[^A-Z0-9]/g, "")
+        .slice(0, PAIR_CODE_LENGTH),
+    );
     setError(null);
   }
 

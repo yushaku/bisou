@@ -77,30 +77,80 @@ describe("anniversaryDate", () => {
 
 describe("nextMilestone", () => {
   it("on the start date, the next milestone is day 100", () => {
-    expect(nextMilestone("2026-11-04", "2026-11-04")).toEqual({ kind: "days", days: 100, date: "2027-02-11", daysLeft: 99 });
+    expect(nextMilestone("2026-11-04", "2026-11-04")).toEqual({
+      kind: "days",
+      days: 100,
+      date: "2027-02-11",
+      daysLeft: 99,
+    });
   });
 
   it("a milestone that falls today has daysLeft 0", () => {
-    expect(nextMilestone("2026-01-01", "2026-04-10")).toEqual({ kind: "days", days: 100, date: "2026-04-10", daysLeft: 0 });
-    expect(nextMilestone("2023-02-14", "2026-02-14")).toEqual({ kind: "anniversary", years: 3, date: "2026-02-14", daysLeft: 0 });
+    expect(nextMilestone("2026-01-01", "2026-04-10")).toEqual({
+      kind: "days",
+      days: 100,
+      date: "2026-04-10",
+      daysLeft: 0,
+    });
+    expect(nextMilestone("2023-02-14", "2026-02-14")).toEqual({
+      kind: "anniversary",
+      years: 3,
+      date: "2026-02-14",
+      daysLeft: 0,
+    });
   });
 
   it("the day after a milestone moves on to the next one", () => {
-    expect(nextMilestone("2026-01-01", "2026-04-11")).toEqual({ kind: "days", days: 200, date: "2026-07-19", daysLeft: 99 });
+    expect(nextMilestone("2026-01-01", "2026-04-11")).toEqual({
+      kind: "days",
+      days: 200,
+      date: "2026-07-19",
+      daysLeft: 99,
+    });
   });
 
   it("picks the nearest of every 100 days and the yearly anniversary", () => {
     // Day 1360: day 1400 (2026-12-14) comes before the 4 year anniversary (2027-02-14).
-    expect(nextMilestone("2023-02-14", "2026-11-04")).toEqual({ kind: "days", days: 1400, date: "2026-12-14", daysLeft: 40 });
+    expect(nextMilestone("2023-02-14", "2026-11-04")).toEqual({
+      kind: "days",
+      days: 1400,
+      date: "2026-12-14",
+      daysLeft: 40,
+    });
     // Day 1453: the 4 year anniversary (2027-03-01) comes before day 1500.
-    expect(nextMilestone("2023-03-01", "2027-02-20")).toEqual({ kind: "anniversary", years: 4, date: "2027-03-01", daysLeft: 9 });
+    expect(nextMilestone("2023-03-01", "2027-02-20")).toEqual({
+      kind: "anniversary",
+      years: 4,
+      date: "2027-03-01",
+      daysLeft: 9,
+    });
     // Day 301: the first anniversary comes before day 400.
-    expect(nextMilestone("2025-01-01", "2025-10-28")).toEqual({ kind: "anniversary", years: 1, date: "2026-01-01", daysLeft: 65 });
+    expect(nextMilestone("2025-01-01", "2025-10-28")).toEqual({
+      kind: "anniversary",
+      years: 1,
+      date: "2026-01-01",
+      daysLeft: 65,
+    });
   });
 
   it("handles Feb 29 starts: the anniversary falls on Feb 28 in non leap years", () => {
-    expect(nextMilestone("2024-02-29", "2025-02-20")).toEqual({ kind: "anniversary", years: 1, date: "2025-02-28", daysLeft: 8 });
-    expect(nextMilestone("2024-02-29", "2025-02-28")).toEqual({ kind: "anniversary", years: 1, date: "2025-02-28", daysLeft: 0 });
-    expect(nextMilestone("2024-02-29", "2028-02-29")).toEqual({ kind: "anniversary", years: 4, date: "2028-02-29", daysLeft: 0 });
+    expect(nextMilestone("2024-02-29", "2025-02-20")).toEqual({
+      kind: "anniversary",
+      years: 1,
+      date: "2025-02-28",
+      daysLeft: 8,
+    });
+    expect(nextMilestone("2024-02-29", "2025-02-28")).toEqual({
+      kind: "anniversary",
+      years: 1,
+      date: "2025-02-28",
+      daysLeft: 0,
+    });
+    expect(nextMilestone("2024-02-29", "2028-02-29")).toEqual({
+      kind: "anniversary",
+      years: 4,
+      date: "2028-02-29",
+      daysLeft: 0,
+    });
   });
 });

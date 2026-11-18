@@ -3,7 +3,14 @@ import { useOnline } from "@/lib/useOnline";
 import { useState } from "react";
 import Cropper from "react-easy-crop";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useI18n } from "@/i18n";
 import type { Area } from "@/lib/photo";
 
@@ -36,7 +43,9 @@ export function PhotoCropDialog({ request }: { request: CropRequest | null }) {
         <DialogHeader>
           <DialogTitle className="font-heading text-xl">{t("crop.title")}</DialogTitle>
           {request && request.total > 1 && (
-            <DialogDescription className="text-base">{t("crop.step", { index: request.index + 1, total: request.total })}</DialogDescription>
+            <DialogDescription className="text-base">
+              {t("crop.step", { index: request.index + 1, total: request.total })}
+            </DialogDescription>
           )}
         </DialogHeader>
         {/* Keyed by photo, so each one starts centered at 1x. */}
@@ -75,18 +84,28 @@ function CropFrame({ request }: { request: CropRequest }) {
             onKeyDownCapture: (event) => {
               if (!["+", "=", "-", "_"].includes(event.key)) return;
               event.preventDefault();
-              setZoom((value) => Math.min(MAX_ZOOM, Math.max(1, value + (event.key === "+" || event.key === "=" ? 0.1 : -0.1))));
+              setZoom((value) =>
+                Math.min(MAX_ZOOM, Math.max(1, value + (event.key === "+" || event.key === "=" ? 0.1 : -0.1))),
+              );
             },
           }}
         />
       </div>
       <p className="text-sm text-muted-foreground">{t(request.round ? "crop.roundHelp" : "crop.help")}</p>
-      {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+      {!online && (
+        <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">
+          {t("offline.save")}
+        </p>
+      )}
       <DialogFooter>
         <Button variant="outline" onClick={() => request.done(null)}>
           {t(request.round ? "entry.cancel" : "crop.skip")}
         </Button>
-        <Button aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online || !area} onClick={() => online && area && request.done(area)}>
+        <Button
+          aria-describedby={!online ? `${offlineId}-1` : undefined}
+          disabled={!online || !area}
+          onClick={() => online && area && request.done(area)}
+        >
           {t("crop.use")}
         </Button>
       </DialogFooter>

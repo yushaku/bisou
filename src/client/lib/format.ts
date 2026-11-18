@@ -6,13 +6,16 @@ const TAGS: Record<Locale, string> = { vi: "vi-VN", en: "en-GB" };
 const formatters = new Map<string, Intl.DateTimeFormat | Intl.NumberFormat>();
 function cached<T extends Intl.DateTimeFormat | Intl.NumberFormat>(key: string, make: () => T): T {
   let formatter = formatters.get(key) as T | undefined;
-  if (!formatter) formatters.set(key, formatter = make());
+  if (!formatter) formatters.set(key, (formatter = make()));
   return formatter;
 }
 
 /* 450000 -> "450.000 ₫" (vi) or "₫450,000" (en). VND has no minor unit. */
 export function formatVnd(amount: number, locale: Locale): string {
-  return cached(`vnd:${locale}`, () => new Intl.NumberFormat(TAGS[locale], { style: "currency", currency: "VND", maximumFractionDigits: 0 })).format(amount);
+  return cached(
+    `vnd:${locale}`,
+    () => new Intl.NumberFormat(TAGS[locale], { style: "currency", currency: "VND", maximumFractionDigits: 0 }),
+  ).format(amount);
 }
 
 export function formatNumber(value: number, locale: Locale): string {
@@ -21,7 +24,11 @@ export function formatNumber(value: number, locale: Locale): string {
 
 /* A money field as typed: digits only, grouped ("500000" -> "500.000" vi, "500,000" en), empty reads "0", at most 15 digits. */
 export function formatMoneyInput(raw: string, locale: Locale): string {
-  const digits = raw.replace(/[.,]\d{1,2}\D*$/, "").replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 15);
+  const digits = raw
+    .replace(/[.,]\d{1,2}\D*$/, "")
+    .replace(/\D/g, "")
+    .replace(/^0+(?=\d)/, "")
+    .slice(0, 15);
   return digits ? formatNumber(Number(digits), locale) : "0";
 }
 
@@ -31,7 +38,11 @@ export function parseDay(day: string): Date {
   return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1);
 }
 
-export function formatDay(day: string | Date, locale: Locale, style: "long" | "short" | "weekday" | "numeric" | "month" = "long"): string {
+export function formatDay(
+  day: string | Date,
+  locale: Locale,
+  style: "long" | "short" | "weekday" | "numeric" | "month" = "long",
+): string {
   const date = typeof day === "string" ? parseDay(day) : day;
   return cached(`day:${locale}:${style}`, () => new Intl.DateTimeFormat(TAGS[locale], dayOptions(style))).format(date);
 }
@@ -46,5 +57,8 @@ function dayOptions(style: "long" | "short" | "weekday" | "numeric" | "month"): 
 
 /* Local clock time of an epoch: "22:00" in both languages. */
 export function formatTime(epochMs: number, locale: Locale): string {
-  return cached(`time:${locale}`, () => new Intl.DateTimeFormat(TAGS[locale], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })).format(epochMs);
+  return cached(
+    `time:${locale}`,
+    () => new Intl.DateTimeFormat(TAGS[locale], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }),
+  ).format(epochMs);
 }

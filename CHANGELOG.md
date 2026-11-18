@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Added ESLint and Prettier (`pnpm lint`, `pnpm format`), checked in CI before typecheck. typescript-eslint runs on TypeScript 6 through `.pnpmfile.cjs` because it needs the JS compiler API that TypeScript 7 lacks.
+
 - Kind note journal cards show all four labelled parts and the recipient message in a separate pocket. Detail shows the full text; the feed previews two lines per part and three for the message.
 
 - Closing a kind note now requires a short message. Quick replies fill the message or append on a new line; sample choices are not stored.

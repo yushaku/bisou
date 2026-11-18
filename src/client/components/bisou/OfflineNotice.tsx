@@ -13,7 +13,10 @@ export function OfflineNotice() {
   useEffect(() => {
     if (online) return;
     // Retry reloads once the browser sees a connection; otherwise the same toast stays.
-    const action = { label, onClick: () => (navigator.onLine ? window.location.reload() : { title, description, action }) };
+    const action = {
+      label,
+      onClick: () => (navigator.onLine ? window.location.reload() : { title, description, action }),
+    };
     const id = toast.error(title, { description, action, duration: 0 });
     return () => toast.dismiss(id);
   }, [online, title, description, label]);

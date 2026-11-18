@@ -9,13 +9,31 @@ export type EventIcon = (typeof EVENT_ICONS)[number];
 export const EVENT_TITLE_MAX = 60;
 export const EVENTS_MAX = 100;
 
-export function validateEvent(body: unknown, earliest: string, current?: CoupleEventInput): { input: CoupleEventInput } | ApiError {
+export function validateEvent(
+  body: unknown,
+  earliest: string,
+  current?: CoupleEventInput,
+): { input: CoupleEventInput } | ApiError {
   if (!body || typeof body !== "object") return { error: "invalid_body" };
   const { title, date, repeat, icon } = body as Record<string, unknown>;
-  if (typeof title !== "string" || CONTROL_CHARACTERS.test(title)
-    || !title.replace(/\p{Cf}/gu, "").trim() || Array.from(title.trim()).length > EVENT_TITLE_MAX) return { error: "event_title_invalid" };
-  if ((repeat !== "once" && repeat !== "yearly") || typeof icon !== "string" || !(EVENT_ICONS as readonly string[]).includes(icon)) return { error: "invalid_body" };
-  if (!isValidDay(date) || (repeat === "once" && date < earliest && !(date === current?.date && repeat === current.repeat))) return { error: "event_date_invalid" };
+  if (
+    typeof title !== "string" ||
+    CONTROL_CHARACTERS.test(title) ||
+    !title.replace(/\p{Cf}/gu, "").trim() ||
+    Array.from(title.trim()).length > EVENT_TITLE_MAX
+  )
+    return { error: "event_title_invalid" };
+  if (
+    (repeat !== "once" && repeat !== "yearly") ||
+    typeof icon !== "string" ||
+    !(EVENT_ICONS as readonly string[]).includes(icon)
+  )
+    return { error: "invalid_body" };
+  if (
+    !isValidDay(date) ||
+    (repeat === "once" && date < earliest && !(date === current?.date && repeat === current.repeat))
+  )
+    return { error: "event_date_invalid" };
   return { input: { title: title.trim(), date, repeat, icon: icon as EventIcon } };
 }
 
@@ -32,17 +50,30 @@ export type UpcomingEvent = { date: string; daysLeft: number } & (
 
 const ORDER = { anniversary: 0, days: 1, birthday: 2, holiday: 3, custom: 4 };
 
-export function eventTitle(event: UpcomingEvent, t: (key: MessageKey, vars?: Record<string, string | number>) => string, locale: Locale): string {
+export function eventTitle(
+  event: UpcomingEvent,
+  t: (key: MessageKey, vars?: Record<string, string | number>) => string,
+  locale: Locale,
+): string {
   const number = (n: number) => new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-GB").format(n);
-  return event.kind === "anniversary" ? t("events.anniversary", { years: number(event.years) })
-    : event.kind === "days" ? t("events.days", { n: number(event.days) })
-    : event.kind === "birthday" ? t("events.birthday", { name: event.name })
-    : event.kind === "custom" ? `${event.title}${event.years >= 1 ? ` ${t(event.years === 1 ? "events.countOne" : "events.count", { n: number(event.years) })}` : ""}`
-    : t(`events.holiday.${event.holiday}`);
+  return event.kind === "anniversary"
+    ? t("events.anniversary", { years: number(event.years) })
+    : event.kind === "days"
+      ? t("events.days", { n: number(event.days) })
+      : event.kind === "birthday"
+        ? t("events.birthday", { name: event.name })
+        : event.kind === "custom"
+          ? `${event.title}${event.years >= 1 ? ` ${t(event.years === 1 ? "events.countOne" : "events.count", { n: number(event.years) })}` : ""}`
+          : t(`events.holiday.${event.holiday}`);
 }
 
 /** Today included, the same calendar day next year excluded (March 1 for February 29); ties follow events R7. */
-export function upcomingEvents(startDate: string | null, people: { name: string; birthDate: string | null }[], today: string, custom: CoupleEvent[] = []): UpcomingEvent[] {
+export function upcomingEvents(
+  startDate: string | null,
+  people: { name: string; birthDate: string | null }[],
+  today: string,
+  custom: CoupleEvent[] = [],
+): UpcomingEvent[] {
   const end = addDays(anniversaryDate(today, 1), today.slice(5) === "02-29" ? 1 : 0);
   const events: UpcomingEvent[] = [];
   const add = (event: UpcomingEvent) => {
@@ -59,7 +90,8 @@ export function upcomingEvents(startDate: string | null, people: { name: string;
     for (const person of people) {
       if (!person.birthDate) continue;
       const age = eventYear - Number(person.birthDate.slice(0, 4));
-      if (age >= 0) add({ kind: "birthday", name: person.name, age, ...timing(anniversaryDate(person.birthDate, age)) });
+      if (age >= 0)
+        add({ kind: "birthday", name: person.name, age, ...timing(anniversaryDate(person.birthDate, age)) });
     }
     for (const holiday of Object.keys(HOLIDAYS) as Holiday[]) {
       add({ kind: "holiday", holiday, ...timing(`${eventYear}-${HOLIDAYS[holiday]}`) });
@@ -78,9 +110,22 @@ export function upcomingEvents(startDate: string | null, people: { name: string;
       date = anniversaryDate(event.date, years);
     }
     if (date < today) continue;
-    events.push({ kind: "custom", id: event.id, title: event.title, icon: event.icon, createdAt: event.createdAt, years, later: date >= end, ...timing(date) });
+    events.push({
+      kind: "custom",
+      id: event.id,
+      title: event.title,
+      icon: event.icon,
+      createdAt: event.createdAt,
+      years,
+      later: date >= end,
+      ...timing(date),
+    });
   }
-  return events.sort((a, b) => a.date.localeCompare(b.date) || ORDER[a.kind] - ORDER[b.kind]
-    || (a.kind === "birthday" && b.kind === "birthday" ? a.name.localeCompare(b.name) : 0)
-    || (a.kind === "custom" && b.kind === "custom" ? a.createdAt - b.createdAt || a.id.localeCompare(b.id) : 0));
+  return events.sort(
+    (a, b) =>
+      a.date.localeCompare(b.date) ||
+      ORDER[a.kind] - ORDER[b.kind] ||
+      (a.kind === "birthday" && b.kind === "birthday" ? a.name.localeCompare(b.name) : 0) ||
+      (a.kind === "custom" && b.kind === "custom" ? a.createdAt - b.createdAt || a.id.localeCompare(b.id) : 0),
+  );
 }

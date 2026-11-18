@@ -18,18 +18,38 @@ import { GardenCard } from "./GardenCard";
 
 type Props = { couple: Couple; user: User; onSignedOut: () => void };
 
-export function StarredCard({ card, myName, partnerName, onOpen }: {
-  card: GardenCardState; myName: string; partnerName: string; onOpen: () => void;
+export function StarredCard({
+  card,
+  myName,
+  partnerName,
+  onOpen,
+}: {
+  card: GardenCardState;
+  myName: string;
+  partnerName: string;
+  onOpen: () => void;
 }) {
   const { t, locale } = useI18n();
   const id = useId();
-  const deck = DECKS.find(deck => deck.id === cardById(card.cardId)?.deckId);
-  return <Card className="relative gap-3 p-4">
-    <p className="flex items-center gap-2 text-sm font-semibold text-muted-foreground"><Heart className="size-4 text-primary" aria-hidden="true" />{deck?.name[locale]}</p>
-    <h3 id={id} className="font-heading text-xl">{gardenQuestion(card.cardId, locale, t)}</h3>
-    <AnswerSlots card={card} revealed clamp variant="today" myName={myName} partnerName={partnerName} />
-    <button type="button" aria-labelledby={id} onClick={onOpen} className="absolute inset-0 rounded-xl focus-visible:outline-2 focus-visible:outline-ring" />
-  </Card>;
+  const deck = DECKS.find((deck) => deck.id === cardById(card.cardId)?.deckId);
+  return (
+    <Card className="relative gap-3 p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+        <Heart className="size-4 text-primary" aria-hidden="true" />
+        {deck?.name[locale]}
+      </p>
+      <h3 id={id} className="font-heading text-xl">
+        {gardenQuestion(card.cardId, locale, t)}
+      </h3>
+      <AnswerSlots card={card} revealed clamp variant="today" myName={myName} partnerName={partnerName} />
+      <button
+        type="button"
+        aria-labelledby={id}
+        onClick={onOpen}
+        className="absolute inset-0 rounded-xl focus-visible:outline-2 focus-visible:outline-ring"
+      />
+    </Card>
+  );
 }
 
 export function StarredBlock({ couple, user, onSignedOut, full = false }: Props & { full?: boolean }) {
@@ -41,7 +61,7 @@ export function StarredBlock({ couple, user, onSignedOut, full = false }: Props 
   const [, setSeenVersion] = useState(0);
   const [openId, setOpenId] = useState<string | null>(null);
   useEffect(() => {
-    const seen = () => setSeenVersion(version => version + 1);
+    const seen = () => setSeenVersion((version) => version + 1);
     window.addEventListener("bisou:garden-seen", seen);
     window.addEventListener("storage", seen);
     return () => {
@@ -50,28 +70,86 @@ export function StarredBlock({ couple, user, onSignedOut, full = false }: Props 
     };
   }, []);
   const shown = starredHere(cards ?? [], scope);
-  const active = shown.find(card => card.cardId === openId);
-  useEffect(() => { if (openId && !active) setOpenId(null); }, [openId, active]);
+  const active = shown.find((card) => card.cardId === openId);
+  useEffect(() => {
+    if (openId && !active) setOpenId(null);
+  }, [openId, active]);
   const myName = user.displayName?.trim() || t("garden.me");
-  const partnerName = couple.members.find(member => member.id !== user.id)?.displayName?.trim() || t("garden.partner");
+  const partnerName =
+    couple.members.find((member) => member.id !== user.id)?.displayName?.trim() || t("garden.partner");
   if (!full && !shown.length) return null;
-  return <section aria-labelledby={full ? undefined : "starred-title"} className={full ? "flex flex-col gap-3" : "mt-5 flex flex-col gap-3"}>
-    {!full && <div className="flex items-center justify-between gap-3"><h2 id="starred-title" className="font-heading text-xl">{t("home.starred")}</h2>
-      {shown.length > 3 && <Button asChild variant="ghost" size="sm"><Link id="stars-see-all" href="/stars" state={{ from: "/" }} onClick={() => {
-        if (memory) { memory.returnFocus = "stars-see-all"; }
-      }}>{t("home.seeAll")}</Link></Button>}
-    </div>}
-    {failed && <div role="alert" className="flex flex-col items-start gap-2"><p>{t("garden.loadError")}</p><Button variant="outline" onClick={() => void refresh()}>{t("journal.retry")}</Button></div>}
-    {full && !cards && !failed && <Skeleton className="h-72 w-full" aria-label={t("loading")} />}
-    {full && cards && !failed && !shown.length && <EmptyState title={t("home.starredEmpty")} />}
-    {(full ? shown : shown.slice(0, 3)).map(card => <StarredCard key={card.cardId} card={card} myName={myName} partnerName={partnerName} onOpen={() => setOpenId(card.cardId)} />)}
-    <Drawer open={!!active} onOpenChange={open => { if (!open) setOpenId(null); }}>
-      <DrawerContent aria-describedby={undefined}>
-        <div className="mx-auto flex w-full max-w-md flex-col gap-4 overflow-y-auto px-4 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
-          <DrawerHeader className="sr-only"><DrawerTitle>{t("home.starred")}</DrawerTitle></DrawerHeader>
-          {active && <GardenCard key={active.cardId} card={active} myName={myName} partnerName={partnerName} memoryScope={scope} onChanged={() => void refresh()} onSignedOut={onSignedOut} />}
+  return (
+    <section
+      aria-labelledby={full ? undefined : "starred-title"}
+      className={full ? "flex flex-col gap-3" : "mt-5 flex flex-col gap-3"}
+    >
+      {!full && (
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="starred-title" className="font-heading text-xl">
+            {t("home.starred")}
+          </h2>
+          {shown.length > 3 && (
+            <Button asChild variant="ghost" size="sm">
+              <Link
+                id="stars-see-all"
+                href="/stars"
+                state={{ from: "/" }}
+                onClick={() => {
+                  if (memory) {
+                    memory.returnFocus = "stars-see-all";
+                  }
+                }}
+              >
+                {t("home.seeAll")}
+              </Link>
+            </Button>
+          )}
         </div>
-      </DrawerContent>
-    </Drawer>
-  </section>;
+      )}
+      {failed && (
+        <div role="alert" className="flex flex-col items-start gap-2">
+          <p>{t("garden.loadError")}</p>
+          <Button variant="outline" onClick={() => void refresh()}>
+            {t("journal.retry")}
+          </Button>
+        </div>
+      )}
+      {full && !cards && !failed && <Skeleton className="h-72 w-full" aria-label={t("loading")} />}
+      {full && cards && !failed && !shown.length && <EmptyState title={t("home.starredEmpty")} />}
+      {(full ? shown : shown.slice(0, 3)).map((card) => (
+        <StarredCard
+          key={card.cardId}
+          card={card}
+          myName={myName}
+          partnerName={partnerName}
+          onOpen={() => setOpenId(card.cardId)}
+        />
+      ))}
+      <Drawer
+        open={!!active}
+        onOpenChange={(open) => {
+          if (!open) setOpenId(null);
+        }}
+      >
+        <DrawerContent aria-describedby={undefined}>
+          <div className="mx-auto flex w-full max-w-md flex-col gap-4 overflow-y-auto px-4 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
+            <DrawerHeader className="sr-only">
+              <DrawerTitle>{t("home.starred")}</DrawerTitle>
+            </DrawerHeader>
+            {active && (
+              <GardenCard
+                key={active.cardId}
+                card={active}
+                myName={myName}
+                partnerName={partnerName}
+                memoryScope={scope}
+                onChanged={() => void refresh()}
+                onSignedOut={onSignedOut}
+              />
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </section>
+  );
 }

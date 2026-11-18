@@ -57,6 +57,8 @@ function mount() {
 // the static skeleton in index.html stays on screen until then.
 const boot = startBoot(loadTabScreens);
 void boot.cache
-  .then((cache) => (cache ? Promise.race([loadTabScreens(), new Promise((resolve) => setTimeout(resolve, 2000))]) : undefined))
+  .then((cache) =>
+    cache ? Promise.race([loadTabScreens(), new Promise((resolve) => setTimeout(resolve, 2000))]) : undefined,
+  )
   .catch(() => undefined)
   .then(mount);

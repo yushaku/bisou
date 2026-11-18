@@ -13,7 +13,9 @@ it("shares a pending refresh across tabs while showing the cached jar", async ()
   testQueryClient.setQueryData(queries.wishes.queryKey, cached);
   const fresh = { ...cached, partnerJarEmpty: false };
   let resolve!: (result: Awaited<ReturnType<typeof api.wishes>>) => void;
-  const response = new Promise<Awaited<ReturnType<typeof api.wishes>>>(done => { resolve = done; });
+  const response = new Promise<Awaited<ReturnType<typeof api.wishes>>>((done) => {
+    resolve = done;
+  });
   const request = vi.spyOn(api, "wishes").mockReturnValue(response);
   function Tab() {
     const { jar } = useWishJar(vi.fn());
@@ -34,7 +36,8 @@ it("keeps the cached jar without an error state when refresh fails", async () =>
   vi.spyOn(api, "wishes").mockResolvedValue({ ok: false, status: 0, error: null });
   let refresh!: () => Promise<void>;
   function Tab() {
-    const state = useWishJar(vi.fn()); refresh = state.refresh;
+    const state = useWishJar(vi.fn());
+    refresh = state.refresh;
     return h("span", null, state.failed ? "error" : "cached");
   }
   renderToString(h(Tab));

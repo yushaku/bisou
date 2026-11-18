@@ -8,11 +8,19 @@ import { readCreateRequest, tabMove } from "../src/client/lib/navigation";
 afterEach(() => vi.restoreAllMocks());
 
 describe("Wish jars", () => {
-  it.each([[0, 0], [1, 1], [2, 1], [3, 2], [5, 2], [6, 3], [9, 3], [10, 4], [100, 4]])(
-    "wishes R26: %i open wishes fill my jar to level %i", (count, level) => {
-      expect(wishJarLevels({ open: { length: count }, partnerJarEmpty: false }).mine).toBe(level);
-    },
-  );
+  it.each([
+    [0, 0],
+    [1, 1],
+    [2, 1],
+    [3, 2],
+    [5, 2],
+    [6, 3],
+    [9, 3],
+    [10, 4],
+    [100, 4],
+  ])("wishes R26: %i open wishes fill my jar to level %i", (count, level) => {
+    expect(wishJarLevels({ open: { length: count }, partnerJarEmpty: false }).mine).toBe(level);
+  });
 
   it.each([0, 1, 5, 10, 100])("wishes R27: partner level ignores my count %i", (count) => {
     expect(wishJarLevels({ open: { length: count }, partnerJarEmpty: false }).partner).toBe(2);

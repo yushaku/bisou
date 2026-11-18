@@ -6,16 +6,23 @@ import { DAY, HOUR } from "../src/worker/lib/time";
 import { call, paired, resetDb, upload, user, type TestUser } from "./helpers";
 
 beforeEach(resetDb);
-afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 async function create(owner: TestUser, input: Record<string, unknown> = {}) {
-  const res = await call("POST", "/api/wishes", { cookie: owner.cookie, body: { title: "Scarf", price: 450000, ...input } });
+  const res = await call("POST", "/api/wishes", {
+    cookie: owner.cookie,
+    body: { title: "Scarf", price: 450000, ...input },
+  });
   expect(res.status).toBe(201);
   return (await res.json<{ wish: Wish }>()).wish;
 }
 const spin = (u: TestUser, budget = 500000) => call("POST", "/api/wishes/spin", { cookie: u.cookie, body: { budget } });
 const claim = (u: TestUser, id: string) => call("POST", `/api/wishes/${id}/claim`, { cookie: u.cookie });
-const claims = async (u: TestUser) => (await (await call("GET", "/api/wishes/claims", { cookie: u.cookie })).json<{ claims: Claim[] }>()).claims;
+const claims = async (u: TestUser) =>
+  (await (await call("GET", "/api/wishes/claims", { cookie: u.cookie })).json<{ claims: Claim[] }>()).claims;
 
 describe("secret spins and claims", () => {
   it("wish-spin: partner's wish is drawable with price 5 tỷ", async () => {
@@ -52,7 +59,9 @@ describe("secret spins and claims", () => {
     await create(a, { title: "Mine", price: 1 });
     const result = await spin(a);
     expect(result.status).toBe(200);
-    expect(await result.json()).toEqual({ wish: { id: scarf.id, title: scarf.title, price: scarf.price, link: null, photoId } });
+    expect(await result.json()).toEqual({
+      wish: { id: scarf.id, title: scarf.title, price: scarf.price, link: null, photoId },
+    });
     const image = await call("GET", `/api/photos/${photoId}/thumb`, { cookie: a.cookie });
     expect(image.status).toBe(200);
     expect(image.headers.get("Cache-Control")).toBe("private, max-age=86400");
@@ -76,7 +85,9 @@ describe("secret spins and claims", () => {
     const limited = await spin(a);
     expect(limited.status).toBe(429);
     expect(await limited.json()).toEqual({ error: "rate_limited", retryAfter: 11 * 60 * 60 });
-    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM wish_spins WHERE user_id = ?").bind(a.id).first("n")).toBe(20);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM wish_spins WHERE user_id = ?").bind(a.id).first("n")).toBe(
+      20,
+    );
     vi.setSystemTime(start + DAY);
     expect((await spin(a)).status).toBe(200);
   });
@@ -88,7 +99,10 @@ describe("secret spins and claims", () => {
     expect(first.status).toBe(201);
     expect((await claim(a, wish.id)).status).toBe(409);
     expect(await (await spin(a)).json()).toEqual({ wish: null });
-    expect((await call("PUT", `/api/wishes/${wish.id}`, { cookie: b.cookie, body: { title: "New scarf", price: 480000 } })).status).toBe(200);
+    expect(
+      (await call("PUT", `/api/wishes/${wish.id}`, { cookie: b.cookie, body: { title: "New scarf", price: 480000 } }))
+        .status,
+    ).toBe(200);
     const mine = await claims(a);
     expect(mine).toHaveLength(1);
     expect(mine[0]).toMatchObject({ title: "New scarf", price: 480000, status: "open" });
@@ -105,7 +119,9 @@ describe("secret spins and claims", () => {
     await claim(a, wish.id);
     expect((await call("DELETE", `/api/wishes/${wish.id}`, { cookie: b.cookie })).status).toBe(200);
     const notices = await claims(a);
-    expect(notices).toEqual([expect.objectContaining({ status: "gone", title: "Scarf", price: null, link: null, photoId: null })]);
+    expect(notices).toEqual([
+      expect.objectContaining({ status: "gone", title: "Scarf", price: null, link: null, photoId: null }),
+    ]);
     expect(await claims(a)).toEqual(notices);
     const path = `/api/wishes/claims/${notices[0]!.id}/ack`;
     expect((await call("POST", path, { cookie: a.cookie, origin: "https://outside.example" })).status).toBe(403);
@@ -124,16 +140,22 @@ describe("secret spins and claims", () => {
     const before = await call("GET", "/api/wishes", { cookie: b.cookie });
     const body = await before.text();
     const headers = Array.from(before.headers);
-    for (const action of [() => spin(a), () => claim(a, wish.id), async () => {
-      const [mine] = await claims(a);
-      return call("DELETE", `/api/wishes/claims/${mine!.id}`, { cookie: a.cookie });
-    }]) {
+    for (const action of [
+      () => spin(a),
+      () => claim(a, wish.id),
+      async () => {
+        const [mine] = await claims(a);
+        return call("DELETE", `/api/wishes/claims/${mine!.id}`, { cookie: a.cookie });
+      },
+    ]) {
       await action();
       const after = await call("GET", "/api/wishes", { cookie: b.cookie });
       expect(await after.text()).toBe(body);
       expect(Array.from(after.headers)).toEqual(headers);
     }
-    expect((await env.DB.prepare("PRAGMA table_info(wish_spins)").all<{ name: string }>()).results.map((c) => c.name)).toEqual(["id", "user_id", "created_at"]);
+    expect(
+      (await env.DB.prepare("PRAGMA table_info(wish_spins)").all<{ name: string }>()).results.map((c) => c.name),
+    ).toEqual(["id", "user_id", "created_at"]);
   });
 
   it("wishes AC1, AC7 (R1, R12, R13): only the partner can claim an open wish", async () => {
@@ -155,7 +177,10 @@ describe("secret spins and claims", () => {
     const path = `/api/wishes/claims/${mine.id}/ack`;
     expect((await call("POST", path, { cookie: a.cookie })).status).toBe(200);
     expect(await claims(a)).toHaveLength(1);
-    await call("POST", `/api/wishes/${wish.id}/received`, { cookie: b.cookie, body: { date: "2023-02-12", note: "", photoIds: [] } });
+    await call("POST", `/api/wishes/${wish.id}/received`, {
+      cookie: b.cookie,
+      body: { date: "2023-02-12", note: "", photoIds: [] },
+    });
     expect((await call("POST", path, { cookie: a.cookie })).status).toBe(200);
     expect(await claims(a)).toEqual([expect.objectContaining({ id: mine.id, status: "received" })]);
   });
@@ -171,22 +196,42 @@ describe("secret spins and claims", () => {
   });
 });
 
-
 it("wishes AC3 (R9): enumerates exact 1:2:2 weights without sampling", () => {
-  const rows = [{ title: "Candle", priority: 1 }, { title: "Scarf", priority: 2 }, { title: "Mug", priority: 2 }];
-  expect(Array.from({ length: 5 }, (_, r) => pickWeighted(rows, (total) => { expect(total).toBe(5); return r; })?.title))
-    .toEqual(["Candle", "Scarf", "Scarf", "Mug", "Mug"]);
-  expect(pickWeighted([], () => { throw new Error("no random draw for an empty jar"); })).toBeNull();
+  const rows = [
+    { title: "Candle", priority: 1 },
+    { title: "Scarf", priority: 2 },
+    { title: "Mug", priority: 2 },
+  ];
+  expect(
+    Array.from(
+      { length: 5 },
+      (_, r) =>
+        pickWeighted(rows, (total) => {
+          expect(total).toBe(5);
+          return r;
+        })?.title,
+    ),
+  ).toEqual(["Candle", "Scarf", "Scarf", "Mug", "Mug"]);
+  expect(
+    pickWeighted([], () => {
+      throw new Error("no random draw for an empty jar");
+    }),
+  ).toBeNull();
 });
 
 it("wishes AC3 (R9): rejects the biased tail of random integers", () => {
   const getRandom = vi.spyOn(crypto, "getRandomValues");
-  getRandom.mockImplementationOnce((array) => { (array as Uint32Array)[0] = 0xffffffff; return array; });
-  getRandom.mockImplementationOnce((array) => { (array as Uint32Array)[0] = 7; return array; });
+  getRandom.mockImplementationOnce((array) => {
+    (array as Uint32Array)[0] = 0xffffffff;
+    return array;
+  });
+  getRandom.mockImplementationOnce((array) => {
+    (array as Uint32Array)[0] = 7;
+    return array;
+  });
   expect(randomInt(5)).toBe(2);
   expect(getRandom).toHaveBeenCalledTimes(2);
 });
-
 
 it("wishes AC5, AC7 (R11, R13): simultaneous requests cannot exceed the spin quota or duplicate a claim", async () => {
   const { a, b } = await paired();

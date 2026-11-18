@@ -8,10 +8,11 @@ let tabScreens: TabScreensModule["TabScreens"] | undefined;
  * One import for the chunk of the main tabs: the shared frame (header, tab bar) and Home. App renders
  * it and boot starts it early (ADR 0014).
  */
-export const loadTabScreens = () => import("../screens/TabScreens").then((module) => {
-  tabScreens = module.TabScreens;
-  return module;
-});
+export const loadTabScreens = () =>
+  import("../screens/TabScreens").then((module) => {
+    tabScreens = module.TabScreens;
+    return module;
+  });
 
 /*
  * The tab screens once their chunk has loaded. React.lazy always suspends on its first render, even
@@ -69,7 +70,11 @@ export function prewarmTabs(schedule: Idle = whenIdle): void {
   const next = () => {
     const tab = queue.shift();
     if (!tab) return;
-    schedule(() => { void loadTab(tab).catch(() => undefined).then(next); }, 2000);
+    schedule(() => {
+      void loadTab(tab)
+        .catch(() => undefined)
+        .then(next);
+    }, 2000);
   };
   next();
 }

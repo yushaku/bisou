@@ -35,18 +35,36 @@ export function LanguageToggle({ onChange, className }: { onChange?: (locale: Lo
   );
 }
 
-export function LanguageSelect({ onChange, labelledBy, className }: { onChange?: (locale: Locale) => void; labelledBy?: string; className?: string }) {
+export function LanguageSelect({
+  onChange,
+  labelledBy,
+  className,
+}: {
+  onChange?: (locale: Locale) => void;
+  labelledBy?: string;
+  className?: string;
+}) {
   const { locale, setLocale } = useI18n();
   const online = useOnline();
   return (
-    <Select disabled={!!onChange && !online} value={locale} onValueChange={(value) => {
-      if (!isLocale(value) || value === locale) return;
-      setLocale(value);
-      onChange?.(value);
-    }}>
-      <SelectTrigger size="sm" aria-labelledby={labelledBy} className={className}><SelectValue /></SelectTrigger>
+    <Select
+      disabled={!!onChange && !online}
+      value={locale}
+      onValueChange={(value) => {
+        if (!isLocale(value) || value === locale) return;
+        setLocale(value);
+        onChange?.(value);
+      }}
+    >
+      <SelectTrigger size="sm" aria-labelledby={labelledBy} className={className}>
+        <SelectValue />
+      </SelectTrigger>
       <SelectContent position="popper" align="end">
-        {LOCALES.map((l) => <SelectItem key={l} value={l} lang={l}>{LABELS[l].name}</SelectItem>)}
+        {LOCALES.map((l) => (
+          <SelectItem key={l} value={l} lang={l}>
+            {LABELS[l].name}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );

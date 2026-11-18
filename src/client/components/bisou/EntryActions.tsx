@@ -5,7 +5,14 @@ import type { JournalEntry } from "../../../shared/types";
 import { api } from "@/api";
 import { useApiMutation } from "@/lib/serverQuery";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useI18n } from "@/i18n";
 import { formatDay } from "@/lib/format";
@@ -29,7 +36,18 @@ interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoI
  * Edit a shared entry (journal R28), delete as author (R11) or either partner for a note entry (R26). Delete asks first, naming the day and photo
  * count; a failure keeps the entry and the dialog for another try. There is no undo.
  */
-export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photoIds">>({ entry, onClose, onEdit, onDeleted, onSignedOut, detail, title, own = true, canDelete = own, remove: deleteItem = api.deleteEntry }: EntryActionsProps<T>) {
+export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photoIds">>({
+  entry,
+  onClose,
+  onEdit,
+  onDeleted,
+  onSignedOut,
+  detail,
+  title,
+  own = true,
+  canDelete = own,
+  remove: deleteItem = api.deleteEntry,
+}: EntryActionsProps<T>) {
   const removeEntry = useApiMutation(deleteItem, ["journal", "notes"]);
   const { t, locale } = useI18n();
   const online = useOnline();
@@ -67,40 +85,51 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
         <DrawerContent className="max-h-[80vh]" aria-describedby={undefined}>
           <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col gap-2 px-5 pb-5">
             <DrawerHeader className="px-0 text-left">
-              <DrawerTitle className="font-heading text-xl">{title ?? (shown ? formatDay(shown.date, locale) : "")}</DrawerTitle>
+              <DrawerTitle className="font-heading text-xl">
+                {title ?? (shown ? formatDay(shown.date, locale) : "")}
+              </DrawerTitle>
             </DrawerHeader>
             <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-            {detail}
-            {own && <>
-            {!online && <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
-            <Button
-              variant="outline"
-              size="lg"
-              className="justify-start"
-              onClick={() => {
-                if (!shown) return;
-                onClose();
-                onEdit(shown);
-              }}
-            >
-              <PencilLine aria-hidden="true" />
-              {t("entry.edit")}
-            </Button>
-            {canDelete && <Button
-              variant="outline"
-              size="lg"
-              className="justify-start text-destructive"
-              aria-describedby={!online ? `${offlineId}-1` : undefined} disabled={!online}
-              onClick={() => {
-                setError(null);
-                setTarget(shown);
-                onClose();
-              }}
-            >
-              <Trash2 aria-hidden="true" />
-              {t("entry.delete")}
-            </Button>}
-            </>}
+              {detail}
+              {own && (
+                <>
+                  {!online && (
+                    <p id={`${offlineId}-1`} className="text-sm text-muted-foreground">
+                      {t("offline.save")}
+                    </p>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="justify-start"
+                    onClick={() => {
+                      if (!shown) return;
+                      onClose();
+                      onEdit(shown);
+                    }}
+                  >
+                    <PencilLine aria-hidden="true" />
+                    {t("entry.edit")}
+                  </Button>
+                  {canDelete && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="justify-start text-destructive"
+                      aria-describedby={!online ? `${offlineId}-1` : undefined}
+                      disabled={!online}
+                      onClick={() => {
+                        setError(null);
+                        setTarget(shown);
+                        onClose();
+                      }}
+                    >
+                      <Trash2 aria-hidden="true" />
+                      {t("entry.delete")}
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
             <Button variant="ghost" size="lg" onClick={onClose}>
               {t(own ? "entry.cancel" : "common.close")}
@@ -117,12 +146,22 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
               {count > 0 ? t("entry.deleteBody", { day, count }) : t("entry.deleteBodyText", { day })}
             </DialogDescription>
           </DialogHeader>
-          {!online && <p id={`${offlineId}-2`} className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+          {!online && (
+            <p id={`${offlineId}-2`} className="text-sm text-muted-foreground">
+              {t("offline.save")}
+            </p>
+          )}
           <p role="alert" className="text-base text-destructive empty:hidden">
             {error}
           </p>
           <DialogFooter>
-            <Button variant="destructive" aria-describedby={!online ? `${offlineId}-2` : undefined} disabled={!online} loading={deleting} onClick={() => target && void remove(target)}>
+            <Button
+              variant="destructive"
+              aria-describedby={!online ? `${offlineId}-2` : undefined}
+              disabled={!online}
+              loading={deleting}
+              onClick={() => target && void remove(target)}
+            >
               {t("entry.deleteYes")}
             </Button>
             <Button autoFocus disabled={deleting} onClick={() => setTarget(null)}>

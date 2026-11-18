@@ -62,7 +62,10 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
   const navigation = useTabNavigation();
 
   // Creator first on both phones, so each partner keeps the same tint everywhere.
-  const people = toPeople(couple.members.slice(0, 2), session.user, t) as [Person & { birthDate: string | null }, Person & { birthDate: string | null }];
+  const people = toPeople(couple.members.slice(0, 2), session.user, t) as [
+    Person & { birthDate: string | null },
+    Person & { birthDate: string | null },
+  ];
 
   async function saveStartDate(day: string): Promise<string | null> {
     const res = await api.setStartDate(day);
@@ -78,19 +81,28 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
     <SignedInShell {...session} tab="home" onRefresh={onRefresh}>
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={people} size="sm" />
-        <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: people[0].name, b: people[1].name })}</p>
+        <p className="min-w-0 truncate text-base text-muted-foreground">
+          {t("couple.and", { a: people[0].name, b: people[1].name })}
+        </p>
       </div>
 
       {couple.startDate ? (
         <DaysCounter startDate={couple.startDate} people={people} today={now} onEditStartDate={pick} />
       ) : (
-        <EmptyState
-          title={t("startDate.prompt")}
-          action={{ label: t("startDate.set"), onClick: pick }}
-        />
+        <EmptyState title={t("startDate.prompt")} action={{ label: t("startDate.set"), onClick: pick }} />
       )}
 
-      {(!notesFailed || !online) && <NotesInbox count={waitingCount(lists)} onOpen={() => { if (memory) { memory.journalSection = "notes"; } navigation.onSelect("journal"); }} />}
+      {(!notesFailed || !online) && (
+        <NotesInbox
+          count={waitingCount(lists)}
+          onOpen={() => {
+            if (memory) {
+              memory.journalSection = "notes";
+            }
+            navigation.onSelect("journal");
+          }}
+        />
+      )}
 
       <MemoDailyQuestion couple={couple} user={session.user} onSignedOut={session.onSignedOut} />
       <CardBoxBlock scope={`${couple.id}:${session.user.id}`} onSignedOut={session.onSignedOut} />
@@ -101,22 +113,53 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
 
       <InstallCard />
 
-      <UpcomingCard onOpen={(id) => setEditingEvent(couple.events.find((event) => event.id === id))} events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter((event) => !(event.kind === "custom" && event.later))} action={
-        <Button asChild variant="ghost" size="sm">
-          <Link id="events-see-all" href="/events" state={{ from: "/" }} onClick={() => {
-            if (memory) {
-              memory.returnFocus = "events-see-all";
-            }
-          }}>{t("home.seeAll")}</Link>
-        </Button>
-      } />
+      <UpcomingCard
+        onOpen={(id) => setEditingEvent(couple.events.find((event) => event.id === id))}
+        events={upcomingEvents(couple.startDate, people, toDayString(now), couple.events).filter(
+          (event) => !(event.kind === "custom" && event.later),
+        )}
+        action={
+          <Button asChild variant="ghost" size="sm">
+            <Link
+              id="events-see-all"
+              href="/events"
+              state={{ from: "/" }}
+              onClick={() => {
+                if (memory) {
+                  memory.returnFocus = "events-see-all";
+                }
+              }}
+            >
+              {t("home.seeAll")}
+            </Link>
+          </Button>
+        }
+      />
 
       <NotificationCard />
 
-      {editingEvent !== undefined && <Suspense fallback={null}><EventSheet event={editingEvent} onClose={() => setEditingEvent(undefined)} onCouple={onCouple} onSignedOut={session.onSignedOut} /></Suspense>}
+      {editingEvent !== undefined && (
+        <Suspense fallback={null}>
+          <EventSheet
+            event={editingEvent}
+            onClose={() => setEditingEvent(undefined)}
+            onCouple={onCouple}
+            onSignedOut={session.onSignedOut}
+          />
+        </Suspense>
+      )}
       {sheetLoaded && (
         <Suspense fallback={null}>
-          <DateSheet title={t("startDate.title")} hint={t("startDate.hint")} saveLabel={t("startDate.save")} firstMonth={new Date(1950, 0, 1)} open={picking} onOpenChange={setPicking} value={couple.startDate} onSave={saveStartDate} />
+          <DateSheet
+            title={t("startDate.title")}
+            hint={t("startDate.hint")}
+            saveLabel={t("startDate.save")}
+            firstMonth={new Date(1950, 0, 1)}
+            open={picking}
+            onOpenChange={setPicking}
+            value={couple.startDate}
+            onSave={saveStartDate}
+          />
         </Suspense>
       )}
       <Celebration

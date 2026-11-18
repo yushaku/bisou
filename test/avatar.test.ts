@@ -6,7 +6,10 @@ import { purgeAvatars } from "../src/worker/lib/photos";
 import { call, explain, jpeg, paired, resetDb, user, webp, type TestUser } from "./helpers";
 
 beforeEach(resetDb);
-afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 
 function form(bytes = jpeg({ width: 512, height: 512 }), type = "image/jpeg") {
   const data = new FormData();
@@ -14,7 +17,8 @@ function form(bytes = jpeg({ width: 512, height: 512 }), type = "image/jpeg") {
   return data;
 }
 const put = (who: TestUser, data = form()) => call("PUT", "/api/me/avatar", { cookie: who.cookie, form: data });
-const get = (who: TestUser, owner: TestUser, id: string) => call("GET", `/api/avatars/${owner.id}/${id}`, { cookie: who.cookie });
+const get = (who: TestUser, owner: TestUser, id: string) =>
+  call("GET", `/api/avatars/${owner.id}/${id}`, { cookie: who.cookie });
 const key = (who: TestUser, id = "") => `users/${who.id}/avatar/${id}`;
 async function save(who: TestUser, data = form()) {
   const res = await put(who, data);
@@ -31,13 +35,25 @@ describe("profile photos", () => {
     const now = Date.now();
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(now);
-    for (const [id, created] of [["stale", now - DAY - 1], ["boundary", now - DAY], ["fresh", now - DAY + 1]] as const) {
-      await env.DB.prepare("INSERT INTO avatar_uploads (id, user_id, created_at) VALUES (?, ?, ?)").bind(id, a.id, created).run();
+    for (const [id, created] of [
+      ["stale", now - DAY - 1],
+      ["boundary", now - DAY],
+      ["fresh", now - DAY + 1],
+    ] as const) {
+      await env.DB.prepare("INSERT INTO avatar_uploads (id, user_id, created_at) VALUES (?, ?, ?)")
+        .bind(id, a.id, created)
+        .run();
       await env.PHOTOS.put(key(a, id), id);
     }
     await purgeAvatars(env, a.id);
-    expect((await env.DB.prepare("SELECT id FROM avatar_uploads WHERE user_id = ?").bind(a.id).all<{ id: string }>()).results.map((r) => r.id).sort()).toEqual([current, "fresh"].sort());
-    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key).sort()).toEqual([key(a, current), key(a, "fresh")].sort());
+    expect(
+      (await env.DB.prepare("SELECT id FROM avatar_uploads WHERE user_id = ?").bind(a.id).all<{ id: string }>()).results
+        .map((r) => r.id)
+        .sort(),
+    ).toEqual([current, "fresh"].sort());
+    expect((await env.PHOTOS.list({ prefix: key(a) })).objects.map((o) => o.key).sort()).toEqual(
+      [key(a, current), key(a, "fresh")].sort(),
+    );
   });
 
   it("a late commit fails after removal purges its stale pending reservation", async () => {
@@ -54,7 +70,9 @@ describe("profile photos", () => {
       return result;
     });
     expect((await put(a)).status).toBe(500);
-    expect(await (await call("GET", "/api/me", { cookie: a.cookie })).json()).toMatchObject({ user: { avatarId: null } });
+    expect(await (await call("GET", "/api/me", { cookie: a.cookie })).json()).toMatchObject({
+      user: { avatarId: null },
+    });
     expect((await env.PHOTOS.list({ prefix: key(a) })).objects).toEqual([]);
   });
 
@@ -169,14 +187,20 @@ describe("profile photos", () => {
     expect((await call("PUT", "/api/me/avatar", { cookie: a.cookie, body: {} })).status).toBe(415);
   });
 
-  it.each([[1024, 1024], [511, 511], [512, 511]])("avatar AC5 R6: refuses dimensions %i x %i", async (width, height) => {
+  it.each([
+    [1024, 1024],
+    [511, 511],
+    [512, 511],
+  ])("avatar AC5 R6: refuses dimensions %i x %i", async (width, height) => {
     expect((await put(await user("An"), form(jpeg({ width, height })))).status).toBe(400);
   });
 
   it("avatar AC5 R6: accepts WebP and refuses its metadata", async () => {
     const a = await user("An");
     await save(a, form(webp({ width: 512, height: 512, kind: "VP8" }), "image/webp"));
-    expect((await put(a, form(webp({ width: 512, height: 512, kind: "VP8X", exif: true }), "image/webp"))).status).toBe(400);
+    expect((await put(a, form(webp({ width: 512, height: 512, kind: "VP8X", exif: true }), "image/webp"))).status).toBe(
+      400,
+    );
   });
 
   it.each([262_145, 300_000])("avatar AC5 R6: refuses %i bytes at file or request limit", async (size) => {
@@ -226,7 +250,9 @@ describe("profile photos", () => {
     }
     for (const method of ["PUT", "DELETE"]) {
       expect((await call(method, "/api/me/avatar")).status).toBe(401);
-      expect((await call(method, "/api/me/avatar", { cookie: a.cookie, origin: "https://other.example" })).status).toBe(403);
+      expect((await call(method, "/api/me/avatar", { cookie: a.cookie, origin: "https://other.example" })).status).toBe(
+        403,
+      );
     }
   });
 
@@ -247,18 +273,36 @@ describe("profile photos", () => {
 
   it("avatar AC9 R11: avatar queries retain indexed lookups", async () => {
     const plans = await Promise.all([
-      explain(`SELECT 1 FROM users u WHERE u.id = ?1 AND u.avatar_id = ?2
+      explain(
+        `SELECT 1 FROM users u WHERE u.id = ?1 AND u.avatar_id = ?2
         AND (u.id = ?3 OR EXISTS (SELECT 1 FROM couple_members a JOIN couple_members b ON b.couple_id = a.couple_id
-        WHERE a.user_id = u.id AND b.user_id = ?3))`, "a", "photo", "b"),
-      explain(`SELECT avatar_id AS id FROM users WHERE id = ?
-        UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`, "a", "a"),
-      explain(`UPDATE users SET avatar_id = ? WHERE id = ?
+        WHERE a.user_id = u.id AND b.user_id = ?3))`,
+        "a",
+        "photo",
+        "b",
+      ),
+      explain(
+        `SELECT avatar_id AS id FROM users WHERE id = ?
+        UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`,
+        "a",
+        "a",
+      ),
+      explain(
+        `UPDATE users SET avatar_id = ? WHERE id = ?
         AND EXISTS (SELECT 1 FROM avatar_uploads WHERE id = ? AND pending = 1)
-        RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at`, "photo", "a", "photo"),
+        RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at`,
+        "photo",
+        "a",
+        "photo",
+      ),
       explain("SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM avatar_uploads WHERE user_id = ?", "a"),
-      explain("UPDATE users SET avatar_id = NULL WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at", "a"),
+      explain(
+        "UPDATE users SET avatar_id = NULL WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at",
+        "a",
+      ),
     ]);
-    for (const plan of plans) expect(plan.join("\n")).not.toMatch(/SCAN (?:users|avatar_uploads|couple_members|u|a|b)\b/);
+    for (const plan of plans)
+      expect(plan.join("\n")).not.toMatch(/SCAN (?:users|avatar_uploads|couple_members|u|a|b)\b/);
     console.log("Avatar EXPLAIN", plans);
   });
 });

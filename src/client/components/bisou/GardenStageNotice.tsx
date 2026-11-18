@@ -8,9 +8,18 @@ import { useOnline } from "../../lib/useOnline";
 import { Button } from "../ui/button";
 import { GardenScene } from "./GardenScene";
 
-export function GardenStageNotice({ state, memoryScope, partnerName, onChanged, onSignedOut }: {
-  state: GardenState; memoryScope: string; partnerName: string;
-  onChanged: () => void; onSignedOut: () => void;
+export function GardenStageNotice({
+  state,
+  memoryScope,
+  partnerName,
+  onChanged,
+  onSignedOut,
+}: {
+  state: GardenState;
+  memoryScope: string;
+  partnerName: string;
+  onChanged: () => void;
+  onSignedOut: () => void;
 }) {
   const { t } = useI18n();
   const changeLevels = useApiMutation(api.gardenLevels, ["garden"]);
@@ -42,23 +51,45 @@ export function GardenStageNotice({ state, memoryScope, partnerName, onChanged, 
     onChanged();
   }
 
-  return <>
-    {proposal && <section aria-label={t("garden.currentStage")} className="flex flex-col gap-3 rounded-xl edge bg-accent p-4">
-      <p role="status" className="text-sm font-semibold">{proposal.proposedByMe
-        ? t("garden.waitingPartner", { name: partnerName })
-        : t("garden.stageRequest", { name: partnerName, stage: t(`level.${proposal.levelId}`) })}</p>
-      <div className="flex flex-wrap gap-2">
-        {proposal.proposedByMe
-          ? <Button variant="outline" disabled={!online || busy} onClick={() => void respond("withdraw")}>{t("garden.withdraw")}</Button>
-          : <>
-            <Button loading={busy} disabled={!online} onClick={() => void respond("accept")}>{t("garden.accept")}</Button>
-            <Button variant="outline" disabled={!online || busy} onClick={() => void respond("decline")}>{t("garden.decline")}</Button>
-          </>}
-      </div>
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-      {!online && <p className="text-sm text-muted-foreground">{t("offline.save")}</p>}
-    </section>}
-    <GardenScene open={celebrating !== null} onClose={() => setCelebrating(null)} plants={state.plants}
-      stageName={celebrationStage ? t(`level.${celebrationStage}`) : undefined} />
-  </>;
+  return (
+    <>
+      {proposal && (
+        <section aria-label={t("garden.currentStage")} className="flex flex-col gap-3 rounded-xl edge bg-accent p-4">
+          <p role="status" className="text-sm font-semibold">
+            {proposal.proposedByMe
+              ? t("garden.waitingPartner", { name: partnerName })
+              : t("garden.stageRequest", { name: partnerName, stage: t(`level.${proposal.levelId}`) })}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {proposal.proposedByMe ? (
+              <Button variant="outline" disabled={!online || busy} onClick={() => void respond("withdraw")}>
+                {t("garden.withdraw")}
+              </Button>
+            ) : (
+              <>
+                <Button loading={busy} disabled={!online} onClick={() => void respond("accept")}>
+                  {t("garden.accept")}
+                </Button>
+                <Button variant="outline" disabled={!online || busy} onClick={() => void respond("decline")}>
+                  {t("garden.decline")}
+                </Button>
+              </>
+            )}
+          </div>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          {!online && <p className="text-sm text-muted-foreground">{t("offline.save")}</p>}
+        </section>
+      )}
+      <GardenScene
+        open={celebrating !== null}
+        onClose={() => setCelebrating(null)}
+        plants={state.plants}
+        stageName={celebrationStage ? t(`level.${celebrationStage}`) : undefined}
+      />
+    </>
+  );
 }

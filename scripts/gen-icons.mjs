@@ -42,22 +42,42 @@ let total = 0;
 for (const { width, height, dpr } of phones) {
   const pixelsWide = width * dpr;
   const pixelsHigh = height * dpr;
-  const heart = await sharp("assets/brand-heart.webp").resize(Math.round(pixelsWide * 0.28)).toBuffer();
-  for (const [mode, palette] of [["light", "peach"], ["dark", "cocoa"]]) {
+  const heart = await sharp("assets/brand-heart.webp")
+    .resize(Math.round(pixelsWide * 0.28))
+    .toBuffer();
+  for (const [mode, palette] of [
+    ["light", "peach"],
+    ["dark", "cocoa"],
+  ]) {
     const href = `/splash/${width}x${height}-${dpr}x-${mode}.png`;
     // A smaller, quieter weave compresses well across the full launch screen.
-    const linen = await sharp("src/client/assets/linen.webp").resize(64 * dpr, 64 * dpr)
-      .removeAlpha().linear(mode === "light" ? 0.08 : 0.025, mode === "light" ? 255 * 0.92 : 0).png().toBuffer();
-    await sharp({ create: { width: pixelsWide, height: pixelsHigh, channels: 3, background: palettes[palette].tokens.background } })
-      .composite([{ input: linen, tile: true, blend: mode === "light" ? "multiply" : "screen" }, { input: heart, gravity: "centre" }])
-      .png({ compressionLevel: 9, palette: true, colours: 64, dither: 0 }).toFile(`public${href}`);
+    const linen = await sharp("src/client/assets/linen.webp")
+      .resize(64 * dpr, 64 * dpr)
+      .removeAlpha()
+      .linear(mode === "light" ? 0.08 : 0.025, mode === "light" ? 255 * 0.92 : 0)
+      .png()
+      .toBuffer();
+    await sharp({
+      create: { width: pixelsWide, height: pixelsHigh, channels: 3, background: palettes[palette].tokens.background },
+    })
+      .composite([
+        { input: linen, tile: true, blend: mode === "light" ? "multiply" : "screen" },
+        { input: heart, gravity: "centre" },
+      ])
+      .png({ compressionLevel: 9, palette: true, colours: 64, dither: 0 })
+      .toFile(`public${href}`);
     total += (await stat(`public${href}`)).size;
-    links.push(`    <link rel="apple-touch-startup-image" href="${href}" media="(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait) and (prefers-color-scheme: ${mode})" />`);
+    links.push(
+      `    <link rel="apple-touch-startup-image" href="${href}" media="(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait) and (prefers-color-scheme: ${mode})" />`,
+    );
   }
 }
 const html = await readFile("index.html", "utf8");
 const block = `    <!-- splash:start -->\n${links.join("\n")}\n    <!-- splash:end -->`;
-await writeFile("index.html", html.includes("<!-- splash:start -->")
-  ? html.replace(/    <!-- splash:start -->[\s\S]*?<!-- splash:end -->/, block)
-  : html.replace("  </head>", `${block}\n  </head>`));
+await writeFile(
+  "index.html",
+  html.includes("<!-- splash:start -->")
+    ? html.replace(/ {4}<!-- splash:start -->[\s\S]*?<!-- splash:end -->/, block)
+    : html.replace("  </head>", `${block}\n  </head>`),
+);
 console.log(`wrote ${links.length} splash PNGs: ${total} bytes (${(total / 1024 / 1024).toFixed(2)} MiB)`);

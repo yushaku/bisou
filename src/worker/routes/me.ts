@@ -59,48 +59,67 @@ me.patch("/", limitBody, async (c) => {
   return c.json({ user: rowToUser(row) });
 });
 
-me.put("/avatar", bodyLimit({
-  maxSize: AVATAR_MAX_BYTES + 16 * 1024,
-  onError: (c) => c.json({ error: "photo_too_large" }, 413),
-}), async (c) => {
-  if (c.req.header("Content-Type")?.split(";", 1)[0]?.trim().toLowerCase() !== "multipart/form-data") {
-    return c.json({ error: "unsupported_photo_type" }, 415);
-  }
-  let form: FormData;
-  try { form = await c.req.formData(); } catch {
-    return c.json({ error: "photo_invalid" }, 400);
-  }
-  const file = form.get("photo");
-  if ([...form.keys()].length !== 1 || !(file instanceof File) || !file.size) return c.json({ error: "photo_invalid" }, 400);
-  if (file.type !== "image/jpeg" && file.type !== "image/webp") return c.json({ error: "unsupported_photo_type" }, 415);
-  if (file.size > AVATAR_MAX_BYTES) return c.json({ error: "photo_too_large" }, 413);
-  const checked = checkPhotoBytes(new Uint8Array(await file.arrayBuffer()), file.type);
-  if (!checked || checked.side !== AVATAR_SIDE) return c.json({ error: "photo_invalid" }, 400);
-  const userId = c.get("user").id;
-  const id = crypto.randomUUID();
-  const retryAfter = await reserveAvatarUpload(c.env.DB, userId, id, Date.now());
-  if (retryAfter !== null) return c.json({ error: "rate_limited", retryAfter }, 429);
-  const key = avatarKey(userId, id);
-  await c.env.PHOTOS.put(key, checked.bytes, { httpMetadata: { contentType: file.type } });
-  let row: UserRow;
-  try {
-    const updated = await c.env.DB.prepare(`UPDATE users SET avatar_id = ? WHERE id = ?
+me.put(
+  "/avatar",
+  bodyLimit({
+    maxSize: AVATAR_MAX_BYTES + 16 * 1024,
+    onError: (c) => c.json({ error: "photo_too_large" }, 413),
+  }),
+  async (c) => {
+    if (c.req.header("Content-Type")?.split(";", 1)[0]?.trim().toLowerCase() !== "multipart/form-data") {
+      return c.json({ error: "unsupported_photo_type" }, 415);
+    }
+    let form: FormData;
+    try {
+      form = await c.req.formData();
+    } catch {
+      return c.json({ error: "photo_invalid" }, 400);
+    }
+    const file = form.get("photo");
+    if ([...form.keys()].length !== 1 || !(file instanceof File) || !file.size)
+      return c.json({ error: "photo_invalid" }, 400);
+    if (file.type !== "image/jpeg" && file.type !== "image/webp")
+      return c.json({ error: "unsupported_photo_type" }, 415);
+    if (file.size > AVATAR_MAX_BYTES) return c.json({ error: "photo_too_large" }, 413);
+    const checked = checkPhotoBytes(new Uint8Array(await file.arrayBuffer()), file.type);
+    if (!checked || checked.side !== AVATAR_SIDE) return c.json({ error: "photo_invalid" }, 400);
+    const userId = c.get("user").id;
+    const id = crypto.randomUUID();
+    const retryAfter = await reserveAvatarUpload(c.env.DB, userId, id, Date.now());
+    if (retryAfter !== null) return c.json({ error: "rate_limited", retryAfter }, 429);
+    const key = avatarKey(userId, id);
+    await c.env.PHOTOS.put(key, checked.bytes, { httpMetadata: { contentType: file.type } });
+    let row: UserRow;
+    try {
+      const updated = await c.env.DB.prepare(
+        `UPDATE users SET avatar_id = ? WHERE id = ?
       AND EXISTS (SELECT 1 FROM avatar_uploads WHERE id = ? AND pending = 1)
-      RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at`).bind(id, userId, id).first<UserRow>();
-    if (!updated) throw new Error("avatar owner or reservation missing");
-    row = updated;
-  } catch (error) {
-    try { await c.env.PHOTOS.delete(key); } catch { console.error("[bisou] avatar rollback failed"); }
-    throw error;
-  }
-  await purgeAvatars(c.env, userId, id);
-  return c.json({ user: rowToUser(row) });
-});
+      RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at`,
+      )
+        .bind(id, userId, id)
+        .first<UserRow>();
+      if (!updated) throw new Error("avatar owner or reservation missing");
+      row = updated;
+    } catch (error) {
+      try {
+        await c.env.PHOTOS.delete(key);
+      } catch {
+        console.error("[bisou] avatar rollback failed");
+      }
+      throw error;
+    }
+    await purgeAvatars(c.env, userId, id);
+    return c.json({ user: rowToUser(row) });
+  },
+);
 
 me.delete("/avatar", limitBody, async (c) => {
   const userId = c.get("user").id;
-  const row = await c.env.DB.prepare("UPDATE users SET avatar_id = NULL WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at")
-    .bind(userId).first<UserRow>();
+  const row = await c.env.DB.prepare(
+    "UPDATE users SET avatar_id = NULL WHERE id = ? RETURNING id, email, display_name, locale, birth_date, avatar_id, created_at",
+  )
+    .bind(userId)
+    .first<UserRow>();
   if (!row) return c.json({ error: "unauthorized" }, 401);
   await purgeAvatars(c.env, userId);
   return c.json({ user: rowToUser(row) });

@@ -44,10 +44,17 @@ couple.post("/", async (c) => {
     try {
       await db.batch([
         db.prepare("DELETE FROM pair_codes WHERE expires_at <= ?").bind(now),
-        db.prepare("INSERT INTO couples (id, start_date, created_by, created_at) VALUES (?, NULL, ?, ?)").bind(coupleId, user.id, now),
-        db.prepare("INSERT INTO garden_levels (couple_id, initial_level, selected_level, furthest_level) VALUES (?, ?, ?, ?)")
+        db
+          .prepare("INSERT INTO couples (id, start_date, created_by, created_at) VALUES (?, NULL, ?, ?)")
+          .bind(coupleId, user.id, now),
+        db
+          .prepare(
+            "INSERT INTO garden_levels (couple_id, initial_level, selected_level, furthest_level) VALUES (?, ?, ?, ?)",
+          )
           .bind(coupleId, FIRST_LEVEL, FIRST_LEVEL, FIRST_LEVEL),
-        db.prepare("INSERT INTO couple_members (couple_id, user_id, joined_at) VALUES (?, ?, ?)").bind(coupleId, user.id, now),
+        db
+          .prepare("INSERT INTO couple_members (couple_id, user_id, joined_at) VALUES (?, ?, ?)")
+          .bind(coupleId, user.id, now),
         db
           .prepare("INSERT INTO pair_codes (code, couple_id, expires_at, created_at) VALUES (?, ?, ?, ?)")
           .bind(generatePairCode(), coupleId, now + PAIR_CODE_TTL, now),
@@ -152,7 +159,7 @@ couple.post("/join", async (c) => {
       .bind(code, target.couple_id, user.id),
   );
 
-  let joined = false;
+  let joined: boolean;
   try {
     const results = await db.batch(statements);
     joined = Boolean(results[statements.length - 2]?.meta.changes);

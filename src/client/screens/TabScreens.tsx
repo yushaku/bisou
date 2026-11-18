@@ -29,7 +29,15 @@ export function visitTab(visited: TabId[], location: string): TabId[] {
  * the visible screen inside it; visited screens keep their state in Activity. A screen's own SignedInShell renders just its content within the frame.
  * The Suspense is local: a tab chunk that is not loaded yet leaves the frame in place.
  */
-export function TabScreens({ location, session, couple, onCouple, onRefresh, celebrate, onCelebrated }: {
+export function TabScreens({
+  location,
+  session,
+  couple,
+  onCouple,
+  onRefresh,
+  celebrate,
+  onCelebrated,
+}: {
   location: string;
   session: SessionProps;
   couple: Couple;
@@ -44,14 +52,28 @@ export function TabScreens({ location, session, couple, onCouple, onRefresh, cel
   if (next !== visited) setVisited(next);
   return (
     <TabFrame tab={active}>
-      {next.map(tab => <Activity key={tab} mode={tab === active ? "visible" : "hidden"}>
-        <Suspense fallback={null}>
-          {tab === "home" ? <Home {...session} couple={couple} onCouple={onCouple} onRefresh={onRefresh} celebrate={celebrate} onCelebrated={onCelebrated} />
-            : tab === "journal" ? <Journal {...session} couple={couple} />
-            : tab === "wishes" ? <Wishes {...session} couple={couple} />
-            : <Garden {...session} couple={couple} />}
-        </Suspense>
-      </Activity>)}
+      {next.map((tab) => (
+        <Activity key={tab} mode={tab === active ? "visible" : "hidden"}>
+          <Suspense fallback={null}>
+            {tab === "home" ? (
+              <Home
+                {...session}
+                couple={couple}
+                onCouple={onCouple}
+                onRefresh={onRefresh}
+                celebrate={celebrate}
+                onCelebrated={onCelebrated}
+              />
+            ) : tab === "journal" ? (
+              <Journal {...session} couple={couple} />
+            ) : tab === "wishes" ? (
+              <Wishes {...session} couple={couple} />
+            ) : (
+              <Garden {...session} couple={couple} />
+            )}
+          </Suspense>
+        </Activity>
+      ))}
     </TabFrame>
   );
 }

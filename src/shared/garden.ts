@@ -4,23 +4,32 @@ import { daysBetween } from "./days";
 
 export const GARDEN_ANSWER_MAX = 1000;
 export const LEVEL_IDS = ["acquainted", "in_love", "living_together", "married", "with_children"] as const;
-export type RelationshipLevel = typeof LEVEL_IDS[number];
+export type RelationshipLevel = (typeof LEVEL_IDS)[number];
 export type LevelKind = "placement" | "target";
-export type LevelAction = { action: "propose"; kind: LevelKind; levelId: RelationshipLevel; revision: number }
+export type LevelAction =
+  | { action: "propose"; kind: LevelKind; levelId: RelationshipLevel; revision: number }
   | { action: "accept" | "decline" | "withdraw"; revision: number };
 export interface GardenLevels {
-  revision: number; initialLevelId: RelationshipLevel | null; selectedLevelId: RelationshipLevel | null;
-  furthestLevelId: RelationshipLevel | null; placementComplete: boolean;
+  revision: number;
+  initialLevelId: RelationshipLevel | null;
+  selectedLevelId: RelationshipLevel | null;
+  furthestLevelId: RelationshipLevel | null;
+  placementComplete: boolean;
   proposal: { kind: LevelKind; levelId: RelationshipLevel; agreed: boolean; proposedByMe: boolean } | null;
   decisions: { cardId: string; complete: boolean }[];
 }
 export const levelRank = (id: RelationshipLevel) => LEVEL_IDS.indexOf(id);
 export const FIRST_LEVEL = levelRank(LEVEL_IDS[0]);
 export function ordinaryEligible(card: GardenCard, furthestLevel: number | null = null): boolean {
-  return card.kind === "ordinary" && (furthestLevel === null ? !card.id.startsWith("L") : levelRank(card.levelId) <= furthestLevel);
+  return (
+    card.kind === "ordinary" &&
+    (furthestLevel === null ? !card.id.startsWith("L") : levelRank(card.levelId) <= furthestLevel)
+  );
 }
 export type Freshness = "fresh" | "dry" | "wilted";
-export function plantStage(growthDays: number): number { return Math.min(7, Math.max(0, growthDays)); }
+export function plantStage(growthDays: number): number {
+  return Math.min(7, Math.max(0, growthDays));
+}
 export function freshness(lastFlipDay: string, today: string): Freshness {
   const days = daysBetween(lastFlipDay, today);
   return days >= 14 ? "wilted" : days >= 3 ? "dry" : "fresh";
@@ -41,7 +50,10 @@ export interface GardenCardState {
   flippedDay: string | null;
   starred: boolean;
 }
-export interface GardenPlant { deckId: string; stage: number }
+export interface GardenPlant {
+  deckId: string;
+  stage: number;
+}
 export interface GardenState {
   levels: GardenLevels;
   day: string;
@@ -50,8 +62,14 @@ export interface GardenState {
   plants: GardenPlant[];
   freshness: Freshness;
 }
-export interface GardenDeckState { active: GardenCardState | null; history: GardenCardState[]; decisions: GardenCardState[] }
-export interface GardenStageAnswers { cards: GardenCardState[] }
+export interface GardenDeckState {
+  active: GardenCardState | null;
+  history: GardenCardState[];
+  decisions: GardenCardState[];
+}
+export interface GardenStageAnswers {
+  cards: GardenCardState[];
+}
 
 export function answerText(raw: unknown): { text: string } | { error: "invalid_answer" | "answer_too_long" } {
   if (typeof raw !== "string") return { error: "invalid_answer" };
@@ -63,11 +81,28 @@ export function answerText(raw: unknown): { text: string } | { error: "invalid_a
   return { text };
 }
 
-export function cardById(id: string): GardenCard | undefined { return CARDS.find((card) => card.id === id); }
+export function cardById(id: string): GardenCard | undefined {
+  return CARDS.find((card) => card.id === id);
+}
 
-export interface DrawInput { furthestLevel?: number | null; waiting?: string[]; played?: string[]; previousDeck?: string; excludedCard?: string; excludedDeck?: string; stages?: Record<string, number>; swapped?: string[] }
+export interface DrawInput {
+  furthestLevel?: number | null;
+  waiting?: string[];
+  played?: string[];
+  previousDeck?: string;
+  excludedCard?: string;
+  excludedDeck?: string;
+  stages?: Record<string, number>;
+  swapped?: string[];
+}
 export function drawCard(input: DrawInput, seed: number): GardenCard | null {
-  const cards = CARDS.filter((card) => !card.retired && ordinaryEligible(card, input.furthestLevel) && !input.played?.includes(card.id) && card.id !== input.excludedCard);
+  const cards = CARDS.filter(
+    (card) =>
+      !card.retired &&
+      ordinaryEligible(card, input.furthestLevel) &&
+      !input.played?.includes(card.id) &&
+      card.id !== input.excludedCard,
+  );
   let decks = DECKS.filter((deck) => cards.some((card) => card.deckId === deck.id));
   for (const excluded of [input.previousDeck, input.excludedDeck]) {
     const alternatives = decks.filter((deck) => deck.id !== excluded);
@@ -76,26 +111,85 @@ export function drawCard(input: DrawInput, seed: number): GardenCard | null {
   if (!decks.length) return null;
   const weight = (deckId: string) => 1 + Math.min(2, Math.max(0, 7 - (input.stages?.[deckId] ?? 0)));
   let bucket = (seed >>> 0) % decks.reduce((sum, deck) => sum + weight(deck.id), 0);
-  const deck = decks.find((candidate) => { bucket -= weight(candidate.id); return bucket < 0; })!;
+  const deck = decks.find((candidate) => {
+    bucket -= weight(candidate.id);
+    return bucket < 0;
+  })!;
   const available = cards.filter((card) => card.deckId === deck.id);
   const untouched = available.filter((card) => !input.waiting?.includes(card.id));
   const inDeck = untouched.length ? untouched : available;
-  return inDeck.find((card) => !input.swapped?.includes(card.id))
-    ?? inDeck.sort((a, b) => input.swapped!.indexOf(a.id) - input.swapped!.indexOf(b.id))[0] ?? null;
+  return (
+    inDeck.find((card) => !input.swapped?.includes(card.id)) ??
+    inDeck.sort((a, b) => input.swapped!.indexOf(a.id) - input.swapped!.indexOf(b.id))[0] ??
+    null
+  );
 }
 
-interface GardenDeck { id: string; name: Record<Locale, string>; purpose: Record<Locale, string> }
-export interface GardenCard { id: string; deckId: string; levelId: RelationshipLevel; kind: "ordinary" | "decision"; depth: "light" | "medium" | "deep"; text: Record<Locale, string>; retired?: boolean }
+interface GardenDeck {
+  id: string;
+  name: Record<Locale, string>;
+  purpose: Record<Locale, string>;
+}
+export interface GardenCard {
+  id: string;
+  deckId: string;
+  levelId: RelationshipLevel;
+  kind: "ordinary" | "decision";
+  depth: "light" | "medium" | "deep";
+  text: Record<Locale, string>;
+  retired?: boolean;
+}
 
 export const DECKS: GardenDeck[] = [
-  {"id": "memories", "name": {"vi": "Ký ức", "en": "Memories"}, "purpose": {"vi": "Những điều đã làm nên mỗi đứa, và những lúc của hai đứa.", "en": "What shaped each of us, and the moments we share."}},
-  {"id": "dreams", "name": {"vi": "Ước mơ", "en": "Dreams"}, "purpose": {"vi": "Điều mỗi đứa mong cho mình và cho hai đứa.", "en": "What each of us hopes for, alone and together."}},
-  {"id": "money", "name": {"vi": "Tiền bạc", "en": "Money"}, "purpose": {"vi": "Mỗi đứa lớn lên cùng tiền ra sao, và muốn giữ tiền chung thế nào.", "en": "How each of us grew up with money, and how we want to handle it together."}},
-  {"id": "disagree", "name": {"vi": "Khi bất đồng", "en": "When we disagree"}, "purpose": {"vi": "Hiểu mỗi đứa cảm thấy gì khi nghĩ khác nhau, để nói về nó, không phải để phân thắng thua.", "en": "Understand how each of us feels when we see things differently, to talk about it, not to win."}},
-  {"id": "families", "name": {"vi": "Gia đình hai bên", "en": "Both families"}, "purpose": {"vi": "Biết về gia đình của nhau, và điều mỗi đứa mong giữa hai nhà.", "en": "Know each other's families, and what each of us hopes for between them."}},
-  {"id": "everyday", "name": {"vi": "Mỗi ngày của mình", "en": "Everyday us"}, "purpose": {"vi": "Những chuyện nhỏ của bây giờ: điều làm mỗi đứa vui, mệt, và thấy được thương.", "en": "The small things of now: what makes each of us happy, tired, and feel loved."}}
+  {
+    id: "memories",
+    name: { vi: "Ký ức", en: "Memories" },
+    purpose: {
+      vi: "Những điều đã làm nên mỗi đứa, và những lúc của hai đứa.",
+      en: "What shaped each of us, and the moments we share.",
+    },
+  },
+  {
+    id: "dreams",
+    name: { vi: "Ước mơ", en: "Dreams" },
+    purpose: { vi: "Điều mỗi đứa mong cho mình và cho hai đứa.", en: "What each of us hopes for, alone and together." },
+  },
+  {
+    id: "money",
+    name: { vi: "Tiền bạc", en: "Money" },
+    purpose: {
+      vi: "Mỗi đứa lớn lên cùng tiền ra sao, và muốn giữ tiền chung thế nào.",
+      en: "How each of us grew up with money, and how we want to handle it together.",
+    },
+  },
+  {
+    id: "disagree",
+    name: { vi: "Khi bất đồng", en: "When we disagree" },
+    purpose: {
+      vi: "Hiểu mỗi đứa cảm thấy gì khi nghĩ khác nhau, để nói về nó, không phải để phân thắng thua.",
+      en: "Understand how each of us feels when we see things differently, to talk about it, not to win.",
+    },
+  },
+  {
+    id: "families",
+    name: { vi: "Gia đình hai bên", en: "Both families" },
+    purpose: {
+      vi: "Biết về gia đình của nhau, và điều mỗi đứa mong giữa hai nhà.",
+      en: "Know each other's families, and what each of us hopes for between them.",
+    },
+  },
+  {
+    id: "everyday",
+    name: { vi: "Mỗi ngày của mình", en: "Everyday us" },
+    purpose: {
+      vi: "Những chuyện nhỏ của bây giờ: điều làm mỗi đứa vui, mệt, và thấy được thương.",
+      en: "The small things of now: what makes each of us happy, tired, and feel loved.",
+    },
+  },
 ];
 
+// scripts/dev-seed-garden.mjs parses the next literal as strict JSON, so Prettier must not touch it.
+// prettier-ignore
 export const CARDS: GardenCard[] = [
   {"id": "memories-01", "deckId": "memories", "levelId": "acquainted", "kind": "ordinary", "depth": "light", "text": {"vi": "Món ăn nào làm mình nhớ ngay tới tuổi thơ? Nó gợi lại ai, ở đâu?", "en": "Which food takes you straight back to childhood? Who and where does it bring back?"}},
   {"id": "memories-02", "deckId": "memories", "levelId": "acquainted", "kind": "ordinary", "depth": "light", "text": {"vi": "Lần đầu gặp người ấy, điều gì mình còn nhớ rõ nhất?", "en": "What do you remember most clearly about the first time we met?"}},
@@ -219,4 +313,5 @@ export const CARDS: GardenCard[] = [
   {"id": "L5-04", "deckId": "memories", "levelId": "with_children", "kind": "ordinary", "depth": "medium", "text": {"vi": "Một khoảnh khắc nhỏ với con gần đây mà mình muốn kể lại cho người ấy là gì?", "en": "What small recent moment with our child would I like to tell my partner about?"}}
 ];
 
-export const gateIds = (rank: number) => CARDS.filter((card) => card.kind === "decision" && levelRank(card.levelId) === rank).map((card) => card.id);
+export const gateIds = (rank: number) =>
+  CARDS.filter((card) => card.kind === "decision" && levelRank(card.levelId) === rank).map((card) => card.id);

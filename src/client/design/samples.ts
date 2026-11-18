@@ -23,7 +23,11 @@ export const PHOTOS = {
 };
 
 export const MINH_ANH: Person & { birthDate: string } = { name: "Minh Anh", tone: "primary", birthDate: "1997-11-18" };
-export const QUOC_BAO: Person & { birthDate: string } = { name: "Quốc Bảo", tone: "secondary", birthDate: "1996-01-03" };
+export const QUOC_BAO: Person & { birthDate: string } = {
+  name: "Quốc Bảo",
+  tone: "secondary",
+  birthDate: "1996-01-03",
+};
 export const COUPLE: [typeof MINH_ANH, typeof QUOC_BAO] = [MINH_ANH, QUOC_BAO];
 
 export const START_DATE = "2023-02-14";
@@ -63,18 +67,54 @@ export const ENTRIES: Entry[] = [
 ];
 
 export const MILESTONES: Milestone[] = [
-  { id: "m1", date: "2023-02-14", title: "Ngày đầu tiên mình gặp nhau", icon: "heart", note: "Quán cà phê nhỏ đường Phan Đình Phùng." },
+  {
+    id: "m1",
+    date: "2023-02-14",
+    title: "Ngày đầu tiên mình gặp nhau",
+    icon: "heart",
+    note: "Quán cà phê nhỏ đường Phan Đình Phùng.",
+  },
   { id: "m2", date: "2023-06-03", title: "Chuyến đi Đà Lạt đầu tiên", icon: "trip" },
   { id: "m3", date: "2024-02-14", title: "Kỷ niệm một năm", icon: "spark" },
-  { id: "m4", date: "2025-09-01", title: "Dọn về chung nhà", icon: "home", note: "Căn hộ nhỏ có ban công trồng húng quế." },
+  {
+    id: "m4",
+    date: "2025-09-01",
+    title: "Dọn về chung nhà",
+    icon: "home",
+    note: "Căn hộ nhỏ có ban công trồng húng quế.",
+  },
 ];
 
-const wishDefaults = { link: null, photoId: null, status: "open" as const, receivedOn: null, note: null, createdAt: 0, updatedAt: 0 };
+const wishDefaults = {
+  link: null,
+  photoId: null,
+  status: "open" as const,
+  receivedOn: null,
+  note: null,
+  createdAt: 0,
+  updatedAt: 0,
+};
 
 export const MY_WISHES: Wish[] = [
-  { ...wishDefaults, id: "w1", title: "Chuyến đi Hội An hai ngày một đêm", price: 3_200_000, priority: 3, link: "https://example.com/hoi-an", photo: PHOTOS.hoiAn },
+  {
+    ...wishDefaults,
+    id: "w1",
+    title: "Chuyến đi Hội An hai ngày một đêm",
+    price: 3_200_000,
+    priority: 3,
+    link: "https://example.com/hoi-an",
+    photo: PHOTOS.hoiAn,
+  },
   { ...wishDefaults, id: "w2", title: "Bó hoa cẩm tú cầu Đà Lạt", price: 350_000, priority: 2, photo: PHOTOS.daLat },
-  { ...wishDefaults, id: "w3", title: "Bộ phin cà phê sứ trắng", price: 280_000, priority: 1, link: "https://example.com/phin", photo: PHOTOS.coffee },
+  {
+    ...wishDefaults,
+    id: "w3",
+    title: "Bộ phin cà phê sứ trắng",
+    price: 280_000,
+    priority: 1,
+    link: "https://example.com/phin",
+    photo: PHOTOS.coffee,
+  },
   { ...wishDefaults, id: "w4", title: "Máy ảnh film Kodak Ektar H35", price: 1_150_000, priority: 2 },
 ];
 
@@ -87,8 +127,10 @@ export const PARTNER_WISHES: Wish[] = [
 
 export const PAIR_CODE = "HN7K2Q";
 
-
 export async function demoSpin(budget: number): Promise<ApiResult<{ wish: SpinWish | null }>> {
   const wish = PARTNER_WISHES.find((w) => w.price === null || w.price <= budget);
-  return { ok: true, data: { wish: wish ? { id: wish.id, title: wish.title, price: wish.price, link: wish.link, photoId: null } : null } };
+  return {
+    ok: true,
+    data: { wish: wish ? { id: wish.id, title: wish.title, price: wish.price, link: wish.link, photoId: null } : null },
+  };
 }

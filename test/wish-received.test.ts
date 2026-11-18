@@ -8,19 +8,28 @@ beforeEach(resetDb);
 afterEach(() => vi.restoreAllMocks());
 const input = { date: "2023-02-12", note: "From An, so soft", photoIds: [] as string[] };
 async function create(owner: TestUser) {
-  return (await (await call("POST", "/api/wishes", { cookie: owner.cookie, body: { title: "Linen scarf", price: 450000 } })).json<{ wish: Wish }>()).wish;
+  return (
+    await (
+      await call("POST", "/api/wishes", { cookie: owner.cookie, body: { title: "Linen scarf", price: 450000 } })
+    ).json<{ wish: Wish }>()
+  ).wish;
 }
-const receive = (owner: TestUser, id: string, body: unknown = input) => call("POST", `/api/wishes/${id}/received`, { cookie: owner.cookie, body });
+const receive = (owner: TestUser, id: string, body: unknown = input) =>
+  call("POST", `/api/wishes/${id}/received`, { cookie: owner.cookie, body });
 
 describe("wish receipt", () => {
-  it.each(["en", "vi", "fr", null, 42, undefined])("wishes R20: uses the app locale %s when valid, otherwise the stored locale", async (locale) => {
-    const { b } = await paired();
-    const wish = await create(b);
-    const res = await receive(b, wish.id, { ...input, locale });
-    expect(res.status).toBe(201);
-    expect((await res.json<{ entry: JournalEntry }>()).entry.text)
-      .toBe(`${locale === "en" ? "Received" : "Đã nhận"}: Linen scarf. ${input.note}`);
-  });
+  it.each(["en", "vi", "fr", null, 42, undefined])(
+    "wishes R20: uses the app locale %s when valid, otherwise the stored locale",
+    async (locale) => {
+      const { b } = await paired();
+      const wish = await create(b);
+      const res = await receive(b, wish.id, { ...input, locale });
+      expect(res.status).toBe(201);
+      expect((await res.json<{ entry: JournalEntry }>()).entry.text).toBe(
+        `${locale === "en" ? "Received" : "Đã nhận"}: Linen scarf. ${input.note}`,
+      );
+    },
+  );
 
   it("wishes AC11 (R18, R19, R22): only the owner receives, for a valid day, permanently; the claim follows", async () => {
     const { a, b } = await paired();
@@ -36,43 +45,77 @@ describe("wish receipt", () => {
     expect(res.status).toBe(201);
     const { wish: received } = await res.json<{ wish: Wish }>();
     expect(received).toMatchObject({ status: "received", receivedOn: input.date, note: input.note });
-    const jar = await (await call("GET", "/api/wishes", { cookie: b.cookie })).json<{ open: Wish[]; received: Wish[] }>();
+    const jar = await (
+      await call("GET", "/api/wishes", { cookie: b.cookie })
+    ).json<{ open: Wish[]; received: Wish[] }>();
     expect(jar.open).toEqual([]);
     expect(jar.received.map((w) => w.id)).toEqual([wish.id]);
-    expect((await call("PUT", `/api/wishes/${wish.id}`, { cookie: b.cookie, body: { title: "Changed" } })).status).toBe(409);
-    const { claims } = await (await call("GET", "/api/wishes/claims", { cookie: a.cookie })).json<{ claims: Claim[] }>();
+    expect((await call("PUT", `/api/wishes/${wish.id}`, { cookie: b.cookie, body: { title: "Changed" } })).status).toBe(
+      409,
+    );
+    const { claims } = await (
+      await call("GET", "/api/wishes/claims", { cookie: a.cookie })
+    ).json<{ claims: Claim[] }>();
     expect(claims[0]?.status).toBe("received");
     expect((await call("DELETE", `/api/wishes/claims/${claims[0]!.id}`, { cookie: a.cookie })).status).toBe(409);
-    expect(await (await call("POST", "/api/wishes/spin", { cookie: a.cookie, body: { budget: 500000 } })).json()).toEqual({ wish: null });
+    expect(
+      await (await call("POST", "/api/wishes/spin", { cookie: a.cookie, body: { budget: 500000 } })).json(),
+    ).toEqual({ wish: null });
     expect((await call("DELETE", `/api/wishes/${wish.id}`, { cookie: b.cookie })).status).toBe(200);
-    expect((await (await call("GET", "/api/wishes/claims", { cookie: a.cookie })).json<{ claims: Claim[] }>()).claims).toEqual([]);
+    expect(
+      (await (await call("GET", "/api/wishes/claims", { cookie: a.cookie })).json<{ claims: Claim[] }>()).claims,
+    ).toEqual([]);
   });
 
-  it.each(["vi", "en"] as const)("wishes AC12 (R20, R21): creates one ordinary journal entry with 4 photos in %s", async (locale) => {
-    const { a, b } = await paired();
-    await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale } });
-    const wish = await create(b);
-    const photoIds = [];
-    for (let i = 0; i < 4; i++) photoIds.push(await upload(b));
-    const res = await receive(b, wish.id, { ...input, photoIds });
-    expect(res.status).toBe(201);
-    const { entry } = await res.json<{ entry: JournalEntry }>();
-    expect(entry).toMatchObject({ authorId: b.id, date: input.date, source: "wish", photoIds,
-      text: `${locale === "vi" ? "Đã nhận" : "Received"}: Linen scarf. ${input.note}` });
-    const feed = await (await call("GET", "/api/journal", { cookie: a.cookie })).json<{ entries: JournalEntry[] }>();
-    expect(feed.entries).toEqual([entry]);
-    expect((await receive(b, wish.id)).status).toBe(409);
-    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(1);
-    const edited = await call("PUT", `/api/journal/${entry.id}`, { cookie: a.cookie, body: { date: "2023-02-13", text: "Changed", photoIds } });
-    expect(edited.status).toBe(200);
-    const changed = (await edited.json<{ entry: JournalEntry }>()).entry;
-    expect(changed).toEqual({ ...entry, date: "2023-02-13", text: "Changed", updatedAt: changed.updatedAt });
-    for (const who of [a, b]) expect((await (await call("GET", "/api/journal", { cookie: who.cookie })).json<{ entries: JournalEntry[] }>()).entries).toEqual([changed]);
-    expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie })).status).toBe(403);
-    expect((await call("PUT", `/api/journal/${entry.id}`, { cookie: b.cookie, body: { date: input.date, text: "Edited memory", photoIds } })).status).toBe(200);
-    expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: b.cookie })).status).toBe(200);
-    expect(await env.DB.prepare("SELECT status FROM wishes WHERE id = ?").bind(wish.id).first("status")).toBe("received");
-  });
+  it.each(["vi", "en"] as const)(
+    "wishes AC12 (R20, R21): creates one ordinary journal entry with 4 photos in %s",
+    async (locale) => {
+      const { a, b } = await paired();
+      await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale } });
+      const wish = await create(b);
+      const photoIds = [];
+      for (let i = 0; i < 4; i++) photoIds.push(await upload(b));
+      const res = await receive(b, wish.id, { ...input, photoIds });
+      expect(res.status).toBe(201);
+      const { entry } = await res.json<{ entry: JournalEntry }>();
+      expect(entry).toMatchObject({
+        authorId: b.id,
+        date: input.date,
+        source: "wish",
+        photoIds,
+        text: `${locale === "vi" ? "Đã nhận" : "Received"}: Linen scarf. ${input.note}`,
+      });
+      const feed = await (await call("GET", "/api/journal", { cookie: a.cookie })).json<{ entries: JournalEntry[] }>();
+      expect(feed.entries).toEqual([entry]);
+      expect((await receive(b, wish.id)).status).toBe(409);
+      expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(1);
+      const edited = await call("PUT", `/api/journal/${entry.id}`, {
+        cookie: a.cookie,
+        body: { date: "2023-02-13", text: "Changed", photoIds },
+      });
+      expect(edited.status).toBe(200);
+      const changed = (await edited.json<{ entry: JournalEntry }>()).entry;
+      expect(changed).toEqual({ ...entry, date: "2023-02-13", text: "Changed", updatedAt: changed.updatedAt });
+      for (const who of [a, b])
+        expect(
+          (await (await call("GET", "/api/journal", { cookie: who.cookie })).json<{ entries: JournalEntry[] }>())
+            .entries,
+        ).toEqual([changed]);
+      expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie })).status).toBe(403);
+      expect(
+        (
+          await call("PUT", `/api/journal/${entry.id}`, {
+            cookie: b.cookie,
+            body: { date: input.date, text: "Edited memory", photoIds },
+          })
+        ).status,
+      ).toBe(200);
+      expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: b.cookie })).status).toBe(200);
+      expect(await env.DB.prepare("SELECT status FROM wishes WHERE id = ?").bind(wish.id).first("status")).toBe(
+        "received",
+      );
+    },
+  );
 
   it("wishes AC11, AC12 (R18-R20): simultaneous receipt submissions create exactly one entry", async () => {
     const { b } = await paired();

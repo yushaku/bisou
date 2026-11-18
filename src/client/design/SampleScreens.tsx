@@ -33,17 +33,32 @@ export function SampleApp({ initial, framed = false }: { initial: SampleScreen; 
   const tabs = {
     active: settings ? undefined : SCREEN_TAB[screen],
     onSelect: (tab: TabId) => {
-      if (tab === "home" || tab === "journal" || tab === "wishes") { setScreen(tab); setSettings(false); }
+      if (tab === "home" || tab === "journal" || tab === "wishes") {
+        setScreen(tab);
+        setSettings(false);
+      }
     },
-    onCreate: (tab: CreateDestination) => { setScreen(tab === "event" ? "home" : tab === "spin" ? "wishes" : tab === "notes" ? "journal" : tab); setSettings(false); toast.info(d("previewOnly")); },
+    onCreate: (tab: CreateDestination) => {
+      setScreen(tab === "event" ? "home" : tab === "spin" ? "wishes" : tab === "notes" ? "journal" : tab);
+      setSettings(false);
+      toast.info(d("previewOnly"));
+    },
   };
-  if (settings) return (
-    <AppShell tabs={tabs} title={t("settings.title")} className={cn(framed && "min-h-full")} action={
-      <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => setSettings(false)}><ArrowLeft /></Button>
-    }>
-      <AppearanceSettings onOpen={() => toast.info(d("previewOnly"))} />
-    </AppShell>
-  );
+  if (settings)
+    return (
+      <AppShell
+        tabs={tabs}
+        title={t("settings.title")}
+        className={cn(framed && "min-h-full")}
+        action={
+          <Button variant="ghost" size="icon" aria-label={t("common.back")} onClick={() => setSettings(false)}>
+            <ArrowLeft />
+          </Button>
+        }
+      >
+        <AppearanceSettings onOpen={() => toast.info(d("previewOnly"))} />
+      </AppShell>
+    );
   return (
     <AppShell
       className={cn(framed && "min-h-full")}
@@ -74,16 +89,23 @@ function HomeScreen() {
     <>
       <div className="mb-4 flex items-center gap-3">
         <CoupleAvatars people={COUPLE} size="sm" />
-        <p className="min-w-0 truncate text-base text-muted-foreground">{t("couple.and", { a: COUPLE[0].name, b: COUPLE[1].name })}</p>
+        <p className="min-w-0 truncate text-base text-muted-foreground">
+          {t("couple.and", { a: COUPLE[0].name, b: COUPLE[1].name })}
+        </p>
       </div>
       <DaysCounter startDate={START_DATE} people={COUPLE} today={TODAY} />
       <section aria-label={t("nav.wishes")} className="mt-5 grid grid-cols-2 gap-2">
         <WishJar person={COUPLE[0]} level={3} mine onOpen={() => toast.info(d("previewOnly"))} />
         <WishJar person={COUPLE[1]} level={2} onOpen={() => toast.info(d("previewOnly"))} />
       </section>
-      <UpcomingCard events={upcomingEvents(START_DATE, COUPLE, toDayString(TODAY))} action={
-        <Button variant="ghost" size="sm" onClick={() => toast.info(d("previewOnly"))}>{t("home.seeAll")}</Button>
-      } />
+      <UpcomingCard
+        events={upcomingEvents(START_DATE, COUPLE, toDayString(TODAY))}
+        action={
+          <Button variant="ghost" size="sm" onClick={() => toast.info(d("previewOnly"))}>
+            {t("home.seeAll")}
+          </Button>
+        }
+      />
     </>
   );
 }
@@ -120,7 +142,10 @@ function WishesScreen() {
         partnerName={QUOC_BAO.name}
         onSpin={demoSpin}
         initialBudget={500_000}
-        onClaim={async () => { toast.info(d("previewOnly")); return { ok: false, status: 0, error: null }; }}
+        onClaim={async () => {
+          toast.info(d("previewOnly"));
+          return { ok: false, status: 0, error: null };
+        }}
         initialState={result ? { step: "result", wish: { ...result, price: result.price! } } : undefined}
       />
       <SectionTitle

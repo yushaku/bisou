@@ -6,29 +6,66 @@ import type { CropRequest } from "../src/client/components/bisou/PhotoCropDialog
 import { toast } from "../src/client/components/ui/ding-toaster";
 import type { QueuedPhoto, useUploadQueue } from "../src/client/components/bisou/useUploadQueue";
 
-const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, ownership: [] as (() => void | (() => void))[], effects: [] as (() => void | (() => void))[] }));
+const hooks = vi.hoisted(() => ({
+  values: [] as unknown[],
+  index: 0,
+  ownership: [] as (() => void | (() => void))[],
+  effects: [] as (() => void | (() => void))[],
+}));
 vi.mock("react", async (original) => ({
-  ...await original<typeof import("react")>(),
+  ...(await original<typeof import("react")>()),
   useId: () => "picker-toast",
   useRef: (initial: unknown) => {
     const index = hooks.index++;
-    return hooks.values[index] ??= { current: initial };
+    return (hooks.values[index] ??= { current: initial });
   },
   useState: (initial: unknown) => {
     const index = hooks.index++;
     if (!(index in hooks.values)) hooks.values[index] = initial;
-    return [hooks.values[index], (value: unknown) => { hooks.values[index] = value; }];
+    return [
+      hooks.values[index],
+      (value: unknown) => {
+        hooks.values[index] = value;
+      },
+    ];
   },
-  useInsertionEffect: (effect: () => void | (() => void)) => { hooks.ownership.push(effect); },
-  useEffect: (effect: () => void | (() => void)) => { hooks.effects.push(effect); },
+  useInsertionEffect: (effect: () => void | (() => void)) => {
+    hooks.ownership.push(effect);
+  },
+  useEffect: (effect: () => void | (() => void)) => {
+    hooks.effects.push(effect);
+  },
 }));
-vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string, vars?: Record<string, unknown>) => vars ? `${key} ${JSON.stringify(vars)}` : key }) }));
-vi.mock("../src/client/components/ui/ding-toaster", () => ({ toast: { loading: vi.fn(), update: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn(), dismiss: vi.fn() } }));
+vi.mock("../src/client/i18n", () => ({
+  useI18n: () => ({
+    t: (key: string, vars?: Record<string, unknown>) => (vars ? `${key} ${JSON.stringify(vars)}` : key),
+  }),
+}));
+vi.mock("../src/client/components/ui/ding-toaster", () => ({
+  toast: { loading: vi.fn(), update: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn(), dismiss: vi.fn() },
+}));
 vi.mock("../src/client/components/bisou/PhotoCropDialog", () => ({ PhotoCropDialog: () => null }));
-vi.mock("../src/client/lib/photo", () => ({ decodePhoto: vi.fn().mockRejectedValue(new Error("unreadable")), renderSquare: vi.fn() }));
-afterEach(() => { hooks.values = []; hooks.effects = []; hooks.ownership = []; hooks.index = 0; vi.clearAllMocks(); });
+vi.mock("../src/client/lib/photo", () => ({
+  decodePhoto: vi.fn().mockRejectedValue(new Error("unreadable")),
+  renderSquare: vi.fn(),
+}));
+afterEach(() => {
+  hooks.values = [];
+  hooks.effects = [];
+  hooks.ownership = [];
+  hooks.index = 0;
+  vi.clearAllMocks();
+});
 
-type Props = { request?: CropRequest | null; children?: ReactNode; role?: string; onClick?: () => void; onChange?: (event: { target: { files: File[]; value: string } }) => void; type?: string; "aria-label"?: string };
+type Props = {
+  request?: CropRequest | null;
+  children?: ReactNode;
+  role?: string;
+  onClick?: () => void;
+  onChange?: (event: { target: { files: File[]; value: string } }) => void;
+  type?: string;
+  "aria-label"?: string;
+};
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -45,17 +82,27 @@ function render(uploads: ReturnType<typeof useUploadQueue>, max = 4) {
   const nodes = elements(PhotoPicker({ queue: uploads, max, saving: false, onChange: vi.fn() }));
   const cleanups = hooks.effects.splice(0).map((effect) => effect());
   const ownership = hooks.ownership.splice(0).map((effect) => effect());
-  return { nodes, hide: () => cleanups.forEach(cleanup => cleanup?.()), unmount: () => [...ownership, ...cleanups].forEach(cleanup => cleanup?.()) };
+  return {
+    nodes,
+    hide: () => cleanups.forEach((cleanup) => cleanup?.()),
+    unmount: () => [...ownership, ...cleanups].forEach((cleanup) => cleanup?.()),
+  };
 }
 
 it("updates one queue toast with overall progress, excludes existing photos and finishes with success", () => {
   const uploads = queue([photo("existing", "done", 1), photo("a", "uploading", 0.5), photo("b", "queued")]);
   const first = render(uploads);
   expect(first.nodes.some((node) => node.props.role === "progressbar")).toBe(false);
-  expect(toast.loading).toHaveBeenCalledWith('compose.uploadProgress {"index":1,"total":2}', expect.objectContaining({ id: "picker-toast", progress: 0.25 }));
+  expect(toast.loading).toHaveBeenCalledWith(
+    'compose.uploadProgress {"index":1,"total":2}',
+    expect.objectContaining({ id: "picker-toast", progress: 0.25 }),
+  );
   uploads.items = [photo("existing", "done", 1), photo("a", "done", 1), photo("b", "uploading", 0.5)];
   render(uploads);
-  expect(toast.loading).toHaveBeenLastCalledWith('compose.uploadProgress {"index":2,"total":2}', { id: "picker-toast", progress: 0.75 });
+  expect(toast.loading).toHaveBeenLastCalledWith('compose.uploadProgress {"index":2,"total":2}', {
+    id: "picker-toast",
+    progress: 0.75,
+  });
   uploads.items = uploads.items.map((item) => ({ ...item, state: "done", progress: 1 }));
   render(uploads);
   expect(toast.success).toHaveBeenCalledWith("compose.photosUploaded", { id: "picker-toast" });
@@ -66,7 +113,10 @@ it("shows upload errors with retry-all and keeps an indexed icon retry on each f
   render(uploads);
   uploads.items = [photo("a", "failed"), { ...photo("b", "failed"), error: "compose.photoRejected" }];
   const { nodes, unmount } = render(uploads);
-  expect(toast.error).toHaveBeenCalledWith("compose.photoFailed", expect.objectContaining({ id: "picker-toast", action: expect.objectContaining({ label: "journal.retry" }) }));
+  expect(toast.error).toHaveBeenCalledWith(
+    "compose.photoFailed",
+    expect.objectContaining({ id: "picker-toast", action: expect.objectContaining({ label: "journal.retry" }) }),
+  );
   const action = vi.mocked(toast.error).mock.calls.at(-1)![1]!.action!;
   action.onClick();
   expect(vi.mocked(uploads.retry).mock.calls).toEqual([["a"], ["b"]]);
@@ -78,7 +128,9 @@ it("shows upload errors with retry-all and keeps an indexed icon retry on each f
 
 it("warns when the wish photo limit is reached without an inline alert", () => {
   const { nodes } = render(queue([photo("existing", "done", 1)]), 1);
-  nodes.find((node) => node.props.children && Array.isArray(node.props.children) && node.props.children.includes("compose.add"))!.props.onClick!();
+  nodes.find(
+    (node) => node.props.children && Array.isArray(node.props.children) && node.props.children.includes("compose.add"),
+  )!.props.onClick!();
   expect(toast.warning).toHaveBeenCalledWith("wish.photoLimit");
   expect(nodes.some((node) => node.props.role === "alert")).toBe(false);
 });
@@ -86,7 +138,9 @@ it("warns when the wish photo limit is reached without an inline alert", () => {
 it("skips the preparing toast and keeps unreadable-photo errors", async () => {
   const uploads = queue();
   const { nodes } = render(uploads);
-  nodes.find((node) => node.props.type === "file")!.props.onChange!({ target: { files: [new File(["bad"], "bad.jpg")], value: "" } });
+  nodes.find((node) => node.props.type === "file")!.props.onChange!({
+    target: { files: [new File(["bad"], "bad.jpg")], value: "" },
+  });
   const { unmount } = render(uploads);
   expect(toast.loading).not.toHaveBeenCalled();
   await Promise.resolve();
@@ -116,7 +170,6 @@ it("retry-all uses the current failures after a failed photo is removed", () => 
   expect(vi.mocked(uploads.retry).mock.calls).toEqual([["b"]]);
 });
 
-
 it("a crop survives hiding the tab and can finish after returning", async () => {
   vi.mocked(decodePhoto).mockResolvedValue({ close: vi.fn(), width: 100, height: 100 } as ImageBitmap);
   const renditions = { full: new Blob(["full"]), thumb: new Blob(["thumb"]) };
@@ -124,15 +177,18 @@ it("a crop survives hiding the tab and can finish after returning", async () => 
   const revoke = vi.spyOn(URL, "revokeObjectURL");
   const uploads = queue();
   const first = render(uploads);
-  first.nodes.find(node => node.props.type === "file")!.props.onChange!({ target: { files: [new File(["photo"], "photo.jpg")], value: "" } });
+  first.nodes.find((node) => node.props.type === "file")!.props.onChange!({
+    target: { files: [new File(["photo"], "photo.jpg")], value: "" },
+  });
   await Promise.resolve();
-  const crop = render(uploads).nodes.find(node => node.props.request)?.props.request;
+  const crop = render(uploads).nodes.find((node) => node.props.request)?.props.request;
   expect(crop).toBeTruthy();
   first.hide();
   expect(revoke).not.toHaveBeenCalled();
-  expect(render(uploads).nodes.find(node => node.props.request)?.props.request).toBe(crop);
+  expect(render(uploads).nodes.find((node) => node.props.request)?.props.request).toBe(crop);
   crop!.done({ x: 0, y: 0, width: 100, height: 100 });
-  await Promise.resolve(); await Promise.resolve();
+  await Promise.resolve();
+  await Promise.resolve();
   expect(uploads.add).toHaveBeenCalledWith(renditions);
   first.unmount();
   revoke.mockRestore();

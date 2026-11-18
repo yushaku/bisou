@@ -4,11 +4,13 @@ import { isStandalone } from "./install";
 
 export function pushSupport(): "ok" | "needsInstall" | "unsupported" {
   if (typeof navigator === "undefined") return "unsupported";
-  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  const ios =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   if (ios && !isStandalone()) return "needsInstall";
   return "serviceWorker" in navigator && typeof PushManager !== "undefined" && typeof Notification !== "undefined"
-    ? "ok" : "unsupported";
+    ? "ok"
+    : "unsupported";
 }
 
 export async function currentSubscription(): Promise<PushSubscription | null> {
@@ -17,13 +19,28 @@ export async function currentSubscription(): Promise<PushSubscription | null> {
   return registration?.pushManager ? registration.pushManager.getSubscription() : null;
 }
 
-export async function turnOn(registration: ServiceWorkerRegistration, publicKey: string, kinds: Pick<PushDevice, "journal" | "reminders">, existing: PushSubscription | null = null) {
+export async function turnOn(
+  registration: ServiceWorkerRegistration,
+  publicKey: string,
+  kinds: Pick<PushDevice, "journal" | "reminders">,
+  existing: PushSubscription | null = null,
+) {
   const key = existing?.options.applicationServerKey;
-  if (existing && (!key || btoa(String.fromCharCode(...new Uint8Array(key))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "") !== publicKey.replace(/=+$/, ""))) {
+  if (
+    existing &&
+    (!key ||
+      btoa(String.fromCharCode(...new Uint8Array(key)))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "") !== publicKey.replace(/=+$/, ""))
+  ) {
     await existing.unsubscribe();
   }
   // Keep subscribe in the tap's user activation, before any API call.
-  const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: publicKey });
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: publicKey,
+  });
   const res = await api.savePush({ ...subscription.toJSON(), ...kinds } as PushSubscriptionInput);
   if (!res.ok) {
     await subscription.unsubscribe();
@@ -34,7 +51,12 @@ export async function turnOn(registration: ServiceWorkerRegistration, publicKey:
 
 /* Chrome's quiet prompt (a bell in the address bar) rejects subscribe while the permission stays "default". */
 export function permissionPromptHidden(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "NotAllowedError" && typeof Notification !== "undefined" && Notification.permission !== "denied";
+  return (
+    error instanceof DOMException &&
+    error.name === "NotAllowedError" &&
+    typeof Notification !== "undefined" &&
+    Notification.permission !== "denied"
+  );
 }
 
 export async function turnOff() {

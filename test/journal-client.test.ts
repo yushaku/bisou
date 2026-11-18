@@ -70,7 +70,10 @@ describe("journal api client", () => {
   });
 
   it("returns status 0 when the network fails", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("offline"))));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Promise.reject(new TypeError("offline"))),
+    );
     expect(await api.journal()).toEqual({ ok: false, status: 0, error: null });
   });
 
@@ -106,7 +109,10 @@ describe("journal feed state", () => {
   it("ties on day and time fall back to id, newest first", () => {
     const a = entry({ id: "a", createdAt: 5 });
     const b = entry({ id: "b", createdAt: 5 });
-    expect(ids(addPage({ entries: [a], nextCursor: null }, { entries: [b], nextCursor: null }).entries)).toEqual(["b", "a"]);
+    expect(ids(addPage({ entries: [a], nextCursor: null }, { entries: [b], nextCursor: null }).entries)).toEqual([
+      "b",
+      "a",
+    ]);
   });
 
   it("journal AC15 (R12, R21): a day split across pages merges into one group with no duplicates or gaps", () => {
@@ -151,7 +157,9 @@ describe("journal feed state", () => {
   it("journal AC23 (R28): an edit that moves the day keeps the entry once, under its new day, in written order", () => {
     const loaded = { entries: [rain, lunch, first], nextCursor: null };
     const moved = upsertEntry(loaded, { ...first, date: "2026-11-06", updatedAt: 9_000 });
-    expect(groupByDay(moved.entries).map((g) => [g.date, ids(g.entries)])).toEqual([["2026-11-06", ["rain", "lunch", "first"]]]);
+    expect(groupByDay(moved.entries).map((g) => [g.date, ids(g.entries)])).toEqual([
+      ["2026-11-06", ["rain", "lunch", "first"]],
+    ]);
   });
 
   it("a refresh that returns the whole journal replaces everything", () => {

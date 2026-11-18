@@ -15,7 +15,14 @@ import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { SettingsGroup, SettingsRow } from "../components/bisou/SettingsGroup";
 import { AppearanceSettings } from "../components/bisou/ThemeControls";
 import { Button } from "../components/ui/button";
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "../components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../components/ui/drawer";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useI18n } from "../i18n";
@@ -27,9 +34,17 @@ import { fitSquare } from "../lib/compose";
 import type { SessionProps } from "./SignedInShell";
 
 const DateSheet = lazy(() => import("../components/bisou/DateSheet").then((m) => ({ default: m.DateSheet })));
-const PhotoCropDialog = lazy(() => import("../components/bisou/PhotoCropDialog").then((m) => ({ default: m.PhotoCropDialog })));
+const PhotoCropDialog = lazy(() =>
+  import("../components/bisou/PhotoCropDialog").then((m) => ({ default: m.PhotoCropDialog })),
+);
 
-export function Settings({ user, onUser, onSignedOut, couple, onCouple }: SessionProps & {
+export function Settings({
+  user,
+  onUser,
+  onSignedOut,
+  couple,
+  onCouple,
+}: SessionProps & {
   couple: Couple | null | undefined;
   onCouple: (couple: Couple | null) => void;
 }) {
@@ -56,7 +71,10 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   const [removingAvatar, setRemovingAvatar] = useState(false);
   useEffect(() => {
     mounted.current = true;
-    return () => { mounted.current = false; cancelCrop.current?.(); };
+    return () => {
+      mounted.current = false;
+      cancelCrop.current?.();
+    };
   }, []);
   const paired = (couple?.members.length ?? 0) >= 2;
   const partner = paired ? couple?.members.find((member) => member.id !== user.id) : null;
@@ -74,15 +92,23 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
   async function pickAvatar(file: File) {
     if (!online) return;
     const error = avatarFileError(file);
-    if (error) { toast.error(t(error)); return; }
+    if (error) {
+      toast.error(t(error));
+      return;
+    }
     setAvatarBusy(true);
     let bitmap: ImageBitmap;
-    try { bitmap = await decodePhoto(file); } catch {
+    try {
+      bitmap = await decodePhoto(file);
+    } catch {
       toast.error(t("avatar.decodeFailed"));
       setAvatarBusy(false);
       return;
     }
-    if (!mounted.current) { bitmap.close(); return; }
+    if (!mounted.current) {
+      bitmap.close();
+      return;
+    }
     setOpen(false);
     try {
       const area = await new Promise<Area | null>((resolve) => {
@@ -96,14 +122,25 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
         cancelCrop.current = () => done(null);
         setCropping({ url, index: 0, total: 1, round: true, done });
       });
-      if (!area) { bitmap.close(); return; }
+      if (!area) {
+        bitmap.close();
+        return;
+      }
       const blob = await renderAvatar(bitmap, area);
-      if (!navigator.onLine) { toast.error(t("offline.save")); return; }
+      if (!navigator.onLine) {
+        toast.error(t("offline.save"));
+        return;
+      }
       const res = await api.setAvatar(blob);
-      if (res.ok) { onUser(res.data.user); toast.success(t("avatar.saved")); }
-      else toast.error(res.status === 429
-        ? t("avatar.rateLimited", { wait: avatarRetryWait(locale, res.error?.retryAfter ?? 60) })
-        : t("avatar.saveFailed"));
+      if (res.ok) {
+        onUser(res.data.user);
+        toast.success(t("avatar.saved"));
+      } else
+        toast.error(
+          res.status === 429
+            ? t("avatar.rateLimited", { wait: avatarRetryWait(locale, res.error?.retryAfter ?? 60) })
+            : t("avatar.saveFailed"),
+        );
     } catch {
       bitmap.close();
       toast.error(t("avatar.saveFailed"));
@@ -162,19 +199,29 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
         navigate("/", { replace: true });
         onSignedOut();
       } else setLogoutError(true);
-    } catch { setLogoutError(true); }
-    finally { setLoggingOut(false); }
+    } catch {
+      setLogoutError(true);
+    } finally {
+      setLoggingOut(false);
+    }
   }
 
   return (
     <div className="flex min-h-dvh flex-col">
       <SubPageHeader title={t("settings.title")} />
-      <p id="settings-offline" className="sr-only">{!online ? t("offline.save") : ""}</p>
+      <p id="settings-offline" className="sr-only">
+        {!online ? t("offline.save") : ""}
+      </p>
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-3 pb-[max(--spacing(6),env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-4 rounded-xl edge bg-card p-4 text-card-foreground">
-          <button type="button" aria-label={t("avatar.change")} aria-busy={avatarBusy} disabled={avatarBusy}
+          <button
+            type="button"
+            aria-label={t("avatar.change")}
+            aria-busy={avatarBusy}
+            disabled={avatarBusy}
             className="min-h-11 min-w-11 shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            onClick={(event) => openAvatar(event.currentTarget)}>
+            onClick={(event) => openAvatar(event.currentTarget)}
+          >
             {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={ownPerson} />}
           </button>
           <div className="min-w-0">
@@ -184,80 +231,227 @@ export function Settings({ user, onUser, onSignedOut, couple, onCouple }: Sessio
         </div>
         <Drawer open={open} onOpenChange={setOpen}>
           <SettingsGroup title={t("settings.account")}>
-            <SettingsRow icon={CircleUserRound} label={t("avatar.row")} value={t(user.avatarId ? "avatar.set" : "settings.notSet")}
-              disabled={avatarBusy} onClick={(event) => openAvatar(event.currentTarget)} />
-            {user.displayName && <DrawerTrigger asChild>
-              <SettingsRow icon={UserRound} label={t("home.displayName")} value={user.displayName} onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("profile"); }} />
-            </DrawerTrigger>}
-            <SettingsRow ref={birthdayButton} icon={Cake} label={t("settings.birthday")}
+            <SettingsRow
+              icon={CircleUserRound}
+              label={t("avatar.row")}
+              value={t(user.avatarId ? "avatar.set" : "settings.notSet")}
+              disabled={avatarBusy}
+              onClick={(event) => openAvatar(event.currentTarget)}
+            />
+            {user.displayName && (
+              <DrawerTrigger asChild>
+                <SettingsRow
+                  icon={UserRound}
+                  label={t("home.displayName")}
+                  value={user.displayName}
+                  onClick={(event) => {
+                    sheetButton.current = event.currentTarget;
+                    setSheet("profile");
+                  }}
+                />
+              </DrawerTrigger>
+            )}
+            <SettingsRow
+              ref={birthdayButton}
+              icon={Cake}
+              label={t("settings.birthday")}
               value={user.birthDate ? formatDay(user.birthDate, locale, "numeric") : t("settings.notSet")}
-              onClick={() => { setBirthdayLoaded(true); setBirthdayOpen(true); }} />
+              onClick={() => {
+                setBirthdayLoaded(true);
+                setBirthdayOpen(true);
+              }}
+            />
             <SettingsRow icon={Mail} label={t("login.email")} value={user.email} />
           </SettingsGroup>
-          {paired && couple && <SettingsGroup title={t("settings.couple")}>
-            <SettingsRow icon={Heart} label={t("settings.partner")} value={displayName(partner, t)} />
-            <SettingsRow ref={dateButton} icon={CalendarHeart} label={t("settings.startDate")}
-              value={couple.startDate ? formatDay(couple.startDate, locale, "numeric") : t("settings.notSet")}
-              onClick={() => { setDateLoaded(true); setPicking(true); }} />
-          </SettingsGroup>}
-          <AppearanceSettings onLocaleChange={(next) => void changeLocale(next)} onOpen={() => {
-            history.replaceState({ ...history.state, focus: "appearance-row" }, "");
-            navigate("/settings/appearance", { state: { from: "/settings" } });
-          }} />
+          {paired && couple && (
+            <SettingsGroup title={t("settings.couple")}>
+              <SettingsRow icon={Heart} label={t("settings.partner")} value={displayName(partner, t)} />
+              <SettingsRow
+                ref={dateButton}
+                icon={CalendarHeart}
+                label={t("settings.startDate")}
+                value={couple.startDate ? formatDay(couple.startDate, locale, "numeric") : t("settings.notSet")}
+                onClick={() => {
+                  setDateLoaded(true);
+                  setPicking(true);
+                }}
+              />
+            </SettingsGroup>
+          )}
+          <AppearanceSettings
+            onLocaleChange={(next) => void changeLocale(next)}
+            onOpen={() => {
+              history.replaceState({ ...history.state, focus: "appearance-row" }, "");
+              navigate("/settings/appearance", { state: { from: "/settings" } });
+            }}
+          />
           <MascotPicker />
-          {paired && <div className="overflow-hidden rounded-xl edge bg-card">
-            <SettingsRow id="notifications-row" icon={Bell} label={t("push.title")} onClick={() => {
-              history.replaceState({ ...history.state, focus: "notifications-row" }, "");
-              navigate("/settings/notifications", { state: { from: "/settings" } });
-            }} />
-          </div>}
+          {paired && (
+            <div className="overflow-hidden rounded-xl edge bg-card">
+              <SettingsRow
+                id="notifications-row"
+                icon={Bell}
+                label={t("push.title")}
+                onClick={() => {
+                  history.replaceState({ ...history.state, focus: "notifications-row" }, "");
+                  navigate("/settings/notifications", { state: { from: "/settings" } });
+                }}
+              />
+            </div>
+          )}
           <div className="overflow-hidden rounded-xl edge bg-card">
             <DrawerTrigger asChild>
-              <SettingsRow icon={LogOut} label={t("home.logout")} className="text-destructive" onClick={(event) => { sheetButton.current = event.currentTarget; setSheet("logout"); setLogoutError(false); }} />
+              <SettingsRow
+                icon={LogOut}
+                label={t("home.logout")}
+                className="text-destructive"
+                onClick={(event) => {
+                  sheetButton.current = event.currentTarget;
+                  setSheet("logout");
+                  setLogoutError(false);
+                }}
+              />
             </DrawerTrigger>
           </div>
-          <DrawerContent onCloseAutoFocus={(event) => { event.preventDefault(); sheetButton.current?.focus({ preventScroll: true }); }}>
+          <DrawerContent
+            onCloseAutoFocus={(event) => {
+              event.preventDefault();
+              sheetButton.current?.focus({ preventScroll: true });
+            }}
+          >
             <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-6">
               <DrawerHeader className="px-0 text-left">
-                <DrawerTitle className="font-heading text-2xl">{t(sheet === "avatar" ? "avatar.row" : sheet === "profile" ? "home.displayName" : "settings.logoutConfirm")}</DrawerTitle>
+                <DrawerTitle className="font-heading text-2xl">
+                  {t(
+                    sheet === "avatar"
+                      ? "avatar.row"
+                      : sheet === "profile"
+                        ? "home.displayName"
+                        : "settings.logoutConfirm",
+                  )}
+                </DrawerTitle>
                 <DrawerDescription className={sheet !== "logout" ? "sr-only" : undefined}>
-                  {t(sheet === "avatar" ? "avatar.change" : sheet === "profile" ? "home.displayNamePlaceholder" : "settings.logoutHint")}
+                  {t(
+                    sheet === "avatar"
+                      ? "avatar.change"
+                      : sheet === "profile"
+                        ? "home.displayNamePlaceholder"
+                        : "settings.logoutHint",
+                  )}
                 </DrawerDescription>
               </DrawerHeader>
-              {sheet === "avatar" ? <div className="flex flex-col gap-3">
-                <Button aria-describedby={!online ? "settings-offline" : undefined} disabled={!online} loading={avatarBusy} onClick={() => avatarInput.current?.click()}>{t("avatar.choose")}</Button>
-                {user.avatarId && (removingAvatar ? <>
-                  <p id="avatar-remove-confirm">{t("avatar.removeConfirm")}</p>
-                  <Button autoFocus variant="destructive" aria-describedby={!online ? "avatar-remove-confirm settings-offline" : "avatar-remove-confirm"} disabled={!online} loading={avatarBusy} onClick={() => void removeAvatar()}>{t("avatar.remove")}</Button>
-                </> : <Button variant="destructive" disabled={avatarBusy} onClick={() => setRemovingAvatar(true)}>{t("avatar.remove")}</Button>)}
-              </div> : sheet === "profile" ? <ProfileForm key={String(open)} user={user} onUser={onUser} /> : <>
-                {logoutError && <p role="alert" className="mb-3 text-destructive">{t("error.generic")}</p>}
-                <Button variant="destructive" aria-describedby={!online ? "settings-offline" : undefined} disabled={!online} className="w-full" loading={loggingOut} onClick={() => void logout()}>{t("home.logout")}</Button>
-              </>}
-              <Button variant="outline" className="mt-3 w-full" disabled={avatarBusy} onClick={() => setOpen(false)}>{t(sheet === "logout" ? "settings.cancel" : "common.close")}</Button>
+              {sheet === "avatar" ? (
+                <div className="flex flex-col gap-3">
+                  <Button
+                    aria-describedby={!online ? "settings-offline" : undefined}
+                    disabled={!online}
+                    loading={avatarBusy}
+                    onClick={() => avatarInput.current?.click()}
+                  >
+                    {t("avatar.choose")}
+                  </Button>
+                  {user.avatarId &&
+                    (removingAvatar ? (
+                      <>
+                        <p id="avatar-remove-confirm">{t("avatar.removeConfirm")}</p>
+                        <Button
+                          autoFocus
+                          variant="destructive"
+                          aria-describedby={
+                            !online ? "avatar-remove-confirm settings-offline" : "avatar-remove-confirm"
+                          }
+                          disabled={!online}
+                          loading={avatarBusy}
+                          onClick={() => void removeAvatar()}
+                        >
+                          {t("avatar.remove")}
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="destructive" disabled={avatarBusy} onClick={() => setRemovingAvatar(true)}>
+                        {t("avatar.remove")}
+                      </Button>
+                    ))}
+                </div>
+              ) : sheet === "profile" ? (
+                <ProfileForm key={String(open)} user={user} onUser={onUser} />
+              ) : (
+                <>
+                  {logoutError && (
+                    <p role="alert" className="mb-3 text-destructive">
+                      {t("error.generic")}
+                    </p>
+                  )}
+                  <Button
+                    variant="destructive"
+                    aria-describedby={!online ? "settings-offline" : undefined}
+                    disabled={!online}
+                    className="w-full"
+                    loading={loggingOut}
+                    onClick={() => void logout()}
+                  >
+                    {t("home.logout")}
+                  </Button>
+                </>
+              )}
+              <Button variant="outline" className="mt-3 w-full" disabled={avatarBusy} onClick={() => setOpen(false)}>
+                {t(sheet === "logout" ? "settings.cancel" : "common.close")}
+              </Button>
             </div>
           </DrawerContent>
         </Drawer>
-        <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={(event) => {
-          const file = event.currentTarget.files?.[0];
-          event.currentTarget.value = "";
-          if (file) void pickAvatar(file);
-        }} />
-        {cropping && <Suspense fallback={null}><PhotoCropDialog request={cropping} /></Suspense>}
-        {birthdayLoaded && <Suspense fallback={null}>
-          <DateSheet title={t("birthday.title")} hint={t("birthday.hint")} saveLabel={t("birthday.save")}
-            firstMonth={new Date(1900, 0, 1)} emptyMonth={new Date(2000, 0, 1)}
-            open={birthdayOpen} onOpenChange={(next) => {
-              setBirthdayOpen(next);
-              if (!next) birthdayButton.current?.focus({ preventScroll: true });
-            }} value={user.birthDate} onSave={saveBirthday} onRemove={() => saveBirthday(null)} />
-        </Suspense>}
-        {dateLoaded && couple && <Suspense fallback={null}>
-          <DateSheet title={t("startDate.title")} hint={t("startDate.hint")} saveLabel={t("startDate.save")} firstMonth={new Date(1950, 0, 1)} open={picking} onOpenChange={(next) => {
-            setPicking(next);
-            if (!next) dateButton.current?.focus({ preventScroll: true });
-          }} value={couple.startDate} onSave={saveStartDate} />
-        </Suspense>}
+        <input
+          ref={avatarInput}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+            if (file) void pickAvatar(file);
+          }}
+        />
+        {cropping && (
+          <Suspense fallback={null}>
+            <PhotoCropDialog request={cropping} />
+          </Suspense>
+        )}
+        {birthdayLoaded && (
+          <Suspense fallback={null}>
+            <DateSheet
+              title={t("birthday.title")}
+              hint={t("birthday.hint")}
+              saveLabel={t("birthday.save")}
+              firstMonth={new Date(1900, 0, 1)}
+              emptyMonth={new Date(2000, 0, 1)}
+              open={birthdayOpen}
+              onOpenChange={(next) => {
+                setBirthdayOpen(next);
+                if (!next) birthdayButton.current?.focus({ preventScroll: true });
+              }}
+              value={user.birthDate}
+              onSave={saveBirthday}
+              onRemove={() => saveBirthday(null)}
+            />
+          </Suspense>
+        )}
+        {dateLoaded && couple && (
+          <Suspense fallback={null}>
+            <DateSheet
+              title={t("startDate.title")}
+              hint={t("startDate.hint")}
+              saveLabel={t("startDate.save")}
+              firstMonth={new Date(1950, 0, 1)}
+              open={picking}
+              onOpenChange={(next) => {
+                setPicking(next);
+                if (!next) dateButton.current?.focus({ preventScroll: true });
+              }}
+              value={couple.startDate}
+              onSave={saveStartDate}
+            />
+          </Suspense>
+        )}
       </main>
       {paired && <BottomBar {...navigation} />}
     </div>
@@ -308,7 +502,13 @@ function ProfileForm({ user, onUser }: Pick<SessionProps, "user" | "onUser">) {
           {t("error.generic")}
         </p>
       )}
-      <Button type="submit" variant="outline" loading={status === "saving"} aria-describedby={!online ? "settings-offline" : undefined} disabled={!online || !name.trim()}>
+      <Button
+        type="submit"
+        variant="outline"
+        loading={status === "saving"}
+        aria-describedby={!online ? "settings-offline" : undefined}
+        disabled={!online || !name.trim()}
+      >
         {status === "saving" ? t("home.saving") : t("home.save")}
       </Button>
     </form>

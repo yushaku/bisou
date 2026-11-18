@@ -17,7 +17,13 @@ export const THEMES: ThemeDef[] = Object.entries(palettes).map(([id, theme]) => 
   id: id as ThemeId,
   label: theme.label,
   kind: theme.kind as ThemeKind,
-  swatches: [theme.tokens.background, theme.tokens.card, theme.tokens.primary, theme.tokens.secondary, theme.tokens.foreground],
+  swatches: [
+    theme.tokens.background,
+    theme.tokens.card,
+    theme.tokens.primary,
+    theme.tokens.secondary,
+    theme.tokens.foreground,
+  ],
 }));
 
 export const LIGHT_THEMES = THEMES.filter((t) => t.kind === "light");

@@ -28,7 +28,15 @@ const SIZES = {
 };
 
 /* onOpen: tiles become buttons that open the photo viewer at that index. */
-export function PhotoGrid({ photos, onOpen, className }: { photos: Photo[]; onOpen?: (index: number) => void; className?: string }) {
+export function PhotoGrid({
+  photos,
+  onOpen,
+  className,
+}: {
+  photos: Photo[];
+  onOpen?: (index: number) => void;
+  className?: string;
+}) {
   const { t } = useI18n();
   if (photos.length === 0) return null;
   const shown = photos.slice(0, 4);
