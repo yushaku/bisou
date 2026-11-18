@@ -316,19 +316,21 @@ describe("Garden daily cards", () => {
 
   it("garden R21: a waiting card in today's deck is not answerable until today's card is played, then it is", async () => {
     const { a, b, couple } = await paired();
+    const day = "2026-11-09";
+    const input = await drawInput(env.DB, couple.id, day);
+    const waiting = drawCard(input, await drawSeed(couple.id, day, 0))!;
+    await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, user_id, body, created_at, updated_at) VALUES (?, ?, ?, 'waiting', ?, ?)").bind(couple.id, waiting.id, b.id, NOW, NOW).run();
     const today = (await garden(a)).today!.cardId;
-    const deckId = CARDS.find((card) => card.id === today)!.deckId;
-    const input = await drawInput(env.DB, couple.id, "2026-11-09");
-    const next = drawCard({ ...input, waiting: undefined, previousDeck: undefined, played: [...input.played, today, ...CARDS.filter((card) => card.deckId !== deckId).map((card) => card.id)] }, 0)!;
-    expect(next.deckId).toBe(deckId);
-    await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, user_id, body, created_at, updated_at) VALUES (?, ?, ?, 'waiting', ?, ?)").bind(couple.id, next.id, b.id, NOW, NOW).run();
+    const { deckId } = waiting;
+    expect(today).not.toBe(waiting.id);
+    expect(CARDS.find((card) => card.id === today)?.deckId).toBe(deckId);
     const deck = () => call("GET", `/api/garden/decks/${deckId}`, { cookie: a.cookie }).then((res) => res.json<GardenDeckState>());
     expect((await deck()).active!.cardId).toBe(today);
-    expect((await answer(a, next.id)).status).toBe(404);
+    expect((await answer(a, waiting.id)).status).toBe(404);
     expect((await answer(a, today)).status).toBe(201);
     expect((await answer(b, today)).status).toBe(201);
-    expect((await deck()).active!.cardId).toBe(next.id);
-    expect((await answer(a, next.id)).status).toBe(201);
+    expect((await deck()).active!.cardId).toBe(waiting.id);
+    expect((await answer(a, waiting.id)).status).toBe(201);
   });
 
   it("garden R3 R21 D8: only today's card or a deck's active card accepts POST", async () => {

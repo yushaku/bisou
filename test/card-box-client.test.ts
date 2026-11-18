@@ -420,7 +420,7 @@ it.each(["list", "player"])("card-box AC26: local %s stays visible after its fir
   expect(html).not.toContain("Connect to open this box for the first time");
 });
 
-it("card-box: the 5:7 card scrolls long text inside its body without chaining the scroll to the page", () => {
+it("card-box: 5:7 card markup puts long text inside a body with scroll and overscroll utilities", () => {
   vi.stubGlobal("localStorage", { getItem: () => "en" });
   const card: CardBoxDetail["cards"][number] = { id: "long", kind: "question", text: { vi: "dài ".repeat(200), en: "long ".repeat(200) } };
   const html = renderToString(h(I18nProvider, null, h(CardBoxCard, { card, boxId: "deep-connection", boxName: "Box" })));
