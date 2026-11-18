@@ -306,10 +306,29 @@ describe("Garden daily cards", () => {
   it("garden R12: line breaks save and CRLF is normalized, while NUL and bidi controls are rejected", async () => {
     const { a } = await paired();
     const id = (await garden(a)).today!.cardId;
-    for (const text of ["a\u0000b", "a\u202eb", "a\rb"]) expect((await answer(a, id, text)).status).toBe(400);
+    for (const text of ["a\u0000b", "a\u202eb", "a\rb", "\r", "\rabc", "abc\r", "a\r\r\nb"]) expect((await answer(a, id, text)).status).toBe(400);
     expect((await answer(a, id, "a\nb")).status).toBe(201);
     expect((await call("PUT", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "a\r\nb" } })).status).toBe(200);
     expect((await garden(a)).today?.mine).toBe("a\nb");
+    expect((await call("PUT", `/api/garden/cards/${id}/answer`, { cookie: a.cookie, body: { text: "\r\n a\r\n" } })).status).toBe(200);
+    expect((await garden(a)).today?.mine).toBe("a");
+  });
+
+  it("garden R21: a waiting card in today's deck is not answerable until today's card is played, then it is", async () => {
+    const { a, b, couple } = await paired();
+    const today = (await garden(a)).today!.cardId;
+    const deckId = CARDS.find((card) => card.id === today)!.deckId;
+    const input = await drawInput(env.DB, couple.id, "2026-11-09");
+    const next = drawCard({ ...input, waiting: undefined, previousDeck: undefined, played: [...input.played, today, ...CARDS.filter((card) => card.deckId !== deckId).map((card) => card.id)] }, 0)!;
+    expect(next.deckId).toBe(deckId);
+    await env.DB.prepare("INSERT INTO garden_answers(couple_id, card_id, user_id, body, created_at, updated_at) VALUES (?, ?, ?, 'waiting', ?, ?)").bind(couple.id, next.id, b.id, NOW, NOW).run();
+    const deck = () => call("GET", `/api/garden/decks/${deckId}`, { cookie: a.cookie }).then((res) => res.json<GardenDeckState>());
+    expect((await deck()).active!.cardId).toBe(today);
+    expect((await answer(a, next.id)).status).toBe(404);
+    expect((await answer(a, today)).status).toBe(201);
+    expect((await answer(b, today)).status).toBe(201);
+    expect((await deck()).active!.cardId).toBe(next.id);
+    expect((await answer(a, next.id)).status).toBe(201);
   });
 
   it("garden R3 R21 D8: only today's card or a deck's active card accepts POST", async () => {
