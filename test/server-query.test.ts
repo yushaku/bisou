@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
-import { QueryObserver, dehydrate, hydrate, onlineManager } from "@tanstack/react-query";
+import { InfiniteQueryObserver, QueryObserver, dehydrate, hydrate, onlineManager } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
 import { api } from "../src/client/api";
-import { createServerQueryClient, apiData, apiMutationOptions, refreshServerData, refreshForPush } from "../src/client/lib/serverQuery";
+import { createServerQueryClient, apiData, apiMutationOptions, refreshServerData, refreshForPush, isFailed } from "../src/client/lib/serverQuery";
 import { queries } from "../src/client/lib/queries";
 import { deleteJournalEntry, updateJournalEntry } from "../src/client/lib/useJournal";
 import type { JournalEntry } from "../src/shared/types";
@@ -355,4 +355,54 @@ it("a partner push starts a new request after an older foreground fetch is alrea
   expect(callsAfterPush).toBe(3);
   expect(client.getQueryData(["notes"])).toBe("after push");
   client.clear();
+});
+
+it("a push refresh does not cancel a running journal load-more", async () => {
+  const client = createServerQueryClient();
+  let finish!: (value: { entries: []; nextCursor: null }) => void;
+  const queryFn = vi.fn(async ({ pageParam }: { pageParam: string | undefined }) => pageParam
+    ? new Promise<{ entries: []; nextCursor: null }>(resolve => { finish = resolve; }) : { entries: [] as [], nextCursor: "c2" as unknown as null });
+  const options = { queryKey: ["journal"], queryFn, initialPageParam: undefined as string | undefined, getNextPageParam: (page: { nextCursor: string | null }) => page.nextCursor ?? undefined };
+  const observer = new InfiniteQueryObserver(client, options);
+  const leave = observer.subscribe(() => {});
+  await observer.refetch();
+  void observer.fetchNextPage();
+  await vi.waitFor(() => expect(queryFn).toHaveBeenCalledTimes(2));
+  const push = refreshForPush(client, "journal");
+  await vi.dynamicImportSettled();
+  finish({ entries: [], nextCursor: null });
+  await push;
+  expect(queryFn).toHaveBeenCalledTimes(2);
+  expect(client.getQueryData<{ pages: unknown[] }>(["journal"])?.pages).toHaveLength(2);
+  leave(); client.clear();
+});
+
+it("a foreground refresh trims an inactive journal to its first page before refetching", async () => {
+  const client = createServerQueryClient();
+  const page = (nextCursor: string | null) => ({ entries: [], nextCursor });
+  client.setQueryData(["journal"], { pages: [page("c2"), page("c3"), page(null)], pageParams: [undefined, "c2", "c3"] });
+  const journal = vi.spyOn(api, "journal").mockResolvedValue({ ok: true, data: page("c2") });
+  await refreshServerData(client);
+  expect(journal).toHaveBeenCalledOnce();
+  expect(client.getQueryData<{ pages: unknown[] }>(["journal"])?.pages).toHaveLength(1);
+  client.clear();
+});
+
+it("restored garden queries with an unknown level id are not refetched", async () => {
+  const client = createServerQueryClient();
+  client.setQueryData(["garden", "stage", "in_love"], { cached: true });
+  client.setQueryData(["garden", "stage", "bogus"], { cached: true });
+  client.setQueryData(["garden", "decisions", "bogus"], { cached: true });
+  const stage = vi.spyOn(api, "gardenStage").mockResolvedValue({ ok: false, status: 503, error: null });
+  const decisions = vi.spyOn(api, "gardenStageDecisions").mockResolvedValue({ ok: false, status: 503, error: null });
+  await refreshForPush(client, "garden");
+  expect(stage.mock.calls).toEqual([["in_love"]]);
+  expect(decisions).not.toHaveBeenCalled();
+  client.clear();
+});
+
+it("a query counts as failed only while it is not refetching", () => {
+  expect(isFailed({ isError: true, isFetching: false })).toBe(true);
+  expect(isFailed({ isError: true, isFetching: true })).toBe(false);
+  expect(isFailed({ isError: false, isFetching: false })).toBe(false);
 });

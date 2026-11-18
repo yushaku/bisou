@@ -1,7 +1,8 @@
-import { QueryClient, focusManager, mutationOptions, useIsRestoring, useMutation, useQuery, useQueryClient, type Query, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
+import { QueryClient, type InfiniteData, focusManager, mutationOptions, useIsRestoring, useMutation, useQuery, useQueryClient, type Query, type QueryKey, type UseQueryOptions } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useCallback, useEffect, useState, type ReactNode, type SetStateAction } from "react";
 import type { ApiResult } from "../api";
+import { LEVEL_IDS, type RelationshipLevel } from "../../shared/garden";
 import { devicePersistOptions, dropOtherScopes } from "./devicePersist";
 import { scopedStore } from "./deviceStore";
 
@@ -17,6 +18,11 @@ export async function apiData<T>(request: Promise<ApiResult<T>>): Promise<T> {
   return result.data;
 }
 
+/** A query shows its failed state only once its retry has finished, so a refetch does not flash the error. */
+export const isFailed = (query: { isError: boolean; isFetching: boolean }) => query.isError && !query.isFetching;
+
+const levelId = (id: unknown): RelationshipLevel | undefined => LEVEL_IDS.find(level => level === id);
+
 export function createServerQueryClient() {
   // A 30-day GC timer exceeds the platform limit; provider unmount clears the session.
   return new QueryClient({ defaultOptions: {
@@ -31,23 +37,30 @@ async function refetchCachedQueries(client: QueryClient, predicate: (query: Quer
   // Persisted queries have data, but no fetch functions until their screens mount.
   const { queries: { journal, gardenDeck, gardenStage, gardenDecisions, box, ...lists } } = await import("./queries");
   await Promise.all(client.getQueryCache().findAll({ predicate }).filter(query => !query.isDisabled()).map(async query => {
+    if (query.queryKey[0] === "journal" && !query.getObserversCount() && query.state.fetchStatus === "idle") {
+      // An inactive journal only needs its first page; every loaded page would refetch on each foreground.
+      client.setQueryData<InfiniteData<unknown>>(query.queryKey, old => old && Array.isArray(old.pages) && old.pages.length > 1 ? { pages: old.pages.slice(0, 1), pageParams: old.pageParams.slice(0, 1) } : old);
+    }
     if (!query.options.queryFn) {
       const [root, part, id] = query.queryKey;
       if (root === "journal") {
         await client.fetchInfiniteQuery({ ...journal, staleTime: 0 }).catch(() => {});
         return;
       }
+      const level = levelId(id);
       const options = root === "boxes" && typeof part === "string" ? box(part)
         : root === "garden" && typeof id === "string" ? part === "deck" ? gardenDeck(id)
-          : part === "stage" ? gardenStage(id as Parameters<typeof gardenStage>[0])
-          : part === "decisions" ? gardenDecisions(id as Parameters<typeof gardenDecisions>[0]) : undefined
+          : part === "stage" && level ? gardenStage(level)
+          : part === "decisions" && level ? gardenDecisions(level) : undefined
         : Object.values(lists).find(option => option.queryKey.length === query.queryKey.length && option.queryKey.every((value, index) => value === query.queryKey[index]));
       if (options) {
         await client.fetchQuery<unknown, Error, unknown, string[]>({ queryKey: options.queryKey, queryFn: options.queryFn, staleTime: 0 }).catch(() => {});
         return;
       }
     }
-    await client.refetchQueries({ queryKey: query.queryKey, exact: true, type: "all" }, { cancelRefetch });
+    // Never cancel a journal load-more: the user is waiting for that page.
+    const loadingMore = query.state.fetchStatus === "fetching" && Boolean(query.state.fetchMeta && "fetchMore" in (query.state.fetchMeta as object));
+    await client.refetchQueries({ queryKey: query.queryKey, exact: true, type: "all" }, { cancelRefetch: cancelRefetch && !loadingMore });
   }));
 }
 
@@ -123,7 +136,7 @@ export function useServerQuery<T, K extends QueryKey>(options: UseQueryOptions<T
       return next ?? undefined;
     });
   }, [client, options.queryKey]);
-  return { data: query.data ?? null, failed: query.isError, error: query.error, refresh, setData };
+  return { data: query.data ?? null, failed: isFailed(query), error: isFailed(query) ? query.error : null, refresh, setData };
 }
 
 export function apiMutationOptions<A extends unknown[], T>(client: QueryClient, run: (...args: A) => Promise<ApiResult<T>>, roots: string[]) {

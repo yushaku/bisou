@@ -3,7 +3,7 @@ import { useCallback, useMemo } from "react";
 import type { JournalEntry, JournalPage } from "../../shared/types";
 import { addPage, removeEntry, upsertEntry } from "./journalFeed";
 import { queries } from "./queries";
-import { useQuerySignOut } from "./serverQuery";
+import { isFailed, useQuerySignOut } from "./serverQuery";
 
 export function updateJournalEntry(client: QueryClient, entry: JournalEntry) {
   void client.cancelQueries({ queryKey: ["journal"] });
@@ -28,6 +28,6 @@ export function useJournal(onSignedOut: () => void) {
   const loadMore = useCallback(async () => {
     if (query.hasNextPage && !query.isFetching) await query.fetchNextPage({ cancelRefetch: false });
   }, [query.hasNextPage, query.isFetching, query.fetchNextPage]);
-  return { feed, refresh, loadMore, failed: query.isError, moreFailed: query.isFetchNextPageError, loadingMore: query.isFetchingNextPage,
+  return { feed, refresh, loadMore, failed: isFailed(query), moreFailed: query.isFetchNextPageError, loadingMore: query.isFetchingNextPage,
     saveEntry: (entry: JournalEntry) => updateJournalEntry(client, entry), removeEntry: (id: string) => deleteJournalEntry(client, id) };
 }

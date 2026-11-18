@@ -730,6 +730,7 @@ body .tst-viewport {
   border: 1px solid color-mix(in oklab, var(--box-ink) 18%, var(--box-paper));
   box-shadow: 0 var(--spacing) calc(var(--spacing) * 4) color-mix(in oklab, var(--foreground) 12%, transparent);
 }
+.card-box-body[data-more="true"] { mask-image: linear-gradient(to bottom, var(--foreground) calc(100% - var(--spacing) * 10), transparent); }
 .card-box-deck { position: relative; isolation: isolate; margin: calc(var(--spacing) * 2); }
 .card-box-deck::before, .card-box-deck::after {
   content: "";
