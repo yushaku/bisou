@@ -1,3 +1,4 @@
+import { noop } from "../../../shared/guards";
 import { lazy, Suspense, useImperativeHandle, useState, type Ref } from "react";
 import { useApiMutation } from "@/lib/serverQuery";
 import { toast } from "@/components/ui/ding-toaster";
@@ -11,6 +12,7 @@ import { formatDay, formatTime } from "@/lib/format";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNow } from "@/lib/useNow";
 import { EmptyState } from "./EmptyState";
 import { toPeople } from "./CoupleAvatars";
 import { EntryActions } from "./EntryActions";
@@ -32,6 +34,7 @@ export function NotesSection({
   onClosed?: (entry: JournalEntry) => void;
 }) {
   const { t, locale } = useI18n();
+  const today = vnDay(useNow().getTime());
   const online = useOnline();
   const openNote = useApiMutation(api.openNote, ["notes"]);
   const [opening, setOpening] = useState<string | null>(null),
@@ -192,21 +195,21 @@ export function NotesSection({
       )}
       <EntryActions
         title={t("notes.opened")}
-        entry={detail && { id: detail.id, date: vnDay(Date.now()), photoIds: [] }}
+        entry={detail && { id: detail.id, date: today, photoIds: [] }}
         own={false}
         onClose={() => setDetail(null)}
-        onEdit={() => {}}
-        onDeleted={() => {}}
+        onEdit={noop}
+        onDeleted={noop}
         onSignedOut={onSignedOut}
         detail={detail && <NoteParts note={detail} />}
       />
       <EntryActions
         title={partner.name}
-        entry={received && { id: received.id, date: vnDay(Date.now()), photoIds: [] }}
+        entry={received && { id: received.id, date: today, photoIds: [] }}
         own={false}
         onClose={() => setReceived(null)}
-        onEdit={() => {}}
-        onDeleted={() => {}}
+        onEdit={noop}
+        onDeleted={noop}
         onSignedOut={onSignedOut}
         detail={
           received && (

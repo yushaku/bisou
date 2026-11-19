@@ -111,6 +111,8 @@ function MainApp() {
 
   useEffect(() => {
     let cancelled = false;
+    // A function call, so TypeScript does not assume the flag kept its value across the await below.
+    const isCancelled = () => cancelled;
     void (getBoot()?.me ?? api.me()).then(async (res) => {
       if (cancelled) return;
       const outcome = meOutcome(res, bootCacheNow());
@@ -121,7 +123,7 @@ function MainApp() {
         return;
       }
       if (outcome.wipe) await wipeDeviceData();
-      if (cancelled) return;
+      if (isCancelled()) return;
       const { user, coupleId } = outcome;
       setAuth((previous) =>
         previous.status === "signedIn" && previous.user.id === user.id
@@ -200,8 +202,8 @@ function SignedIn({
   }, [bootCouple, applyCouple]);
 
   useEffect(() => {
-    if (couple === undefined && !bootCouple) void refresh();
-  }, [couple, bootCouple, refresh]);
+    if (couple === undefined && !bootCouple) void api.couple().then(applyCouple);
+  }, [couple, bootCouple, applyCouple]);
 
   // Fetch the other tab chunks once the first frame is out, so a tab switch never waits on one.
   useEffect(() => {

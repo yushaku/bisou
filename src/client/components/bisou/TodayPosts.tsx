@@ -1,3 +1,4 @@
+import { defined, noop } from "../../../shared/guards";
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
 import { Button } from "../ui/button";
@@ -29,7 +30,9 @@ export function TodayPosts({
 
   const posts = feed?.entries.filter((entry) => entry.date === today) ?? [];
   if (posts.length === 0) return null;
-  const people = new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person]));
+  const people = new Map(
+    toPeople(couple.members, user, t).map((person, index) => [defined(couple.members[index]).id, person]),
+  );
   return (
     <section aria-labelledby="today-posts" className="mt-5 flex flex-col gap-3">
       <h2 id="today-posts" className="font-heading text-xl">
@@ -55,7 +58,7 @@ export function TodayPosts({
               <DrawerTitle className="font-heading text-xl">{detail ? formatDay(detail.date, locale) : ""}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={() => {}} />}
+              {detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={noop} />}
             </div>
             <Button variant="ghost" size="lg" onClick={() => setDetailId(null)}>
               {t("common.close")}

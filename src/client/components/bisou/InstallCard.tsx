@@ -21,7 +21,7 @@ export function InstallCard() {
   const [installing, setInstalling] = useState(false);
   const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
   const iphoneSafari =
-    /iPhone/.test(ua) && /Version\/.*Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|DuckDuckGo/.test(ua);
+    ua.includes("iPhone") && /Version\/.*Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA|DuckDuckGo/.test(ua);
 
   useEffect(() => {
     const query = matchMedia("(display-mode: standalone)");

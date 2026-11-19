@@ -25,6 +25,15 @@ function buildId(): string {
   return `${pkg.version}-${commit}-${Date.now().toString(36)}`;
 }
 
+// `pnpm dev` (scripts/dev-seed-garden.mjs) points the Worker at a local config and state directory.
+function localCloudflareOptions() {
+  const configPath = process.env.BISOU_LOCAL_CONFIG;
+  if (!configPath) return undefined;
+  const statePath = process.env.BISOU_LOCAL_STATE;
+  if (!statePath) throw new Error("BISOU_LOCAL_STATE must be set together with BISOU_LOCAL_CONFIG");
+  return { configPath, persistState: { path: statePath }, remoteBindings: false, inspectorPort: false } as const;
+}
+
 export default defineConfig({
   define: { __BISOU_BUILD__: JSON.stringify(buildId()) },
   // `pnpm dev:phone` serves the dev server through a cloudflared quick tunnel.
@@ -39,16 +48,7 @@ export default defineConfig({
     { name: "bisou-palettes", transformIndexHtml: () => themeHead(palettes) },
     react(),
     tailwindcss(),
-    cloudflare(
-      process.env.BISOU_LOCAL_CONFIG
-        ? {
-            configPath: process.env.BISOU_LOCAL_CONFIG,
-            persistState: { path: process.env.BISOU_LOCAL_STATE! },
-            remoteBindings: false,
-            inspectorPort: false,
-          }
-        : undefined,
-    ),
+    cloudflare(localCloudflareOptions()),
     // The PWA plugin only concerns the browser build, not the Worker bundle.
     ...clientOnly(
       VitePWA({

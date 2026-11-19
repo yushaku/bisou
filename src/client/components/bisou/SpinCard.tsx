@@ -1,6 +1,6 @@
 import { useOnline } from "@/lib/useOnline";
 import { Dices, ExternalLink, Gift, RotateCcw } from "lucide-react";
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type SubmitEvent } from "react";
 import type { SpinWish } from "../../../shared/types";
 import { api, photoUrl } from "@/api";
 import { useApiMutation } from "@/lib/serverQuery";
@@ -57,7 +57,7 @@ export function SpinCard({
     return () => clearTimeout(timer);
   }, [retryAt]);
 
-  async function spin(e?: FormEvent) {
+  async function spin(e?: SubmitEvent) {
     e?.preventDefault();
     if (!online) return;
     if (partnerJarEmpty || state.step === "spinning" || claiming || retryAt !== null) return;

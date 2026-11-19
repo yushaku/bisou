@@ -1,3 +1,4 @@
+import { defined } from "../../../shared/guards";
 import { BookHeart, Gift, House, Loader2Icon, Plus, Settings, Sprout, type LucideIcon } from "lucide-react";
 import { toast } from "@/components/ui/ding-toaster";
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
@@ -82,7 +83,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
             return;
         }
       }
-      const touch = event.touches[0]!;
+      const touch = defined(event.touches[0]);
       start = { x: touch.clientX, y: touch.clientY };
     };
     const move = (event: TouchEvent) => {
@@ -91,7 +92,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
         cancel();
         return;
       }
-      const touch = event.touches[0]!;
+      const touch = defined(event.touches[0]);
       const dy = touch.clientY - start.y;
       if (dy <= 0 || Math.abs(touch.clientX - start.x) > dy || !event.cancelable) {
         cancel();

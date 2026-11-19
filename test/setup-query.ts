@@ -2,6 +2,7 @@ import { afterEach, vi } from "vitest";
 import type { QueryKey, UseQueryOptions } from "@tanstack/react-query";
 import type { SetStateAction } from "react";
 import type { ApiResult } from "../src/client/api";
+import { ApiQueryError } from "../src/client/lib/apiQueryError";
 
 // Component tests render on the server or drive React hooks manually. Cache semantics are
 // exercised with real QueryClient/QueryObserver instances in server-query.test.ts.
@@ -34,13 +35,13 @@ vi.mock("../src/client/lib/serverQuery", async (original) => {
         null;
       const refresh = useCallback(async () => {
         try {
-          await testQueryClient.fetchQuery({ ...options, staleTime: 0 });
+          await testQueryClient.query({ ...options, staleTime: 0 });
         } catch (error) {
-          if (error instanceof actual.ApiQueryError && error.status === 401) onSignedOut();
+          if (error instanceof ApiQueryError && error.status === 401) onSignedOut();
         }
       }, [options.queryKey, onSignedOut]);
       useEffect(() => {
-        if (options.enabled !== false) void testQueryClient.fetchQuery(options).catch(() => {});
+        if (options.enabled !== false) void testQueryClient.query(options).catch(() => {});
       }, [options.queryKey]);
       return {
         data,
@@ -67,7 +68,7 @@ vi.mock("../src/client/lib/serverQuery", async (original) => {
               .execute(args),
           };
         } catch (error) {
-          if (error instanceof actual.ApiQueryError) return { ok: false, status: error.status, error: error.error };
+          if (error instanceof ApiQueryError) return { ok: false, status: error.status, error: error.error };
           throw error;
         }
       },
@@ -84,12 +85,12 @@ vi.mock("../src/client/lib/useJournal", async (original) => {
     useJournal: () => {
       const data = testQueryClient.getQueryData(queries.journal.queryKey);
       useEffect(() => {
-        void testQueryClient.fetchInfiniteQuery(queries.journal).catch(() => {});
+        void testQueryClient.infiniteQuery(queries.journal).catch(() => {});
       }, []);
       return {
         feed: data?.pages.reduce(addPage) ?? null,
         refresh: async () => {
-          await testQueryClient.fetchInfiniteQuery({ ...queries.journal, staleTime: 0 });
+          await testQueryClient.infiniteQuery({ ...queries.journal, staleTime: 0 });
         },
         loadMore: async () => {},
         failed: false,

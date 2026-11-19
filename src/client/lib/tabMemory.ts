@@ -11,6 +11,11 @@ export function createTabMemory(): TabMemoryValue {
   return { journalSection: "feed", returnFocus: null, wishesSection: "jar", wishesFilter: "all" };
 }
 
+/** Records navigation state for a later screen. The memory is a shared mutable store kept alive across tabs. */
+export function remember(memory: TabMemoryValue | null, patch: Partial<TabMemoryValue>): void {
+  if (memory) Object.assign(memory, patch);
+}
+
 export const TabMemory = createContext<TabMemoryValue | null>(null);
 
 /* Reset the shared page position on entry; focus restoration remains independent. */

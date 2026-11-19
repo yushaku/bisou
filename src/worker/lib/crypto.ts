@@ -1,15 +1,16 @@
+import { defined } from "../../shared/guards";
 // Web Crypto helpers only: Workers free plan has a 10 ms CPU budget, so no bcrypt/scrypt.
 
 const encoder = new TextEncoder();
 
-export function toHex(bytes: ArrayBuffer | Uint8Array): string {
+function toHex(bytes: ArrayBuffer | Uint8Array): string {
   const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   let out = "";
   for (const b of view) out += b.toString(16).padStart(2, "0");
   return out;
 }
 
-export function fromHex(hex: string): Uint8Array<ArrayBuffer> | null {
+function fromHex(hex: string): Uint8Array<ArrayBuffer> | null {
   if (hex.length % 2 !== 0 || /[^0-9a-f]/i.test(hex)) return null;
   const out = new Uint8Array(hex.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
@@ -33,7 +34,7 @@ export function generateOtpCode(): string {
   const buf = new Uint32Array(1);
   for (;;) {
     crypto.getRandomValues(buf);
-    const n = buf[0]!;
+    const n = defined(buf[0]);
     if (n < limit) return (n % 1_000_000).toString().padStart(6, "0");
   }
 }

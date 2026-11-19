@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/worker/app";
 import { call, paired, resetDb, user, waitForBackground } from "./helpers";
@@ -72,7 +72,7 @@ describe("push subscriptions", () => {
       { ...d.body, journal: 1 },
       { ...d.body, endpoint: "https://evil.test/push" },
       { ...d.body, keys: { ...d.body.keys, auth: "abcd" } },
-      { ...d.body, keys: { ...d.body.keys, p256dh: "BA" + "A".repeat(85) } },
+      { ...d.body, keys: { ...d.body.keys, p256dh: `BA${"A".repeat(85)}` } },
     ]) {
       const res = await call("PUT", "/api/push/subscription", { cookie: a.cookie, body });
       expect(res.status).toBe(400);

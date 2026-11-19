@@ -1,5 +1,5 @@
 import { useOnline } from "@/lib/useOnline";
-import { useId, useState, type FormEvent } from "react";
+import { useId, useState, type SubmitEvent } from "react";
 import { X } from "lucide-react";
 import { toast } from "@/components/ui/ding-toaster";
 import { toDayString } from "../../../shared/days";
@@ -75,7 +75,7 @@ export function EventSheet({
     }
   };
 
-  async function save(e: FormEvent) {
+  async function save(e: SubmitEvent) {
     e.preventDefault();
     if (!online || "error" in parsed || saving) return;
     setSaving(true);
@@ -97,7 +97,7 @@ export function EventSheet({
     if (!online || !event || saving) return;
     setSaving(true);
     const res = await api.deleteEvent(event.id);
-    if (res.ok || (!res.ok && res.error?.error === "not_found")) {
+    if (res.ok || res.error?.error === "not_found") {
       const refreshed = res.ok ? res : await api.couple();
       if (refreshed.ok) onCouple(refreshed.data.couple);
       toast.success(t("events.deleted"));

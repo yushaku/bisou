@@ -2,7 +2,8 @@ import { useEffect, useId, useState } from "react";
 import { Heart, LockKeyhole, PencilLine, Star } from "lucide-react";
 import { cardById, DECKS, type ResponseChoice, type GardenCardState, type GardenState } from "../../../shared/garden";
 import { api } from "../../api";
-import { ApiQueryError, useApiMutation } from "../../lib/serverQuery";
+import { ApiQueryError } from "../../lib/apiQueryError";
+import { useApiMutation } from "../../lib/serverQuery";
 import { queries } from "../../lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { useI18n } from "../../i18n";
@@ -97,7 +98,10 @@ export function GardenCard({
         : answer(card.cardId, choice ? { choice } : { text }));
     setBusy(false);
     if (!result.ok) {
-      if (result.status === 401) return onSignedOut();
+      if (result.status === 401) {
+        onSignedOut();
+        return;
+      }
       setError(
         t(
           result.error?.error === "answer_too_long"
@@ -120,7 +124,10 @@ export function GardenCard({
     const result = await (card.starred ? unstar(card.cardId) : star(card.cardId));
     setBusy(false);
     if (!result.ok) {
-      if (result.status === 401) return onSignedOut();
+      if (result.status === 401) {
+        onSignedOut();
+        return;
+      }
       setError(t("error.generic"));
       return;
     }
@@ -137,7 +144,7 @@ export function GardenCard({
     }
     if (definition?.kind === "decision") return;
     try {
-      const state = await client.fetchQuery({ ...queries.garden, staleTime: 0 });
+      const state = await client.query({ ...queries.garden, staleTime: 0 });
       if (state.today?.cardId === card.cardId && card.flippedDay === state.day) setWatering(state);
     } catch (error) {
       if (error instanceof ApiQueryError && error.status === 401) onSignedOut();

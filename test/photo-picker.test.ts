@@ -1,3 +1,4 @@
+import type { EffectCallback } from "react";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { PhotoPicker } from "../src/client/components/bisou/PhotoPicker";
@@ -9,8 +10,8 @@ import type { QueuedPhoto, useUploadQueue } from "../src/client/components/bisou
 const hooks = vi.hoisted(() => ({
   values: [] as unknown[],
   index: 0,
-  ownership: [] as (() => void | (() => void))[],
-  effects: [] as (() => void | (() => void))[],
+  ownership: [] as EffectCallback[],
+  effects: [] as EffectCallback[],
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -29,10 +30,10 @@ vi.mock("react", async (original) => ({
       },
     ];
   },
-  useInsertionEffect: (effect: () => void | (() => void)) => {
+  useInsertionEffect: (effect: EffectCallback) => {
     hooks.ownership.push(effect);
   },
-  useEffect: (effect: () => void | (() => void)) => {
+  useEffect: (effect: EffectCallback) => {
     hooks.effects.push(effect);
   },
 }));
@@ -57,7 +58,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-type Props = {
+interface Props {
   request?: CropRequest | null;
   children?: ReactNode;
   role?: string;
@@ -65,7 +66,7 @@ type Props = {
   onChange?: (event: { target: { files: File[]; value: string } }) => void;
   type?: string;
   "aria-label"?: string;
-};
+}
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -171,7 +172,7 @@ it("retry-all uses the current failures after a failed photo is removed", () => 
 });
 
 it("a crop survives hiding the tab and can finish after returning", async () => {
-  vi.mocked(decodePhoto).mockResolvedValue({ close: vi.fn(), width: 100, height: 100 } as ImageBitmap);
+  vi.mocked(decodePhoto).mockResolvedValue({ close: vi.fn(), width: 100, height: 100 });
   const renditions = { full: new Blob(["full"]), thumb: new Blob(["thumb"]) };
   vi.mocked(renderSquare).mockResolvedValue(renditions);
   const revoke = vi.spyOn(URL, "revokeObjectURL");

@@ -21,8 +21,8 @@ it("shares a pending refresh across tabs while showing the cached jar", async ()
     const { jar } = useWishJar(vi.fn());
     return h("span", null, jar?.partnerJarEmpty ? "empty" : "ready");
   }
-  const home = testQueryClient.fetchQuery({ ...queries.wishes, staleTime: 0 });
-  const wishes = testQueryClient.fetchQuery({ ...queries.wishes, staleTime: 0 });
+  const home = testQueryClient.query({ ...queries.wishes, staleTime: 0 });
+  const wishes = testQueryClient.query({ ...queries.wishes, staleTime: 0 });
   expect(renderToString(h(Tab))).toContain("empty");
   expect(request).toHaveBeenCalledTimes(1);
   resolve({ ok: true, data: fresh });

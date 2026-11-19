@@ -40,7 +40,7 @@ export const BACKGROUNDS = [
   { id: "dots", labelKey: "bg.dots" },
   { id: "hearts", labelKey: "bg.hearts" },
 ] as const satisfies readonly { id: string; labelKey: MessageKey }[];
-export type BackgroundId = (typeof BACKGROUNDS)[number]["id"];
+type BackgroundId = (typeof BACKGROUNDS)[number]["id"];
 
 /* Personalities share the same components; values live in personalities.css. */
 export const STYLES = [
@@ -48,7 +48,7 @@ export const STYLES = [
   { id: "soft", labelKey: "style.soft" },
   { id: "sticker", labelKey: "style.sticker" },
 ] as const satisfies readonly { id: string; labelKey: MessageKey }[];
-export type StyleId = (typeof STYLES)[number]["id"];
+type StyleId = (typeof STYLES)[number]["id"];
 
 export interface ThemePrefs {
   mode: Mode;

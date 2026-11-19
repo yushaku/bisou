@@ -1,18 +1,10 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import { defined } from "../../shared/guards";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import type { User } from "../../shared/types";
 import { AppShell, type TabId } from "../components/bisou/AppShell";
 import { useI18n, type MessageKey } from "../i18n";
-import { attachTabScroll, TabMemory } from "../lib/tabMemory";
+import { attachTabScroll, remember, TabMemory } from "../lib/tabMemory";
 import { useTabNavigation } from "../lib/useTabNavigation";
 
 export interface SessionProps {
@@ -39,7 +31,7 @@ type Refresh = (() => void | Promise<void>) | undefined;
  * Set by TabFrame. Inside it, a tab screen's SignedInShell renders only its content: the header,
  * tab bar and pull-to-refresh stay mounted across tab switches and just follow the active tab.
  */
-const TabFrameContext = createContext<RefObject<Refresh> | null>(null);
+const TabFrameContext = createContext<((refresh: Refresh) => () => void) | null>(null);
 
 function useScrollMemory(tab: TabId | undefined) {
   const memory = useContext(TabMemory);
@@ -57,12 +49,18 @@ export function TabFrame({ tab, children }: { tab: TabId; children: ReactNode })
   const memory = useScrollMemory(tab);
   const refresh = useRef<Refresh>(undefined);
   const pull = useCallback(() => refresh.current?.(), []);
+  const register = useCallback((next: Refresh) => {
+    refresh.current = next;
+    return () => {
+      if (refresh.current === next) refresh.current = undefined;
+    };
+  }, []);
   return (
-    <TabFrameContext value={refresh}>
+    <TabFrameContext value={register}>
       <AppShell
-        title={t(TAB_TITLES[tab]!)}
+        title={t(defined(TAB_TITLES[tab]))}
         onOpenSettings={() => {
-          if (memory) memory.returnFocus = "settings-button";
+          remember(memory, { returnFocus: "settings-button" });
           navigate("/settings", { state: { from: location } });
         }}
         onRefresh={pull}
@@ -77,19 +75,14 @@ export function TabFrame({ tab, children }: { tab: TabId; children: ReactNode })
 /* A tab screen inside TabFrame: registers its refresh with the frame while visible. */
 function TabContent({
   onRefresh,
-  refresh,
+  register,
   children,
 }: {
   onRefresh: Refresh;
-  refresh: RefObject<Refresh>;
+  register: (refresh: Refresh) => () => void;
   children: ReactNode;
 }) {
-  useEffect(() => {
-    refresh.current = onRefresh;
-    return () => {
-      if (refresh.current === onRefresh) refresh.current = undefined;
-    };
-  });
+  useEffect(() => register(onRefresh));
   return children;
 }
 
@@ -101,7 +94,7 @@ export function SignedInShell({
   const frame = useContext(TabFrameContext);
   if (frame && tab)
     return (
-      <TabContent onRefresh={onRefresh} refresh={frame}>
+      <TabContent onRefresh={onRefresh} register={frame}>
         {children}
       </TabContent>
     );
@@ -131,7 +124,7 @@ function StandaloneShell({
     <AppShell
       title={titleKey ? t(titleKey) : undefined}
       onOpenSettings={() => {
-        if (memory) memory.returnFocus = "settings-button";
+        remember(memory, { returnFocus: "settings-button" });
         navigate("/settings", { state: { from: location } });
       }}
       onRefresh={onRefresh}

@@ -1,3 +1,4 @@
+import { defined } from "../../../shared/guards";
 import { useId } from "react";
 import { DECKS } from "../../../shared/garden";
 import { useI18n } from "../../i18n";
@@ -22,7 +23,7 @@ export function Plant({ deckId, stage }: { deckId: string; stage: number }) {
     <svg
       viewBox="0 0 120 170"
       role="img"
-      aria-label={DECKS[species]!.name[locale]}
+      aria-label={defined(DECKS[species]).name[locale]}
       className="garden-plant h-36 w-full"
       data-stage={stage}
       data-species={deckId}

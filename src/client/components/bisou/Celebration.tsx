@@ -8,7 +8,7 @@ import { useI18n } from "@/i18n";
 const TOKENS = ["--primary", "--secondary", "--warning", "--success", "--info"];
 
 /* Confetti in the active theme's colours; nothing moves when the user prefers reduced motion. */
-export function fireConfetti() {
+function fireConfetti() {
   if (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const style = getComputedStyle(document.documentElement);
   const colors = TOKENS.map((name) => style.getPropertyValue(name).trim()).filter((c) => c.startsWith("#"));

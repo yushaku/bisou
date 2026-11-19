@@ -7,7 +7,7 @@ import { cardById, DECKS, type GardenCardState } from "../../../shared/garden";
 import type { Couple, User } from "../../../shared/types";
 import { useI18n } from "../../i18n";
 import { gardenQuestion, starredHere } from "../../lib/garden";
-import { TabMemory } from "../../lib/tabMemory";
+import { remember, TabMemory } from "../../lib/tabMemory";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
@@ -16,7 +16,11 @@ import { AnswerSlots } from "./AnswerSlots";
 import { EmptyState } from "./EmptyState";
 import { GardenCard } from "./GardenCard";
 
-type Props = { couple: Couple; user: User; onSignedOut: () => void };
+interface Props {
+  couple: Couple;
+  user: User;
+  onSignedOut: () => void;
+}
 
 export function StarredCard({
   card,
@@ -71,9 +75,8 @@ export function StarredBlock({ couple, user, onSignedOut, full = false }: Props 
   }, []);
   const shown = starredHere(cards ?? [], scope);
   const active = shown.find((card) => card.cardId === openId);
-  useEffect(() => {
-    if (openId && !active) setOpenId(null);
-  }, [openId, active]);
+  // The open card left the list (answered elsewhere, say): close its sheet.
+  if (openId && !active) setOpenId(null);
   const myName = user.displayName?.trim() || t("garden.me");
   const partnerName =
     couple.members.find((member) => member.id !== user.id)?.displayName?.trim() || t("garden.partner");
@@ -95,9 +98,7 @@ export function StarredBlock({ couple, user, onSignedOut, full = false }: Props 
                 href="/stars"
                 state={{ from: "/" }}
                 onClick={() => {
-                  if (memory) {
-                    memory.returnFocus = "stars-see-all";
-                  }
+                  remember(memory, { returnFocus: "stars-see-all" });
                 }}
               >
                 {t("home.seeAll")}

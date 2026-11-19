@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { Link } from "wouter";
 import type { CardBoxSummary } from "../../../shared/cardBox";
 import { useI18n } from "../../i18n";
-import { TabMemory } from "../../lib/tabMemory";
+import { remember, TabMemory } from "../../lib/tabMemory";
 import { useCardBoxes } from "../../lib/useCardBoxes";
 import { cardBoxLoadMessage } from "../../lib/cardBox";
 import { useOnline } from "../../lib/useOnline";
@@ -24,9 +24,7 @@ export function CardBoxRows({ boxes, from, compact }: { boxes: CardBoxSummary[];
             href={`/boxes/${box.id}`}
             state={{ from }}
             onClick={() => {
-              if (memory && from === "/") {
-                memory.returnFocus = `card-box-${box.id}`;
-              }
+              if (from === "/") remember(memory, { returnFocus: `card-box-${box.id}` });
             }}
             className="relative isolate flex h-64 min-h-11 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground focus-visible:outline-2 focus-visible:outline-ring"
           >
@@ -56,11 +54,9 @@ export function CardBoxRows({ boxes, from, compact }: { boxes: CardBoxSummary[];
             <span className="liquid-glass mt-auto flex shrink-0 flex-col gap-2 rounded-t-xl border-x-0 border-b-0 p-3">
               <span className="truncate font-heading text-base leading-snug">{box.name[locale]}</span>
               {!compact && <span className="line-clamp-2 text-sm text-card-foreground">{box.description[locale]}</span>}
-              {box.cardCount != null && (
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {t(box.cardCount === 1 ? "cardBox.cardCountOne" : "cardBox.cardCount", { count: box.cardCount })}
-                </span>
-              )}
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {t(box.cardCount === 1 ? "cardBox.cardCountOne" : "cardBox.cardCount", { count: box.cardCount })}
+              </span>
             </span>
           </Link>
         </li>
@@ -117,9 +113,7 @@ export function CardBoxBlock({ onSignedOut, scope }: { onSignedOut: () => void; 
             href="/boxes"
             state={{ from: "/" }}
             onClick={() => {
-              if (memory) {
-                memory.returnFocus = "boxes-see-all";
-              }
+              remember(memory, { returnFocus: "boxes-see-all" });
             }}
           >
             {t("cardBox.seeAll")}

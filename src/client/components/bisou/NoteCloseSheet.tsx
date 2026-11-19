@@ -113,7 +113,10 @@ export function NoteCloseSheet({
       onClosed(res.data.entry);
       return;
     }
-    if (res.status === 401) return onSignedOut();
+    if (res.status === 401) {
+      onSignedOut();
+      return;
+    }
     setError(t(res.error?.error === "note_empty" ? "notes.messageRequired" : "notes.saveError"));
   }
   return (

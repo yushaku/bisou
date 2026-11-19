@@ -45,6 +45,7 @@ export function GardenStageView({
   onSignedOut: () => void;
 }) {
   const { t } = useI18n();
+  const selectedLevelId = levels.selectedLevelId;
   const state = gardenStageState(stageId, levels);
   const rank = levelRank(stageId);
   const furthest = levels.furthestLevelId ? levelRank(levels.furthestLevelId) : -1;
@@ -71,12 +72,12 @@ export function GardenStageView({
         </Button>
       </div>
 
-      {levels.selectedLevelId && !current && (
+      {selectedLevelId && !current && (
         <div className="garden-view-current">
           <span>
-            {t("garden.currentStage")}: {t(`level.${levels.selectedLevelId}`)}
+            {t("garden.currentStage")}: {t(`level.${selectedLevelId}`)}
           </span>
-          <Button variant="ghost" size="xs" onClick={() => onSelectStage(levels.selectedLevelId!)}>
+          <Button variant="ghost" size="xs" onClick={() => onSelectStage(selectedLevelId)}>
             {t("garden.viewCurrentStage")}
           </Button>
         </div>

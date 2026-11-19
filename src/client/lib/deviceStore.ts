@@ -18,25 +18,28 @@ const OPEN_TIMEOUT_MS = 1500;
 function request<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(req.error ?? new DOMException("Request failed", "UnknownError"));
   });
 }
 
 function transactionDone(tx: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error);
+    tx.onerror = () => reject(tx.error ?? new DOMException("Transaction failed", "UnknownError"));
+    tx.onabort = () => reject(tx.error ?? new DOMException("Transaction aborted", "AbortError"));
   });
 }
 
-export function indexedDbBackend(factory: () => IDBFactory | undefined = () => globalThis.indexedDB): KeyValueBackend {
+function indexedDbBackend(factory: () => IDBFactory | undefined = () => globalThis.indexedDB): KeyValueBackend {
   let opened: Promise<IDBDatabase | null> | undefined;
   const open = () =>
     (opened ??= new Promise<IDBDatabase | null>((resolve) => {
       try {
         const idb = factory();
-        if (!idb) return resolve(null);
+        if (!idb) {
+          resolve(null);
+          return;
+        }
         const timer = setTimeout(() => resolve(null), OPEN_TIMEOUT_MS);
         const req = idb.open(DB_NAME, 1);
         req.onupgradeneeded = () => req.result.createObjectStore(STORE);
@@ -76,7 +79,7 @@ export function indexedDbBackend(factory: () => IDBFactory | undefined = () => g
   return {
     get: (key) =>
       run("readonly", undefined, async (s) => {
-        const v = await request(s.get(key));
+        const v = await request<unknown>(s.get(key));
         return typeof v === "string" ? v : undefined;
       }),
     set: (key, value) =>
@@ -102,16 +105,19 @@ export function memoryBackend(): KeyValueBackend & { data: Map<string, string> }
   const data = new Map<string, string>();
   return {
     data,
-    get: async (key) => data.get(key),
-    set: async (key, value) => {
+    get: (key) => Promise.resolve(data.get(key)),
+    set: (key, value) => {
       data.set(key, value);
+      return Promise.resolve();
     },
-    del: async (key) => {
+    del: (key) => {
       data.delete(key);
+      return Promise.resolve();
     },
-    keys: async () => [...data.keys()],
-    clear: async () => {
+    keys: () => Promise.resolve([...data.keys()]),
+    clear: () => {
       data.clear();
+      return Promise.resolve();
     },
   };
 }

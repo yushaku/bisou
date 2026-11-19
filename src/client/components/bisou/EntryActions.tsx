@@ -1,6 +1,6 @@
 import { type ReactNode, useId } from "react";
 import { PencilLine, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { JournalEntry } from "../../../shared/types";
 import { api } from "@/api";
 import { useApiMutation } from "@/lib/serverQuery";
@@ -52,13 +52,13 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
   const { t, locale } = useI18n();
   const online = useOnline();
   const offlineId = useId();
-  // The sheet still shows its entry while it animates closed.
-  const last = useRef(entry);
-  if (entry) last.current = entry;
-  const shown = entry ?? last.current;
   const [target, setTarget] = useState<T | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The sheet still shows its entry while it animates closed.
+  const [last, setLast] = useState(entry);
+  if (entry && entry !== last) setLast(entry);
+  const shown = entry ?? last;
 
   async function remove(e: T) {
     if (!online || deleting) return;
@@ -72,7 +72,10 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
       onDeleted(e.id);
       return;
     }
-    if (res.status === 401) return onSignedOut();
+    if (res.status === 401) {
+      onSignedOut();
+      return;
+    }
     setError(t("entry.deleteError"));
   }
 

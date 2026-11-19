@@ -39,6 +39,7 @@ export function useUploadQueue(existing: string[] = []) {
       if (!renditions) continue;
       const controller = new AbortController();
       aborts.current.set(id, controller);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- this effect is the upload worker: starting a transfer marks it uploading
       patch(id, { state: "uploading", progress: 0, error: undefined });
       void uploadPhoto(renditions, (progress) => patch(id, { progress }), controller.signal).then((res) => {
         aborts.current.delete(id);

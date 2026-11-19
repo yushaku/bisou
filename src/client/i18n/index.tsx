@@ -6,14 +6,16 @@ import { vi, type MessageKey, type Messages } from "./vi";
 const dictionaries: Record<Locale, Messages> = { vi, en };
 const STORAGE_KEY = "bisou.locale";
 
-export function detectLocale(): Locale {
+function detectLocale(): Locale {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (isLocale(stored)) return stored;
   } catch {
     // localStorage can be unavailable (private mode); fall back to the browser language.
   }
-  const lang = (navigator.languages?.[0] ?? navigator.language ?? "").toLowerCase();
+  // Older browsers lack `languages`, whatever the DOM types say.
+  const nav: Partial<Navigator> = navigator;
+  const lang = (nav.languages?.[0] ?? nav.language ?? "").toLowerCase();
   return lang.startsWith("vi") ? "vi" : "en";
 }
 

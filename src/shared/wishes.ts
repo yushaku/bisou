@@ -1,8 +1,8 @@
 import { CONTROL_CHARACTERS } from "./text";
 import type { ApiErrorCode, Locale, WishInput, WishPriority } from "./types";
 
-export const WISH_TITLE_MAX = 100;
-export const WISH_LINK_MAX = 2048;
+const WISH_TITLE_MAX = 100;
+const WISH_LINK_MAX = 2048;
 export const SPIN_MAX_PER_DAY = 20;
 
 export function validateWish(

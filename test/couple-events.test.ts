@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Couple } from "../src/shared/types";
 import { call, explain, paired, resetDb, user } from "./helpers";

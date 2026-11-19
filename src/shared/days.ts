@@ -7,10 +7,10 @@ const DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DAY_MS = 86_400_000;
 
 /** UTC+14 is the earliest time zone to enter a new calendar day. */
-export const MAX_UTC_OFFSET = 14 * 60 * 60 * 1000;
+const MAX_UTC_OFFSET = 14 * 60 * 60 * 1000;
 
 /** Earliest accepted start date; guards against typos such as year 0202. */
-export const MIN_DAY = "1900-01-01";
+const MIN_DAY = "1900-01-01";
 
 function parts(day: string): [number, number, number] | null {
   const m = DAY_RE.exec(day);
@@ -18,7 +18,7 @@ function parts(day: string): [number, number, number] | null {
   return [Number(m[1]), Number(m[2]), Number(m[3])];
 }
 
-export function isLeapYear(year: number): boolean {
+function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
 
@@ -64,7 +64,7 @@ export function latestDay(nowMs: number): string {
 }
 
 /** Days since 1970-01-01 (timezone free). */
-export function dayNumber(day: string): number {
+function dayNumber(day: string): number {
   const p = parts(day);
   if (!p) throw new Error(`invalid day: ${day}`);
   return Math.round(Date.UTC(p[0], p[1] - 1, p[2]) / DAY_MS);
@@ -105,7 +105,7 @@ export type Milestone =
   | { kind: "anniversary"; years: number; date: string; daysLeft: number };
 
 /** Day 100, 200, ... */
-export const MILESTONE_STEP = 100;
+const MILESTONE_STEP = 100;
 
 /**
  * The nearest milestone on or after today: every 100th day (counted inclusively) or a

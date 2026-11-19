@@ -6,7 +6,7 @@ export function pushSupport(): "ok" | "needsInstall" | "unsupported" {
   if (typeof navigator === "undefined") return "unsupported";
   const ios =
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    (navigator.userAgent.includes("Macintosh") && navigator.maxTouchPoints > 1);
   if (ios && !isStandalone()) return "needsInstall";
   return "serviceWorker" in navigator && typeof PushManager !== "undefined" && typeof Notification !== "undefined"
     ? "ok"

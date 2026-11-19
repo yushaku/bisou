@@ -6,7 +6,7 @@ import { toDayString } from "../../shared/days";
 import { upcomingEvents } from "../../shared/events";
 import { UpcomingCard } from "../components/bisou/EventRow";
 import { Button } from "../components/ui/button";
-import { TabMemory } from "../lib/tabMemory";
+import { remember, TabMemory } from "../lib/tabMemory";
 import { useCreateRequest, useTabNavigation } from "../lib/useTabNavigation";
 import { useNow } from "../lib/useNow";
 import { useNotes } from "../lib/useNotes";
@@ -96,9 +96,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
         <NotesInbox
           count={waitingCount(lists)}
           onOpen={() => {
-            if (memory) {
-              memory.journalSection = "notes";
-            }
+            remember(memory, { journalSection: "notes" });
             navigation.onSelect("journal");
           }}
         />
@@ -125,9 +123,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
               href="/events"
               state={{ from: "/" }}
               onClick={() => {
-                if (memory) {
-                  memory.returnFocus = "events-see-all";
-                }
+                remember(memory, { returnFocus: "events-see-all" });
               }}
             >
               {t("home.seeAll")}

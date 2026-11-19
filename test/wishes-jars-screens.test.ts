@@ -214,7 +214,7 @@ it.each([
   const memory = createTabMemory();
   memory.notes = {
     fromMe: [],
-    toMe: Array.from({ length: count as number }, (_, i) => ({ id: String(i), state: "waiting" as const })),
+    toMe: Array.from({ length: count }, (_, i) => ({ id: String(i), state: "waiting" as const })),
   };
   const html = renderToString(
     h(Router, {
@@ -290,7 +290,7 @@ it.each([
   expect(html.match(/line-clamp-2/g)).toHaveLength(4);
   expect(html).toContain("line-clamp-3");
   expect(html).not.toContain('data-seal="broken"');
-  const header = html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? "";
+  const header = /<header[\s\S]*?<\/header>/.exec(html)?.[0] ?? "";
   expect(header).toMatch(new RegExp(`data-slot="badge"[^>]*>${locale === "vi" ? "Lời nhắn nhỏ" : "Kind note"}<`));
   expect(header.indexOf('data-slot="badge"')).toBeGreaterThan(header.indexOf("tabular-nums"));
   expect(html).not.toContain("lucide-mailbox");

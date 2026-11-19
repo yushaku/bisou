@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { Hono } from "hono";
 import type { AppEnv } from "../env";
 import { findMembership } from "../lib/couples";
@@ -26,5 +27,5 @@ cardBoxes.post("/:boxId/unlock", async (c) => {
     .bind(c.get("coupleId"), boxId, Date.now())
     .run();
   c.get("unlocked").add(boxId);
-  return c.json(boxDetail(boxId, c.get("unlocked"))!);
+  return c.json(defined(boxDetail(boxId, c.get("unlocked"))));
 });

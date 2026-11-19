@@ -40,7 +40,7 @@ it("wishes AC15 (R27): labels only a confirmed empty jar, keeping loading and er
   const empty = render(true);
   expect(empty).toContain('aria-disabled="true"');
   expect(empty).toContain('aria-label="Hũ của Bình, quay quà"');
-  const description = empty.match(/aria-describedby="([^"]+)"/)?.[1];
+  const description = /aria-describedby="([^"]+)"/.exec(empty)?.[1];
   expect(description).toBeDefined();
   expect(empty).toContain(`id="${description}"`);
   expect(empty).toMatch(new RegExp(`<span id="${description}"[^>]*>Chưa bỏ điều ước nào</span>`));

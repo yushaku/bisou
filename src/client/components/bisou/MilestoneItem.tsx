@@ -4,7 +4,7 @@ import { formatDay } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /* Icons a milestone can carry; stored by name so the data stays plain. */
-export const MILESTONE_ICONS = {
+const MILESTONE_ICONS = {
   heart: Heart,
   place: MapPin,
   trip: Plane,
@@ -13,7 +13,7 @@ export const MILESTONE_ICONS = {
   birthday: Cake,
   spark: Sparkles,
 } satisfies Record<string, LucideIcon>;
-export type MilestoneIcon = keyof typeof MILESTONE_ICONS;
+type MilestoneIcon = keyof typeof MILESTONE_ICONS;
 
 export interface Milestone {
   id: string;

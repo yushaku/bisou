@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useJournal } from "../lib/useJournal";
@@ -19,7 +20,7 @@ import { useI18n } from "../i18n";
 import { formatDay } from "../lib/format";
 import { groupByDay } from "../lib/journalFeed";
 import { toCard } from "../lib/journalCard";
-import { TabMemory } from "../lib/tabMemory";
+import { remember, TabMemory } from "../lib/tabMemory";
 import { useCreateRequest } from "../lib/useTabNavigation";
 import { useOnline } from "../lib/useOnline";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
@@ -50,10 +51,11 @@ export function Journal({ couple, ...session }: JournalProps) {
       : (memory?.journalSection ?? "feed"),
   );
   useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- runs again each time Activity reveals the tab, to pick up the section Home asked for
     if (memory?.journalSection === "notes") setSection("notes");
   }, [memory]);
   useEffect(() => {
-    if (memory) memory.journalSection = section;
+    remember(memory, { journalSection: section });
     const url = new URL(window.location.href);
     if (url.searchParams.get("section") === "notes") {
       url.searchParams.delete("section");
@@ -80,7 +82,8 @@ export function Journal({ couple, ...session }: JournalProps) {
 
   // Creator first, as on Home, so each partner keeps one tint everywhere.
   const people = useMemo(
-    () => new Map(toPeople(couple.members, user, t).map((person, index) => [couple.members[index]!.id, person])),
+    () =>
+      new Map(toPeople(couple.members, user, t).map((person, index) => [defined(couple.members[index]).id, person])),
     [couple.members, user, t],
   );
   const partner = couple.members.find((m) => m.id !== user.id);
@@ -96,16 +99,16 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [composing, setComposing] = useState(false);
   // Stays mounted after the first open so the sheet can animate closed.
   const [composeLoaded, setComposeLoaded] = useState(false);
-  const [focusId, setFocusId] = useState<string | null>(null);
+  // Entry to scroll to and focus once it shows in the feed.
+  const focusId = useRef<string | null>(null);
   // Entry being edited in the sheet; null writes a new one.
   const [editing, setEditing] = useState<JournalEntry | null>(null);
   // Entry whose actions are open.
   const [acting, setActing] = useState<JournalEntry | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const detail = feed?.entries.find((e) => e.id === detailId);
-  useEffect(() => {
-    if (!detail) setDetailId(null);
-  }, [detail]);
+  // The open entry left the feed (deleted on the other phone): close its sheet.
+  if (detailId && !detail) setDetailId(null);
   const [closedEditing, setClosedEditing] = useState<
     (JournalEntry & { note: NonNullable<JournalEntry["note"]> }) | null
   >(null);
@@ -148,17 +151,18 @@ export function Journal({ couple, ...session }: JournalProps) {
   // A saved entry joins the shared feed in place; the partner sees it on their next refresh.
   const onSaved = (entry: JournalEntry) => {
     saveEntry(entry);
-    setFocusId(entry.id);
+    focusId.current = entry.id;
     toast.success(t("compose.saved", { day: formatDay(entry.date, locale) }));
   };
 
   useEffect(() => {
-    if (!focusId) return;
-    const el = document.getElementById(`entry-${focusId}`);
+    const id = focusId.current;
+    if (!id) return;
+    const el = document.getElementById(`entry-${id}`);
     el?.scrollIntoView({ block: "center" });
     el?.focus({ preventScroll: true });
-    setFocusId(null);
-  }, [focusId, feed]);
+    focusId.current = null;
+  }, [feed]);
 
   const pullRefresh = useCallback(async () => {
     await Promise.all([refresh(), section === "notes" ? notesRef.current?.refresh() : undefined]);
@@ -190,7 +194,7 @@ export function Journal({ couple, ...session }: JournalProps) {
         onValueChange={(value) => {
           const next = value === "notes" ? "notes" : "feed";
           setSection(next);
-          if (memory) memory.journalSection = next;
+          remember(memory, { journalSection: next });
         }}
       >
         <TabsList className="mb-4 w-full">
@@ -244,7 +248,7 @@ export function Journal({ couple, ...session }: JournalProps) {
             />
           )}
 
-          {feed && feed.entries.length === 0 && (
+          {feed?.entries.length === 0 && (
             <EmptyState
               title={t("journal.emptyTitle")}
               description={t("journal.emptyBody")}
@@ -260,7 +264,7 @@ export function Journal({ couple, ...session }: JournalProps) {
                     <time dateTime={group.date}>{formatDay(group.date, locale)}</time>
                   </h2>
                   {group.entries.map((e) => {
-                    const card = cards.get(e.id)!;
+                    const card = defined(cards.get(e.id));
                     return (
                       <EntryCard
                         key={e.id}
@@ -321,11 +325,12 @@ export function Journal({ couple, ...session }: JournalProps) {
 
           <PhotoViewer
             photos={
-              viewed &&
-              viewed.map((id, i) => ({
-                src: photoUrl(id, "full"),
-                alt: t("entry.photo", { index: i + 1, count: viewed.length }),
-              }))
+              viewed
+                ? viewed.map((id, i) => ({
+                    src: photoUrl(id, "full"),
+                    alt: t("entry.photo", { index: i + 1, count: viewed.length }),
+                  }))
+                : null
             }
             index={viewer?.index ?? 0}
             onIndex={(index) => setViewer((v) => v && { ...v, index })}

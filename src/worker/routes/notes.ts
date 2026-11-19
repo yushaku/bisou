@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { vnDay } from "../../shared/days";
 import { notifyNote } from "../lib/notify";
 import { entriesWithPhotos, findEntry } from "../lib/journal";
@@ -30,7 +31,7 @@ const save: Handler<NoteEnv> = async (c) => {
     couple = c.get("noteCouple"),
     now = Date.now();
   const updating = c.req.method === "PUT";
-  const id = updating ? c.req.param("id")! : crypto.randomUUID();
+  const id = updating ? defined(c.req.param("id")) : crypto.randomUUID();
   // Check ownership before validation so a hidden id behaves like a missing id even with invalid input.
   const current = updating
     ? await db
@@ -39,7 +40,7 @@ const save: Handler<NoteEnv> = async (c) => {
         .first<NoteRow>()
     : null;
   if (updating && !current) return c.json({ error: "not_found" }, 404);
-  const raw = await c.req.json().catch(() => null);
+  const raw: unknown = await c.req.json().catch(() => null);
   const parsed = validateNote(raw);
   if ("error" in parsed) return c.json(parsed, 400);
   const delivery = validateNoteDelivery(raw, now, !updating);
@@ -153,9 +154,9 @@ notes.post("/:id/close", limitBody, async (c) => {
     db.prepare(CLOSE_NOTE_SQL).bind(parsed.input.line, now, now, id, user, couple),
     db.prepare(CLOSE_ENTRY_SQL).bind(entryId, vnDay(now), now, now, id, user, couple, id),
   ]);
-  if (!closed!.meta.changes) return c.json({ error: "not_found" }, 404);
+  if (!defined(closed).meta.changes) return c.json({ error: "not_found" }, 404);
   const row = await findEntry(db, entryId, user);
-  const [entry] = await entriesWithPhotos(db, [row!]);
+  const [entry] = await entriesWithPhotos(db, [defined(row)]);
   return c.json({ entry }, 201);
 });
 
@@ -182,7 +183,7 @@ notes.put("/:id/closed", limitBody, async (c) => {
       .prepare("UPDATE journal_entries SET entry_date = ?, updated_at = ? WHERE note_id = ? AND couple_id = ?")
       .bind(date, now, id, couple),
   ]);
-  if (!updated!.meta.changes) return c.json({ error: "not_found" }, 404);
+  if (!defined(updated).meta.changes) return c.json({ error: "not_found" }, 404);
   const row = await db
     .prepare("SELECT id FROM journal_entries WHERE note_id = ? AND couple_id = ?")
     .bind(id, couple)

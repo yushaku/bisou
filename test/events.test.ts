@@ -89,7 +89,7 @@ describe("upcoming events", () => {
     ["2027-02-01", "2027-02-28", 3],
     ["2028-02-01", "2028-02-29", 4],
   ])("events AC7 R5: leap birthday and anniversary from %s fall on %s", (today, date, years) => {
-    const events = upcomingEvents("2024-02-29", [{ name: "An", birthDate: "2024-02-29" }], String(today));
+    const events = upcomingEvents("2024-02-29", [{ name: "An", birthDate: "2024-02-29" }], today);
     expect(events.filter((e) => e.kind === "anniversary" || e.kind === "birthday")).toEqual([
       expect.objectContaining({ kind: "anniversary", date, years }),
       expect.objectContaining({ kind: "birthday", date, age: years }),

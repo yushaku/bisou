@@ -8,9 +8,9 @@ export function useNotes(onSignedOut: () => void) {
   useEffect(() => {
     const now = Date.now();
     const next = Math.min(
-      ...(lists?.fromMe
-        .filter((n) => n.state === "draft" && n.scheduledAt !== undefined)
-        .map((n) => Math.max(n.scheduledAt! + 1_000, now + 60_000)) ?? []),
+      ...(lists?.fromMe.flatMap((n) =>
+        n.state === "draft" && n.scheduledAt !== undefined ? [Math.max(n.scheduledAt + 1_000, now + 60_000)] : [],
+      ) ?? []),
     );
     if (!Number.isFinite(next)) return;
     const timer = setTimeout(

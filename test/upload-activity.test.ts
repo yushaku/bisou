@@ -1,3 +1,4 @@
+import type { EffectCallback } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { useUploadQueue } from "../src/client/components/bisou/useUploadQueue";
 import { api } from "../src/client/api";
@@ -5,8 +6,8 @@ import { api } from "../src/client/api";
 const hooks = vi.hoisted(() => ({
   values: [] as unknown[],
   index: 0,
-  effects: [] as (() => void | (() => void))[],
-  ownership: [] as (() => void | (() => void))[],
+  effects: [] as EffectCallback[],
+  ownership: [] as EffectCallback[],
 }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
@@ -25,10 +26,10 @@ vi.mock("react", async (original) => ({
     return (hooks.values[index] ??= { current: initial });
   },
   useCallback: <T>(value: T) => value,
-  useEffect: (effect: () => void | (() => void)) => {
+  useEffect: (effect: EffectCallback) => {
     hooks.effects.push(effect);
   },
-  useInsertionEffect: (effect: () => void | (() => void)) => {
+  useInsertionEffect: (effect: EffectCallback) => {
     hooks.ownership.push(effect);
   },
 }));

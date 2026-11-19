@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import type { Env } from "../env";
 import { sendPush, type PushMessage, type PushResult, type PushRow, type PushTopic } from "./webpush";
 
@@ -11,7 +12,7 @@ export interface PushJob {
   expiresAt: number;
 }
 
-export const PUSH_LIFETIME_MS = 86400 * 1000;
+const PUSH_LIFETIME_MS = 86400 * 1000;
 const SEND_BATCH_LIMIT = 100;
 const MAX_RETRIES = 3;
 const BACKOFF_SECONDS = [30, 120, 480];
@@ -26,7 +27,7 @@ export async function enqueuePush(env: Env, jobs: PushJob[]): Promise<void> {
     try {
       await env.PUSH_QUEUE.sendBatch(chunk.map((body) => ({ body })));
     } catch {
-      console.error("[bisou] push enqueue failed", chunk[0]!.topic, chunk.length);
+      console.error("[bisou] push enqueue failed", defined(chunk[0]).topic, chunk.length);
     }
   }
 }
@@ -62,7 +63,7 @@ export async function consumePushBatch(batch: MessageBatch<PushJob>, env: Env): 
       const delay =
         ("retryAfter" in result ? result.retryAfter : undefined) ??
         BACKOFF_SECONDS[message.attempts - 1] ??
-        BACKOFF_SECONDS.at(-1)!;
+        defined(BACKOFF_SECONDS.at(-1));
       if (message.attempts <= MAX_RETRIES && Date.now() + delay * 1000 < message.body.expiresAt) {
         counts.retried++;
         message.retry({ delaySeconds: delay });

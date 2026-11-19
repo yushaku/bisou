@@ -1,4 +1,5 @@
-import { createExecutionContext, createMessageBatch, env, getQueueResult } from "cloudflare:test";
+import { createExecutionContext, createMessageBatch, getQueueResult } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { expect, vi } from "vitest";
 import { fromBase64Url, toBase64Url } from "../src/worker/lib/crypto";
 import { call, type TestUser } from "./helpers";
@@ -14,11 +15,7 @@ export async function runPushCron(time: string) {
     passThroughOnException: () => {},
     props: {},
   } as unknown as ExecutionContext;
-  worker.scheduled(
-    { scheduledTime: Date.parse(time), cron: "* * * * *", noRetry: () => {} } as ScheduledController,
-    env,
-    ctx,
-  );
+  worker.scheduled({ scheduledTime: Date.parse(time), cron: "* * * * *", noRetry: () => {} }, env, ctx);
   await Promise.all(pending);
 }
 
@@ -82,9 +79,9 @@ export function mockPush(status = 201) {
   const spy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     expect(init?.redirect).toBe("manual");
     // workerd rejects redirect "error" here, as the real fetch does at the edge.
-    new Request(String(input), { method: init?.method, redirect: init?.redirect });
+    new Request(requestUrl(input), { method: init?.method, redirect: init?.redirect });
     sent.push({
-      endpoint: String(input),
+      endpoint: requestUrl(input),
       headers: new Headers(init?.headers),
       body: new Uint8Array(await new Response(init?.body).arrayBuffer()),
     });
@@ -121,4 +118,8 @@ export async function decrypt(body: Uint8Array<ArrayBuffer>, d: Awaited<ReturnTy
 
 export async function stored(endpoint: string) {
   return env.DB.prepare("SELECT * FROM push_subscriptions WHERE endpoint = ?").bind(endpoint).first();
+}
+
+export function requestUrl(input: RequestInfo | URL): string {
+  return input instanceof Request ? input.url : String(input);
 }

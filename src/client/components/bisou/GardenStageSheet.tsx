@@ -66,7 +66,10 @@ export function GardenStageSheet({
     const result = await changeLevels(action);
     setBusy(false);
     if (!result.ok) {
-      if (result.status === 401) return onSignedOut();
+      if (result.status === 401) {
+        onSignedOut();
+        return;
+      }
       setError(t(result.status === 409 ? "garden.staleLevels" : "error.generic"));
     }
     if (result.ok && action.action === "accept") onClose();

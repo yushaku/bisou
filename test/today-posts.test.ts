@@ -90,6 +90,6 @@ it.each(["vi", "en"])("Home opens a long closed note from today's preview in %s"
   expect(html).toContain(locale === "vi" ? "Đọc tiếp" : "Read more");
   expect(html).toMatch(/<button[^>]*aria-label="[^"]*An/);
   expect(html).not.toContain("note-envelope");
-  const header = html.match(/<header[\s\S]*?<\/header>/)?.[0] ?? "";
+  const header = /<header[\s\S]*?<\/header>/.exec(html)?.[0] ?? "";
   expect(header).toMatch(new RegExp(`data-slot="badge"[^>]*>${locale === "vi" ? "Lời nhắn nhỏ" : "Kind note"}<`));
 });

@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../src/worker/index";
 import { runCleanup, sweepPhotos } from "../src/worker/lib/cleanup";
@@ -185,7 +185,7 @@ describe("scheduled handler", () => {
     } as unknown as ExecutionContext;
     const controller = { scheduledTime: NOW, cron: "* * * * *", noRetry: () => {} } as ScheduledController;
 
-    await worker.scheduled!(controller, env, ctx);
+    worker.scheduled(controller, env, ctx);
     expect(pending).toHaveLength(2);
     await Promise.all(pending);
 
@@ -212,7 +212,7 @@ async function scheduled() {
     passThroughOnException: () => {},
     props: {},
   } as unknown as ExecutionContext;
-  await worker.scheduled({ scheduledTime: NOW, cron: "* * * * *", noRetry: () => {} } as ScheduledController, env, ctx);
+  worker.scheduled({ scheduledTime: NOW, cron: "* * * * *", noRetry: () => {} }, env, ctx);
   await Promise.all(pending);
 }
 

@@ -1,8 +1,13 @@
+import { defined } from "../../shared/guards";
 import { formatNumber } from "./format";
 import { swipedPhotoIndex } from "./photoSwipe";
 import type { Locale } from "../../shared/types";
 import type { CardBoxDetail, CardBoxSummary } from "../../shared/cardBox";
-export type Play = { stack: string[]; index: number; startedOver: boolean };
+export interface Play {
+  stack: string[];
+  index: number;
+  startedOver: boolean;
+}
 export function cardBoxEndMessage(open: boolean) {
   return open ? "cardBox.startOver" : "cardBox.previewEnd";
 }
@@ -35,7 +40,7 @@ export function randomCard(
     validSeen = [];
     available = ids.filter((id) => id !== current);
   }
-  const id = available[Math.floor(random() * available.length)] ?? ids[0]!;
+  const id = available[Math.floor(random() * available.length)] ?? defined(ids[0]);
   return {
     play: { stack: [...play.stack.slice(0, play.index + 1), id], index: play.index + 1, startedOver },
     seen: [...validSeen, id],
@@ -63,7 +68,10 @@ export function writeSeen(scope: string, boxId: string, seen: string[]): void {
   }
 }
 
-type CardBoxCache = { list: CardBoxSummary[]; [key: `box:${string}`]: CardBoxDetail };
+interface CardBoxCache {
+  list: CardBoxSummary[];
+  [key: `box:${string}`]: CardBoxDetail;
+}
 export function readCache<K extends keyof CardBoxCache>(scope: string, key: K): CardBoxCache[K] | null {
   try {
     return JSON.parse(localStorage.getItem(`bisou.cardBox.v1:${scope}:${key}`) ?? "null") as CardBoxCache[K] | null;

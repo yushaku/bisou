@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { SPIN_MAX_PER_DAY } from "../../shared/wishes";
 import { DAY } from "./time";
 import type { Claim, Wish } from "../../shared/types";
@@ -48,8 +49,8 @@ export function randomInt(max: number): number {
   const value = new Uint32Array(1);
   do {
     crypto.getRandomValues(value);
-  } while (value[0]! >= limit);
-  return value[0]! % max;
+  } while (defined(value[0]) >= limit);
+  return defined(value[0]) % max;
 }
 
 export function pickWeighted<T extends { priority: number }>(rows: T[], draw = randomInt): T | null {
@@ -68,8 +69,8 @@ export async function reserveSpin(db: D1Database, userId: string, now: number): 
     db.prepare("INSERT INTO wish_spins (user_id, created_at) VALUES (?, ?) RETURNING id").bind(userId, now),
     db.prepare("SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM wish_spins WHERE user_id = ?").bind(userId),
   ]);
-  const id = (inserted!.results as { id: number }[])[0]!.id;
-  const stats = (counted!.results as { n: number; oldest: number }[])[0]!;
+  const id = defined((defined(inserted).results as { id: number }[])[0]).id;
+  const stats = defined((defined(counted).results as { n: number; oldest: number }[])[0]);
   if (stats.n <= SPIN_MAX_PER_DAY) return null;
   await db.prepare("DELETE FROM wish_spins WHERE id = ?").bind(id).run();
   return Math.max(1, Math.ceil((stats.oldest + DAY - now) / 1000));

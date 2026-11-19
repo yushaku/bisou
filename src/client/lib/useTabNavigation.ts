@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import type { TabId } from "../components/bisou/AppShell";
 import { readCreateRequest, tabMove, TAB_PATH, type CreateDestination } from "./navigation";
-import { TabMemory } from "./tabMemory";
+import { remember, TabMemory } from "./tabMemory";
 
 export function useTabNavigation() {
   const [location, navigate] = useLocation();
@@ -11,7 +11,7 @@ export function useTabNavigation() {
   const memory = useContext(TabMemory);
 
   function go(next: TabId, create?: CreateDestination) {
-    if (memory) memory.returnFocus = null;
+    remember(memory, { returnFocus: null });
     const path = TAB_PATH[next];
     const move = tabMove(location, state?.from, path, create);
     if (move === "scroll") {

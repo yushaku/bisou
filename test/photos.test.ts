@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PHOTO_SIZES, PHOTO_UPLOAD_MAX_BYTES } from "../src/shared/journal";
 import { app } from "../src/worker/app";
@@ -487,7 +487,7 @@ describe("photo header bounds", () => {
   });
 
   it("caps the total ICC APP2 payload at 64 KB across segments", () => {
-    const chunk = segment(0xe2, "ICC_PROFILE\0\x01\x02" + "x".repeat(32754));
+    const chunk = segment(0xe2, `ICC_PROFILE\0\x01\x02${"x".repeat(32754)}`);
     const atLimit = new Uint8Array([...baseline.subarray(0, 2), ...chunk, ...chunk, ...baseline.subarray(2)]);
     expect(checkPhotoBytes(atLimit, "image/jpeg")).not.toBeNull();
     const overLimit = new Uint8Array([

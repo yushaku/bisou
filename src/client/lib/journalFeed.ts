@@ -3,7 +3,7 @@
 import type { JournalEntry, JournalPage } from "../../shared/types";
 
 /** Feed order, newest first: entry day, then time written, then id (journal R12, R13). Same order as the server cursor. */
-export function compareEntries(a: JournalEntry, b: JournalEntry): number {
+function compareEntries(a: JournalEntry, b: JournalEntry): number {
   if (a.date !== b.date) return a.date < b.date ? 1 : -1;
   if (a.createdAt !== b.createdAt) return b.createdAt - a.createdAt;
   return a.id === b.id ? 0 : a.id < b.id ? 1 : -1;

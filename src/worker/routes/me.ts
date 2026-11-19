@@ -10,7 +10,7 @@ import { avatarKey, checkPhotoBytes, purgeAvatars, reserveAvatarUpload } from ".
 export const me = new Hono<AppEnv>();
 const limitBody = bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "body_too_large" }, 413) });
 
-me.get("/", async (c) => {
+me.get("/", (c) => {
   // The session query already read the couple: no second D1 round trip.
   const body: MeResponse = { user: c.get("user"), coupleId: c.get("coupleId") };
   return c.json(body);
@@ -82,7 +82,7 @@ me.put(
       return c.json({ error: "unsupported_photo_type" }, 415);
     if (file.size > AVATAR_MAX_BYTES) return c.json({ error: "photo_too_large" }, 413);
     const checked = checkPhotoBytes(new Uint8Array(await file.arrayBuffer()), file.type);
-    if (!checked || checked.side !== AVATAR_SIDE) return c.json({ error: "photo_invalid" }, 400);
+    if (checked?.side !== AVATAR_SIDE) return c.json({ error: "photo_invalid" }, 400);
     const userId = c.get("user").id;
     const id = crypto.randomUUID();
     const retryAfter = await reserveAvatarUpload(c.env.DB, userId, id, Date.now());

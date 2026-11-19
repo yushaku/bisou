@@ -127,12 +127,12 @@ export function ComponentsSection() {
         <SpinCard
           partnerName={QUOC_BAO.name}
           onSpin={demoSpin}
-          onClaim={async () => ({ ok: false, status: 0, error: null })}
+          onClaim={() => Promise.resolve({ ok: false, status: 0, error: null })}
         />
         <SpinCard
           partnerName={QUOC_BAO.name}
           onSpin={demoSpin}
-          onClaim={async () => ({ ok: false, status: 0, error: null })}
+          onClaim={() => Promise.resolve({ ok: false, status: 0, error: null })}
           initialBudget={100_000}
           initialState={{ step: "empty" }}
         />

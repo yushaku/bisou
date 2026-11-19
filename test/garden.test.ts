@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { call, explain, paired, resetDb, user, waitForBackground, type TestUser } from "./helpers";
 import { drawInput, drawSeed, loadToday } from "../src/worker/lib/garden";

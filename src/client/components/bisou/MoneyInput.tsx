@@ -1,3 +1,4 @@
+import { defined } from "../../../shared/guards";
 import { useRef, type ComponentProps } from "react";
 import { Input } from "@/components/ui/input";
 import { useI18n } from "@/i18n";
@@ -49,7 +50,7 @@ export function MoneyInput({
           const input = ref.current;
           if (!input || document.activeElement !== input) return;
           let pos = 0;
-          for (let seen = 0; pos < next.length && seen < digitsBefore; pos++) if (/\d/.test(next[pos]!)) seen++;
+          for (let seen = 0; pos < next.length && seen < digitsBefore; pos++) if (/\d/.test(defined(next[pos]))) seen++;
           const at = atStart ? 0 : digitsBefore ? pos : next.length;
           input.setSelectionRange(at, at);
         });

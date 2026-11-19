@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { Hono } from "hono";
 import type { AppEnv } from "../env";
 import { avatarKey } from "../lib/photos";
@@ -18,7 +19,7 @@ avatars.get("/:userId/:avatarId", async (c) => {
   if (!object) return c.json({ error: "not_found" }, 404);
   return new Response(object.body, {
     headers: {
-      "Content-Type": object.httpMetadata!.contentType!,
+      "Content-Type": defined(object.httpMetadata?.contentType),
       "Content-Length": String(object.size),
       "Cache-Control": "private, max-age=86400",
       "X-Content-Type-Options": "nosniff",

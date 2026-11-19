@@ -31,6 +31,8 @@ export function CardBoxDeck({
   const busy = useRef(false);
   const shufflePending = useRef(false);
   const [offset, setOffset] = useState(0);
+  // Mirrors `drag.current !== null` so the render can read it.
+  const [dragging, setDragging] = useState(false);
   const [leaving, setLeaving] = useState<{
     card: BoxCard;
     offset: number;
@@ -41,6 +43,7 @@ export function CardBoxDeck({
   const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cancel = () => {
     drag.current = null;
+    setDragging(false);
     setOffset(0);
   };
   const go = (direction: "next" | "previous" | "random") => {
@@ -91,11 +94,12 @@ export function CardBoxDeck({
   const down = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0 || busy.current) return;
     drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, axis: null };
+    setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   const move = (event: PointerEvent<HTMLDivElement>) => {
     const start = drag.current;
-    if (!start || start.id !== event.pointerId) return;
+    if (start?.id !== event.pointerId) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
     if (!start.axis && Math.max(Math.abs(dx), Math.abs(dy)) >= 8) start.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
@@ -103,7 +107,7 @@ export function CardBoxDeck({
   };
   const up = (event: PointerEvent<HTMLDivElement>) => {
     const start = drag.current;
-    if (!start || start.id !== event.pointerId) return;
+    if (start?.id !== event.pointerId) return;
     const direction =
       start.axis === "x"
         ? cardSwipe(event.clientX - start.x, event.clientY - start.y, event.currentTarget.clientWidth)
@@ -162,7 +166,7 @@ export function CardBoxDeck({
                   : offset
                     ? `translateX(${offset}px) rotate(${offset / 24}deg)`
                     : undefined,
-                transition: drag.current ? "none" : "transform 180ms var(--ease)",
+                transition: dragging ? "none" : "transform 180ms var(--ease)",
               }}
             >
               <CardBoxCard card={card} boxId={boxId} boxName={boxName} adult={adult} />
@@ -176,7 +180,7 @@ export function CardBoxDeck({
             className="card-box-back-preview"
             style={{ transform: `translateX(calc(-100% + ${offset}px)) rotate(${-14 + Math.min(offset / 24, 14)}deg)` }}
           >
-            <CardBoxCard card={previous!} boxId={boxId} boxName={boxName} adult={adult} />
+            <CardBoxCard card={previous} boxId={boxId} boxName={boxName} adult={adult} />
           </div>
         )}
         {leaving && (

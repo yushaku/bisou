@@ -38,9 +38,9 @@ it("Home and Garden share an in-flight request and reuse fresh data on tab entry
     },
   };
   const request = vi.spyOn(api, "garden").mockResolvedValue({ ok: true, data });
-  const [home, garden] = await Promise.all([client.fetchQuery(queries.garden), client.fetchQuery(queries.garden)]);
+  const [home, garden] = await Promise.all([client.query(queries.garden), client.query(queries.garden)]);
   expect(home).toBe(garden);
-  await client.fetchQuery(queries.garden);
+  await client.query(queries.garden);
   expect(request).toHaveBeenCalledTimes(1);
   client.clear();
 });
@@ -49,7 +49,7 @@ it("unchanged polling data keeps its reference and does not notify data-only obs
   const client = createServerQueryClient();
   let version = 1;
   const options = { queryKey: ["poll"], queryFn: async () => ({ version }), notifyOnChangeProps: ["data" as const] };
-  await client.fetchQuery(options);
+  await client.query(options);
   const observer = new QueryObserver(client, options);
   const changed = vi.fn();
   const unsubscribe = observer.subscribe(changed);
@@ -68,7 +68,7 @@ it("refresh errors keep cached data, and HTTP errors are query errors", async ()
   const client = createServerQueryClient();
   client.setQueryData(["notes"], { fromMe: [], toMe: [] });
   vi.spyOn(api, "notes").mockResolvedValue({ ok: false, status: 401, error: null });
-  await expect(client.fetchQuery({ ...queries.notes, staleTime: 0 })).rejects.toMatchObject({ status: 401 });
+  await expect(client.query({ ...queries.notes, staleTime: 0 })).rejects.toMatchObject({ status: 401 });
   expect(client.getQueryData(["notes"])).toEqual({ fromMe: [], toMe: [] });
   client.clear();
 });
@@ -99,7 +99,7 @@ it("successful mutations invalidate related domains; failures leave caches intac
 it("a new session cannot read or receive late data from the previous session", async () => {
   const first = createServerQueryClient();
   let resolve!: (value: string) => void;
-  const pending = first.fetchQuery({
+  const pending = first.query({
     queryKey: ["private"],
     queryFn: () =>
       new Promise<string>((done) => {
@@ -139,10 +139,10 @@ it("Home and Journal share cursor pages; edits and deletions update the same cac
     ok: true,
     data: cursor ? { entries: [older], nextCursor: null } : { entries: [entry], nextCursor: "cursor" },
   }));
-  const data = await client.fetchInfiniteQuery({ ...queries.journal, pages: 2 });
+  const data = await client.infiniteQuery({ ...queries.journal, pages: 2 });
   expect(request.mock.calls).toEqual([[undefined], ["cursor"]]);
   expect(data.pages).toHaveLength(2);
-  await client.fetchInfiniteQuery(queries.journal);
+  await client.infiniteQuery(queries.journal);
   expect(request).toHaveBeenCalledTimes(2);
   updateJournalEntry(client, { ...older, text: "edited" });
   const edited = client.getQueryData(queries.journal.queryKey)!;
@@ -214,10 +214,10 @@ it("foreground refresh fetches inactive lists and stars but defers details until
   const stars = vi.fn(async () => "stars");
   const detail = vi.fn(async () => "deck");
   const push = vi.fn(async () => "push");
-  await client.fetchQuery({ queryKey: ["wishes"], queryFn: list });
-  await client.fetchQuery({ queryKey: ["garden", "stars"], queryFn: stars });
-  await client.fetchQuery({ queryKey: ["garden", "deck", "x"], queryFn: detail });
-  await client.fetchQuery({ queryKey: ["push"], queryFn: push });
+  await client.query({ queryKey: ["wishes"], queryFn: list });
+  await client.query({ queryKey: ["garden", "stars"], queryFn: stars });
+  await client.query({ queryKey: ["garden", "deck", "x"], queryFn: detail });
+  await client.query({ queryKey: ["push"], queryFn: push });
   await refreshServerData(client);
   expect(list).toHaveBeenCalledTimes(2);
   expect(stars).toHaveBeenCalledTimes(2);
@@ -241,10 +241,10 @@ it("a successful mutation refreshes an inactive query when its tab next opens", 
   const request = vi
     .spyOn(api, "wishes")
     .mockResolvedValue({ ok: true, data: { open: [], received: [], partnerJarEmpty: true } });
-  await client.fetchQuery(queries.wishes);
+  await client.query(queries.wishes);
   const healthy = vi.fn(async () => "healthy");
   const controlOptions = { queryKey: ["notes"], queryFn: healthy };
-  await client.fetchQuery(controlOptions);
+  await client.query(controlOptions);
   await client
     .getMutationCache()
     .build(
@@ -328,7 +328,7 @@ it("journal pushes refresh only their related roots, including inactive data", a
   const requests = Object.fromEntries(
     ["journal", "wishes", "claims", "garden", "notes"].map((root) => [root, vi.fn(async () => root)]),
   );
-  for (const [root, queryFn] of Object.entries(requests)) await client.fetchQuery({ queryKey: [root], queryFn });
+  for (const [root, queryFn] of Object.entries(requests)) await client.query({ queryKey: [root], queryFn });
   await refreshForPush(client, "journal");
   expect(
     Object.fromEntries(Object.entries(requests).map(([root, request]) => [root, request.mock.calls.length])),
@@ -350,7 +350,7 @@ it("garden pushes refresh every garden detail and stars; notes pushes refresh on
     ["boxes"],
   ];
   const requests = keys.map(() => vi.fn(async () => "data"));
-  for (const [index, queryKey] of keys.entries()) await client.fetchQuery({ queryKey, queryFn: requests[index]! });
+  for (const [index, queryKey] of keys.entries()) await client.query({ queryKey, queryFn: requests[index]! });
   await refreshForPush(client, "garden");
   expect(requests.map((request) => request.mock.calls.length)).toEqual([2, 2, 2, 2, 2, 1, 1]);
   await refreshForPush(client, "notes");
@@ -388,8 +388,8 @@ it("foreground refresh refetches observed details while leaving closed details i
   const open = vi.fn(async () => "open");
   const closed = vi.fn(async () => "closed");
   const openOptions = { queryKey: ["garden", "deck", "open"], queryFn: open };
-  await client.fetchQuery(openOptions);
-  await client.fetchQuery({ queryKey: ["boxes", "closed"], queryFn: closed });
+  await client.query(openOptions);
+  await client.query({ queryKey: ["boxes", "closed"], queryFn: closed });
   const observer = new QueryObserver(client, openOptions);
   const leave = observer.subscribe(() => {});
   await refreshServerData(client);
@@ -411,7 +411,7 @@ it("overlapping push and foreground refreshes join each running list request", a
     root,
     request: vi.fn(async () => (refreshing ? pending : "cached")),
   }));
-  for (const { root, request } of requests) await client.fetchQuery({ queryKey: [root], queryFn: request });
+  for (const { root, request } of requests) await client.query({ queryKey: [root], queryFn: request });
   refreshing = true;
   const refreshes = [refreshForPush(client, "journal"), refreshServerData(client)];
   await vi.dynamicImportSettled();
@@ -432,7 +432,7 @@ it("overlapping foreground refreshes also join an observed detail request", asyn
     .mockResolvedValueOnce("cached")
     .mockImplementation(() => pending);
   const options = { queryKey: ["boxes", "open"], queryFn: request };
-  await client.fetchQuery(options);
+  await client.query(options);
   const observer = new QueryObserver(client, options);
   const leave = observer.subscribe(() => {});
   const refreshes = [refreshServerData(client), refreshServerData(client)];
@@ -454,8 +454,8 @@ it("reopening a list retries its failed background refresh once while healthy da
   const healthy = vi.fn(async () => "healthy");
   const options = { queryKey: ["wishes"], queryFn: request };
   const control = { queryKey: ["push"], queryFn: healthy };
-  await client.fetchQuery(options);
-  await client.fetchQuery(control);
+  await client.query(options);
+  await client.query(control);
   await refreshServerData(client);
   expect(client.getQueryState(["wishes"])).toMatchObject({ status: "error", data: "cached" });
   const observer = new QueryObserver(client, options);
@@ -481,7 +481,7 @@ it("every content push tag emitted by the Worker refreshes a cached query root",
     root,
     request: vi.fn(async () => "cached"),
   }));
-  for (const { root, request } of requests) await client.fetchQuery({ queryKey: [root], queryFn: request });
+  for (const { root, request } of requests) await client.query({ queryKey: [root], queryFn: request });
   for (const tag of tags) {
     for (const { request } of requests) request.mockClear();
     await refreshForPush(client, tag);
@@ -504,7 +504,7 @@ it("a partner push starts a new request after an older foreground fetch is alrea
     .mockResolvedValueOnce("cached")
     .mockImplementationOnce(() => oldResponse)
     .mockResolvedValueOnce("after push");
-  await client.fetchQuery({ queryKey: ["notes"], queryFn: request });
+  await client.query({ queryKey: ["notes"], queryFn: request });
   const foreground = refreshServerData(client);
   await vi.dynamicImportSettled();
   expect(request).toHaveBeenCalledTimes(2);

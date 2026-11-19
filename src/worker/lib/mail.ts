@@ -1,7 +1,7 @@
 import type { Locale } from "../../shared/types";
 import type { Env } from "../env";
 
-export const RESEND_URL = "https://api.resend.com/emails";
+const RESEND_URL = "https://api.resend.com/emails";
 const FROM = "Bisou <no-reply@mail.yuchi-education.com>";
 
 const copy: Record<Locale, { subject: (code: string) => string; intro: string; expiry: string; ignore: string }> = {
@@ -19,7 +19,7 @@ const copy: Record<Locale, { subject: (code: string) => string; intro: string; e
   },
 };
 
-export function buildOtpMail(code: string, locale: Locale): { subject: string; text: string; html: string } {
+function buildOtpMail(code: string, locale: Locale): { subject: string; text: string; html: string } {
   const t = copy[locale];
   const text = `${t.intro}\n\n${code}\n\n${t.expiry}\n${t.ignore}\n`;
   const html = `<!doctype html><html lang="${locale}"><body style="margin:0;padding:24px;background:#eff1f5;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#4c4f69">

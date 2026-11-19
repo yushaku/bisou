@@ -1,3 +1,4 @@
+import { defined, isRecord } from "../../shared/guards";
 import { Hono, type Handler } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { vnDay } from "../../shared/days";
@@ -57,14 +58,18 @@ garden.get("/", async (c) =>
 );
 
 garden.post("/levels", limitBody, async (c) => {
-  const body = await c.req.json().catch(() => null);
+  const body: unknown = await c.req.json().catch(() => null);
   if (
-    !body ||
+    !isRecord(body) ||
+    typeof body.revision !== "number" ||
     !Number.isSafeInteger(body.revision) ||
     body.revision < 0 ||
+    typeof body.action !== "string" ||
     !["propose", "accept", "decline", "withdraw"].includes(body.action) ||
     (body.action === "propose" &&
-      (!["placement", "target"].includes(body.kind) || !LEVEL_IDS.includes(body.levelId))) ||
+      (typeof body.kind !== "string" ||
+        !["placement", "target"].includes(body.kind) ||
+        !LEVEL_IDS.some((id) => id === body.levelId))) ||
     Object.keys(body).some(
       (key) =>
         !(body.action === "propose" ? ["action", "kind", "levelId", "revision"] : ["action", "revision"]).includes(key),
@@ -114,8 +119,8 @@ garden.get("/stages/:levelId/decisions", async (c) => {
 });
 
 garden.post("/today/swap", limitBody, async (c) => {
-  const body = await c.req.json().catch(() => null);
-  const requested = typeof body?.cardId === "string" ? cardById(body.cardId) : undefined;
+  const body: unknown = await c.req.json().catch(() => null);
+  const requested = isRecord(body) && typeof body.cardId === "string" ? cardById(body.cardId) : undefined;
   if (!requested || requested.retired) return c.json({ error: "invalid_body" }, 400);
   const db = c.env.DB;
   const couple = c.get("gardenCoupleId");
@@ -123,7 +128,7 @@ garden.post("/today/swap", limitBody, async (c) => {
   const now = Date.now();
   const today = await loadToday(db, couple, now, user);
   const state = () => gardenState(db, couple, user, now);
-  if (!today || today.card_id !== requested.id) return c.json(await state());
+  if (today?.card_id !== requested.id) return c.json(await state());
   const locked = () =>
     db
       .prepare(
@@ -224,7 +229,7 @@ garden.put("/cards/:cardId/star", async (c) => {
       couple,
     )
     .run();
-  const state = (await cardStates(db, couple, user, [card.id]))[0]!;
+  const state = defined((await cardStates(db, couple, user, [card.id]))[0]);
   if (!result.meta.changes) return c.json({ error: "not_found" }, 404);
   return c.json({ card: state });
 });
@@ -236,7 +241,7 @@ garden.delete("/cards/:cardId/star", async (c) => {
     couple = c.get("gardenCoupleId"),
     user = c.get("user").id;
   if (card.kind === "decision") {
-    const state = (await cardStates(db, couple, user, [card.id]))[0]!;
+    const state = defined((await cardStates(db, couple, user, [card.id]))[0]);
     if (
       !state.flippedDay ||
       !(await db
@@ -250,7 +255,7 @@ garden.delete("/cards/:cardId/star", async (c) => {
     .prepare(`DELETE FROM garden_stars WHERE couple_id = ? AND card_id = ? AND ${memberGuard}`)
     .bind(couple, card.id, couple, user, couple)
     .run();
-  return c.json({ card: (await cardStates(db, couple, user, [card.id]))[0]! });
+  return c.json({ card: defined((await cardStates(db, couple, user, [card.id]))[0]) });
 });
 
 const saveAnswer: Handler<GardenEnv> = async (c) => {
@@ -263,19 +268,18 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
     .bind(c.get("gardenCoupleId"), card.id, c.get("user").id)
     .first();
   if (c.req.method === "PUT" && !existing) return c.json({ error: "not_found" }, 404);
-  const raw = await c.req.json().catch(() => null);
+  const raw: unknown = await c.req.json().catch(() => null);
   if (
-    !raw ||
-    typeof raw !== "object" ||
+    !isRecord(raw) ||
     Array.isArray(raw) ||
     Object.keys(raw).some((key) => !["text", "choice"].includes(key)) ||
     Object.hasOwn(raw, "text") === Object.hasOwn(raw, "choice")
   )
     return c.json({ error: "invalid_answer" }, 400);
-  const choice: ResponseChoice | null = raw.choice ?? null;
+  const choice = (raw.choice ?? null) as ResponseChoice | null;
   if (
     Object.hasOwn(raw, "choice") &&
-    (card.kind !== "decision" || !["no_details", "later_not_applicable"].includes(choice!))
+    (card.kind !== "decision" || choice === null || !["no_details", "later_not_applicable"].includes(choice))
   )
     return c.json({ error: "invalid_answer" }, 400);
   const parsed = choice === null ? answerText(raw.text) : { text: null };
@@ -394,7 +398,7 @@ const saveAnswer: Handler<GardenEnv> = async (c) => {
         return c.json({ error: "already_answered" }, 409);
       throw error;
     }
-    if (!changes[0]!.meta.changes) return c.json({ error: "not_found" }, 404);
+    if (!defined(changes[0]).meta.changes) return c.json({ error: "not_found" }, 404);
     if (isToday) c.executionCtx.waitUntil(notifyGarden(c.env, couple, user));
   }
   const [state] = await cardStates(db, couple, user, [card.id]);

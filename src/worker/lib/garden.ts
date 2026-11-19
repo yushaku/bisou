@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { vnDay } from "../../shared/days";
 import {
   CARDS,
@@ -35,7 +36,7 @@ interface LevelRow {
   proposer_id: string | null;
   target_agreed: number;
 }
-export async function ensureLevels(db: D1Database, couple: string, user: string) {
+async function ensureLevels(db: D1Database, couple: string, user: string) {
   await db
     .prepare(`INSERT OR IGNORE INTO garden_levels(couple_id) SELECT ? WHERE ${memberGuard}`)
     .bind(couple, couple, user, couple)
@@ -60,12 +61,12 @@ export async function levelsState(db: D1Database, couple: string, user: string):
     )
     .bind(couple, couple)
     .all<{ card_id: string }>();
-  const level = (rank: number | null) => (rank === null ? null : LEVEL_IDS[rank]!);
+  const level = (rank: number | null) => (rank === null ? null : defined(LEVEL_IDS[rank]));
   let proposal: GardenLevels["proposal"] = null;
   if (row.proposal_kind !== null && !(row.proposal_kind === "placement" && row.initial_level === null)) {
     proposal = {
       kind: row.proposal_kind,
-      levelId: level(row.proposal_level)!,
+      levelId: defined(level(row.proposal_level)),
       agreed: !!row.target_agreed,
       proposedByMe: row.proposer_id === user,
     };
@@ -175,11 +176,11 @@ export async function drawInput(db: D1Database, coupleId: string, day: string) {
       .first<number | null>("furthest_level")) ?? FIRST_LEVEL;
   return {
     furthestLevel,
-    waiting: waiting!.results.map((r) => r.card_id),
-    played: played!.results.map((r) => r.card_id),
-    previousDeck: previous!.results[0]?.deck_id,
-    stages: Object.fromEntries(growth!.results.map((r) => [r.deck_id, plantStage(r.days)])),
-    swapped: swapped!.results.map((r) => r.card_id),
+    waiting: defined(waiting).results.map((r) => r.card_id),
+    played: defined(played).results.map((r) => r.card_id),
+    previousDeck: defined(previous).results[0]?.deck_id,
+    stages: Object.fromEntries(defined(growth).results.map((r) => [r.deck_id, plantStage(r.days)])),
+    swapped: defined(swapped).results.map((r) => r.card_id),
   };
 }
 
@@ -227,7 +228,7 @@ export async function loadToday(
       ),
     select(),
   ]);
-  return results[1]!.results[0] ?? (retry ? loadToday(db, coupleId, now, userId, false) : null);
+  return defined(results[1]).results[0] ?? (retry ? loadToday(db, coupleId, now, userId, false) : null);
 }
 
 export async function cardStates(
@@ -295,7 +296,7 @@ export async function cardStates(
 
 export async function gardenState(db: D1Database, coupleId: string, userId: string, now: number): Promise<GardenState> {
   const today = await loadToday(db, coupleId, now, userId);
-  const state = today ? (await cardStates(db, coupleId, userId, [today.card_id]))[0]! : null;
+  const state = today ? defined((await cardStates(db, coupleId, userId, [today.card_id]))[0]) : null;
   const locked = today
     ? await db
         .prepare(
@@ -320,9 +321,9 @@ export async function gardenState(db: D1Database, coupleId: string, userId: stri
     swapLocked: !!locked,
     plants: DECKS.map((deck) => ({
       deckId: deck.id,
-      stage: plantStage(growth!.results.find((r) => r.deck_id === deck.id)?.days ?? 0),
+      stage: plantStage(defined(growth).results.find((r) => r.deck_id === deck.id)?.days ?? 0),
     })),
-    freshness: today ? freshness(last!.results[0]?.day ?? vnDay(now), vnDay(now)) : "fresh",
+    freshness: today ? freshness(defined(last).results[0]?.day ?? vnDay(now), vnDay(now)) : "fresh",
   };
 }
 
@@ -392,8 +393,8 @@ export async function gardenDeck(
       .bind(coupleId, userId),
   ]);
   const stamp = (cardId: string) =>
-    answered!.results.find((row) => row.card_id === cardId)?.stamp ??
-    drawn!.results.find((row) => row.card_id === cardId)?.stamp ??
+    defined(answered).results.find((row) => row.card_id === cardId)?.stamp ??
+    defined(drawn).results.find((row) => row.card_id === cardId)?.stamp ??
     0;
   // Past daily cards stay accessible to both even when untouched, so their presence cannot expose a waiting answer.
   const history = states
@@ -405,15 +406,15 @@ export async function gardenDeck(
           card.mineChoice !== null ||
           card.mineDeleted ||
           card.flippedDay ||
-          drawn!.results.some((row) => row.card_id === card.cardId)),
+          defined(drawn).results.some((row) => row.card_id === card.cardId)),
     )
     .sort((a, b) => stamp(b.cardId) - stamp(a.cardId) || b.cardId.localeCompare(a.cardId));
   return {
     active: states.find((card) => card.cardId === activeId) ?? null,
     history,
     decisions: states.filter((state) => {
-      const card = cardById(state.cardId)!;
-      return card.kind === "decision" && input.furthestLevel !== null && levelRank(card.levelId) <= input.furthestLevel;
+      const card = defined(cardById(state.cardId));
+      return card.kind === "decision" && levelRank(card.levelId) <= input.furthestLevel;
     }),
   };
 }

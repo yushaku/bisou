@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Wish, JournalEntry, Claim } from "../src/shared/types";
 import { latestDay } from "../src/shared/days";

@@ -27,16 +27,27 @@ import { Input } from "../src/client/components/ui/input";
 import { toast } from "../src/client/components/ui/ding-toaster";
 import { api } from "../src/client/api";
 
-const hooks = vi.hoisted(() => ({
-  values: [] as unknown[],
+interface Hooks {
+  values: unknown[];
+  index: number;
+  refs: { current: unknown }[];
+  refIndex: number;
+  locale: string;
+  notes: NoteLists;
+  effects: (() => unknown)[];
+  memory: null | { journalSection: "feed" | "notes" };
+  requests: Map<string, () => void>;
+}
+const hooks = vi.hoisted((): Hooks => ({
+  values: [],
   index: 0,
-  refs: [] as { current: unknown }[],
+  refs: [],
   refIndex: 0,
   locale: "vi",
-  notes: { fromMe: [], toMe: [] } as NoteLists,
-  effects: [] as (() => unknown)[],
-  memory: null as null | { journalSection: "feed" | "notes" },
-  requests: new Map<string, () => void>(),
+  notes: { fromMe: [], toMe: [] },
+  effects: [],
+  memory: null,
+  requests: new Map(),
 }));
 const notesRefresh = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("react", async (original) => ({
@@ -93,7 +104,7 @@ vi.mock("../src/client/components/bisou/useUploadQueue", () => ({
   useUploadQueue: () => ({ items: [], saved: vi.fn() }),
 }));
 
-type Props = {
+interface Props {
   entry?: { id: string } | null;
   own?: boolean;
   onSubmit?: (event: { preventDefault: () => void }) => void;
@@ -131,7 +142,7 @@ type Props = {
   open?: boolean;
   onAnimationEnd?: (open: boolean) => void;
   onCloseAutoFocus?: (event: { preventDefault: () => void }) => void;
-};
+}
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];
@@ -424,7 +435,8 @@ it.each(["vi", "en"])("composer forms expose a guarded exit and named writing co
   expect(
     journal.some(
       (n) =>
-        n.props["aria-describedby"]?.includes("test-hint") || n.props["aria-describedby"]?.includes("test-counter"),
+        n.props["aria-describedby"]?.includes("test-hint") === true ||
+        n.props["aria-describedby"]?.includes("test-counter") === true,
     ),
   ).toBe(false);
   hooks.values = [];

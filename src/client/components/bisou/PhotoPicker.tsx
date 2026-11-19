@@ -1,3 +1,4 @@
+import { defined } from "../../../shared/guards";
 import { ImagePlus, RotateCw, X } from "lucide-react";
 import { useEffect, useId, useInsertionEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,9 @@ export function PhotoPicker({
   const loading = useRef(false);
   const batch = useRef(new Set<string>());
   const latestQueue = useRef(queue);
-  latestQueue.current = queue;
+  useInsertionEffect(() => {
+    latestQueue.current = queue;
+  });
   const fileInput = useRef<HTMLInputElement>(null);
   const mounted = useRef(true);
   const cancelCrop = useRef<(() => void) | null>(null);
@@ -67,7 +70,7 @@ export function PhotoPicker({
     } else if (loading.current) {
       const failed = queue.items.filter((item) => item.state === "failed");
       if (failed.length) {
-        toast.error(t(failed[0]!.error ?? "compose.photoFailed"), {
+        toast.error(t(defined(failed[0]).error ?? "compose.photoFailed"), {
           id: toastId,
           action: {
             label: t("journal.retry"),
@@ -109,16 +112,18 @@ export function PhotoPicker({
     setPreparing(true);
     // One photo at a time: a phone holds a single full size bitmap in memory, never four.
     const chosen = files.slice(0, take);
+    // A function call, so TypeScript does not assume the ref kept its value across the awaits below.
+    const isMounted = () => mounted.current;
     for (const [index, file] of chosen.entries()) {
-      if (!mounted.current) break;
+      if (!isMounted()) break;
       let bitmap: ImageBitmap;
       try {
         bitmap = await decodePhoto(file);
       } catch {
-        if (mounted.current) toast.error(t("compose.photoUnreadable", { name: file.name }));
+        if (isMounted()) toast.error(t("compose.photoUnreadable", { name: file.name }));
         continue;
       }
-      if (!mounted.current) {
+      if (!isMounted()) {
         bitmap.close();
         break;
       }
@@ -129,9 +134,9 @@ export function PhotoPicker({
       }
       try {
         const renditions = await renderSquare(bitmap, area);
-        if (mounted.current) queue.add(renditions);
+        if (isMounted()) queue.add(renditions);
       } catch {
-        if (mounted.current) toast.error(t("compose.photoUnreadable", { name: file.name }));
+        if (isMounted()) toast.error(t("compose.photoUnreadable", { name: file.name }));
       }
     }
     if (!mounted.current) return;
@@ -144,7 +149,7 @@ export function PhotoPicker({
         <p className="flex items-center justify-between">
           <span className="font-semibold">{t("compose.photos")}</span>
           <span className="text-sm text-muted-foreground tabular-nums">
-            {t("compose.count", { count: queue.items.length, max: max })}
+            {t("compose.count", { count: queue.items.length, max })}
           </span>
         </p>
 

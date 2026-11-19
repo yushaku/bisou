@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { en } from "../../client/i18n/en";
 import { vi, type MessageKey } from "../../client/i18n/vi";
 import { addDays, vnDay, vnHour } from "../../shared/days";
@@ -85,7 +86,8 @@ export function reminderMessage(titles: string[], locale: Locale, offset: 0 | 1)
     const names = titles.slice(0, count);
     if (count < titles.length) names.push(translate(locale, "push.events.more", { n: titles.length - count }));
     const conjunction = count < titles.length ? " " : locale === "vi" ? " và " : " and ";
-    const events = names.length < 2 ? names.join("") : names.slice(0, -1).join(", ") + conjunction + names.at(-1);
+    const events =
+      names.length < 2 ? names.join("") : names.slice(0, -1).join(", ") + conjunction + defined(names.at(-1));
     const message = {
       title: translate(locale, offset ? "push.events.tomorrow" : "push.events.today", { events }),
       url: "/events",
@@ -122,7 +124,7 @@ export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 
       if (couple?.members.length !== 2) continue;
       const locale = isLocale(rawLocale) ? rawLocale : "vi";
       const t = (key: MessageKey, vars?: Record<string, string | number>) => translate(locale, key, vars);
-      const partner = couple.members.find((member) => member.id !== userId)!;
+      const partner = defined(couple.members.find((member) => member.id !== userId));
       const titles = upcomingEvents(
         couple.startDate,
         [{ name: partner.displayName?.trim() || t("common.person"), birthDate: partner.birthDate }],

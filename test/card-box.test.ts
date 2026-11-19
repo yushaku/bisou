@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { CARD_BOXES } from "../src/worker/lib/cardBoxes";
 import { beforeEach, expect, it } from "vitest";
 import { call, explain, paired, resetDb, user } from "./helpers";
@@ -59,7 +59,7 @@ it("card-box AC4 AC30: browsing twenty times leaves garden and push unchanged an
     expect((await call("GET", "/api/boxes/deep-connection", { cookie: a.cookie })).status).toBe(200);
   expect((await snapshot()).map((x) => x.results)).toEqual(before.map((x) => x.results));
   const tables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all<{ name: string }>();
-  expect(tables.results.filter((row) => /draw/.test(row.name))).toEqual([]);
+  expect(tables.results.filter((row) => row.name.includes("draw"))).toEqual([]);
   expect((await env.DB.prepare("SELECT * FROM card_box_unlocks").all()).results).toEqual([]);
   expect(
     (await call("POST", "/api/boxes/deep-connection", { cookie: a.cookie, body: { answer: "hello" } })).status,

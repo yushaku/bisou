@@ -31,18 +31,20 @@ export function NotificationCard() {
   useEffect(() => {
     if (!eligible || dismissed) return;
     let active = true;
+    // A function call, so TypeScript does not assume the flag kept its value across the awaits below.
+    const isActive = () => active;
     void (async () => {
       try {
         const registration = await navigator.serviceWorker.getRegistration();
         const subscription = registration?.pushManager ? await registration.pushManager.getSubscription() : null;
-        if (active)
+        if (isActive())
           setReady(
             registration?.pushManager && !subscription && push?.publicKey
               ? { registration, publicKey: push.publicKey }
               : null,
           );
       } catch {
-        if (active) setReady(null);
+        if (isActive()) setReady(null);
       }
     })();
     return () => {

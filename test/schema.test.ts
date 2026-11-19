@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WRITTEN_NOTES_SQL, RECEIVED_NOTES_SQL } from "../src/worker/lib/notes";
 import { REMIND_NOTES_SQL } from "../src/worker/lib/notify";
@@ -372,7 +372,7 @@ describe("wish query plans", () => {
       ["wish"],
     ],
   ])("%s uses indexed searches", async (_name, sql, binds) => {
-    const plan = (await explain(sql as string, ...binds)).join("\n");
+    const plan = (await explain(sql, ...binds)).join("\n");
     expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });
@@ -402,7 +402,7 @@ describe("notes query plans", () => {
       ["id", "couple", "writer", "recipient", "h", "f", "n", "r", 1, 1],
     ],
   ])("%s uses indexed lookups without table scans or temporary sorting", async (_name, sql, binds) => {
-    const plan = (await explain(sql as string, ...binds)).join("\n");
+    const plan = (await explain(sql, ...binds)).join("\n");
     expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });
@@ -433,7 +433,7 @@ describe("notes recipient and joined feed query plans", () => {
       ["entry", "user"],
     ],
   ])("%s uses indexed lookups without scans or temporary sorting", async (_name, sql, binds) => {
-    expect((await explain(sql as string, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+    expect((await explain(sql, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });
 
@@ -447,7 +447,7 @@ describe("notes push query plans", () => {
       "push_subscriptions_user",
     ],
   ])("%s uses indexed SEARCH", async (_name, sql, binds, index) => {
-    const plan = (await explain(sql as string, ...(binds as unknown[]))).join("\n");
+    const plan = (await explain(sql, ...(binds as unknown[]))).join("\n");
     expect(plan).toContain(index);
     expect(plan).toContain("SEARCH");
     expect(plan).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
@@ -474,6 +474,6 @@ describe("closed-note edit and delete query plans", () => {
       ["note", "couple", "writer"],
     ],
   ])("%s uses indexed lookups without scans or temporary sorting", async (_name, sql, binds) => {
-    expect((await explain(sql as string, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
+    expect((await explain(sql, ...binds)).join("\n")).not.toMatch(/\bSCAN\b|TEMP B-TREE/);
   });
 });

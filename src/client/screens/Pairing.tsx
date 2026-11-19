@@ -1,5 +1,5 @@
 import { ArrowLeft, Heart, KeyRound, Share2, Sparkles, TimerOff } from "lucide-react";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type SubmitEvent } from "react";
 import { toast } from "@/components/ui/ding-toaster";
 import { normalizePairCode, PAIR_CODE_LENGTH } from "../../shared/pairCode";
 import type { ApiError, Couple } from "../../shared/types";
@@ -211,7 +211,7 @@ function WaitingView({
     <>
       <PageHeader title={t(expired ? "pairing.expiredTitle" : "pairing.codeTitle")} />
       <Card className="px-5 py-5">
-        {!expired && pending ? (
+        {!expired ? (
           <PairCodeDisplay code={pending.code} expiresAt={pending.expiresAt}>
             <Button onClick={() => void share(pending.code)}>
               <Share2 aria-hidden="true" />
@@ -270,7 +270,7 @@ function EnterView({ onCouple, onBack }: { onCouple: (couple: Couple | null) => 
     setError(null);
   }
 
-  async function submit(e: FormEvent) {
+  async function submit(e: SubmitEvent) {
     e.preventDefault();
     if (code.length !== PAIR_CODE_LENGTH || busy) return;
     setBusy(true);

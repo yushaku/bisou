@@ -1,4 +1,4 @@
-import type { Locale, User } from "../shared/types";
+import type { User } from "../shared/types";
 import type { PushJob } from "./lib/pushQueue";
 
 export interface Env {
@@ -32,5 +32,3 @@ export interface AppEnv {
     coupleId: string | null;
   };
 }
-
-export type { Locale };

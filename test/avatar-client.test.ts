@@ -41,7 +41,8 @@ describe("profile photo client", () => {
   });
   it("avatar AC5 R6: keeps only the framed square, upscales to 512, and frees bitmap and canvas", async () => {
     const drawImage = vi.fn();
-    const bitmap = { close: vi.fn() } as unknown as ImageBitmap;
+    const close = vi.fn();
+    const bitmap = { close } as unknown as ImageBitmap;
     const canvas = {
       width: 0,
       height: 0,
@@ -52,7 +53,7 @@ describe("profile photo client", () => {
     const blob = await renderAvatar(bitmap, { x: 10, y: 20, width: 100, height: 100 });
     expect(drawImage).toHaveBeenCalledWith(bitmap, 10, 20, 100, 100, 0, 0, 512, 512);
     expect(blob.type).toBe("image/webp");
-    expect(bitmap.close).toHaveBeenCalled();
+    expect(close).toHaveBeenCalled();
     expect(canvas.width).toBe(0);
     expect(canvas.height).toBe(0);
   });

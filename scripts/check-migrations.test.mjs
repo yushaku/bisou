@@ -110,7 +110,7 @@ test("fails closed on empty, changed, truncated, unsafe or contradictory listing
     listing.replace("0002_safe.sql", "../unsafe.sql"),
     listing.replace("0002_safe.sql", "invalid"),
     listing.replace("└────────────────┘", ""),
-    listing + "No migrations to apply!\n",
+    `${listing}No migrations to apply!\n`,
   ]) {
     assert.throws(() => parsePendingMigrations(output), /migration/i);
   }

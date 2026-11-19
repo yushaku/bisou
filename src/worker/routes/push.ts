@@ -1,3 +1,4 @@
+import { isRecord } from "../../shared/guards";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { PushSubscriptionInput } from "../../shared/types";
@@ -20,7 +21,7 @@ push.get("/", async (c) => {
     .bind(c.get("user").id)
     .all<{ endpoint: string; journal: number; reminders: number }>();
   return c.json({
-    publicKey: c.env.VAPID_PRIVATE_KEY ? publicKeyFromJwk(JSON.parse(c.env.VAPID_PRIVATE_KEY)) : null,
+    publicKey: c.env.VAPID_PRIVATE_KEY ? publicKeyFromJwk(JSON.parse(c.env.VAPID_PRIVATE_KEY) as JsonWebKey) : null,
     devices: results.map((row) => ({
       endpoint: row.endpoint,
       journal: Boolean(row.journal),
@@ -38,7 +39,7 @@ async function readSubscription(body: unknown): Promise<PushSubscriptionInput | 
     typeof value.journal !== "boolean" ||
     typeof value.reminders !== "boolean" ||
     typeof value.keys?.p256dh !== "string" ||
-    typeof value.keys?.auth !== "string"
+    typeof value.keys.auth !== "string"
   )
     return null;
   try {
@@ -92,8 +93,8 @@ push.put("/subscription", async (c) => {
 });
 
 push.delete("/subscription", async (c) => {
-  const body = await c.req.json().catch(() => null);
-  if (typeof body?.endpoint !== "string" || !isPushEndpoint(body.endpoint))
+  const body: unknown = await c.req.json().catch(() => null);
+  if (!isRecord(body) || typeof body.endpoint !== "string" || !isPushEndpoint(body.endpoint))
     return c.json({ error: "invalid_subscription" }, 400);
   await c.env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?")
     .bind(body.endpoint, c.get("user").id)

@@ -2,10 +2,10 @@ import { CONTROL_CHARACTERS } from "./text";
 import type { Locale } from "./types";
 import { daysBetween } from "./days";
 
-export const GARDEN_ANSWER_MAX = 1000;
+const GARDEN_ANSWER_MAX = 1000;
 export const LEVEL_IDS = ["acquainted", "in_love", "living_together", "married", "with_children"] as const;
 export type RelationshipLevel = (typeof LEVEL_IDS)[number];
-export type LevelKind = "placement" | "target";
+type LevelKind = "placement" | "target";
 export type LevelAction =
   | { action: "propose"; kind: LevelKind; levelId: RelationshipLevel; revision: number }
   | { action: "accept" | "decline" | "withdraw"; revision: number };
@@ -20,7 +20,7 @@ export interface GardenLevels {
 }
 export const levelRank = (id: RelationshipLevel) => LEVEL_IDS.indexOf(id);
 export const FIRST_LEVEL = levelRank(LEVEL_IDS[0]);
-export function ordinaryEligible(card: GardenCard, furthestLevel: number | null = null): boolean {
+function ordinaryEligible(card: GardenCard, furthestLevel: number | null = null): boolean {
   return (
     card.kind === "ordinary" &&
     (furthestLevel === null ? !card.id.startsWith("L") : levelRank(card.levelId) <= furthestLevel)
@@ -77,7 +77,7 @@ export function answerText(raw: unknown): { text: string } | { error: "invalid_a
   if (CONTROL_CHARACTERS.test(normalized.replace(/\n/g, ""))) return { error: "invalid_answer" };
   const text = normalized.trim();
   if (!text) return { error: "invalid_answer" };
-  if ([...text].length > GARDEN_ANSWER_MAX) return { error: "answer_too_long" };
+  if (Array.from(text).length > GARDEN_ANSWER_MAX) return { error: "answer_too_long" };
   return { text };
 }
 
@@ -114,13 +114,15 @@ export function drawCard(input: DrawInput, seed: number): GardenCard | null {
   const deck = decks.find((candidate) => {
     bucket -= weight(candidate.id);
     return bucket < 0;
-  })!;
+  });
+  if (!deck) throw new Error("Weighted deck pick found no deck");
   const available = cards.filter((card) => card.deckId === deck.id);
   const untouched = available.filter((card) => !input.waiting?.includes(card.id));
   const inDeck = untouched.length ? untouched : available;
+  const swapped = input.swapped ?? [];
   return (
     inDeck.find((card) => !input.swapped?.includes(card.id)) ??
-    inDeck.sort((a, b) => input.swapped!.indexOf(a.id) - input.swapped!.indexOf(b.id))[0] ??
+    inDeck.sort((a, b) => swapped.indexOf(a.id) - swapped.indexOf(b.id))[0] ??
     null
   );
 }

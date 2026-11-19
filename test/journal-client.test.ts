@@ -47,7 +47,7 @@ describe("journal api client", () => {
     const res = await api.createEntry(input);
     expect(fn.mock.calls[0]?.[0]).toBe("/api/journal");
     expect(fn.mock.calls[0]?.[1]?.method).toBe("POST");
-    expect(JSON.parse(String(fn.mock.calls[0]?.[1]?.body))).toEqual(input);
+    expect(JSON.parse(fn.mock.calls[0]?.[1]?.body as string)).toEqual(input);
     expect(res).toEqual({ ok: false, status: 400, error: { error: "entry_empty" } });
   });
 
@@ -57,7 +57,7 @@ describe("journal api client", () => {
     const res = await api.updateEntry("e/1", input);
     expect(fn.mock.calls[0]?.[0]).toBe("/api/journal/e%2F1");
     expect(fn.mock.calls[0]?.[1]?.method).toBe("PUT");
-    expect(JSON.parse(String(fn.mock.calls[0]?.[1]?.body))).toEqual(input);
+    expect(JSON.parse(fn.mock.calls[0]?.[1]?.body as string)).toEqual(input);
     expect(res.ok && res.data.entry.text).toBe("fixed typo");
   });
 

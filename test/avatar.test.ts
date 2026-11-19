@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Couple, User } from "../src/shared/types";
 import { DAY, HOUR } from "../src/worker/lib/time";

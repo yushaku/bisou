@@ -1,6 +1,7 @@
+import { defined } from "../../../shared/guards";
 import { useId } from "react";
 import { useOnline } from "@/lib/useOnline";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toDayString } from "../../../shared/days";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -44,18 +45,21 @@ export function DateSheet({
   const [error, setError] = useState<string | null>(null);
   const today = new Date();
 
-  useEffect(() => {
+  // Reopening the sheet, or a new value while it is open, starts from that value again.
+  const [synced, setSynced] = useState({ open, value });
+  if (synced.open !== open || synced.value !== value) {
+    setSynced({ open, value });
     if (open) {
       setSelected(value ? parseDay(value) : undefined);
       setError(null);
     }
-  }, [open, value]);
+  }
 
   async function save(remove = false) {
     if (!online || busy || (!remove && !selected)) return;
     setBusy(true);
     setError(null);
-    const message = remove ? await onRemove!() : await onSave(toDayString(selected!));
+    const message = remove ? await defined(onRemove)() : await onSave(toDayString(defined(selected)));
     setBusy(false);
     if (message) setError(message);
     else onOpenChange(false);

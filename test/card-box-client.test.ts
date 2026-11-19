@@ -761,7 +761,7 @@ it.each(["list", "player"])(
     writeCache("c:u", "box:sample", detail);
     const queryKey = screen === "list" ? ["boxes"] : ["boxes", "sample"];
     await expect(
-      testQueryClient.fetchQuery({ queryKey, queryFn: () => Promise.reject(new Error("offline")) }),
+      testQueryClient.query({ queryKey, queryFn: () => Promise.reject(new Error("offline")) }),
     ).rejects.toThrow("offline");
     expect(testQueryClient.getQueryState(queryKey)?.status).toBe("error");
     expect(testQueryClient.getQueryData(queryKey)).toBeUndefined();

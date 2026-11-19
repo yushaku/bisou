@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import type { Env } from "../env";
 import { fromBase64Url, toBase64Url } from "./crypto";
 
@@ -25,7 +26,7 @@ export function isPushEndpoint(value: string): boolean {
 }
 
 export function publicKeyFromJwk(jwk: JsonWebKey): string {
-  return toBase64Url(new Uint8Array([4, ...fromBase64Url(jwk.x!), ...fromBase64Url(jwk.y!)]));
+  return toBase64Url(new Uint8Array([4, ...fromBase64Url(defined(jwk.x)), ...fromBase64Url(defined(jwk.y))]));
 }
 
 async function hkdf(input: Uint8Array, salt: Uint8Array, info: Uint8Array, bits: number) {
@@ -145,7 +146,7 @@ export async function sendPush(
         TTL: String(options.ttl),
         Urgency: "normal",
         Topic: options.topic,
-        Authorization: await vapidHeader(row.endpoint, JSON.parse(env.VAPID_PRIVATE_KEY), now),
+        Authorization: await vapidHeader(row.endpoint, JSON.parse(env.VAPID_PRIVATE_KEY) as JsonWebKey, now),
       },
     });
     status = response.status;

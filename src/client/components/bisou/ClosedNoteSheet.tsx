@@ -52,18 +52,24 @@ export function ClosedNoteSheet({
       else onClose();
     }
   };
-  const parsed = validateClosedNote(value, Date.now());
+  const [now] = useState(Date.now);
+  const parsed = validateClosedNote(value, now);
   async function save() {
-    if (!online || saving || "error" in parsed) return;
+    // Checked again against the time of the tap, not the time the sheet opened.
+    const checked = validateClosedNote(value, Date.now());
+    if (!online || saving || "error" in checked) return;
     setSaving(true);
     setError(null);
-    const res = await updateClosedNote(entry.note.id, parsed.input);
+    const res = await updateClosedNote(entry.note.id, checked.input);
     setSaving(false);
     if (res.ok) {
       onSaved(res.data.entry);
       return;
     }
-    if (res.status === 401) return onSignedOut();
+    if (res.status === 401) {
+      onSignedOut();
+      return;
+    }
     setError(t(res.error?.error === "note_empty" ? "notes.messageRequired" : saveErrorKey(res.error?.error)));
   }
   return (
@@ -109,7 +115,7 @@ export function ClosedNoteSheet({
                 />
               </div>
               <DayField
-                now={Date.now()}
+                now={now}
                 value={value.date}
                 disabled={saving}
                 onChange={(date) => change({ ...value, date })}

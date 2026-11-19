@@ -62,13 +62,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-type Props = {
+interface Props {
   children?: ReactNode;
   onClick?: () => unknown;
   onValueChange?: (value: string) => void;
   onSubmit?: (event: { preventDefault: () => void }) => void;
   open?: boolean;
-};
+}
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -382,7 +382,7 @@ it.each([{ cards: [] }, { cards: [starredCards[0]!] }])(
     const nodes = await loadStars([], component);
     // A server result can also contain a card this device has never revealed.
     vi.mocked(api.gardenStars).mockResolvedValue({ ok: true, data: { cards } });
-    await testQueryClient.fetchQuery({ ...queries.gardenStars, staleTime: 0 }).catch(() => {});
+    await testQueryClient.query({ ...queries.gardenStars, staleTime: 0 }).catch(() => {});
     await flushQueryWork();
     const loaded = render(component);
     expect(loaded.filter((node) => node.type === StarredCard)).toHaveLength(0);
@@ -407,7 +407,7 @@ it.each(["drawer", "partner"])(
       const drawerCard = render(component).find((node) => node.type === GardenCard)!;
       (drawerCard.props as { onChanged: () => void }).onChanged();
     } else {
-      await testQueryClient.fetchQuery({ ...queries.gardenStars, staleTime: 0 }).catch(() => {});
+      await testQueryClient.query({ ...queries.gardenStars, staleTime: 0 }).catch(() => {});
     }
     await flushQueryWork();
     const refreshed = render(component);

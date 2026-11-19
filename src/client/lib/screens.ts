@@ -27,11 +27,11 @@ export const loadedTabScreens = () => tabScreens;
  * frame is out, and tabScreen renders a loaded one directly, so a tab switch never waits on a
  * chunk or on React.lazy's first-render suspension.
  */
-type TabLoaders = {
+interface TabLoaders {
   journal: () => Promise<ComponentType<never>>;
   wishes: () => Promise<ComponentType<never>>;
   garden: () => Promise<ComponentType<never>>;
-};
+}
 
 const tabLoaders: TabLoaders = {
   journal: () => import("../screens/Journal").then((m) => m.Journal as ComponentType<never>),

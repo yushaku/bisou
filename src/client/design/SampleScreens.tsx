@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { demoSpin } from "./samples";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
@@ -142,11 +143,11 @@ function WishesScreen() {
         partnerName={QUOC_BAO.name}
         onSpin={demoSpin}
         initialBudget={500_000}
-        onClaim={async () => {
+        onClaim={() => {
           toast.info(d("previewOnly"));
-          return { ok: false, status: 0, error: null };
+          return Promise.resolve({ ok: false, status: 0, error: null });
         }}
-        initialState={result ? { step: "result", wish: { ...result, price: result.price! } } : undefined}
+        initialState={result ? { step: "result", wish: { ...result, price: defined(result.price) } } : undefined}
       />
       <SectionTitle
         action={

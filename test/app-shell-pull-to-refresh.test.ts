@@ -1,8 +1,9 @@
+import type { EffectCallback } from "react";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { AppShell } from "../src/client/components/bisou/AppShell";
 
-const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as (() => void | (() => void))[] }));
+const hooks = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as EffectCallback[] }));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {
@@ -20,7 +21,7 @@ vi.mock("react", async (original) => ({
     if (!(index in hooks.values)) hooks.values[index] = { current: initial };
     return hooks.values[index];
   },
-  useEffect: (effect: () => void | (() => void)) => {
+  useEffect: (effect: EffectCallback) => {
     hooks.effects.push(effect);
   },
 }));
@@ -40,14 +41,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-type Props = {
+interface Props {
   children?: ReactNode;
   ref?: { current: unknown };
   role?: string;
   className?: string;
   style?: { height?: number };
   "aria-busy"?: boolean;
-};
+}
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];

@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import type { PhotoSize } from "../../shared/types";
 import type { Env } from "../env";
 import { DAY } from "./time";
@@ -17,7 +18,7 @@ export async function reserveAvatarUpload(
     db.prepare("INSERT INTO avatar_uploads (id, user_id, created_at) VALUES (?, ?, ?)").bind(id, userId, now),
     db.prepare("SELECT COUNT(*) AS n, MIN(created_at) AS oldest FROM avatar_uploads WHERE user_id = ?").bind(userId),
   ]);
-  const stats = (counted!.results as { n: number; oldest: number }[])[0]!;
+  const stats = defined((defined(counted).results as { n: number; oldest: number }[])[0]);
   if (stats.n <= 20) return null;
   await db.prepare("DELETE FROM avatar_uploads WHERE id = ?").bind(id).run();
   return Math.max(1, Math.ceil((stats.oldest + DAY - now) / 1000));
@@ -40,7 +41,7 @@ export async function purgeAvatars(env: Env, userId: string, completedId?: strin
           UNION ALL SELECT id FROM avatar_uploads WHERE user_id = ? AND pending = 1`,
         ).bind(userId, userId),
       ]);
-      const results = kept!.results;
+      const results = defined(kept).results;
       const keep = new Set(results.map((row) => avatarKey(userId, row.id ?? "")));
       const keys = page.objects.map((object) => object.key).filter((key) => !keep.has(key));
       if (keys.length) await env.PHOTOS.delete(keys);
@@ -93,7 +94,7 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
         // Refuse metadata between scans and appended images without decoding pixels (journal R16).
         for (let i = offset + length; i < bytes.length - 2; i++) {
           if (bytes[i] !== 0xff) continue;
-          const next = bytes[i + 1]!;
+          const next = defined(bytes[i + 1]);
           if ((next >= 0xe0 && next <= 0xef) || next === 0xfe || next === 0xd9) return null;
         }
         scanned = true;
@@ -148,13 +149,13 @@ export function checkPhotoBytes(bytes: Uint8Array, type: string): { side: number
       let w = 0;
       let h = 0;
       if (kind === "VP8X") {
-        if (length !== 10 || (bytes[data]! & 0x0c) !== 0) return null;
-        w = 1 + bytes[data + 4]! + (bytes[data + 5]! << 8) + (bytes[data + 6]! << 16);
-        h = 1 + bytes[data + 7]! + (bytes[data + 8]! << 8) + (bytes[data + 9]! << 16);
+        if (length !== 10 || (defined(bytes[data]) & 0x0c) !== 0) return null;
+        w = 1 + defined(bytes[data + 4]) + (defined(bytes[data + 5]) << 8) + (defined(bytes[data + 6]) << 16);
+        h = 1 + defined(bytes[data + 7]) + (defined(bytes[data + 8]) << 8) + (defined(bytes[data + 9]) << 16);
       } else if (kind === "VP8 ") {
         if (
           length < 10 ||
-          (bytes[data]! & 1) !== 0 ||
+          (defined(bytes[data]) & 1) !== 0 ||
           bytes[data + 3] !== 0x9d ||
           bytes[data + 4] !== 1 ||
           bytes[data + 5] !== 0x2a

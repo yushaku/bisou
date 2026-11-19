@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PushJob } from "../src/worker/lib/pushQueue";
 import { enqueuePush } from "../src/worker/lib/pushQueue";

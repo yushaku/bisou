@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { vnDay, vnHour } from "../src/shared/days";
 import { call, paired, resetDb, waitForBackground, type TestUser } from "./helpers";

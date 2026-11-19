@@ -60,30 +60,28 @@ export function ThemeControls({
 
   return (
     <div className={cn("flex flex-col gap-5", className)}>
-      {STYLES.length > 1 && (
-        <Field label={t("settings.style")}>
-          {(id) => (
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              spacing={1}
-              className="w-full"
-              aria-labelledby={id}
-              value={prefs.style}
-              onValueChange={(v) => {
-                const s = STYLES.find((x) => x.id === v);
-                if (s) setPrefs({ style: s.id });
-              }}
-            >
-              {STYLES.map((s) => (
-                <ToggleGroupItem key={s.id} value={s.id} className={item}>
-                  {t(s.labelKey)}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-          )}
-        </Field>
-      )}
+      <Field label={t("settings.style")}>
+        {(id) => (
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            spacing={1}
+            className="w-full"
+            aria-labelledby={id}
+            value={prefs.style}
+            onValueChange={(v) => {
+              const s = STYLES.find((x) => x.id === v);
+              if (s) setPrefs({ style: s.id });
+            }}
+          >
+            {STYLES.map((s) => (
+              <ToggleGroupItem key={s.id} value={s.id} className={item}>
+                {t(s.labelKey)}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        )}
+      </Field>
 
       <Field label={t("settings.mode")}>
         {(id) => (

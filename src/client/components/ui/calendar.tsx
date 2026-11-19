@@ -25,7 +25,7 @@ function Calendar({
   const defaultClassNames = getDefaultClassNames();
   // Follow the app language unless a locale is passed in.
   const app = useI18n();
-  locale = locale ?? (app.locale === "vi" ? vi : enGB);
+  const resolvedLocale = locale ?? (app.locale === "vi" ? vi : enGB);
 
   return (
     <DayPicker
@@ -37,9 +37,9 @@ function Calendar({
         className,
       )}
       captionLayout={captionLayout}
-      locale={locale}
+      locale={resolvedLocale}
       formatters={{
-        formatMonthDropdown: (date) => date.toLocaleString(locale?.code, { month: "short" }),
+        formatMonthDropdown: (date) => date.toLocaleString(resolvedLocale.code, { month: "short" }),
         ...formatters,
       }}
       classNames={{
@@ -123,7 +123,7 @@ function Calendar({
 
           return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
         },
-        DayButton: ({ ...props }) => <CalendarDayButton locale={locale} {...props} />,
+        DayButton: ({ ...props }) => <CalendarDayButton locale={resolvedLocale} {...props} />,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>

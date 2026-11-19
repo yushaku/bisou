@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PAIR_CODE_ALPHABET } from "../src/shared/pairCode";
 import type { Couple } from "../src/shared/types";

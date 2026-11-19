@@ -17,7 +17,7 @@ export function queryScope(userId: string, coupleId: string | null | undefined):
 export const queryCacheKey = (scope: string) => `${QUERY_PREFIX}${scope}`;
 
 /** Infinite queries (the journal) keep only their first page on the device. */
-export function firstPageOnly(data: unknown): unknown {
+function firstPageOnly(data: unknown): unknown {
   const d = data as { pages?: unknown; pageParams?: unknown } | null;
   if (d && Array.isArray(d.pages) && Array.isArray(d.pageParams)) {
     return { ...d, pages: d.pages.slice(0, 1), pageParams: d.pageParams.slice(0, 1) };
@@ -25,7 +25,7 @@ export function firstPageOnly(data: unknown): unknown {
   return data;
 }
 
-export function shouldPersistQuery(query: Query): boolean {
+function shouldPersistQuery(query: Query): boolean {
   return query.queryKey[0] !== "push" && query.state.data !== undefined;
 }
 

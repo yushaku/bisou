@@ -1,3 +1,5 @@
+import { isRecord, noop } from "../../shared/guards";
+import { ApiQueryError } from "./apiQueryError";
 import {
   QueryClient,
   focusManager,
@@ -17,15 +19,6 @@ import { LEVEL_IDS, type RelationshipLevel } from "../../shared/garden";
 import { devicePersistOptions, dropOtherScopes } from "./devicePersist";
 import { scopedStore } from "./deviceStore";
 
-export class ApiQueryError extends Error {
-  constructor(
-    readonly status: number,
-    readonly error: Extract<ApiResult<unknown>, { ok: false }>["error"],
-  ) {
-    super(error?.error ?? `HTTP ${status}`);
-  }
-}
-
 export async function apiData<T>(request: Promise<ApiResult<T>>): Promise<T> {
   const result = await request;
   if (!result.ok) throw new ApiQueryError(result.status, result.error);
@@ -34,6 +27,12 @@ export async function apiData<T>(request: Promise<ApiResult<T>>): Promise<T> {
 
 /** A query shows its failed state only once its retry has finished, so a refetch does not flash the error. */
 export const isFailed = (query: { isError: boolean; isFetching: boolean }) => query.isError && !query.isFetching;
+
+// Restored or partial cache entries may lack `pages`, whatever the type says.
+const journalPages = (client: QueryClient, queryKey: QueryKey) => {
+  const cached: { pages?: unknown[] } | undefined = client.getQueryData(queryKey);
+  return cached?.pages;
+};
 
 const levelId = (id: unknown): RelationshipLevel | undefined => LEVEL_IDS.find((level) => level === id);
 
@@ -74,22 +73,22 @@ async function refetchCachedQueries(client: QueryClient, predicate: (query: Quer
           query.queryKey.length === 1 &&
           !query.getObserversCount() &&
           query.state.fetchStatus === "idle" &&
-          (client.getQueryData(journal.queryKey)?.pages?.length ?? 0) > 1
+          (journalPages(client, journal.queryKey)?.length ?? 0) > 1
         ) {
           // Stop after the first page if the Journal is still closed when it arrives.
           await client
-            .fetchInfiniteQuery({
+            .infiniteQuery({
               ...journal,
               staleTime: 0,
               getNextPageParam: (...args: Parameters<typeof journal.getNextPageParam>) =>
                 query.getObserversCount() ? journal.getNextPageParam(...args) : undefined,
             })
-            .catch(() => {});
+            .catch(noop);
           return;
         }
         if (!query.options.queryFn) {
           if (root === "journal") {
-            await client.fetchInfiniteQuery({ ...journal, staleTime: 0 }).catch(() => {});
+            await client.infiniteQuery({ ...journal, staleTime: 0 }).catch(noop);
             return;
           }
           const level = levelId(id);
@@ -112,12 +111,12 @@ async function refetchCachedQueries(client: QueryClient, predicate: (query: Quer
                   );
           if (options) {
             await client
-              .fetchQuery<unknown, Error, unknown, string[]>({
+              .query<unknown, Error, unknown, unknown, string[]>({
                 queryKey: options.queryKey,
                 queryFn: options.queryFn,
                 staleTime: 0,
               })
-              .catch(() => {});
+              .catch(noop);
             return;
           }
         }
@@ -195,10 +194,13 @@ export function ServerDataProvider({
     [client],
   );
   useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.serviceWorker) return;
+    // Not every browser exposes service workers, whatever the DOM types say.
+    const worker: Partial<Navigator> = typeof navigator === "undefined" ? {} : navigator;
+    if (!worker.serviceWorker) return;
     const receive = (event: MessageEvent) => {
-      if (event.data?.type === "bisou:push" && typeof event.data.tag === "string")
-        void refreshForPush(client, event.data.tag);
+      const data: unknown = event.data;
+      if (isRecord(data) && data.type === "bisou:push" && typeof data.tag === "string")
+        void refreshForPush(client, data.tag);
     };
     navigator.serviceWorker.addEventListener("message", receive);
     return () => navigator.serviceWorker.removeEventListener("message", receive);

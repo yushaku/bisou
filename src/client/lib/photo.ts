@@ -109,7 +109,10 @@ export function uploadPhoto(
 ): Promise<ApiResult<PhotoUploadResponse>> {
   return new Promise((resolve) => {
     const failed = { ok: false, status: 0, error: null } as const;
-    if (signal?.aborted) return resolve(failed);
+    if (signal?.aborted) {
+      resolve(failed);
+      return;
+    }
     const ext = photo.full.type === "image/webp" ? "webp" : "jpg";
     const form = new FormData();
     form.append("full", photo.full, `full.${ext}`);
@@ -123,7 +126,10 @@ export function uploadPhoto(
     };
     xhr.onload = () => {
       const json: unknown = xhr.response;
-      if (xhr.status >= 200 && xhr.status < 300) return resolve({ ok: true, data: json as PhotoUploadResponse });
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve({ ok: true, data: json as PhotoUploadResponse });
+        return;
+      }
       const error = json && typeof json === "object" && "error" in json ? (json as ApiError) : null;
       resolve({ ok: false, status: xhr.status, error });
     };

@@ -28,7 +28,7 @@ describe("wish forms", () => {
       const text = receivedText(locale, "💛", "💛".repeat(room));
       expect(Array.from(text)).toHaveLength(2000);
       expect(saveBlock({ date: "2023-02-12", text, photos: [] }, Date.now())).toBeNull();
-      expect(saveBlock({ date: "2023-02-12", text: text + "x", photos: [] }, Date.now())).toBe("tooLong");
+      expect(saveBlock({ date: "2023-02-12", text: `${text}x`, photos: [] }, Date.now())).toBe("tooLong");
     }
   });
 });

@@ -1,3 +1,4 @@
+import { defined } from "../shared/guards";
 import { captureInstallPrompt } from "./lib/install";
 import { captureShortcut } from "./lib/navigation";
 import { reloadOnNewVersion, shouldCheckForUpdate } from "./lib/updateReload";
@@ -37,7 +38,7 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
 }
 
 function mount() {
-  createRoot(document.getElementById("root")!).render(
+  createRoot(defined(document.getElementById("root"), "Missing #root element")).render(
     <StrictMode>
       <ThemeProvider>
         <I18nProvider>

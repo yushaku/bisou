@@ -1,3 +1,4 @@
+import type { EffectCallback } from "react";
 import { persistQueryClientRestore, persistQueryClientSave } from "@tanstack/react-query-persist-client";
 import { focusManager, type QueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -84,7 +85,7 @@ describe("persisted server data", () => {
   it("does not persist queries that failed", async () => {
     const a = createServerQueryClient();
     a.setQueryData(["boxes"], { boxes: [] });
-    await a.fetchQuery({ queryKey: ["garden"], queryFn: () => Promise.reject(new Error("boom")) }).catch(() => {});
+    await a.query({ queryKey: ["garden"], queryFn: () => Promise.reject(new Error("boom")) }).catch(() => {});
     await persistQueryClientSave(options(a, "u1:c1"));
     const keys = JSON.parse(backend.data.get(queryCacheKey("u1:c1"))!).clientState.queries.map(
       (q: { queryKey: string[] }) => q.queryKey[0],
@@ -95,9 +96,9 @@ describe("persisted server data", () => {
   it("keeps cached list data on the device after its background refresh fails", async () => {
     const client = createServerQueryClient();
     const cached = { wishes: ["saved wish"] };
-    await client.fetchQuery({ queryKey: ["wishes"], queryFn: async () => cached });
+    await client.query({ queryKey: ["wishes"], queryFn: async () => cached });
     await expect(
-      client.fetchQuery({ queryKey: ["wishes"], queryFn: () => Promise.reject(new Error("offline")), staleTime: 0 }),
+      client.query({ queryKey: ["wishes"], queryFn: () => Promise.reject(new Error("offline")), staleTime: 0 }),
     ).rejects.toThrow("offline");
     expect(client.getQueryState(["wishes"])?.status).toBe("error");
     await persistQueryClientSave(options(client, "u1:c1"));
@@ -252,11 +253,11 @@ describe("boot outcome from /api/me", () => {
   });
 });
 
-const effects = vi.hoisted(() => [] as (() => void | (() => void))[]);
+const effects = vi.hoisted(() => [] as EffectCallback[]);
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => [typeof initial === "function" ? initial() : initial, vi.fn()],
-  useEffect: (effect: () => void | (() => void)) => {
+  useEffect: (effect: EffectCallback) => {
     effects.push(effect);
   },
 }));
@@ -270,7 +271,7 @@ it("provider refreshes once after restore and on foreground, and removes its lis
   const provider = ServerDataProvider({ scope: "u1:c1", fallback: null, children: null });
   const client = provider.props.client as QueryClient;
   const request = vi.fn(async () => "fresh");
-  await client.fetchQuery({ queryKey: ["wishes"], queryFn: request });
+  await client.query({ queryKey: ["wishes"], queryFn: request });
   expect(provider.props.onSuccess).toBeTypeOf("function");
   expect(provider.props.onSuccess()).toBeUndefined();
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
@@ -279,7 +280,7 @@ it("provider refreshes once after restore and on foreground, and removes its lis
   focusManager.setFocused(true);
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(3));
   for (const cleanup of cleanups.reverse()) cleanup?.();
-  await client.fetchQuery({ queryKey: ["wishes"], queryFn: request });
+  await client.query({ queryKey: ["wishes"], queryFn: request });
   focusManager.setFocused(false);
   focusManager.setFocused(true);
   await vi.dynamicImportSettled();
@@ -293,10 +294,10 @@ it("sign-out during foreground refresh cannot write private data back to the dev
   const client = createServerQueryClient();
   const store = scopedStore();
   let resolve!: (value: string) => void;
-  await client.fetchQuery({ queryKey: ["wishes"], queryFn: async () => "cached" });
+  await client.query({ queryKey: ["wishes"], queryFn: async () => "cached" });
   // Update the cached query's fetch function, as its observer does on mount.
   const pending = client
-    .fetchQuery({
+    .query({
       queryKey: ["wishes"],
       staleTime: 0,
       queryFn: () =>
@@ -322,7 +323,7 @@ it("provider accepts only push messages and removes its service worker listener 
   const provider = ServerDataProvider({ scope: "u1:c1", fallback: null, children: null });
   const client = provider.props.client as QueryClient;
   const request = vi.fn(async () => "notes");
-  await client.fetchQuery({ queryKey: ["notes"], queryFn: request });
+  await client.query({ queryKey: ["notes"], queryFn: request });
   const cleanups = effects.map((effect) => effect());
   for (const data of [
     null,
@@ -339,7 +340,7 @@ it("provider accepts only push messages and removes its service worker listener 
   serviceWorker.dispatchEvent(new MessageEvent("message", { data: { type: "bisou:push", tag: "notes" } }));
   await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
   for (const cleanup of cleanups.reverse()) cleanup?.();
-  await client.fetchQuery({ queryKey: ["notes"], queryFn: request });
+  await client.query({ queryKey: ["notes"], queryFn: request });
   serviceWorker.dispatchEvent(new MessageEvent("message", { data: { type: "bisou:push", tag: "notes" } }));
   await vi.dynamicImportSettled();
   await new Promise((resolve) => setTimeout(resolve, 0));

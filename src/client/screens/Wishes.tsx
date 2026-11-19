@@ -1,5 +1,6 @@
+import { defined } from "../../shared/guards";
 import { ArrowLeft, Check, Ellipsis, ListFilter, PencilLine, Plus, Trash2 } from "lucide-react";
-import { lazy, Suspense, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useContext, useLayoutEffect, useState } from "react";
 import { Link } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import { toast } from "@/components/ui/ding-toaster";
@@ -27,7 +28,7 @@ import { wishErrorKey, wishJarLevels } from "../lib/wishes";
 import { useCreateRequest } from "../lib/useTabNavigation";
 import { readCreateRequest } from "../lib/navigation";
 import { useWishJar } from "../lib/useWishJar";
-import { TabMemory } from "../lib/tabMemory";
+import { remember, TabMemory } from "../lib/tabMemory";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
@@ -58,28 +59,25 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   );
   const people = toPeople(couple.members, session.user, t);
   const myIndex = couple.members[0]?.id === session.user.id ? 0 : 1;
-  const myJar = people[myIndex]!;
-  const partnerJar = people[myIndex === 0 ? 1 : 0]!;
+  const myJar = defined(people[myIndex]);
+  const partnerJar = defined(people[myIndex === 0 ? 1 : 0]);
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const { jar, setJar, failed, refresh } = useWishJar(session.onSignedOut);
   const levels = wishJarLevels(jar);
   useLayoutEffect(() => {
-    if (!memory) return;
-    if (view !== "spin") memory.wishesSection = view;
-    memory.wishesFilter = filter;
+    remember(memory, view === "spin" ? { wishesFilter: filter } : { wishesSection: view, wishesFilter: filter });
   }, [view, filter, memory]);
   const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
   const [acting, setActing] = useState<Wish | null>(null);
   const [detail, setDetail] = useState(false);
-  useEffect(() => {
-    if (acting && jar && ![...jar.open, ...jar.received].some((wish) => wish.id === acting.id)) setActing(null);
-  }, [jar, acting]);
+  // The acted-on wish is gone from the jar (deleted on the other phone): close its sheet.
+  if (acting && jar && ![...jar.open, ...jar.received].some((wish) => wish.id === acting.id)) setActing(null);
   // The options sheet still shows its wish while it animates closed.
-  const lastActing = useRef(acting);
-  if (acting) lastActing.current = acting;
-  const shownWish = acting ?? lastActing.current;
+  const [lastActing, setLastActing] = useState(acting);
+  if (acting && acting !== lastActing) setLastActing(acting);
+  const shownWish = acting ?? lastActing;
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

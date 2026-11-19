@@ -6,6 +6,7 @@ import { Home } from "./Home";
 import { TabFrame, type SessionProps } from "./SignedInShell";
 
 /* The other tabs: rendered directly once prewarmed, so a tab switch never suspends (see lib/screens.ts). */
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- P ties the lazy screen to the props the caller passes
 function tabScreen<P extends object>(tab: "journal" | "wishes" | "garden") {
   const Lazy = lazy(() => loadTab(tab).then((component) => ({ default: component as unknown as ComponentType<P> })));
   return function TabScreen(props: P) {

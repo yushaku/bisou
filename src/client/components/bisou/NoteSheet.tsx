@@ -1,3 +1,4 @@
+import { defined } from "../../../shared/guards";
 import { useApiMutation } from "@/lib/serverQuery";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "@/components/ui/ding-toaster";
@@ -130,7 +131,7 @@ export function NoteForm({
   const choosingDelivery = !entry || entry.state === "draft";
   const scheduledAt =
     delivery === "eightHours" ? eightHoursAt : delivery === "custom" && sendAt ? new Date(sendAt).getTime() : null;
-  const invalidSchedule =
+  const isScheduleInvalid = () =>
     choosingDelivery &&
     deliveryChanged &&
     delivery === "custom" &&
@@ -152,7 +153,7 @@ export function NoteForm({
         : "";
   async function save() {
     if (!online || saving || block || locked) return;
-    if (invalidSchedule) {
+    if (isScheduleInvalid()) {
       showScheduleError();
       return;
     }
@@ -162,7 +163,7 @@ export function NoteForm({
     const input = {
       ...value,
       ...(choosingDelivery && deliveryChanged
-        ? { delivery, ...(delivery === "custom" ? { sendAt: scheduledAt! } : {}) }
+        ? { delivery, ...(delivery === "custom" ? { sendAt: defined(scheduledAt) } : {}) }
         : {}),
     };
     const res = entry ? await updateNote(entry.id, input) : await createNote(input);
@@ -181,7 +182,10 @@ export function NoteForm({
       onDone();
       return;
     }
-    if (res.status === 401) return onSignedOut();
+    if (res.status === 401) {
+      onSignedOut();
+      return;
+    }
     if (res.error?.error === "invalid_note_schedule") {
       showScheduleError();
       return;
@@ -212,7 +216,10 @@ export function NoteForm({
       onDone();
       return;
     }
-    if (res.status === 401) return onSignedOut();
+    if (res.status === 401) {
+      onSignedOut();
+      return;
+    }
     setWithdraw(false);
     if (res.error?.error === "note_opened") {
       setLocked(true);
@@ -331,7 +338,7 @@ export function NoteForm({
             disabled={!online || saving || locked}
             onClick={() => setWithdraw(true)}
           >
-            {t(entry?.state === "draft" ? "notes.delete" : "notes.withdraw")}
+            {t(entry.state === "draft" ? "notes.delete" : "notes.withdraw")}
           </Button>
         )}
       </ComposeFooter>

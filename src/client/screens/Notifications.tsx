@@ -30,13 +30,14 @@ export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
     async function load() {
       if (changing.current) return;
       const version = revision.current;
+      const stale = () => !active || changing.current || version !== revision.current;
       try {
         const [reg, res] = await Promise.all([
           support === "ok" ? navigator.serviceWorker.getRegistration() : undefined,
           api.push(),
         ]);
         const sub = reg?.pushManager ? await reg.pushManager.getSubscription() : null;
-        if (!active || changing.current || version !== revision.current) return;
+        if (stale()) return;
         setRegistration(reg);
         setSubscription(sub);
         setPermission(typeof Notification === "undefined" ? "default" : Notification.permission);
@@ -79,7 +80,7 @@ export function Notifications({ onSignedOut }: { onSignedOut: () => void }) {
   const disabled = !loaded || busy || !online || !registration?.pushManager || !publicKey || permission === "denied";
 
   async function change(kind: "journal" | "reminders", value: boolean) {
-    if (disabled || changing.current || !registration || !publicKey) return;
+    if (disabled || changing.current) return;
     const kinds = { journal: device?.journal ?? false, reminders: device?.reminders ?? false, [kind]: value };
     changing.current = true;
     revision.current++;

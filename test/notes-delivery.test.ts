@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, expect, test, vi } from "vitest";
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { call, paired, resetDb, waitForBackground } from "./helpers";
 import { device, subscribe, mockPush, runPushCron } from "./push-helpers";
 import type { WrittenNote } from "../src/shared/types";

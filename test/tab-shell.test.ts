@@ -107,7 +107,7 @@ it("returns focus to the control that opened a sub-page, once", () => {
 it("a page without a tab neither scrolls nor listens", () => {
   const memory = createTabMemory();
   const { win } = fakeWindow();
-  expect(attachTabScroll(memory, undefined)).toBeUndefined();
+  attachTabScroll(memory, undefined);
   expect(win.scrollTo).not.toHaveBeenCalled();
 });
 

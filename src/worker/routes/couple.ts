@@ -124,7 +124,7 @@ couple.post("/join", async (c) => {
     .bind(code)
     .first<{ couple_id: string; expires_at: number }>();
   if (!target) return c.json({ error: "pair_code_invalid" }, 400);
-  if (mine && target.couple_id === mine.coupleId) {
+  if (mine?.coupleId === target.couple_id) {
     await release();
     return c.json({ error: "own_pair_code" }, 400);
   }

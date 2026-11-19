@@ -6,7 +6,7 @@ import { DAY, HOUR, PENDING_PHOTO_TTL } from "./time";
  * Rate limit windows: otp_requests (routes/auth.ts) and join_attempts (lib/couples.ts) both
  * count rows of the last rolling hour, so older rows no longer matter.
  */
-export const RATE_LIMIT_WINDOW = HOUR;
+const RATE_LIMIT_WINDOW = HOUR;
 
 export interface CleanupCounts {
   otp_codes: number;

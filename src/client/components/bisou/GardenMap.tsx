@@ -70,7 +70,9 @@ export function GardenMap({
     const observer = new ResizeObserver(measure);
     if (list) observer.observe(list);
     window.addEventListener("resize", measure);
-    void document.fonts?.ready.then(() => measure());
+    // Older browsers lack `document.fonts`, whatever the DOM types say.
+    const doc: Partial<Document> = document;
+    void doc.fonts?.ready.then(() => measure());
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", measure);

@@ -29,6 +29,11 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
   const { data, setData, failed, refresh } = useServerQuery(queries.claims, onSignedOut);
   const releaseClaim = useApiMutation(api.releaseClaim, ["claims", "wishes"]);
   const [notices, setNotices] = useState<Claim[]>([]);
+  // A claim the partner released stays on screen as a notice after it is acknowledged and leaves the data.
+  const newNotices = (data?.claims ?? []).filter(
+    (claim) => claim.status === "gone" && !notices.some((n) => n.id === claim.id),
+  );
+  if (newNotices.length) setNotices([...notices, ...newNotices]);
   const claims = data ? [...notices.filter((c) => !data.claims.some((n) => n.id === c.id)), ...data.claims] : null;
   const [releasing, setReleasing] = useState<Claim | null>(null);
   const [busy, setBusy] = useState(false);
@@ -36,7 +41,6 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
   useEffect(() => {
     for (const claim of data?.claims ?? []) {
       if (claim.status !== "gone") continue;
-      setNotices((old) => (old.some((n) => n.id === claim.id) ? old : [...old, claim]));
       void api.acknowledgeClaimNotice(claim.id).then((res) => {
         if (res.ok) setData((old) => old && { claims: old.claims.filter((n) => n.id !== claim.id) });
         else if (res.status === 401) onSignedOut();

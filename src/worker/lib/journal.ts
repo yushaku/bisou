@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { isValidDay, latestDay } from "../../shared/days";
 import { ENTRY_PHOTOS_MAX, ENTRY_TEXT_MAX, entryText } from "../../shared/journal";
 import type { ApiErrorCode, EntryInput, JournalEntry } from "../../shared/types";
@@ -93,12 +94,12 @@ export async function entriesWithPhotos(db: D1Database, rows: EntryRow[]): Promi
       ? {
           note: {
             id: row.note_id,
-            recipientId: row.recipient_id!,
+            recipientId: defined(row.recipient_id),
             happened: row.happened,
             feel: row.feel,
             need: row.need,
             hope: row.hope,
-            line: row.line!,
+            line: defined(row.line),
           },
         }
       : {}),

@@ -55,7 +55,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-type Props = {
+interface Props {
   className?: string;
   onAnimationEnd?: (event: { target: unknown; currentTarget: unknown }) => void;
   children?: ReactNode;
@@ -65,7 +65,7 @@ type Props = {
   "aria-label"?: string;
   onConfirm?: () => void;
   open?: boolean;
-};
+}
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];

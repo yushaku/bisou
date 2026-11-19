@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/worker/app";
 import { hashOtp, sha256Hex } from "../src/worker/lib/crypto";
@@ -287,10 +287,7 @@ describe("POST /api/auth/verify", () => {
           ctx,
         );
       await post("/api/auth/request", { email });
-      const match = log.mock.calls
-        .flat()
-        .join(" ")
-        .match(new RegExp(`${email.replace(".", "\\.")}: (\\d{6})`));
+      const match = new RegExp(`${email.replace(".", "\\.")}: (\\d{6})`).exec(log.mock.calls.flat().join(" "));
       const res = await post("/api/auth/verify", { email, code: match![1] });
       expect(res.status).toBe(200);
       return res.headers.get("Set-Cookie")!;

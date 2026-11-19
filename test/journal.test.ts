@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { EntryInput, JournalEntry, JournalPage } from "../src/shared/types";
 import { HOUR, PENDING_PHOTO_TTL } from "../src/worker/lib/time";

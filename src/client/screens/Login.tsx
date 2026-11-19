@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type SubmitEvent } from "react";
 import type { ApiError, User } from "../../shared/types";
 import { api } from "../api";
 import couple from "../assets/couple.webp";
@@ -89,12 +89,12 @@ export function Login({ onSignedIn }: { onSignedIn: (user: User) => void }) {
     codeRef.current?.focus();
   }
 
-  function onEmailSubmit(e: FormEvent) {
+  function onEmailSubmit(e: SubmitEvent) {
     e.preventDefault();
     void requestCode();
   }
 
-  function onCodeSubmit(e: FormEvent) {
+  function onCodeSubmit(e: SubmitEvent) {
     e.preventDefault();
     if (code.length === 6) void verify(code);
   }

@@ -12,7 +12,12 @@ import { NoteReply } from "../src/client/components/bisou/NoteReply";
 import { Journal } from "../src/client/screens/Journal";
 import type { JournalEntry } from "../src/shared/types";
 import { createQueryFixture as createTabMemory } from "./query-fixture";
-const hooks = vi.hoisted(() => ({ active: false, index: 0, values: [] as unknown[], memory: null as unknown }));
+const hooks = vi.hoisted((): { active: boolean; index: number; values: unknown[]; memory: unknown } => ({
+  active: false,
+  index: 0,
+  values: [],
+  memory: null,
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useId: () => "test",
@@ -43,13 +48,13 @@ afterEach(() => {
 });
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key, locale: "vi" }) }));
 vi.mock("../src/client/lib/useOnline", () => ({ useOnline: () => true }));
-type Props = {
+interface Props {
   children?: ReactNode;
   onClick?: () => void;
   "aria-label"?: string;
   "aria-controls"?: string;
   href?: string;
-};
+}
 function nodes(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<Props>(node)) return [];

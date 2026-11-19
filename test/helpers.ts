@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { expect, vi } from "vitest";
 import type { Couple } from "../src/shared/types";
 import worker from "../src/worker/index";
@@ -65,7 +65,7 @@ export function mockResend(status = 200) {
   const spy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
     const url = input instanceof Request ? input.url : String(input);
     if (url !== "https://api.resend.com/emails") throw new Error(`unexpected fetch ${url}`);
-    sent.push(JSON.parse(String(init?.body)) as SentMail);
+    sent.push(JSON.parse(init?.body as string) as SentMail);
     return new Response(JSON.stringify({ id: "mock" }), { status });
   });
   return { sent, spy };
@@ -98,7 +98,7 @@ export function codeFromMail(mail: SentMail | undefined): string {
 /** Extracts "bisou_session=<value>" from a Set-Cookie header, for the Cookie header of later calls. */
 export function sessionCookie(res: Response): string {
   const set = res.headers.get("Set-Cookie") ?? "";
-  const match = set.match(/bisou_session=([^;]*)/);
+  const match = /bisou_session=([^;]*)/.exec(set);
   if (!match?.[1]) throw new Error(`no session cookie in: ${set}`);
   return `bisou_session=${match[1]}`;
 }

@@ -50,7 +50,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
   };
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     const start = drag.current;
-    if (!start || start.id !== e.pointerId) return;
+    if (start?.id !== e.pointerId) return;
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
     // Lock the first deliberate direction, so a vertical gesture cannot turn into a swipe.
@@ -61,7 +61,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
   };
   const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
     const start = drag.current;
-    if (!start || start.id !== e.pointerId) return;
+    if (start?.id !== e.pointerId) return;
     if (start.axis === "x")
       go(swipedPhotoIndex(index, total, e.clientX - start.x, e.clientY - start.y, e.currentTarget.clientWidth));
     else cancelDrag();
@@ -117,9 +117,9 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
                 transitionProperty: dragging ? "none" : undefined,
               }}
             >
-              {photos?.map((item, i) => (
+              {photos.map((item, i) => (
                 <img
-                  key={item.src + i}
+                  key={`${item.src}${i}`}
                   src={item.src}
                   alt={i === index ? item.alt : ""}
                   aria-hidden={i !== index}

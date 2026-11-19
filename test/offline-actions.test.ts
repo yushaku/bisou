@@ -40,7 +40,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-type Props = {
+interface Props {
   role?: string;
   id?: string;
   className?: string;
@@ -49,7 +49,7 @@ type Props = {
   disabled?: boolean;
   onClick?: () => void;
   onSubmit?: (event: { preventDefault: () => void }) => void;
-};
+}
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -107,7 +107,7 @@ it.each([false, true])("entry deletion respects connectivity: online=%s", async 
 it.each([false, true])("wish deletion respects connectivity: online=%s", async (online) => {
   vi.stubGlobal("navigator", { onLine: online });
   const remove = vi.spyOn(api, "deleteWish").mockResolvedValue({ ok: false, status: 0, error: null });
-  state.push("jar", "all", null, false, false, undefined, wish, false, true, false, null);
+  state.push("jar", "all", null, false, false, undefined, wish, wish, false, true, false, null);
   const nodes = elements(
     Wishes({
       user,
@@ -228,7 +228,7 @@ it("notifications AC19: Home hides the invitation for an unpaired user", () => {
       user,
       onUser: vi.fn(),
       onSignedOut: vi.fn(),
-      couple: { id: "c", members: [user], events: [], startDate: null } as never,
+      couple: { id: "c", members: [user], events: [], startDate: null },
       onCouple: vi.fn(),
       celebrate: false,
       onCelebrated: vi.fn(),

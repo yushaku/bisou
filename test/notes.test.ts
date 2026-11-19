@@ -1,6 +1,6 @@
 import { device, subscribe, mockPush, runPushCron } from "./push-helpers";
 import { beforeEach, afterEach, expect, test, vi } from "vitest";
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { call, paired, resetDb, user, waitForBackground } from "./helpers";
 import { sendScheduledNotes } from "../src/worker/lib/notes";
 

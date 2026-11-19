@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { PHOTO_SIZES, PHOTO_TYPES, PHOTO_UPLOAD_MAX_BYTES } from "../../shared/journal";
@@ -31,7 +32,7 @@ photos.post(
     )
       .bind(userId, now - PENDING_PHOTO_TTL)
       .first<number>("n");
-    if (pending! >= MAX_PENDING_PHOTOS_PER_USER) {
+    if (defined(pending) >= MAX_PENDING_PHOTOS_PER_USER) {
       return c.json({ error: "too_many_pending_photos" }, 429);
     }
     let form: FormData;
@@ -59,7 +60,7 @@ photos.post(
       }
       parts.push({ size, bytes: dimensions.bytes, type: file.type, side: dimensions.side });
     }
-    if (parts[1]!.side > parts[0]!.side) {
+    if (defined(parts[1]).side > defined(parts[0]).side) {
       return c.json({ error: "photo_invalid" }, 400);
     }
     const id = crypto.randomUUID();
@@ -67,7 +68,9 @@ photos.post(
     try {
       // Wait for both writes before cleanup, including a slower successful write.
       const puts = await Promise.allSettled(
-        parts.map((part, i) => c.env.PHOTOS.put(keys[i]!, part.bytes, { httpMetadata: { contentType: part.type } })),
+        parts.map((part, i) =>
+          c.env.PHOTOS.put(defined(keys[i]), part.bytes, { httpMetadata: { contentType: part.type } }),
+        ),
       );
       const failed = puts.find((result) => result.status === "rejected");
       if (failed?.status === "rejected") throw failed.reason;
@@ -116,7 +119,7 @@ photos.get("/:id/:size", async (c) => {
   if (!object) return c.json({ error: "not_found" }, 404);
   return new Response(object.body, {
     headers: {
-      "Content-Type": object.httpMetadata!.contentType!,
+      "Content-Type": defined(object.httpMetadata?.contentType),
       "Content-Length": String(object.size),
       // journal R20: a partner's cached photo must become stale within a day of deletion.
       "Cache-Control": "private, max-age=86400",

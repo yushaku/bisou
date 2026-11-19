@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env } from "cloudflare:workers";
 import { beforeEach, afterEach, expect, test, vi } from "vitest";
 import { call, paired, resetDb, waitForBackground } from "./helpers";
 import { device, subscribe, mockPush, decrypt, runPushCron, stored } from "./push-helpers";

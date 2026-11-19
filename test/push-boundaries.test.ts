@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { call, paired, resetDb, waitForBackground, type TestUser } from "./helpers";
-import { decrypt, device, mockPush, runPushCron, stored, subscribe } from "./push-helpers";
+import { decrypt, device, mockPush, requestUrl, runPushCron, stored, subscribe } from "./push-helpers";
 
 beforeEach(async () => {
   await resetDb();
@@ -176,11 +176,11 @@ it("notifications R28: a 410 on an event reminder deletes only that device, the 
   const send = mockPush();
   send.spy.mockImplementation(async (input, init) => {
     send.sent.push({
-      endpoint: String(input),
+      endpoint: requestUrl(input),
       headers: new Headers(init?.headers),
       body: new Uint8Array(await new Response(init?.body).arrayBuffer()),
     });
-    return new Response(null, { status: String(input) === gone.body.endpoint ? 410 : 201 });
+    return new Response(null, { status: requestUrl(input) === gone.body.endpoint ? 410 : 201 });
   });
   await runPushCron("2027-02-11T20:00:00+07:00");
   expect(send.sent.map((s) => s.endpoint).sort()).toEqual(

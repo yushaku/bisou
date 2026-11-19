@@ -33,6 +33,7 @@ export function GardenStageNotice({
     const key = gardenMemoryKey(memoryScope, "stage", furthest);
     if (gardenSeen(key)) return;
     rememberGarden(key);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the "seen" flag lives in localStorage, so it can only be read after mount
     setCelebrating(furthest);
   }, [furthest, memoryScope]);
   const proposal = state.levels.proposal;
@@ -45,7 +46,10 @@ export function GardenStageNotice({
     const result = await changeLevels({ action, revision: state.levels.revision });
     setBusy(false);
     if (!result.ok) {
-      if (result.status === 401) return onSignedOut();
+      if (result.status === 401) {
+        onSignedOut();
+        return;
+      }
       setError(t(result.status === 409 ? "garden.staleLevels" : "error.generic"));
     }
     onChanged();

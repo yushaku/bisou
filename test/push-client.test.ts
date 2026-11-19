@@ -8,14 +8,12 @@ afterEach(() => {
 });
 
 function setup() {
-  vi.stubGlobal("navigator", {
-    userAgent: "Chrome",
-    onLine: true,
-    serviceWorker: { getRegistration: vi.fn().mockResolvedValue(undefined) },
-  });
+  const getRegistration = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal("navigator", { userAgent: "Chrome", onLine: true, serviceWorker: { getRegistration } });
   vi.stubGlobal("Notification", { permission: "default" });
   vi.stubGlobal("PushManager", {});
   vi.stubGlobal("matchMedia", () => ({ matches: false }));
+  return { getRegistration };
 }
 it("notifications AC16, R20: distinguishes iPhone and iPad browser installation from unsupported browsers", async () => {
   setup();
@@ -32,14 +30,13 @@ it("notifications AC1, AC2, R1, R21: subscribe is called synchronously in the ta
   setup();
   const body = { endpoint: "endpoint", keys: { auth: "auth", p256dh: "key" } };
   const subscription = { toJSON: () => body, unsubscribe: vi.fn() };
-  const registration = {
-    pushManager: { subscribe: vi.fn().mockResolvedValue(subscription) },
-  } as unknown as ServiceWorkerRegistration;
+  const subscribe = vi.fn().mockResolvedValue(subscription);
+  const registration = { pushManager: { subscribe } } as unknown as ServiceWorkerRegistration;
   const save = vi
     .spyOn(api, "savePush")
     .mockResolvedValue({ ok: true, data: { device: { endpoint: "endpoint", journal: true, reminders: true } } });
   const pending = turnOn(registration, "public-key", { journal: true, reminders: true });
-  expect(registration.pushManager.subscribe).toHaveBeenCalledWith({
+  expect(subscribe).toHaveBeenCalledWith({
     userVisibleOnly: true,
     applicationServerKey: "public-key",
   });
@@ -58,11 +55,11 @@ it("notifications R28: an API failure undoes a new browser subscription", async 
   expect(unsubscribe).toHaveBeenCalledOnce();
 });
 it("notifications AC20, R28: turning both off deletes on the server before unsubscribing locally", async () => {
-  setup();
+  const { getRegistration } = setup();
   const unsubscribe = vi.fn().mockResolvedValue(true);
-  vi.mocked(navigator.serviceWorker.getRegistration).mockResolvedValue({
+  getRegistration.mockResolvedValue({
     pushManager: { getSubscription: vi.fn().mockResolvedValue({ endpoint: "endpoint", unsubscribe }) },
-  } as unknown as ServiceWorkerRegistration);
+  });
   const remove = vi.spyOn(api, "deletePush").mockImplementation(async () => {
     expect(unsubscribe).not.toHaveBeenCalled();
     return { ok: true, data: { ok: true } };

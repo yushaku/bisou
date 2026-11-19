@@ -49,7 +49,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-type Props = { children?: ReactNode; disabled?: boolean; "aria-label"?: string; onClick?: () => Promise<void> | void };
+interface Props {
+  children?: ReactNode;
+  disabled?: boolean;
+  "aria-label"?: string;
+  onClick?: () => Promise<void> | void;
+}
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -154,7 +159,7 @@ it.each(["allowed", "denied"])(
 
 it("notifications AC17, R25: closing stores dismissal, restores focus and never asks permission", async () => {
   const { registration, store, focus } = await setup();
-  render().find((n) => n.props["aria-label"] === "push.card.dismiss")!.props.onClick!();
+  void render().find((n) => n.props["aria-label"] === "push.card.dismiss")!.props.onClick!();
   expect(store.get("bisou.push.card")).toBe("1");
   expect(render()).toHaveLength(0);
   expect(focus).toHaveBeenCalledWith({ preventScroll: true });

@@ -1,8 +1,9 @@
+import { defined, noop } from "../../shared/guards";
 import { MascotPicker } from "../components/bisou/MascotPicker";
 import { useOnline } from "../lib/useOnline";
 import { Bell, Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
 import { currentSubscription } from "../lib/push";
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type SubmitEvent } from "react";
 import { toast } from "@/components/ui/ding-toaster";
 import { useLocation } from "wouter";
 import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
@@ -66,6 +67,8 @@ export function Settings({
   const avatarInput = useRef<HTMLInputElement>(null);
   const cancelCrop = useRef<(() => void) | null>(null);
   const mounted = useRef(true);
+  // A function call, so TypeScript does not assume the ref kept its value across awaits.
+  const isMounted = () => mounted.current;
   const [cropping, setCropping] = useState<CropRequest | null>(null);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [removingAvatar, setRemovingAvatar] = useState(false);
@@ -79,8 +82,8 @@ export function Settings({
   const paired = (couple?.members.length ?? 0) >= 2;
   const partner = paired ? couple?.members.find((member) => member.id !== user.id) : null;
   const members = toPeople(couple?.members ?? [], user, t);
-  const people: [Person, Person] | null = paired ? [members[0]!, members[1]!] : null;
-  const ownPerson = toPeople([user], user, t)[0]!;
+  const people: [Person, Person] | null = paired ? [defined(members[0]), defined(members[1])] : null;
+  const ownPerson = defined(toPeople([user], user, t)[0]);
 
   function openAvatar(button: HTMLButtonElement) {
     sheetButton.current = button;
@@ -145,7 +148,7 @@ export function Settings({
       bitmap.close();
       toast.error(t("avatar.saveFailed"));
     } finally {
-      if (mounted.current) {
+      if (isMounted()) {
         setAvatarBusy(false);
         sheetButton.current?.focus({ preventScroll: true });
       }
@@ -195,7 +198,7 @@ export function Settings({
       const subscription = await currentSubscription();
       const res = await api.logout(subscription?.endpoint);
       if (res.ok) {
-        await subscription?.unsubscribe().catch(() => {});
+        await subscription?.unsubscribe().catch(noop);
         navigate("/", { replace: true });
         onSignedOut();
       } else setLogoutError(true);
@@ -464,7 +467,7 @@ function ProfileForm({ user, onUser }: Pick<SessionProps, "user" | "onUser">) {
   const [name, setName] = useState(user.displayName ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  async function save(e: FormEvent) {
+  async function save(e: SubmitEvent) {
     e.preventDefault();
     if (!online || !name.trim() || status === "saving") return;
     setStatus("saving");

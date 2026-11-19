@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { noop } from "../../../shared/guards";
+import { useState } from "react";
 import type { JournalEntry, WrittenNote } from "../../../shared/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,9 +41,12 @@ export function JournalComposeSheet({
   const [journalLock, setJournalLock] = useState<Lock>(null);
   const [noteLock, setNoteLock] = useState<Lock>(null);
   const [confirming, setConfirming] = useState(false);
-  useEffect(() => {
+  // Reopening the sheet, or a new first tab while it is open, starts from that tab again.
+  const [synced, setSynced] = useState({ open, initialTab });
+  if (synced.open !== open || synced.initialTab !== initialTab) {
+    setSynced({ open, initialTab });
     if (open) setTab(initialTab);
-  }, [open, initialTab]);
+  }
   const saving = journalLock === "saving" || noteLock === "saving";
   const close = (locks: Lock[] = [journalLock, noteLock]) => {
     if (locks.includes("saving")) return;
@@ -114,7 +118,7 @@ export function JournalComposeSheet({
               <NoteForm
                 partnerName={partnerName}
                 onSaved={onNoteSaved}
-                onRefresh={() => {}}
+                onRefresh={noop}
                 onSignedOut={onSignedOut}
                 onLock={setNoteLock}
                 onClose={() => close()}

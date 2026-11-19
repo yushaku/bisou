@@ -21,7 +21,7 @@ export const localMembers = [
   { id: "local-binh", email: "binh@example.com", displayName: "Binh", locale: "en" },
 ];
 const quote = (value) =>
-  value === null ? "NULL" : typeof value === "number" ? String(value) : "'" + value.replaceAll("'", "''") + "'";
+  value === null ? "NULL" : typeof value === "number" ? String(value) : `'${value.replaceAll("'", "''")}'`;
 export function seedSql(cards, existing, now) {
   const levels = ["acquainted", "in_love", "living_together", "married", "with_children"];
   const gates = (rank) =>
@@ -126,7 +126,7 @@ export function prepareSeed(run = execFileSync, directory = seedRoot) {
   const { statements, fresh } = seedSql(cards, existing, Date.now());
   if (statements.length) {
     const sqlPath = path.join(directory, "seed.sql");
-    writeFileSync(sqlPath, "BEGIN TRANSACTION;\n" + statements.join("\n") + "\nCOMMIT;\n");
+    writeFileSync(sqlPath, `BEGIN TRANSACTION;\n${statements.join("\n")}\nCOMMIT;\n`);
     wrangler(["d1", "execute", "bisou-stage-seed", "--local", "--file", sqlPath]);
   }
   // Self-check: ownership, paired identities, placement state and a clean starting history.

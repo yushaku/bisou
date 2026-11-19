@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import type { Env } from "../env";
 import { notifyNote } from "./notify";
 import type { NoteInput, NoteLists, ReceivedNote, WrittenNote } from "../../shared/types";
@@ -29,7 +30,7 @@ export function toWritten(row: NoteRow): WrittenNote {
     ...(row.scheduled_at !== null ? { scheduledAt: row.scheduled_at } : {}),
   };
 }
-export function toReceived(row: NoteRow): ReceivedNote {
+function toReceived(row: NoteRow): ReceivedNote {
   return row.opened_at === null ? { id: row.id, state: "waiting" } : { id: row.id, state: "opened", ...parts(row) };
 }
 export const WRITTEN_NOTES_SQL =
@@ -46,9 +47,9 @@ export async function noteLists(db: D1Database, user: string, couple: string): P
     db.prepare(RECEIVED_NOTES_SQL).bind(user, couple),
   ]);
   return {
-    fromMe: written!.results.map(toWritten),
-    toMe: received!.results
-      .sort(
+    fromMe: defined(written).results.map(toWritten),
+    toMe: defined(received)
+      .results.sort(
         (a, b) =>
           Number(a.opened_at !== null) - Number(b.opened_at !== null) ||
           (a.opened_at !== null && b.opened_at !== null ? a.opened_at - b.opened_at : 0) ||

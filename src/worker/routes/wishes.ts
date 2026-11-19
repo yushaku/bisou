@@ -1,3 +1,4 @@
+import { defined, isRecord } from "../../shared/guards";
 import { Hono, type Handler } from "hono";
 import { notifyJournal } from "../lib/notify";
 import { bodyLimit } from "hono/body-limit";
@@ -55,8 +56,8 @@ wishes.get("/", async (c) => {
     .bind(c.get("partnerId"), c.get("wishCoupleId"))
     .first<number>("has_open_wish");
   return c.json({
-    open: lists[0]!.results.map(toWish),
-    received: lists[1]!.results.map(toWish),
+    open: defined(lists[0]).results.map(toWish),
+    received: defined(lists[1]).results.map(toWish),
     partnerJarEmpty: !hasOpenWish,
   });
 });
@@ -110,13 +111,13 @@ const saveWish: Handler<WishEnv> = async (c) => {
       )
       .bind(id, photoId, owner, couple, now - PENDING_PHOTO_TTL, id, owner),
   ]);
-  if (!write!.meta.changes) {
+  if (!defined(write).meta.changes) {
     const latest = updating ? await findWish(db, id, owner, couple) : null;
     if (updating && !latest) return c.json({ error: "not_found" }, 404);
     if (latest?.status === "received") return c.json({ error: "wish_received" }, 409);
     return c.json({ error: "photo_invalid" }, 400);
   }
-  await purgePhotos(c.env, detached!.results as { id: string; couple_id: string }[]);
+  await purgePhotos(c.env, defined(detached).results as { id: string; couple_id: string }[]);
   const row = await findWish(db, id, owner, couple);
   if (!row) return c.json({ error: "not_found" }, 404);
   return c.json({ wish: toWish(row) }, updating ? 200 : 201);
@@ -140,13 +141,13 @@ wishes.delete("/:id", async (c) => {
     db.prepare("DELETE FROM wish_claims WHERE wish_id = ?").bind(id),
     db.prepare("DELETE FROM wishes WHERE id = ? AND owner_id = ?").bind(id, owner),
   ]);
-  await purgePhotos(c.env, detached!.results as { id: string; couple_id: string }[]);
+  await purgePhotos(c.env, defined(detached).results as { id: string; couple_id: string }[]);
   return c.json({ ok: true });
 });
 
 wishes.post("/spin", limitBody, async (c) => {
-  const body = await c.req.json().catch(() => null);
-  const budget = body?.budget;
+  const body: unknown = await c.req.json().catch(() => null);
+  const budget = isRecord(body) ? body.budget : undefined;
   if (typeof budget !== "number" || !Number.isSafeInteger(budget) || budget <= 0)
     return c.json({ error: "invalid_budget" }, 400);
   const retryAfter = await reserveSpin(c.env.DB, c.get("user").id, Date.now());
@@ -231,8 +232,8 @@ wishes.post("/:id/received", limitBody, async (c) => {
   const current = await findWish(db, id, owner, couple);
   if (!current) return c.json({ error: "not_found" }, 404);
   if (current.status === "received") return c.json({ error: "wish_received" }, 409);
-  const body = await c.req.json().catch(() => null);
-  if (!body || typeof body !== "object" || typeof body.note !== "string") return c.json({ error: "invalid_body" }, 400);
+  const body: unknown = await c.req.json().catch(() => null);
+  if (!isRecord(body) || typeof body.note !== "string") return c.json({ error: "invalid_body" }, 400);
   const now = Date.now();
   const note = body.note.trim();
   const locale = isLocale(body.locale) ? body.locale : c.get("user").locale;
@@ -280,8 +281,8 @@ wishes.post("/:id/received", limitBody, async (c) => {
       .prepare(`DELETE FROM journal_entries WHERE id = ? AND (SELECT COUNT(*) FROM photos WHERE entry_id = ?) != ?`)
       .bind(entryId, entryId, photoIds.length),
   ]);
-  if (!changes[changes.length - 2]!.meta.changes) {
-    return changes[0]!.meta.changes === 0
+  if (!defined(changes[changes.length - 2]).meta.changes) {
+    return defined(changes[0]).meta.changes === 0
       ? c.json({ error: "wish_received" }, 409)
       : c.json({ error: "photo_invalid" }, 400);
   }

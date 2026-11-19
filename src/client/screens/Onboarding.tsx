@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { useId, useState, type SubmitEvent } from "react";
 import { DISPLAY_NAME_MAX } from "../../shared/types";
 import { api } from "../api";
 import couple from "../assets/couple.webp";
@@ -18,7 +18,7 @@ export function Onboarding(props: SessionProps) {
   const [error, setError] = useState<string | null>(null);
   const errorId = useId();
 
-  async function submit(e: FormEvent) {
+  async function submit(e: SubmitEvent) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {

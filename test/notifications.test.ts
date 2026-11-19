@@ -34,13 +34,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-type Props = {
+interface Props {
   id?: string;
   children?: ReactNode;
   disabled?: boolean;
   checked?: boolean;
   onCheckedChange?: (value: boolean) => Promise<void>;
-};
+}
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
   if (!isValidElement<Props>(node)) return [];
@@ -140,7 +140,7 @@ it("notifications R21: visibility reload cannot replace an in-flight switch chan
 
 it("notifications R20, R32: a browser endpoint unknown to the server shows off and registers again", async () => {
   const { registration, subscription } = await setup();
-  registration.pushManager.getSubscription.mockResolvedValue(subscription as never);
+  registration.pushManager.getSubscription.mockResolvedValue(subscription);
   Object.defineProperty(document, "visibilityState", { value: "visible" });
   document.dispatchEvent(new Event("visibilitychange"));
   await vi.waitFor(() => expect(api.push).toHaveBeenCalledTimes(2));

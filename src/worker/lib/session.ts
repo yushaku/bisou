@@ -6,7 +6,7 @@ import { generateSessionToken, sha256Hex } from "./crypto";
 import { SESSION_REFRESH_BELOW, SESSION_TTL } from "./time";
 import { rowToUser, type UserRow } from "./users";
 
-export const SESSION_COOKIE = "bisou_session";
+const SESSION_COOKIE = "bisou_session";
 
 /**
  * Secure everywhere except local development over plain http: Safari (unlike Chromium)
@@ -76,9 +76,4 @@ export async function loadSession(env: Env, token: string, now = Date.now()): Pr
     await env.DB.prepare("UPDATE sessions SET expires_at = ? WHERE token_hash = ?").bind(expiresAt, tokenHash).run();
   }
   return { user: rowToUser(row), session: { tokenHash, expiresAt }, coupleId: row.couple_id, refreshed };
-}
-
-export async function deleteSession(env: Env, token: string): Promise<void> {
-  const tokenHash = await sha256Hex(token);
-  await env.DB.prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash).run();
 }

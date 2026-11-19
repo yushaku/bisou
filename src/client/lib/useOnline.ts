@@ -9,7 +9,11 @@ function subscribe(changed: () => void) {
   };
 }
 
-const snapshot = () => typeof navigator === "undefined" || navigator.onLine !== false;
+// Only an explicit `false` means offline: environments without `onLine` count as online.
+const snapshot = () => {
+  const nav: Partial<Navigator> = typeof navigator === "undefined" ? {} : navigator;
+  return nav.onLine !== false;
+};
 export function useOnline() {
   return useSyncExternalStore(subscribe, snapshot, snapshot);
 }

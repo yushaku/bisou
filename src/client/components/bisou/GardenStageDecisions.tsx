@@ -124,7 +124,7 @@ export function GardenStageDecisions({
         <DrawerContent aria-describedby={undefined}>
           <div className="mx-auto flex w-full max-w-md flex-col gap-4 overflow-y-auto px-4 pb-6">
             <DrawerHeader className="sr-only">
-              <DrawerTitle>{t("garden.stageQuestions", { stage: next ? t(`level.${next}`) : "" })}</DrawerTitle>
+              <DrawerTitle>{t("garden.stageQuestions", { stage: t(`level.${next}`) })}</DrawerTitle>
             </DrawerHeader>
             {active && (
               <GardenCard

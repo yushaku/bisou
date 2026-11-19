@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { PAIR_CODE_ALPHABET, PAIR_CODE_LENGTH } from "../../shared/pairCode";
 import { earliestDay } from "../../shared/days";
 import type { Couple, CoupleEvent } from "../../shared/types";
@@ -12,7 +13,7 @@ export function generatePairCode(): string {
   while (out.length < PAIR_CODE_LENGTH) {
     crypto.getRandomValues(buf);
     for (const b of buf) {
-      if (b < limit && out.length < PAIR_CODE_LENGTH) out.push(PAIR_CODE_ALPHABET[b % size]!);
+      if (b < limit && out.length < PAIR_CODE_LENGTH) out.push(defined(PAIR_CODE_ALPHABET[b % size]));
     }
   }
   return out.join("");
@@ -84,7 +85,10 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
 
 /** True when a D1 error is a UNIQUE or PRIMARY KEY violation on the given "table.column". */
 export function isUniqueViolation(err: unknown, column: string): boolean {
-  const message = err instanceof Error ? `${err.message} ${String(err.cause ?? "")}` : String(err);
+  const message =
+    err instanceof Error
+      ? `${err.message} ${err.cause instanceof Error || typeof err.cause === "string" ? String(err.cause) : ""}`
+      : String(err);
   return message.includes("UNIQUE constraint failed") && message.includes(column);
 }
 

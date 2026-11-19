@@ -1,3 +1,4 @@
+import { defined } from "../../shared/guards";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { FEED_PAGE_SIZE } from "../../shared/journal";
@@ -53,7 +54,7 @@ journal.get("/", async (c) => {
   const rows = results.slice(0, FEED_PAGE_SIZE);
   return c.json({
     entries: await entriesWithPhotos(db, rows),
-    nextCursor: results.length > FEED_PAGE_SIZE ? entryCursor(rows[rows.length - 1]!) : null,
+    nextCursor: results.length > FEED_PAGE_SIZE ? entryCursor(defined(rows[rows.length - 1])) : null,
   });
 });
 
@@ -97,7 +98,7 @@ journal.post("/", limitEntryBody, async (c) => {
     return c.json({ error: "photo_invalid" }, 400);
   }
   const row = await findEntry(db, id, userId);
-  const [entry] = await entriesWithPhotos(db, [row!]);
+  const [entry] = await entriesWithPhotos(db, [defined(row)]);
   c.executionCtx.waitUntil(notifyJournal(c.env, coupleId, userId));
   return c.json({ entry }, 201);
 });

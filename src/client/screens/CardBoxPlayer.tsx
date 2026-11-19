@@ -1,7 +1,9 @@
+import { defined } from "../../shared/guards";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { queries } from "../lib/queries";
-import { ApiQueryError, useApiMutation, useServerQuery } from "../lib/serverQuery";
+import { ApiQueryError } from "../lib/apiQueryError";
+import { useApiMutation, useServerQuery } from "../lib/serverQuery";
 import type { Couple } from "../../shared/types";
 import { api } from "../api";
 import { BottomBar } from "../components/bisou/AppShell";
@@ -65,6 +67,7 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
   useEffect(() => {
     if (!detail) return;
     writeCache(scope, `box:${boxId}`, detail);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reconciles the play position with each fresh server copy of the box
     setPlay((play) =>
       detail.cards.some((card) => card.id === play.stack[play.index])
         ? { ...play, startedOver: play.startedOver && !detail.box.open }
@@ -81,6 +84,7 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
   useEffect(() => {
     if (detail && play.index < 0 && !play.startedOver && detail.cards.length) {
       const next = nextCard(detail, play, seen);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- draws the first card once the box has loaded, and records it as seen
       setPlay(next.play);
       setSeen(next.seen);
       writeSeen(scope, boxId, next.seen);
@@ -166,14 +170,14 @@ export function CardBoxPlayer({ boxId, couple, user, onSignedOut }: SessionProps
             <CardBoxDeck
               card={card}
               boxId={boxId}
-              boxName={detail!.box.name[locale]}
-              adult={detail!.box.adult}
-              previous={detail!.cards.find((card) => card.id === play.stack[play.index - 1])}
+              boxName={defined(detail).box.name[locale]}
+              adult={defined(detail).box.adult}
+              previous={defined(detail).cards.find((card) => card.id === play.stack[play.index - 1])}
               onNext={() => draw()}
               onRandom={() => draw(true)}
               onPrevious={() => setPlay(previousCard(play))}
             />
-            {play.startedOver && <p role="status">{t(cardBoxEndMessage(detail!.box.open))}</p>}
+            {play.startedOver && <p role="status">{t(cardBoxEndMessage(defined(detail).box.open))}</p>}
           </>
         ) : (
           !message && (

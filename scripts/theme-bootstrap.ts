@@ -2,14 +2,14 @@ type Palettes = Record<string, { kind: string; tokens: Record<string, string> }>
 
 // Vite injects these before the page paints. Adding a palette also updates this script.
 export function themeHead(palettes: Palettes) {
-  const ids = (kind: string) => Object.keys(palettes).filter((id) => palettes[id]?.kind === kind);
+  const ids = (kind: string) => Object.keys(palettes).filter((id) => palettes[id].kind === kind);
   return [
     { tag: "meta", attrs: { charset: "UTF-8" }, injectTo: "head-prepend" as const },
     {
       tag: "meta",
       attrs: {
         name: "theme-color",
-        content: palettes.peach!.tokens.background!,
+        content: palettes.peach.tokens.background,
         media: "(prefers-color-scheme: light)",
       },
       injectTo: "head-prepend" as const,
@@ -18,7 +18,7 @@ export function themeHead(palettes: Palettes) {
       tag: "meta",
       attrs: {
         name: "theme-color",
-        content: palettes.cocoa!.tokens.background!,
+        content: palettes.cocoa.tokens.background,
         media: "(prefers-color-scheme: dark)",
       },
       injectTo: "head-prepend" as const,

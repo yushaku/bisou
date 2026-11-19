@@ -1,4 +1,4 @@
-import { createElement as h, useSyncExternalStore, type ReactNode } from "react";
+import { createElement as h, useSyncExternalStore } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
 import { InstallCard } from "../src/client/components/bisou/InstallCard";
@@ -11,11 +11,11 @@ vi.mock("../src/client/components/ui/button", () => ({
     onClick,
     "aria-label": label,
   }: {
-    children: ReactNode;
+    children: string;
     onClick?: () => unknown;
     "aria-label"?: string;
   }) => {
-    if (onClick) buttons.set(label ?? String(children), onClick);
+    if (onClick) buttons.set(label ?? children, onClick);
     return h("button", { "aria-label": label }, children);
   },
 }));

@@ -24,7 +24,7 @@ test.each([
     ["every time", "all the time", "your fault", "because of you"],
   ],
 ])("notes AC3, notes-journal AC34: soft hints match both languages without rewriting %s", (text, expected) =>
-  expect(softHints(text as string)).toEqual(expected),
+  expect(softHints(text)).toEqual(expected),
 );
 test("notes AC2: noteBlock counts trimmed code points, requires all parts", () => {
   expect(noteBlock(input)).toBeNull();
@@ -342,13 +342,13 @@ test.each(["vi", "en"])(
     expect(cards[0]).toContain("note-envelope-waiting");
     for (const card of cards.slice(1)) {
       expect(card.match(/<button/g)).toHaveLength(1);
-      const label = card.match(/aria-label="([^"]*)"/)?.[1];
+      const label = /aria-label="([^"]*)"/.exec(card)?.[1];
       expect(label).toBeDefined();
       expect(label).not.toMatch(/preview|aaaa|Writer opened/);
       expect(card.indexOf("note-preview")).toBeLessThan(card.indexOf("note-metadata"));
       expect(card.indexOf("note-metadata")).toBeLessThan(card.indexOf("note-envelope-item"));
     }
-    expect(cards.map((card) => card.match(/data-envelope-state="([^"]+)"/)?.[1])).toEqual([
+    expect(cards.map((card) => /data-envelope-state="([^"]+)"/.exec(card)?.[1])).toEqual([
       "waiting",
       "opened",
       "cooling",

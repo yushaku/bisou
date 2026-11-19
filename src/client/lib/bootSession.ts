@@ -1,3 +1,4 @@
+import { noop } from "../../shared/guards";
 import type { ApiResult } from "../api";
 import { api } from "../api";
 import type { Couple, CoupleResponse, MeResponse, User } from "../../shared/types";
@@ -106,7 +107,7 @@ export function startBoot(loadHome: () => Promise<unknown>): Boot {
   if (!boot) {
     const cache = readBootCache().then((value) => (bootCache = value));
     boot = { cache, me: api.me(), couple: api.couple() };
-    void loadHome().catch(() => {});
+    void loadHome().catch(noop);
   }
   return boot;
 }

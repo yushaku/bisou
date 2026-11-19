@@ -171,7 +171,10 @@ export function ComposeForm({
       onDone();
       return;
     }
-    if (res.status === 401) return onSignedOut();
+    if (res.status === 401) {
+      onSignedOut();
+      return;
+    }
     setFormError(t(saveErrorKey(res.error?.error)));
   }
 

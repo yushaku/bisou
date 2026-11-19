@@ -1,15 +1,21 @@
+import { isRecord } from "../../../shared/guards";
 import { ArrowLeft } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/i18n";
 
+function historyState(): Record<string, unknown> {
+  return isRecord(history.state) ? history.state : {};
+}
+
 export function SubPageHeader({ title }: { title: string }) {
   const { t } = useI18n();
   const [, navigate] = useLocation();
   const heading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
-    const target = history.state?.focus && document.getElementById(history.state.focus);
+    const focus = historyState().focus;
+    const target = typeof focus === "string" && focus ? document.getElementById(focus) : null;
     if (target) {
       target.scrollIntoView({ block: "center" });
       target.focus({ preventScroll: true });
@@ -26,7 +32,7 @@ export function SubPageHeader({ title }: { title: string }) {
           size="icon"
           aria-label={t("common.back")}
           onClick={() => {
-            if (history.state?.from) history.back();
+            if (historyState().from) history.back();
             else navigate("/", { replace: true });
           }}
         >

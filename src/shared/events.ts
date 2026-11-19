@@ -6,7 +6,7 @@ import type { ApiError, CoupleEvent, CoupleEventInput, Locale } from "./types";
 
 export const EVENT_ICONS = ["heart", "plane", "music", "dinner", "gift", "cake", "family", "star"] as const;
 export type EventIcon = (typeof EVENT_ICONS)[number];
-export const EVENT_TITLE_MAX = 60;
+const EVENT_TITLE_MAX = 60;
 export const EVENTS_MAX = 100;
 
 export function validateEvent(
@@ -37,9 +37,9 @@ export function validateEvent(
   return { input: { title: title.trim(), date, repeat, icon: icon as EventIcon } };
 }
 
-export const DAY_EVENT_STEP = 1000;
-export const HOLIDAYS = { valentine: "02-14", womensDay: "03-08", vnWomensDay: "10-20", mensDay: "11-19" } as const;
-export type Holiday = keyof typeof HOLIDAYS;
+const DAY_EVENT_STEP = 1000;
+const HOLIDAYS = { valentine: "02-14", womensDay: "03-08", vnWomensDay: "10-20", mensDay: "11-19" } as const;
+type Holiday = keyof typeof HOLIDAYS;
 export type UpcomingEvent = { date: string; daysLeft: number } & (
   | { kind: "anniversary"; years: number }
   | { kind: "days"; days: number }

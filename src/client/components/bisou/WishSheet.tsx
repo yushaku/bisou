@@ -1,6 +1,6 @@
 import { useOnline } from "@/lib/useOnline";
 import { X } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+import { useId, useState, type SubmitEvent } from "react";
 import type { Wish, WishPriority } from "../../../shared/types";
 import { api } from "@/api";
 import { useApiMutation } from "@/lib/serverQuery";
@@ -72,7 +72,7 @@ export function WishSheet({
     }
   };
 
-  async function save(e: FormEvent) {
+  async function save(e: SubmitEvent) {
     e.preventDefault();
     if (!online || block || saving) return;
     setSaving(true);
