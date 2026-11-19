@@ -1,4 +1,5 @@
 import { MASCOTS } from "@/lib/mascots";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { isLocale } from "../../shared/types";
 import { ThemeControls } from "@/components/bisou/ThemeControls";
@@ -57,7 +58,18 @@ function Section({ id, title, intro, children }: { id: string; title: string; in
   );
 }
 
+// The gallery runs outside the signed-in data provider; samples that mutate need a client of their own.
+const galleryClient = new QueryClient();
+
 export default function DesignPage() {
+  return (
+    <QueryClientProvider client={galleryClient}>
+      <DesignGallery />
+    </QueryClientProvider>
+  );
+}
+
+function DesignGallery() {
   const d = useDesignT();
   const { t } = useI18n();
   const screen = useUrlParams();
