@@ -1,8 +1,3 @@
-dist
-dev-dist
-.wrangler
-coverage
-node_modules
 pnpm-lock.yaml
 migrations
 public

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "scripts/*.{mjs,ts}",
+    "test/**/*.{test.ts,test.mjs}",
+    "test/*.ts",
+    "public/push-sw.js",
+    "src/client/styles.css"
+  ],
+  "project": ["src/**/*.{ts,tsx,css}", "scripts/**", "test/**", "*.{ts,js,cjs}"],
+  "ignoreIssues": {
+    "src/client/components/ui/**": ["exports", "types"]
+  }
+}

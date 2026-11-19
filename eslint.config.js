@@ -1,18 +1,18 @@
+import { fileURLToPath } from "node:url";
+import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
-import globals from "globals";
-import tseslint from "typescript-eslint";
+import { defineConfig } from "eslint/config";
+import prettier from "eslint-config-prettier";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
-import prettier from "eslint-config-prettier";
+import globals from "globals";
+import tseslint from "typescript-eslint";
 
-export default tseslint.config(
+export default defineConfig(
+  includeIgnoreFile(fileURLToPath(new URL(".gitignore", import.meta.url)), "Imported .gitignore patterns"),
   {
+    // Not in .gitignore: generated, vendored or tool-owned files.
     ignores: [
-      "dist",
-      "dev-dist",
-      ".wrangler",
-      "coverage",
-      "node_modules",
       "migrations",
       "public",
       "test/__snapshots__",
@@ -24,58 +24,109 @@ export default tseslint.config(
     ],
   },
   js.configs.recommended,
-  tseslint.configs.recommended,
   {
+    rules: {
+      eqeqeq: ["error", "smart"],
+      "no-console": ["error", { allow: ["warn", "error", "info"] }],
+      // `!!x` stays allowed: unlike Boolean(x) it narrows in TypeScript (`!!a?.b && a.b`).
+      "no-implicit-coercion": ["error", { allow: ["!!"] }],
+      "no-useless-rename": "error",
+      "object-shorthand": "error",
+      "prefer-template": "error",
+    },
+  },
+  {
+    files: ["**/*.{ts,tsx,mts,cts}"],
+    extends: [tseslint.configs.strictTypeChecked, tseslint.configs.stylisticTypeChecked],
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
       ],
+      // Arrow shorthand like `onClick={() => setOpen(false)}` is idiomatic in JSX handlers.
+      "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
+      // `a || b` on strings, numbers and booleans deliberately treats "", 0 and false as missing; `??` would not.
+      "@typescript-eslint/prefer-nullish-coalescing": [
+        "error",
+        { ignorePrimitives: { string: true, number: true, boolean: true } },
+      ],
+      // React ignores the value a handler returns, and tests await the promise an async handler returns.
+      "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
+      // Numbers in template strings are safe and common (`${count} items`).
+      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
     },
   },
   {
-    files: ["src/client/**/*.{ts,tsx}"],
-    languageOptions: { globals: globals.browser },
-    extends: [reactHooks.configs.flat.recommended],
-    rules: {
-      // React Compiler diagnostics from react-hooks v7; the app does not use the compiler and these flag
-      // working patterns (ref-backed state, Date.now in render, set-state in effects). Keep rules-of-hooks
-      // and exhaustive-deps.
-      "react-hooks/refs": "off",
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/immutability": "off",
-      "react-hooks/purity": "off",
-    },
-  },
-  {
-    files: ["src/client/**/*.{ts,tsx}"],
-    ...reactRefresh.configs.vite,
-  },
-  {
-    // shadcn-generated files export variants next to components. The other modules deliberately pair a
-    // provider or component with its hooks and helpers; the rule only affects dev hot reload.
-    files: [
-      "src/client/components/ui/**",
-      "src/client/components/bisou/{AppShell,Celebration,CoupleAvatars}.tsx",
-      "src/client/i18n/index.tsx",
-      "src/client/lib/serverQuery.tsx",
-      "src/client/screens/TabScreens.tsx",
-      "src/client/theme/ThemeProvider.tsx",
-    ],
-    rules: { "react-refresh/only-export-components": "off" },
-  },
-  {
-    files: ["src/worker/**/*.ts", "src/shared/**/*.ts"],
-    languageOptions: { globals: { ...globals.serviceworker } },
-  },
-  {
-    files: ["scripts/**", "test/**", "*.config.{js,ts,mjs}", ".pnpmfile.cjs"],
+    // Plain JS files are not in any tsconfig project, so type-aware rules cannot run on them.
+    files: ["**/*.{js,mjs,cjs}"],
+    extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: globals.node },
   },
   {
-    // Tests mock Cloudflare and browser APIs with loose shapes.
+    files: ["src/client/**/*.{ts,tsx}"],
+    extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
+    rules: {
+      // Vite preset options plus the helpers and hooks that deliberately live next to a component or provider
+      // (shadcn variants, context hooks, query helpers). Hot reload then does a full reload for these files only.
+      "react-refresh/only-export-components": [
+        "error",
+        {
+          allowConstantExport: true,
+          allowCompoundComponents: true,
+          allowExportNames: [
+            "TABS",
+            "pillColumn",
+            "toPeople",
+            "badgeVariants",
+            "buttonVariants",
+            "tabsListVariants",
+            "toggleVariants",
+            "toast",
+            "useI18n",
+            "apiData",
+            "isFailed",
+            "createServerQueryClient",
+            "refreshServerData",
+            "refreshForPush",
+            "useQuerySignOut",
+            "useServerQuery",
+            "apiMutationOptions",
+            "useApiMutation",
+            "visitTab",
+            "useTheme",
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The worker logs through console (Workers observability); log is part of its contract.
+    files: ["src/worker/**/*.ts"],
+    rules: { "no-console": ["error", { allow: ["log", "warn", "error", "info"] }] },
+  },
+  {
+    // CLI scripts print to stdout by design.
+    files: ["scripts/**"],
+    rules: { "no-console": "off" },
+  },
+  {
+    // Tests mock Cloudflare and browser APIs with loose shapes and assert on values they just set up.
     files: ["test/**"],
-    rules: { "@typescript-eslint/no-explicit-any": "off" },
+    rules: {
+      "no-console": "off",
+      "@typescript-eslint/no-non-null-assertion": "off", // asserting on fixtures, a failure is a failed test
+      "@typescript-eslint/no-empty-function": "off", // no-op mocks
+      "@typescript-eslint/no-explicit-any": "off", // loose mock shapes
+      "@typescript-eslint/no-unsafe-argument": "off", // loose mock shapes
+      "@typescript-eslint/no-unsafe-assignment": "off", // loose mock shapes
+      "@typescript-eslint/no-unsafe-call": "off", // loose mock shapes
+      "@typescript-eslint/no-unsafe-member-access": "off", // loose mock shapes
+      "@typescript-eslint/no-unsafe-return": "off", // loose mock shapes
+      "@typescript-eslint/require-await": "off", // async mocks without await
+    },
   },
   prettier,
 );
