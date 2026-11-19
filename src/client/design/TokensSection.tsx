@@ -26,7 +26,6 @@ const COLOR_TOKENS = [
   "warning",
   "warning-foreground",
   "info",
-  "info-foreground",
   "chart-1",
   "chart-2",
   "chart-3",
@@ -48,7 +47,6 @@ const PAIRS: [string, string, number][] = [
   ["destructive", "card", 4.5],
   ["success-foreground", "success", 4.5],
   ["warning-foreground", "warning", 4.5],
-  ["info-foreground", "info", 4.5],
   ["ring", "card", 3],
   ["input", "card", 3],
 ];
@@ -77,7 +75,7 @@ function luminance([r, g, b]: [number, number, number]): number {
 }
 
 function useContrast(): { pair: string; ratio: number; need: number }[] {
-  const { theme, prefs } = useTheme();
+  const { theme } = useTheme();
   const [rows, setRows] = useState<{ pair: string; ratio: number; need: number }[]>([]);
   useEffect(() => {
     const ctx = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
@@ -93,7 +91,7 @@ function useContrast(): { pair: string; ratio: number; need: number }[] {
       ),
     );
     return () => cancelAnimationFrame(id);
-  }, [theme, prefs.style]);
+  }, [theme]);
   return rows;
 }
 

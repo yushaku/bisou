@@ -5,16 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useI18n } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/theme/ThemeProvider";
-import {
-  BACKGROUNDS,
-  DARK_THEMES,
-  LIGHT_THEMES,
-  MODES,
-  STYLES,
-  type Mode,
-  type ThemeDef,
-  themeById,
-} from "@/theme/themes";
+import { BACKGROUNDS, DARK_THEMES, LIGHT_THEMES, MODES, type Mode, type ThemeDef, themeById } from "@/theme/themes";
 import { LanguageSelect, LanguageToggle } from "./LanguageToggle";
 import { SettingsGroup, SettingsRow } from "./SettingsGroup";
 
@@ -60,29 +51,6 @@ export function ThemeControls({
 
   return (
     <div className={cn("flex flex-col gap-5", className)}>
-      <Field label={t("settings.style")}>
-        {(id) => (
-          <ToggleGroup
-            type="single"
-            variant="outline"
-            spacing={1}
-            className="w-full"
-            aria-labelledby={id}
-            value={prefs.style}
-            onValueChange={(v) => {
-              const s = STYLES.find((x) => x.id === v);
-              if (s) setPrefs({ style: s.id });
-            }}
-          >
-            {STYLES.map((s) => (
-              <ToggleGroupItem key={s.id} value={s.id} className={item}>
-                {t(s.labelKey)}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-        )}
-      </Field>
-
       <Field label={t("settings.mode")}>
         {(id) => (
           <ToggleGroup
@@ -110,7 +78,7 @@ export function ThemeControls({
         )}
       </Field>
 
-      {showLight && LIGHT_THEMES.length > 0 && (
+      {showLight && LIGHT_THEMES.length > 1 && (
         <Field label={t("settings.lightTheme")}>
           {(id) => (
             <ToggleGroup
@@ -208,7 +176,7 @@ export function AppearanceSettings({
         id="appearance-row"
         icon={Paintbrush}
         label={t("settings.appearance")}
-        value={`${t(`style.${prefs.style}`)} · ${palette}`}
+        value={palette}
         onClick={onOpen}
       />
       <div className="flex min-h-14 w-full items-center gap-3 px-4 py-2 text-base">

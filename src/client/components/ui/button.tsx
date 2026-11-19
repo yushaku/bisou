@@ -5,7 +5,7 @@ import { Loader2Icon } from "lucide-react";
 import { Slot } from "radix-ui";
 
 // Shape, outline, resting shadow and press feedback come from the personality
-// (rounded-control, edge-*, elevate-sm, press; see theme/personalities.css).
+// (rounded-control, edge-*, elevate-sm, press; see theme/base.css).
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 press items-center justify-center rounded-control bg-clip-padding font-semibold whitespace-nowrap outline-none select-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
   {

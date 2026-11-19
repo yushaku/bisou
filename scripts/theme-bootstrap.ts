@@ -50,7 +50,6 @@ export function themeHead(palettes: Palettes) {
         const isDark = p.mode === "dark" || (p.mode !== "light" && sysDark);
         const r = document.documentElement;
         r.dataset.theme = isDark ? dt : lt;
-        r.dataset.style = ["journal", "soft", "sticker"].includes(p.style) ? p.style : "soft";
         r.dataset.bg = ["linen", "plain", "paper", "dots", "hearts"].includes(p.background) ? p.background : "linen";
         r.classList.toggle("dark", isDark);
         const backgrounds = ${JSON.stringify(Object.fromEntries(Object.entries(palettes).map(([id, p]) => [id, p.tokens.background])))};

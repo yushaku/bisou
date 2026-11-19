@@ -56,10 +56,7 @@ export function WishCard({
           onClick={onOpen}
         />
       )}
-      <div
-        style={onOpen ? { pointerEvents: "none" } : undefined}
-        className="photo-frame shrink-0 [--photo-pad-bottom:var(--photo-pad)] [--photo-tilt:0deg]"
-      >
+      <div style={onOpen ? { pointerEvents: "none" } : undefined} className="photo-frame shrink-0">
         <div data-slot="photo" className="relative size-20 overflow-hidden bg-muted">
           {photo ? (
             <img

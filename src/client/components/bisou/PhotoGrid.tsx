@@ -47,14 +47,8 @@ export function PhotoGrid({
       {shown.map((photo, i) => {
         const lead = shown.length === 3 && i === 0;
         const Tile = onOpen ? "button" : "div";
-        // data-tilt: prints sit a little askew in the journal and sticker styles; soft sets the tilt to 0.
         return (
-          <li
-            key={`${photo.src}${i}`}
-            className={cn("photo-frame", lead && "row-span-2")}
-            data-tilt={i % 2 === 0 ? "left" : "right"}
-            data-tape={i === 0 ? "" : undefined}
-          >
+          <li key={`${photo.src}${i}`} className={cn("photo-frame", lead && "row-span-2")}>
             <Tile
               data-slot="photo"
               data-photo={i}

@@ -5,7 +5,7 @@ import { ThemeControls } from "@/components/bisou/ThemeControls";
 import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n";
 import { useTheme } from "@/theme/ThemeProvider";
-import { BACKGROUNDS, STYLES, THEMES, type ThemePrefs } from "@/theme/themes";
+import { BACKGROUNDS, THEMES, type ThemePrefs } from "@/theme/themes";
 import { ComponentsSection } from "./ComponentsSection";
 import { useDesignT } from "./messages";
 import { PrimitivesSection } from "./PrimitivesSection";
@@ -16,7 +16,7 @@ const SCREENS: SampleScreen[] = ["home", "journal", "wishes"];
 
 /*
  * URL parameters (used by the screenshot script, handy by hand too):
- *   ?style=journal|soft|sticker  &theme=<palette id>  &bg=linen|plain|paper|dots|hearts
+ *   ?theme=<palette id>  &bg=linen|plain|paper|dots|hearts
  *   &lang=vi|en  &screen=home|journal|wishes (renders that sample screen alone, full size)
  */
 function useUrlParams(): SampleScreen | null {
@@ -30,8 +30,6 @@ function useUrlParams(): SampleScreen | null {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const patch: Partial<ThemePrefs> = {};
-    const style = STYLES.find((s) => s.id === params.get("style"));
-    if (style) patch.style = style.id;
     const theme = THEMES.find((th) => th.id === params.get("theme"));
     if (theme?.kind === "dark") Object.assign(patch, { mode: "dark", darkTheme: theme.id });
     if (theme?.kind === "light") Object.assign(patch, { mode: "light", lightTheme: theme.id });

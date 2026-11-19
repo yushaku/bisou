@@ -149,14 +149,13 @@ export function PrimitivesSection() {
       <Block title="Select, Switch">
         <div className="grid gap-2">
           <Label htmlFor="d-select">{t("settings.darkTheme")}</Label>
-          <Select defaultValue="frappe">
+          <Select defaultValue="cocoa">
             <SelectTrigger id="d-select" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="cocoa">Cocoa</SelectItem>
               <SelectItem value="frappe">Frappé</SelectItem>
-              <SelectItem value="macchiato">Macchiato</SelectItem>
-              <SelectItem value="mocha">Mocha</SelectItem>
             </SelectContent>
           </Select>
         </div>

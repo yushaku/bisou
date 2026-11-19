@@ -16,9 +16,8 @@ test("invalid saved preferences recover without mixing light and dark palettes",
     parsePrefs(
       JSON.stringify({
         mode: "unknown",
-        lightTheme: "mocha",
-        darkTheme: "latte",
-        style: "missing",
+        lightTheme: "frappe",
+        darkTheme: "peach",
         background: "photo",
       }),
     ),
@@ -26,7 +25,23 @@ test("invalid saved preferences recover without mixing light and dark palettes",
   );
 });
 
-test("mode, palette, style and background resolve independently, including before React loads", () => {
+test("saved choices for removed palettes and styles fall back to defaults, other fields are kept", () => {
+  const legacy = {
+    mode: "dark",
+    lightTheme: "latte",
+    darkTheme: "mocha",
+    style: "sticker",
+    background: "paper",
+  };
+  const parsed = parsePrefs(JSON.stringify(legacy));
+  assert.deepEqual(parsed, { ...DEFAULT_PREFS, mode: "dark", background: "paper" });
+  assert.equal("style" in parsed, false);
+  for (const id of ["latte", "macchiato", "mocha"]) assert.equal(id in palettes, false);
+  assert.equal(parsePrefs(JSON.stringify({ darkTheme: "macchiato" })).darkTheme, DEFAULT_PREFS.darkTheme);
+  assert.equal(parsePrefs(JSON.stringify({ style: "journal", lightTheme: "peach" })).lightTheme, "peach");
+});
+
+test("mode, palette and background resolve independently, including before React loads", () => {
   const script = themeHead(palettes).find((tag) => tag.tag === "script").children;
   for (const theme of THEMES) {
     for (const mode of ["light", "dark", "system", "invalid"]) {
@@ -58,7 +73,7 @@ test("mode, palette, style and background resolve independently, including befor
         assert.equal(statusBar.content, "black");
         assert.equal(color.content, palettes[expected].tokens.background);
         assert.equal(root.dataset.theme, expected);
-        assert.equal(root.dataset.style, "sticker");
+        assert.equal("style" in root.dataset, false);
         assert.equal(root.dataset.bg, "hearts");
         assert.equal(root.dark, palettes[expected].kind === "dark");
       }
@@ -78,7 +93,7 @@ test("pre-paint theme works when browser storage is blocked", () => {
     document: { documentElement: root, querySelector: () => null, querySelectorAll: () => [] },
   });
   assert.equal(root.dataset.theme, DEFAULT_PREFS.lightTheme);
-  assert.equal(root.dataset.style, DEFAULT_PREFS.style);
+  assert.equal("style" in root.dataset, false);
   assert.equal(root.dataset.bg, DEFAULT_PREFS.background);
 });
 
@@ -91,10 +106,9 @@ test("the fabric preset resolves before paint and existing choices are retained"
       document: { documentElement: root, querySelector: () => null, querySelectorAll: () => [] },
     });
     assert.equal(root.dataset.theme, resolveTheme(DEFAULT_PREFS, systemDark));
-    assert.equal(root.dataset.style, "soft");
     assert.equal(root.dataset.bg, "linen");
   }
-  const saved = { mode: "dark", lightTheme: "latte", darkTheme: "mocha", style: "journal", background: "paper" };
+  const saved = { mode: "dark", lightTheme: "peach", darkTheme: "frappe", background: "paper" };
   assert.deepEqual(parsePrefs(JSON.stringify(saved)), saved);
 });
 
@@ -121,11 +135,10 @@ test("every palette supplies the same semantic tokens with readable text pairs",
     ["destructive", "card"],
     ["success-foreground", "success"],
     ["warning-foreground", "warning"],
-    ["info-foreground", "info"],
   ];
   for (const [id, { kind, tokens }] of Object.entries(palettes)) {
     assert.ok(["light", "dark"].includes(kind));
-    assert.deepEqual(Object.keys(tokens).sort(), Object.keys(palettes.latte.tokens).sort());
+    assert.deepEqual(Object.keys(tokens).sort(), Object.keys(palettes.peach.tokens).sort());
     for (const [fg, bg] of pairs) {
       const a = luminance(tokens[fg]);
       const b = luminance(tokens[bg]);

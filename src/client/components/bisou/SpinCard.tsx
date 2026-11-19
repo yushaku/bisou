@@ -158,7 +158,7 @@ export function SpinCard({
         )}
         {state.step === "result" && (
           <div className="flex animate-in flex-col gap-3 duration-(--duration) fade-in motion-reduce:animate-none">
-            <div className="photo-frame w-full [--photo-pad-bottom:var(--photo-pad)] [--photo-tilt:0deg]">
+            <div className="photo-frame w-full">
               <div data-slot="photo" className="relative aspect-square w-full overflow-hidden bg-muted">
                 {state.wish.photoId ? (
                   <img

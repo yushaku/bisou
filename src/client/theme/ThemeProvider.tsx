@@ -36,7 +36,6 @@ function systemIsDark(): boolean {
 function applyToDocument(prefs: ThemePrefs, theme: ThemeId) {
   const root = document.documentElement;
   root.dataset.theme = theme;
-  root.dataset.style = prefs.style;
   root.dataset.bg = prefs.background;
   root.classList.toggle("dark", themeById(theme).kind === "dark");
   // Browser chrome follows the page background of the active theme.

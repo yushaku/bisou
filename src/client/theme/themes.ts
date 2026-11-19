@@ -42,20 +42,11 @@ export const BACKGROUNDS = [
 ] as const satisfies readonly { id: string; labelKey: MessageKey }[];
 type BackgroundId = (typeof BACKGROUNDS)[number]["id"];
 
-/* Personalities share the same components; values live in personalities.css. */
-export const STYLES = [
-  { id: "journal", labelKey: "style.journal" },
-  { id: "soft", labelKey: "style.soft" },
-  { id: "sticker", labelKey: "style.sticker" },
-] as const satisfies readonly { id: string; labelKey: MessageKey }[];
-type StyleId = (typeof STYLES)[number]["id"];
-
 export interface ThemePrefs {
   mode: Mode;
   lightTheme: ThemeId;
   darkTheme: ThemeId;
   background: BackgroundId;
-  style: StyleId;
 }
 
 /* The pre-paint script uses the same defaults; covered by the design-system tests. */
@@ -65,7 +56,6 @@ export const DEFAULT_PREFS: ThemePrefs = {
   lightTheme: "peach",
   darkTheme: "cocoa",
   background: "linen",
-  style: "soft",
 };
 
 const has = <T extends { id: string }>(list: readonly T[], id: unknown): id is T["id"] =>
@@ -84,7 +74,6 @@ export function parsePrefs(raw: string | null): ThemePrefs {
     lightTheme: has(LIGHT_THEMES, data.lightTheme) ? data.lightTheme : DEFAULT_PREFS.lightTheme,
     darkTheme: has(DARK_THEMES, data.darkTheme) ? data.darkTheme : DEFAULT_PREFS.darkTheme,
     background: has(BACKGROUNDS, data.background) ? data.background : DEFAULT_PREFS.background,
-    style: has(STYLES, data.style) ? data.style : DEFAULT_PREFS.style,
   };
 }
 
