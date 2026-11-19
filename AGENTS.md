@@ -4,24 +4,21 @@ Do not read or search files under these directories unless I explicitly ask: nod
 
 ## Commands
 
-`pnpm dev`: local seed, sign in with `111111` at http://127.0.0.1:5191.
-`pnpm dev:phone`: open on a phone through a cloudflared tunnel.
-Migrations are additive only.
-Merging into `main` and pushing it releases production through GitHub Actions; see [README Deploy](README.md#deploy).
+- `pnpm dev`: local seed, sign in with `111111` at [http://127.0.0.1:5191](http://127.0.0.1:5191); `pnpm dev:phone`: open on a phone through a cloudflared tunnel. run app với seed data sẵn.
+
+- Migrations are additive only.
+- Merging into `main` and pushing it releases production through GitHub Actions;
 
 ## Design system
 
-Read [DESIGN.md](DESIGN.md) before creating or changing UI, components, tokens, assets, or user-facing copy. It records Bisou's approved visual direction and design constraints; do not invent a separate visual system per feature.
-
-Keep exact token values in their source files. When the user changes a design decision, update `DESIGN.md` with the implementation. Other documents and agent instructions must link to it rather than duplicate its rules. Explicit current user instructions take precedence.
+- Read [DESIGN.md](DESIGN.md) before creating or changing UI, components, tokens, assets, or user-facing copy. 
+- It records Bisou's approved visual direction and design constraints; do not invent a separate visual system per feature.
 
 ## Docs
 
 - Product rules: [docs/product/](docs/product/).
 - Decisions: [docs/adr/](docs/adr/).
 - Visual rules: [DESIGN.md](DESIGN.md).
-- How to run: [README.md](README.md).
-- Changes: [CHANGELOG.md](CHANGELOG.md).
 - [docs/architecture.md](docs/architecture.md) is a read-only legacy reference; code wins.
 
 ## CodeGraph
