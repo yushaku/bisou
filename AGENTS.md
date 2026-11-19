@@ -6,7 +6,6 @@ Do not read or search files under these directories unless I explicitly ask: nod
 
 `pnpm dev`: local seed, sign in with `111111` at http://127.0.0.1:5191.
 `pnpm dev:phone`: open on a phone through a cloudflared tunnel.
-Verify: `pnpm run typecheck`, `pnpm test`, `pnpm run build`, `pnpm lint`.
 Migrations are additive only.
 Merging into `main` and pushing it releases production through GitHub Actions; see [README Deploy](README.md#deploy).
 
