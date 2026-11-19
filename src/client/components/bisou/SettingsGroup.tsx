@@ -9,7 +9,7 @@ export function SettingsGroup({ title, children }: { title: string; children: Re
       <h2 id={id} className="px-4 text-sm font-semibold text-muted-foreground">
         {title}
       </h2>
-      <div className="overflow-hidden rounded-xl edge bg-card text-card-foreground divide-y divide-border">
+      <div className="divide-y divide-border overflow-hidden rounded-xl edge bg-card text-card-foreground">
         {children}
       </div>
     </section>
@@ -31,7 +31,9 @@ export function SettingsRow({
     <>
       <Icon className="size-5 shrink-0" aria-hidden="true" />
       <span className="shrink-0">{label}</span>
-      {value && <span className="ml-auto min-w-0 break-words text-right text-sm text-muted-foreground">{value}</span>}
+      {value && (
+        <span className="ml-auto min-w-0 text-right text-sm wrap-break-word text-muted-foreground">{value}</span>
+      )}
       {props.onClick && (
         <ChevronRight className={cn("size-4 shrink-0 text-muted-foreground", !value && "ml-auto")} aria-hidden="true" />
       )}
@@ -43,7 +45,7 @@ export function SettingsRow({
       type="button"
       className={cn(
         rowClass,
-        "press outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring",
+        "press outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset",
       )}
       {...props}
     >

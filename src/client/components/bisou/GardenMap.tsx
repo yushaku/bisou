@@ -182,7 +182,7 @@ function IslandArt({ rank }: { rank: number }) {
         className="island-vine"
         d="M54 92c-6 10-4 19 3 26M186 92c6 10 4 19-3 26M80 103c-3 8-2 14 3 19M160 103c3 8 2 14-3 19"
       />
-      <g className="island-flowers">
+      <g>
         <g transform="translate(62 56)">
           <path className="island-stem" d="M0 0v10" />
           <circle className="island-flower" cx="0" cy="-2" r="4" />
@@ -199,7 +199,7 @@ function IslandArt({ rank }: { rank: number }) {
           <circle className="island-flower-core" cx="0" cy="-1" r="1" />
         </g>
       </g>
-      <g className="island-flag" transform="translate(178 28)">
+      <g transform="translate(178 28)">
         <path className="island-flag-pole" d="M0 30V2" />
         <path className="island-flag-cloth" d="M1 3l18 6-18 7Z" />
       </g>

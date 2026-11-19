@@ -127,7 +127,7 @@ export function Login({ onSignedIn }: { onSignedIn: (user: User) => void }) {
         <p className="mt-2 text-lg text-muted-foreground">{t("login.subtitle")}</p>
       </div>
 
-      <Card className="mt-8 px-5 py-5">
+      <Card className="mt-8 p-5">
         {step === "email" ? (
           <form onSubmit={onEmailSubmit} className="flex flex-col gap-3" noValidate>
             <Label htmlFor="email">{t("login.email")}</Label>

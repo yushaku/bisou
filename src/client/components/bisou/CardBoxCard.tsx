@@ -54,7 +54,7 @@ export function CardBoxCard({
   return (
     <article
       data-box={boxId}
-      className="card-box-colour card-box-face flex aspect-[5/7] flex-col gap-6 overflow-hidden rounded-2xl p-6"
+      className="card-box-colour card-box-face flex aspect-5/7 flex-col gap-6 overflow-hidden rounded-2xl p-6"
     >
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm">{t(`cardBox.kind.${card.kind}`)}</p>
@@ -83,7 +83,7 @@ export function CardBoxCard({
             ))}
           </div>
         ) : (
-          <p className="my-auto font-heading text-2xl leading-relaxed">{card.text[locale]}</p>
+          <p className="my-auto font-heading text-2xl/relaxed">{card.text[locale]}</p>
         )}
         {card.kind === "scale" && (
           <div

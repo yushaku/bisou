@@ -121,7 +121,7 @@ export function ClaimsList({ onSignedOut }: { onSignedOut: () => void }) {
                   )}
                   {claim.status === "received" && (
                     <span className="flex size-11 shrink-0 items-center justify-center">
-                      <span className="flex size-9 items-center justify-center rounded-full bg-success text-success-foreground elevate-sm motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-300">
+                      <span className="flex size-9 items-center justify-center rounded-full bg-success text-success-foreground elevate-sm motion-safe:animate-in motion-safe:duration-300 motion-safe:zoom-in-50">
                         <Check className="size-5" strokeWidth={3} aria-hidden="true" />
                       </span>
                       <span className="sr-only">{t("claims.received")}</span>

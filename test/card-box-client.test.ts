@@ -263,7 +263,7 @@ it("card-box AC5 AC6, card-box-unlock AC48: Home block and box list share ordere
     expect(html).not.toContain("Xem thử");
     expect(html).toContain("Deep talk");
     expect(html).toContain("relative h-1/2 shrink-0");
-    expect(html).toContain("h-full w-full object-cover");
+    expect(html).toContain("size-full object-cover");
     expect(html).not.toMatch(/<input|Liên hệ|Mã mở/);
     expect(html.replace(/<[^>]*>/g, "")).not.toMatch(/[0-9]\/[0-9]/);
   }
@@ -797,7 +797,7 @@ it("card-box: 5:7 card markup puts long text inside a body with scroll and overs
   const html = renderToString(
     h(I18nProvider, null, h(CardBoxCard, { card, boxId: "deep-connection", boxName: "Box" })),
   );
-  expect(html).toContain("aspect-[5/7]");
+  expect(html).toContain("aspect-5/7");
   expect(html).toMatch(/class="card-box-body[^"]*min-h-0[^"]*overflow-y-auto[^"]*overscroll-y-contain/);
   expect(html.indexOf("card-box-body")).toBeLessThan(html.indexOf("long long"));
 });

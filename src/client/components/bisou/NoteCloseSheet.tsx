@@ -40,7 +40,7 @@ export function CloseFields({
             type="button"
             variant="outline"
             disabled={disabled}
-            className="min-h-11 h-auto justify-start whitespace-normal text-left"
+            className="h-auto min-h-11 justify-start text-left whitespace-normal"
             onClick={() =>
               onChange({
                 line: value.line ? `${value.line}\n${t(`notes.sample.${sample}`)}` : t(`notes.sample.${sample}`),

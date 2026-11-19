@@ -29,7 +29,7 @@ export function WishDetailSheet({ wish }: { wish: Wish }) {
               {t("received.on", { date: formatDay(wish.receivedOn, locale) })}
             </p>
           )}
-          {wish.note && <p className="whitespace-pre-line text-sm">{wish.note}</p>}
+          {wish.note && <p className="text-sm whitespace-pre-line">{wish.note}</p>}
         </>
       )}
     </div>

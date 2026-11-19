@@ -87,7 +87,7 @@ export function NoteEnvelope({ kind }: { kind: "cooling" | "ready" | "sent" | "w
             strokeWidth="1"
             opacity=".65"
           />
-          <g className="note-stamp" transform="translate(232 49) rotate(3)">
+          <g transform="translate(232 49) rotate(3)">
             <path
               d="M0 0q4 5 8 0t8 0t8 0t8 0t8 0v46q-4-5-8 0t-8 0t-8 0t-8 0t-8 0Z"
               fill="var(--envelope-paper)"

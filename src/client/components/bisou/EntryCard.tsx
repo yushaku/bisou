@@ -64,7 +64,7 @@ export function EntryCard({
     <Card
       id={id}
       tabIndex={id ? -1 : undefined}
-      className={cn("relative gap-4 px-4 py-4 outline-none focus-visible:ring-3 focus-visible:ring-ring", className)}
+      className={cn("relative gap-4 p-4 outline-none focus-visible:ring-3 focus-visible:ring-ring", className)}
     >
       {onOpen && (
         <button
@@ -102,7 +102,7 @@ export function EntryCard({
         )}
         <div className="relative">{actions}</div>
       </header>
-      {entry.milestone && <h3 className="font-heading text-xl leading-snug">{entry.milestone}</h3>}
+      {entry.milestone && <h3 className="font-heading text-xl/snug">{entry.milestone}</h3>}
       {parts ? (
         <NoteParts note={parts} preview={!!onOpen} />
       ) : (
@@ -110,10 +110,7 @@ export function EntryCard({
           <div>
             <p
               id={bodyId}
-              className={cn(
-                "text-base leading-relaxed whitespace-pre-line wrap-anywhere",
-                long && !open && "line-clamp-5",
-              )}
+              className={cn("text-base/relaxed wrap-anywhere whitespace-pre-line", long && !open && "line-clamp-5")}
             >
               {entry.body}
             </p>

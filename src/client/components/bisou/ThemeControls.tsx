@@ -152,7 +152,7 @@ export function ThemeControls({
               }}
             >
               {DARK_THEMES.map((th) => (
-                <ToggleGroupItem key={th.id} value={th.id} className={cn(item, "flex-col gap-1 py-1.5 h-14")}>
+                <ToggleGroupItem key={th.id} value={th.id} className={cn(item, "h-14 flex-col gap-1 py-1.5")}>
                   <Swatches theme={th} />
                   {th.label}
                 </ToggleGroupItem>

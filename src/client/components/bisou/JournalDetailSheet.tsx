@@ -20,7 +20,7 @@ export function JournalDetailSheet({ entry, onOpenPhoto }: { entry: Entry; onOpe
       {entry.parts ? (
         <NoteParts note={entry.parts} />
       ) : (
-        <p className="whitespace-pre-line wrap-anywhere">{entry.body}</p>
+        <p className="wrap-anywhere whitespace-pre-line">{entry.body}</p>
       )}
       {entry.reply && <NoteReply reply={entry.reply} />}
       {entry.note && <p className="text-sm text-muted-foreground">{entry.note}</p>}

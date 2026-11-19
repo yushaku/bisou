@@ -12,9 +12,7 @@ export function NoteReply({ reply, preview = false }: { reply: Reply; preview?: 
         {reply.person.name}
       </p>
       {reply.line && (
-        <p className={cn("text-base leading-6 whitespace-pre-wrap wrap-anywhere", preview && "line-clamp-3")}>
-          {reply.line}
-        </p>
+        <p className={cn("text-base/6 wrap-anywhere whitespace-pre-wrap", preview && "line-clamp-3")}>{reply.line}</p>
       )}
     </div>
   );

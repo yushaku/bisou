@@ -46,7 +46,7 @@ export function Celebration({ open, onOpenChange, title, body }: CelebrationProp
       <DialogContent className="max-w-sm text-center" showCloseButton={false}>
         <DialogHeader className="items-center text-center">
           <Mascot situation="celebrate" />
-          <DialogTitle className="font-heading text-2xl leading-tight">{title ?? t("celebration.title")}</DialogTitle>
+          <DialogTitle className="font-heading text-2xl/tight">{title ?? t("celebration.title")}</DialogTitle>
           <DialogDescription className="text-base text-balance">{body ?? t("celebration.body")}</DialogDescription>
         </DialogHeader>
         <Button onClick={() => onOpenChange(false)}>{t("common.close")}</Button>

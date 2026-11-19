@@ -170,7 +170,7 @@ export function GardenCard({
         <div
           className={
             today
-              ? "today-frame rounded-[calc(var(--radius-xl)-0.2rem)] border border-dashed border-primary/40 px-4 pt-5 pb-4"
+              ? "today-frame rounded-today-frame border border-dashed border-primary/40 px-4 pt-5 pb-4"
               : "rounded-lg border border-dashed border-primary/40 p-4"
           }
         >
@@ -187,7 +187,7 @@ export function GardenCard({
             className={cn(
               "font-heading",
               today
-                ? ["mx-auto mt-4 text-balance text-center leading-[1.35]", writing ? "text-xl" : "text-[1.6rem]"]
+                ? ["mx-auto mt-4 text-center leading-prompt text-balance", writing ? "text-xl" : "text-prompt"]
                 : phase === "open" && !writing
                   ? "py-8 text-center text-2xl"
                   : "mb-4 text-xl",
@@ -215,7 +215,7 @@ export function GardenCard({
                     <legend
                       className={cn(
                         "mb-2 text-sm font-semibold",
-                        today && "px-1 text-xs uppercase tracking-[0.14em] text-muted-foreground",
+                        today && "px-1 text-xs tracking-eyebrow text-muted-foreground uppercase",
                       )}
                     >
                       {t("garden.responseType")}
@@ -245,7 +245,7 @@ export function GardenCard({
                     htmlFor={`${id}-answer`}
                     className={
                       today
-                        ? "text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground"
+                        ? "text-xs font-semibold tracking-eyebrow text-muted-foreground uppercase"
                         : "text-sm font-semibold"
                     }
                   >
@@ -261,8 +261,8 @@ export function GardenCard({
                     }}
                     disabled={busy}
                     className={cn(
-                      "garden-lined text-base leading-8",
-                      today ? "min-h-44 rounded-[calc(var(--radius)*1.1)] bg-card/80 p-4" : "min-h-48",
+                      "garden-lined text-base/8",
+                      today ? "min-h-44 rounded-today-card bg-card/80 p-4" : "min-h-48",
                     )}
                   />
                 </>
@@ -299,7 +299,7 @@ export function GardenCard({
                   {t("garden.write")}
                 </Button>
                 {definition?.kind !== "decision" && (
-                  <p className="flex items-start justify-center gap-1.5 text-center text-xs leading-relaxed text-muted-foreground">
+                  <p className="flex items-start justify-center gap-1.5 text-center text-xs/relaxed text-muted-foreground">
                     <LockKeyhole className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
                     <span>{t("garden.privateHint")}</span>
                   </p>
@@ -357,7 +357,7 @@ export function GardenCard({
                   role="status"
                   className={cn(
                     "mt-3 text-center text-muted-foreground",
-                    today ? "mx-auto max-w-[34ch] text-xs leading-relaxed" : "text-sm",
+                    today ? "mx-auto max-w-[34ch] text-xs/relaxed" : "text-sm",
                   )}
                 >
                   {t("garden.waiting", { partner: partnerName })}

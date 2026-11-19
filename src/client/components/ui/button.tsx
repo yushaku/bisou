@@ -7,14 +7,14 @@ import { Slot } from "radix-ui";
 // Shape, outline, resting shadow and press feedback come from the personality
 // (rounded-control, edge-*, elevate-sm, press; see theme/personalities.css).
 const buttonVariants = cva(
-  "group/button press inline-flex shrink-0 items-center justify-center rounded-control bg-clip-padding font-semibold whitespace-nowrap outline-none select-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+  "group/button inline-flex shrink-0 press items-center justify-center rounded-control bg-clip-padding font-semibold whitespace-nowrap outline-none select-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-invalid:ring-3 aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
   {
     variants: {
       variant: {
-        default: "edge-ink elevate-sm bg-primary text-primary-foreground hover:bg-primary/85",
-        outline: "edge-control elevate-sm bg-(--outline-fill) text-foreground hover:bg-accent aria-expanded:bg-accent",
+        default: "edge-ink bg-primary text-primary-foreground elevate-sm hover:bg-primary/85",
+        outline: "edge-control bg-outline-fill text-foreground elevate-sm hover:bg-accent aria-expanded:bg-accent",
         secondary:
-          "edge-ink elevate-sm bg-secondary text-secondary-foreground hover:bg-secondary/85 aria-expanded:bg-secondary",
+          "edge-ink bg-secondary text-secondary-foreground elevate-sm hover:bg-secondary/85 aria-expanded:bg-secondary",
         ghost: "text-foreground hover:bg-muted aria-expanded:bg-muted",
         destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:ring-destructive/40",
         link: "h-auto px-0 text-foreground underline decoration-primary decoration-2 underline-offset-4 hover:decoration-foreground",

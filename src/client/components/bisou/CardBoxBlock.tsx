@@ -34,7 +34,7 @@ export function CardBoxRows({ boxes, from, compact }: { boxes: CardBoxSummary[];
               width={800}
               height={1024}
               loading="lazy"
-              className="absolute inset-0 -z-10 h-full w-full object-cover"
+              className="absolute inset-0 -z-10 size-full object-cover"
               onError={(event) => {
                 event.currentTarget.style.visibility = "hidden";
               }}
@@ -52,7 +52,7 @@ export function CardBoxRows({ boxes, from, compact }: { boxes: CardBoxSummary[];
               )}
             </span>
             <span className="liquid-glass mt-auto flex shrink-0 flex-col gap-2 rounded-t-xl border-x-0 border-b-0 p-3">
-              <span className="truncate font-heading text-base leading-snug">{box.name[locale]}</span>
+              <span className="truncate font-heading text-base/snug">{box.name[locale]}</span>
               {!compact && <span className="line-clamp-2 text-sm text-card-foreground">{box.description[locale]}</span>}
               <span className="text-xs text-muted-foreground tabular-nums">
                 {t(box.cardCount === 1 ? "cardBox.cardCountOne" : "cardBox.cardCount", { count: box.cardCount })}

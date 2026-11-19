@@ -29,7 +29,7 @@ export function GardenScene({
             </DrawerTitle>
             <DrawerDescription>{t(stageName ? "garden.stageOpenedBody" : "garden.tomorrow")}</DrawerDescription>
           </DrawerHeader>
-          <div className="garden-scene relative rounded-xl bg-accent p-4" data-fresh="fresh">
+          <div className="relative rounded-xl bg-accent p-4" data-fresh="fresh">
             <div className="garden-watering absolute top-3 right-6 text-chart-5" aria-hidden="true">
               {stageName ? <Sparkles className="size-10" /> : <Droplets className="size-10" />}
             </div>

@@ -78,7 +78,7 @@ export function WishCard({
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 font-semibold leading-snug">{wish.title}</h3>
+        <h3 className="line-clamp-2 leading-snug font-semibold">{wish.title}</h3>
         {wish.price !== null && (
           <p className="mt-0.5 font-heading text-lg tabular-nums">{formatVnd(wish.price, locale)}</p>
         )}

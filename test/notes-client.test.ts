@@ -329,7 +329,7 @@ test.each(["vi", "en"])(
     const cards = html.split(/<div data-slot="card"/).slice(1);
     expect(cards).toHaveLength(6);
     expect(html.match(/line-clamp-2/g)).toHaveLength(5);
-    expect(html.match(/text-base leading-6 font-semibold/g)).toHaveLength(5);
+    expect(html.match(/text-base\/6 font-semibold/g)).toHaveLength(5);
     expect(html).not.toContain("text-xs");
     expect(html).not.toContain("truncate");
     expect(html).not.toContain("<text");
@@ -360,7 +360,7 @@ test.each(["vi", "en"])(
     for (const card of cards.slice(3)) expect(card).not.toMatch(/<time|\d{1,2}:\d{2}|2099/);
     expect(cards[4]).toContain(longWord);
     expect(html).toContain(longName);
-    expect(html).toContain("[overflow-wrap:anywhere]");
+    expect(html).toContain("wrap-anywhere");
     expect(html.match(/<span class="note-envelope-item"[^>]*aria-hidden="true"/g)).toHaveLength(6);
   },
 );

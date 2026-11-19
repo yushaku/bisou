@@ -56,7 +56,7 @@ export function OtpInput({
             key={i}
             data-active={i === caret || undefined}
             className={cn(
-              "edge-control flex h-14 items-center justify-center rounded-control bg-(--field-bg) font-heading text-3xl tabular-nums transition-[box-shadow,border-color] duration-(--duration)",
+              "flex h-14 items-center justify-center rounded-control edge-control bg-field font-heading text-3xl tabular-nums transition-[box-shadow,border-color] duration-(--duration)",
               "group-focus-within/otp:data-active:border-ring group-focus-within/otp:data-active:ring-3 group-focus-within/otp:data-active:ring-ring/40",
               invalid && "border-destructive",
               disabled && "opacity-50",

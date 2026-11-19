@@ -85,7 +85,7 @@ export function DateSheet({
             startMonth={firstMonth}
             endMonth={today}
             disabled={{ after: today }}
-            className="edge mx-auto rounded-lg"
+            className="mx-auto rounded-lg edge"
           />
           <p className="mt-3 min-h-6 text-center text-base font-semibold" aria-live="polite">
             {selected ? formatDay(selected, locale) : ""}

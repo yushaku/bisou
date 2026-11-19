@@ -12,6 +12,18 @@ const LEAVES = [
   "M0 0C-32-1-35-17-20-21C-34-32-12-36-7-25C2-35 15-17 5-8Z",
 ];
 
+// Each layer shows from its growth stage on (see .plant-s* in styles.css); the top layer shows at the last stage only.
+const LAYER_CLASS = [
+  "plant-layer plant-s0",
+  "plant-layer plant-s1",
+  "plant-layer plant-s2",
+  "plant-layer plant-s3",
+  "plant-layer plant-s4",
+  "plant-layer plant-s5",
+  "plant-layer plant-s6",
+  "plant-layer",
+];
+
 export function Plant({ deckId, stage }: { deckId: string; stage: number }) {
   const id = useId();
   const { locale } = useI18n();
@@ -39,7 +51,7 @@ export function Plant({ deckId, stage }: { deckId: string; stage: number }) {
         {Array.from({ length: 8 }, (_, layer) => {
           const y = 137 - layer * 15;
           return (
-            <g key={layer} className={`plant-layer plant-s${layer}`}>
+            <g key={layer} className={LAYER_CLASS[layer]}>
               <path className="plant-ink plant-stem" d={`M60 ${y + 16}Q${layer % 2 ? 57 : 63} ${y + 8} 60 ${y}`} />
               <g transform={`translate(60 ${y + 5}) scale(${0.4 + layer * 0.055})`}>
                 <use href={`#${id}-leaf`} className="plant-leaf" transform="rotate(-16)" />

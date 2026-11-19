@@ -108,10 +108,10 @@ export function TokensSection() {
           {COLOR_TOKENS.map((name) => (
             <li key={name} className="flex items-center gap-3">
               <span
-                className="edge size-11 shrink-0 rounded-md border-border"
+                className="size-11 shrink-0 rounded-md edge border-border"
                 style={{ backgroundColor: `var(--${name})` }}
               />
-              <span className="min-w-0 text-sm break-words">{name}</span>
+              <span className="min-w-0 text-sm wrap-break-word">{name}</span>
             </li>
           ))}
         </ul>
@@ -145,8 +145,8 @@ export function TokensSection() {
         <h3 className="mb-3 font-heading text-xl">{d("type")}</h3>
         <div className="flex flex-col gap-3">
           <p className="font-heading text-7xl leading-none tabular-nums">1.360</p>
-          <p className="font-heading text-4xl leading-tight">Ngày đầu tiên mình gặp nhau</p>
-          <p className="font-heading text-3xl leading-tight">Ngày đầu tiên mình gặp nhau</p>
+          <p className="font-heading text-4xl/tight">Ngày đầu tiên mình gặp nhau</p>
+          <p className="font-heading text-3xl/tight">Ngày đầu tiên mình gặp nhau</p>
           <p className="font-heading text-2xl">Hũ điều ước của Quốc Bảo</p>
           <p className="font-heading text-xl">Thứ Hai, 2 tháng 11</p>
           <p className="text-lg">Sáng chủ nhật đi bộ quanh Hồ Gươm, gió đầu đông lạnh mà vui.</p>
@@ -162,7 +162,7 @@ export function TokensSection() {
         <ul className="flex flex-wrap gap-4">
           {["rounded-sm", "rounded-md", "rounded-lg", "rounded-xl", "rounded-2xl", "rounded-control"].map((r) => (
             <li key={r} className="flex flex-col items-center gap-2">
-              <span className={`edge size-16 bg-card ${r}`} />
+              <span className={`size-16 edge bg-card ${r}`} />
               <span className="text-sm">{r.replace("rounded-", "")}</span>
             </li>
           ))}

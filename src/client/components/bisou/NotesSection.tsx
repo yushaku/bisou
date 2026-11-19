@@ -111,9 +111,7 @@ export function NotesSection({
                 state = t(note.state === "opened" ? "notes.opened" : "notes.notOpened");
               return note.state === "waiting" ? (
                 <Card key={note.id} className="note-envelope note-envelope-waiting">
-                  <p className="col-start-2 min-w-0 self-end text-base font-semibold [overflow-wrap:anywhere]">
-                    {address}
-                  </p>
+                  <p className="col-start-2 min-w-0 self-end text-base font-semibold wrap-anywhere">{address}</p>
                   <Button
                     className="note-ready-button col-start-2 w-full self-start"
                     size="lg"
@@ -131,14 +129,14 @@ export function NotesSection({
                   <button
                     type="button"
                     aria-label={`${address}, ${state}, ${t("notes.readAgain")}`}
-                    className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                    className="note-envelope-button min-h-11 w-full press rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                     onClick={() => setReceived(note)}
                   >
                     <span className="flex min-w-0 flex-col gap-2">
-                      <span className="note-preview line-clamp-2 text-base leading-6 font-semibold whitespace-normal break-words [overflow-wrap:anywhere]">
+                      <span className="note-preview line-clamp-2 text-base/6 font-semibold wrap-anywhere whitespace-normal">
                         {note.happened}
                       </span>
-                      <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                      <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm wrap-anywhere text-muted-foreground">
                         <span className="font-semibold">{address}</span>
                         <span>{state}</span>
                       </span>
@@ -173,14 +171,14 @@ export function NotesSection({
                   <button
                     type="button"
                     aria-label={`${address}, ${state}`}
-                    className="note-envelope-button press min-h-11 w-full rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+                    className="note-envelope-button min-h-11 w-full press rounded-xl p-4 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
                     onClick={() => (note.state === "opened" ? setDetail(note) : write(note))}
                   >
                     <span className="flex min-w-0 flex-col gap-2">
-                      <span className="note-preview line-clamp-2 text-base leading-6 font-semibold whitespace-normal break-words [overflow-wrap:anywhere]">
+                      <span className="note-preview line-clamp-2 text-base/6 font-semibold wrap-anywhere whitespace-normal">
                         {note.happened}
                       </span>
-                      <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                      <span className="note-metadata flex flex-wrap gap-x-2 gap-y-1 text-sm wrap-anywhere text-muted-foreground">
                         <span className="font-semibold">{address}</span>
                         <span>{state}</span>
                       </span>

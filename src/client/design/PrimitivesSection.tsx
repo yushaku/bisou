@@ -293,7 +293,7 @@ export function PrimitivesSection() {
             </PopoverContent>
           </Popover>
         </div>
-        <Calendar mode="single" selected={date} onSelect={setDate} className="edge rounded-lg" />
+        <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-lg edge" />
       </Block>
     </div>
   );

@@ -206,7 +206,7 @@ export function EventSheet({
                   }
                   endMonth={new Date(today.getFullYear() + 30, 11, 31)}
                   disabled={repeat === "once" ? { before: parseDay(todayDay) } : undefined}
-                  className="edge mx-auto rounded-lg"
+                  className="mx-auto rounded-lg edge"
                 />
                 <p className="mt-3 min-h-6 text-center font-semibold" aria-live="polite">
                   {date ? formatDay(date, locale) : ""}

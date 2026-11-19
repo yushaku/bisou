@@ -8,6 +8,12 @@
 /* Dark utilities follow the .dark class that the theme script sets for dark themes. */
 @custom-variant dark (&:is(.dark *));
 
+/* Tailwind's default palette is removed: every color class must come from the tokens below. */
+@theme {
+  --color-*: initial;
+  --color-overlay: rgb(0 0 0 / 0.1);
+}
+
 @theme inline {
   --color-box-peach: var(--box-peach);
   --color-box-peach-foreground: var(--box-peach-foreground);
@@ -47,6 +53,8 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-field: var(--field-bg);
+  --color-outline-fill: var(--outline-fill);
 
   --font-sans: var(--font-sans-family);
   --font-heading: var(--font-display-family);
@@ -59,6 +67,17 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
   --radius-control: var(--control-radius);
+  --radius-photo: var(--photo-radius);
+  --radius-textarea: min(var(--control-radius), 1.25rem);
+  --radius-control-sm: min(var(--radius-md), 10px);
+  --radius-dock: 1.75rem;
+  --radius-device: 2.5rem;
+  --radius-today-frame: calc(var(--radius-xl) - 0.2rem);
+  --radius-today-card: calc(var(--radius) * 1.1);
+
+  --text-prompt: 1.6rem;
+  --leading-prompt: 1.35;
+  --tracking-eyebrow: 0.14em;
 }
 
 /* Personality hooks shared by primitives and Bisou components (values in theme/personalities.css). */

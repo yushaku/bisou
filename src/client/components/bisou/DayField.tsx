@@ -56,7 +56,7 @@ export function DayField({
           startMonth={FIRST_DAY}
           endMonth={parseDay(max)}
           disabled={[{ before: FIRST_DAY }, { after: parseDay(max) }]}
-          className="edge mx-auto rounded-lg"
+          className="mx-auto rounded-lg edge"
         />
       )}
     </div>

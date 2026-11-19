@@ -84,16 +84,11 @@ export function GardenStageDecisions({
                   <button
                     type="button"
                     onClick={() => setOpenId(card.cardId)}
-                    className="press flex w-full items-center gap-3 px-4 py-3 text-left outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring"
+                    className="flex w-full press items-center gap-3 px-4 py-3 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset"
                   >
                     <span className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
                       {deck && <span className="text-xs text-muted-foreground">{deck.name[locale]}</span>}
-                      <span
-                        className={cn(
-                          "line-clamp-2 text-[15px] leading-snug",
-                          status === "done" && "text-muted-foreground",
-                        )}
-                      >
+                      <span className={cn("line-clamp-2 text-base/snug", status === "done" && "text-muted-foreground")}>
                         {definition?.text[locale]}
                       </span>
                       <Badge variant={status === "turn" ? "default" : "secondary"}>

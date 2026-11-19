@@ -72,7 +72,7 @@ export function PairCodeDisplay({ code, expiresInMinutes, expiresAt, children, c
         {code.split("").map((char, i) => (
           <span
             key={i}
-            className="edge-control elevate-sm flex aspect-[4/5] items-center justify-center rounded-control bg-card font-heading text-4xl tabular-nums"
+            className="flex aspect-4/5 items-center justify-center rounded-control edge-control bg-card font-heading text-4xl tabular-nums elevate-sm"
           >
             {char}
           </span>

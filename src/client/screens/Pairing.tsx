@@ -81,7 +81,7 @@ function ChooseView({ busy, onCreate, onEnter }: { busy: boolean; onCreate: () =
     <>
       <img src={couple} alt="" width={640} height={466} className="mx-auto mt-2 h-40 w-56 object-contain" />
       <PageHeader title={t("pairing.title")} description={t("pairing.body")} />
-      <Card className="gap-4 px-5 py-5">
+      <Card className="gap-4 p-5">
         <div className="flex flex-col gap-2">
           <p className="flex items-center gap-2 text-base text-muted-foreground">
             <Sparkles className="size-5 shrink-0 text-primary" aria-hidden="true" />
@@ -210,7 +210,7 @@ function WaitingView({
   return (
     <>
       <PageHeader title={t(expired ? "pairing.expiredTitle" : "pairing.codeTitle")} />
-      <Card className="px-5 py-5">
+      <Card className="p-5">
         {!expired ? (
           <PairCodeDisplay code={pending.code} expiresAt={pending.expiresAt}>
             <Button onClick={() => void share(pending.code)}>
@@ -308,7 +308,7 @@ function EnterView({ onCouple, onBack }: { onCouple: (couple: Couple | null) => 
         </Button>
       </div>
       <PageHeader title={t("pairing.enterTitle")} description={t("pairing.enterBody")} />
-      <Card className="px-5 py-5">
+      <Card className="p-5">
         <form onSubmit={submit} className="flex flex-col gap-3">
           <Label htmlFor="pair-code">{t("pair.title")}</Label>
           <OtpInput

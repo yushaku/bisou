@@ -156,7 +156,7 @@ export function PhotoPicker({
         {queue.items.length > 0 && (
           <ul className="grid grid-cols-2 gap-3">
             {queue.items.map((item, i) => (
-              <li key={item.localId} className="overflow-hidden rounded-(--photo-radius) edge bg-background">
+              <li key={item.localId} className="overflow-hidden rounded-photo edge bg-background">
                 <img
                   src={item.previewUrl}
                   alt={t("compose.photo", { index: i + 1 })}

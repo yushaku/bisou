@@ -174,7 +174,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
                         {(Object.keys(FILTERS) as Filter[]).map((id) => (
                           <SelectItem key={id} value={id}>
                             {t(FILTERS[id])}
-                            <span className="tabular-nums text-muted-foreground">
+                            <span className="text-muted-foreground tabular-nums">
                               {id === "all" ? jar.open.length + jar.received.length : jar[id].length}
                             </span>
                           </SelectItem>
@@ -264,7 +264,7 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
                                 {t("received.on", { date: formatDay(wish.receivedOn, locale) })}
                               </p>
                             )}
-                            {wish.note && <p className="mt-1 whitespace-pre-line text-sm">{wish.note}</p>}
+                            {wish.note && <p className="mt-1 text-sm whitespace-pre-line">{wish.note}</p>}
                           </WishCard>
                         ))}
                       {filter === "received" && jar.received.length > 0 && (

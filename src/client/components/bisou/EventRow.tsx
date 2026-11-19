@@ -28,7 +28,7 @@ export function EventRow({ event, onOpen }: { event: UpcomingEvent; onOpen?: (id
       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
         <Icon className="size-5" aria-hidden="true" />
       </span>
-      <div className="min-w-0 flex-1 break-words">
+      <div className="min-w-0 flex-1 wrap-break-word">
         <p className="font-semibold">{title}</p>
         <p className="text-sm text-muted-foreground">
           <time dateTime={event.date}>{formatDay(event.date, locale, "short")}</time>
@@ -56,7 +56,7 @@ export function EventRow({ event, onOpen }: { event: UpcomingEvent; onOpen?: (id
         <button
           type="button"
           onClick={() => onOpen(event.id)}
-          className="press flex w-full items-center gap-3 px-4 py-3 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset"
+          className="flex w-full press items-center gap-3 px-4 py-3 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset"
         >
           {content}
         </button>

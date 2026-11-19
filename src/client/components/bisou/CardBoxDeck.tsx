@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } fr
 import type { CardBoxCard as BoxCard } from "../../../shared/cardBox";
 import { cardSwipe } from "../../lib/cardBox";
 import { Shuffle } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { useI18n } from "../../i18n";
 import { CardBoxCard } from "./CardBoxCard";
@@ -187,7 +188,11 @@ export function CardBoxDeck({
           <div
             inert
             aria-hidden="true"
-            className={`card-box-leaving card-box-leaving-${leaving.direction}`}
+            className={cn(
+              "card-box-leaving",
+              leaving.direction === "previous" && "card-box-leaving-previous",
+              leaving.direction === "random" && "card-box-leaving-random",
+            )}
             style={
               {
                 "--drag-x": `${leaving.direction === "next" ? leaving.offset : 0}px`,

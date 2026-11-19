@@ -175,7 +175,7 @@ export function AppShell({ title, onOpenSettings, action, tabs, onRefresh, child
         ref={mainRef}
         data-tab-page
         tabIndex={-1}
-        className="outline-none mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4"
+        className="mx-auto flex w-full max-w-md flex-1 flex-col px-4 pt-2 pb-4 outline-none"
       >
         {canRefresh && (
           <div
@@ -244,7 +244,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
       <nav
         aria-label={t("nav.label")}
         data-tab-bar
-        className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-[1.75rem]"
+        className="liquid-glass sticky bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-3 mt-2 rounded-dock"
       >
         <ul className="relative mx-auto grid w-full max-w-md grid-cols-5">
           {active && (
@@ -267,7 +267,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
                     <Button
                       data-create-button
                       size="icon"
-                      className="size-14 -translate-y-3 rounded-full ring-4 ring-[color-mix(in_oklab,var(--card)_55%,transparent)] elevate"
+                      className="size-14 -translate-y-3 rounded-full ring-4 elevate ring-card/55"
                       aria-label={
                         direct
                           ? t(direct === "event" ? "events.add" : direct === "journal" ? "nav.create" : "wishes.add")
@@ -285,7 +285,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
                     aria-current={selected ? "page" : undefined}
                     onClick={() => onSelect(id)}
                     className={cn(
-                      "press flex h-16 w-full items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset",
+                      "flex h-16 w-full press items-stretch p-1.5 text-xs font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-inset",
                       selected ? "text-foreground" : "text-muted-foreground",
                     )}
                   >
@@ -318,7 +318,7 @@ export function BottomBar({ active, onSelect, onCreate }: BottomBarProps) {
             <DrawerTitle className="font-heading text-2xl">{t("nav.create")}</DrawerTitle>
             <DrawerDescription className="sr-only">{t("nav.createHint")}</DrawerDescription>
           </DrawerHeader>
-          <div className="overflow-hidden rounded-xl edge bg-card divide-y divide-border">
+          <div className="divide-y divide-border overflow-hidden rounded-xl edge bg-card">
             <DrawerClose asChild>
               <SettingsRow
                 icon={BookHeart}

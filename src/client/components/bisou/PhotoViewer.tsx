@@ -89,7 +89,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
           e.preventDefault();
           onReturnFocus(index);
         }}
-        className="top-0 left-0 flex h-dvh w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none bg-background p-0 sm:max-w-none"
+        className="top-0 left-0 flex h-dvh w-full max-w-none translate-0 flex-col gap-0 rounded-none bg-background p-0 sm:max-w-none"
       >
         <div className="flex items-center gap-2 px-4 pt-[env(safe-area-inset-top)]">
           <DialogTitle className="flex h-14 min-w-0 flex-1 items-center font-heading text-xl">
@@ -125,7 +125,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose, onReturnFocus }: 
                   aria-hidden={i !== index}
                   draggable={false}
                   loading={i === index ? "eager" : "lazy"}
-                  className="h-full min-w-0 w-full shrink-0 object-contain select-none"
+                  className="size-full min-w-0 shrink-0 object-contain select-none"
                 />
               ))}
             </div>

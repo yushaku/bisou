@@ -228,8 +228,8 @@ export function Settings({
             {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={ownPerson} />}
           </button>
           <div className="min-w-0">
-            <p className="break-words font-heading text-xl">{displayName(user, t)}</p>
-            <p className="break-all text-sm text-muted-foreground">{user.email}</p>
+            <p className="font-heading text-xl wrap-break-word">{displayName(user, t)}</p>
+            <p className="text-sm break-all text-muted-foreground">{user.email}</p>
           </div>
         </div>
         <Drawer open={open} onOpenChange={setOpen}>

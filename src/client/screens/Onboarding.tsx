@@ -37,7 +37,7 @@ export function Onboarding(props: SessionProps) {
     <SignedInShell {...props}>
       <img src={couple} alt="" width={640} height={466} className="mx-auto mt-2 h-40 w-56 object-contain" />
       <PageHeader title={t("onboarding.title")} description={t("onboarding.body")} />
-      <Card className="px-5 py-5">
+      <Card className="p-5">
         <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
           <Label htmlFor="onboarding-name">{t("home.displayName")}</Label>
           <Input

@@ -79,7 +79,7 @@ export function NotificationCard() {
   }
 
   return (
-    <Card className="relative mt-5 mb-5 gap-3 p-4">
+    <Card className="relative my-5 gap-3 p-4">
       <h2 className="pr-10 font-heading text-xl">{t("push.card.title")}</h2>
       <Button
         variant="ghost"

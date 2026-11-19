@@ -29,7 +29,7 @@ export function WishJar({
       }}
       className="flex min-w-0 flex-col items-center rounded-xl py-1 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-disabled:cursor-default"
     >
-      <span className="w-full break-words font-heading text-lg">{t("wishes.jarTitle", { name: person.name })}</span>
+      <span className="w-full font-heading text-lg wrap-break-word">{t("wishes.jarTitle", { name: person.name })}</span>
       <span className={`jar-wrap relative block w-35 max-w-full ${empty ? "[&>svg]:opacity-50" : ""}`}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -189,7 +189,7 @@ export function WishJar({
         {empty && (
           <span
             id={`${id}-empty`}
-            className="absolute top-21 right-6 left-6 text-xs leading-snug font-semibold text-balance text-muted-foreground"
+            className="absolute inset-x-6 top-21 text-xs/snug font-semibold text-balance text-muted-foreground"
           >
             {t("wishes.jarEmpty")}
           </span>

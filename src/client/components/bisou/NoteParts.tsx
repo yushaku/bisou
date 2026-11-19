@@ -9,7 +9,7 @@ export function NoteParts({ note, preview = false }: { note: NoteInput; preview?
       {NOTE_FIELDS.map((field) => (
         <div key={field} className="min-w-0">
           <dt className="mb-1 text-sm font-semibold text-muted-foreground">{t(`notes.${field}`)}</dt>
-          <dd className={cn("text-base leading-6 whitespace-pre-wrap wrap-anywhere", preview && "line-clamp-2")}>
+          <dd className={cn("text-base/6 wrap-anywhere whitespace-pre-wrap", preview && "line-clamp-2")}>
             {note[field]}
           </dd>
         </div>

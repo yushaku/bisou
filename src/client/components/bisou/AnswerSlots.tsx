@@ -39,8 +39,8 @@ export function AnswerSlots({
           <div key={index} className="min-w-0">
             <p
               className={cn(
-                "mb-2 text-center font-semibold break-words",
-                today ? "text-[0.68rem] uppercase tracking-[0.14em] text-muted-foreground" : "text-sm",
+                "mb-2 text-center font-semibold wrap-break-word",
+                today ? "text-xs tracking-eyebrow text-muted-foreground uppercase" : "text-sm",
               )}
             >
               {slot.name}
@@ -49,16 +49,10 @@ export function AnswerSlots({
               <div
                 className={cn(
                   "rounded-xl bg-card p-3",
-                  today ? "today-note min-h-36 border border-border/70" : "garden-lined edge min-h-40",
+                  today ? "today-note min-h-36 border border-border/70" : "garden-lined min-h-40 edge",
                 )}
               >
-                <p
-                  className={cn(
-                    "whitespace-pre-wrap break-words [overflow-wrap:anywhere]",
-                    today && "text-sm leading-7",
-                    clamp && "line-clamp-4",
-                  )}
-                >
+                <p className={cn("wrap-anywhere whitespace-pre-wrap", today && "text-sm/7", clamp && "line-clamp-4")}>
                   {slot.deleted ? t("garden.deleted") : slot.choice ? t(`garden.${slot.choice}`) : slot.text}
                 </p>
                 {slot.edited && !slot.deleted && (

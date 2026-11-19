@@ -73,7 +73,7 @@ export default function DesignPage() {
           <h1 className="font-heading text-4xl sm:text-5xl">{d("title")}</h1>
           <p className="mt-3 max-w-xl text-lg text-muted-foreground">{d("intro")}</p>
         </div>
-        <Card className="px-5 py-5">
+        <Card className="p-5">
           <h2 className="sr-only">{d("controls")}</h2>
           <ThemeControls />
         </Card>
@@ -85,7 +85,7 @@ export default function DesignPage() {
             <figure key={s} className="flex shrink-0 snap-start flex-col gap-3">
               <div
                 id={`frame-${s}`}
-                className="h-[844px] w-[390px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[2.5rem] border-2 border-input"
+                className="h-[844px] w-[390px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-device border-2 border-input"
               >
                 <SampleApp initial={s} framed />
               </div>
