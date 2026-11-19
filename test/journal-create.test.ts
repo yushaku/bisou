@@ -7,7 +7,7 @@ import { Card } from "../src/client/components/ui/card";
 import { NotesSection } from "../src/client/components/bisou/NotesSection";
 import { ClosedNoteSheet } from "../src/client/components/bisou/ClosedNoteSheet";
 import { CloseFields, NoteCloseSheet } from "../src/client/components/bisou/NoteCloseSheet";
-import type { NoteLists } from "../src/shared/types";
+import type { Locale, NoteLists } from "../src/shared/types";
 import { NoteForm, NoteSheet } from "../src/client/components/bisou/NoteSheet";
 import { BottomBar } from "../src/client/components/bisou/AppShell";
 import { DrawerContent, DrawerHeader, DrawerTitle } from "../src/client/components/ui/drawer";
@@ -26,6 +26,11 @@ import { Textarea } from "../src/client/components/ui/textarea";
 import { Input } from "../src/client/components/ui/input";
 import { toast } from "../src/client/components/ui/ding-toaster";
 import { api } from "../src/client/api";
+import { formatDay, formatTime } from "../src/client/lib/format";
+
+// Date text comes from the runtime ICU data, which differs between Node versions.
+const at = (epochMs: number, locale: Locale) =>
+  `${formatDay(new Date(epochMs), locale)} ${formatTime(epochMs, locale)}`;
 
 interface Hooks {
   values: unknown[];
@@ -653,7 +658,7 @@ it.each(["button", "escape", "outside", "swipe"])(
   },
 );
 
-it.each(["vi", "en"])(
+it.each(["vi", "en"] as const)(
   "eight hours resolves locally before saving and success uses the server schedule in %s",
   async (locale) => {
     hooks.locale = locale;
@@ -688,13 +693,13 @@ it.each(["vi", "en"])(
       render().some(
         (n) =>
           n.props.children ===
-          (locale === "vi" ? "Hẹn gửi 18 tháng 11, 2026 04:00" : "Scheduled for 18 November 2026 04:00"),
+          (locale === "vi" ? "Hẹn gửi " : "Scheduled for ") + at(new Date(2026, 10, 18, 4, 0).getTime(), locale),
       ),
     ).toBe(true);
     render().find((n) => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
     await flushQueryWork();
     expect(success).toHaveBeenCalledExactlyOnceWith(
-      locale === "vi" ? "Đã hẹn gửi lúc 18 tháng 11, 2026 04:01" : "Scheduled for 18 November 2026 04:01",
+      (locale === "vi" ? "Đã hẹn gửi lúc " : "Scheduled for ") + at(note.scheduledAt, locale),
     );
   },
 );
@@ -883,7 +888,7 @@ it.each(["draft", "sent"] as const)("saving a %s edit uses its current state for
   render().find((n) => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
   await flushQueryWork();
   expect(success).toHaveBeenCalledExactlyOnceWith(
-    state === "draft" ? "Đã hẹn gửi lúc 18 tháng 11, 2099 04:00" : "Đã gửi lời nhắn",
+    state === "draft" ? `Đã hẹn gửi lúc ${at(new Date(2099, 10, 18, 4, 0).getTime(), "vi")}` : "Đã gửi lời nhắn",
   );
 });
 
