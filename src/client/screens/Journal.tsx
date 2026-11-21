@@ -9,8 +9,7 @@ import { api, photoUrl } from "../api";
 import { toPeople } from "../components/bisou/CoupleAvatars";
 import { displayName } from "../lib/displayName";
 import { EmptyState } from "../components/bisou/EmptyState";
-import { JournalComments } from "../components/bisou/JournalComments";
-import { JournalDetailSheet } from "../components/bisou/JournalDetailSheet";
+import { JournalDetailDrawer } from "../components/bisou/JournalDetailDrawer";
 import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard } from "../components/bisou/EntryCard";
 import { NotesSection } from "../components/bisou/NotesSection";
@@ -114,6 +113,9 @@ export function Journal({ couple, ...session }: JournalProps) {
   // Entry whose actions are open.
   const [acting, setActing] = useState<JournalEntry | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailMenu, setDetailMenu] = useState(false);
+  const [jumpToThread, setJumpToThread] = useState(false);
+  const countButton = useRef<HTMLButtonElement | null>(null);
   const linkQuery = useMemo(
     () => ({
       ...queries.journalEntry(linkedId ?? ""),
@@ -133,8 +135,15 @@ export function Journal({ couple, ...session }: JournalProps) {
     url.searchParams.delete("entry");
     history.replaceState(history.state, "", url);
   };
+  const openEntry = (id: string, button: HTMLButtonElement | null = null) => {
+    clearEntryLink();
+    countButton.current = button;
+    setJumpToThread(!!button);
+    setDetailId(id);
+  };
   const closeDetail = () => {
     clearEntryLink();
+    setDetailMenu(false);
     setDetailId(null);
   };
   const [closedEditing, setClosedEditing] = useState<
@@ -316,10 +325,8 @@ export function Journal({ couple, ...session }: JournalProps) {
                         id={`entry-${e.id}`}
                         entry={card}
                         showDate={false}
-                        onOpen={() => {
-                          clearEntryLink();
-                          setDetailId(e.id);
-                        }}
+                        onOpen={() => openEntry(e.id)}
+                        onOpenComments={(button) => openEntry(e.id, button)}
                         onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
                         actions={
                           <Button
@@ -391,28 +398,42 @@ export function Journal({ couple, ...session }: JournalProps) {
             }
           />
 
-          <EntryActions
-            entry={detail ?? null}
-            canDelete={detail?.authorId === user.id || !!detail?.note}
-            remove={deleteItem}
+          <JournalDetailDrawer
+            entry={detail ? toCard(detail, people, t, locale) : null}
+            people={people}
+            userId={user.id}
+            jumpToThread={!linkedId && jumpToThread}
             onClose={closeDetail}
-            onEdit={write}
-            onDeleted={onDeleted}
+            onReturnFocus={() => {
+              countButton.current?.focus({ preventScroll: true });
+              countButton.current = null;
+            }}
+            onOpenOptions={detail ? () => setDetailMenu(true) : undefined}
+            onOpenPhoto={(index) => {
+              if (!detail) return;
+              countButton.current = null;
+              closeDetail();
+              setViewer({ entry: detail, index, open: true });
+            }}
             onSignedOut={onSignedOut}
-            detail={
-              detail && (
-                <JournalDetailSheet
-                  entry={toCard(detail, people, t, locale)}
-                  onOpenPhoto={(index) => {
-                    closeDetail();
-                    setViewer({ entry: detail, index, open: true });
-                  }}
-                >
-                  <JournalComments key={detail.id} entryId={detail.id} userId={user.id} onSignedOut={onSignedOut} />
-                </JournalDetailSheet>
-              )
-            }
-          />
+          >
+            <EntryActions
+              nested
+              entry={detailMenu ? (detail ?? null) : null}
+              canDelete={detail?.authorId === user.id || !!detail?.note}
+              remove={deleteItem}
+              onClose={() => setDetailMenu(false)}
+              onEdit={(entry) => {
+                closeDetail();
+                write(entry);
+              }}
+              onDeleted={(id) => {
+                closeDetail();
+                onDeleted(id);
+              }}
+              onSignedOut={onSignedOut}
+            />
+          </JournalDetailDrawer>
           <EntryActions
             remove={deleteItem}
             entry={acting}

@@ -1,13 +1,9 @@
 import { defined, noop } from "../../../shared/guards";
-import { useState } from "react";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
-import { Button } from "../ui/button";
-import { JournalComments } from "./JournalComments";
-import { JournalDetailSheet } from "./JournalDetailSheet";
+import { useRef, useState } from "react";
+import { JournalDetailDrawer } from "./JournalDetailDrawer";
 import { useJournal } from "../../lib/useJournal";
 import type { Couple, User } from "../../../shared/types";
 import { useI18n } from "../../i18n";
-import { formatDay } from "../../lib/format";
 import { toCard } from "../../lib/journalCard";
 import { toPeople } from "./CoupleAvatars";
 import { EntryCard } from "./EntryCard";
@@ -27,6 +23,13 @@ export function TodayPosts({
   const { t, locale } = useI18n();
   const { feed } = useJournal(onSignedOut);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [jumpToThread, setJumpToThread] = useState(false);
+  const countButton = useRef<HTMLButtonElement | null>(null);
+  const openEntry = (id: string, button: HTMLButtonElement | null = null) => {
+    countButton.current = button;
+    setJumpToThread(!!button);
+    setDetailId(id);
+  };
   const detail = feed?.entries.find((entry) => entry.id === detailId && entry.note);
 
   const posts = feed?.entries.filter((entry) => entry.date === today) ?? [];
@@ -44,33 +47,23 @@ export function TodayPosts({
           key={entry.id}
           entry={toCard(entry, people, t, locale)}
           showDate={false}
-          onOpen={entry.note ? () => setDetailId(entry.id) : undefined}
+          onOpen={entry.note ? () => openEntry(entry.id) : undefined}
+          onOpenComments={entry.note ? (button) => openEntry(entry.id, button) : undefined}
         />
       ))}
-      <Drawer
-        open={!!detail}
-        onOpenChange={(open) => {
-          if (!open) setDetailId(null);
+      <JournalDetailDrawer
+        entry={detail ? toCard(detail, people, t, locale) : null}
+        people={people}
+        userId={user.id}
+        jumpToThread={jumpToThread}
+        onClose={() => setDetailId(null)}
+        onReturnFocus={() => {
+          countButton.current?.focus({ preventScroll: true });
+          countButton.current = null;
         }}
-      >
-        <DrawerContent aria-describedby={undefined}>
-          <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col gap-2 px-5 pb-5">
-            <DrawerHeader className="px-0 text-left">
-              <DrawerTitle className="font-heading text-xl">{detail ? formatDay(detail.date, locale) : ""}</DrawerTitle>
-            </DrawerHeader>
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              {detail && (
-                <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={noop}>
-                  <JournalComments key={detail.id} entryId={detail.id} userId={user.id} onSignedOut={onSignedOut} />
-                </JournalDetailSheet>
-              )}
-            </div>
-            <Button variant="ghost" size="lg" onClick={() => setDetailId(null)}>
-              {t("common.close")}
-            </Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
+        onOpenPhoto={noop}
+        onSignedOut={onSignedOut}
+      />
     </section>
   );
 }

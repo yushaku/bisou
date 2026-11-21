@@ -45,6 +45,7 @@ export function EntryCard({
   actions,
   onOpenPhoto,
   onOpen,
+  onOpenComments,
   className,
 }: {
   entry: Entry;
@@ -52,6 +53,7 @@ export function EntryCard({
   id?: string;
   actions?: ReactNode;
   onOpen?: () => void;
+  onOpenComments?: (button: HTMLButtonElement) => void;
   onOpenPhoto?: (index: number) => void;
   className?: string;
 }) {
@@ -138,13 +140,25 @@ export function EntryCard({
         </Button>
       )}
       <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="relative px-1" />
-      {!!entry.commentCount && (
-        <Badge variant="secondary" className="pointer-events-none self-start">
-          <MessageCircle aria-hidden="true" />
-          <span className="sr-only">{t("comments.countLabel", { count: entry.commentCount })}</span>
-          <span aria-hidden="true">{entry.commentCount}</span>
-        </Badge>
-      )}
+      {!!entry.commentCount &&
+        (onOpenComments ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="relative self-start text-muted-foreground tabular-nums"
+            aria-label={t("comments.countLabel", { count: entry.commentCount })}
+            onClick={(event) => onOpenComments(event.currentTarget)}
+          >
+            <MessageCircle aria-hidden="true" />
+            <span aria-hidden="true">{entry.commentCount}</span>
+          </Button>
+        ) : (
+          <Badge variant="secondary" className="pointer-events-none self-start">
+            <MessageCircle aria-hidden="true" />
+            <span className="sr-only">{t("comments.countLabel", { count: entry.commentCount })}</span>
+            <span aria-hidden="true">{entry.commentCount}</span>
+          </Badge>
+        ))}
     </Card>
   );
 }

@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerHeader, DrawerNested, DrawerTitle } from "@/components/ui/drawer";
 import { useI18n } from "@/i18n";
 import { formatDay } from "@/lib/format";
 import { useOnline } from "@/lib/useOnline";
@@ -23,6 +23,7 @@ interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoI
   entry: T | null;
   detail?: ReactNode;
   title?: string;
+  nested?: boolean;
   remove?: (id: string, entry: T) => ReturnType<typeof api.deleteEntry>;
   own?: boolean;
   canDelete?: boolean;
@@ -44,6 +45,7 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
   onSignedOut,
   detail,
   title,
+  nested = false,
   own = true,
   canDelete = own,
   remove: deleteItem = api.deleteEntry,
@@ -79,12 +81,13 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
     setError(t("entry.deleteError"));
   }
 
+  const ActionDrawer = nested ? DrawerNested : Drawer;
   const day = target ? formatDay(target.date, locale) : "";
   const count = target?.photoIds.length ?? 0;
 
   return (
     <>
-      <Drawer open={!!entry} onOpenChange={(open) => !open && onClose()}>
+      <ActionDrawer open={!!entry} onOpenChange={(open) => !open && onClose()}>
         <DrawerContent className="max-h-[80vh]" aria-describedby={undefined}>
           <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col gap-2 px-5 pb-5">
             <DrawerHeader className="px-0 text-left">
@@ -139,7 +142,7 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
             </Button>
           </div>
         </DrawerContent>
-      </Drawer>
+      </ActionDrawer>
 
       <Dialog open={!!target} onOpenChange={(open) => !open && !deleting && setTarget(null)}>
         <DialogContent showCloseButton={false}>

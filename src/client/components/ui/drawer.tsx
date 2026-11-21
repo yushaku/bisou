@@ -9,6 +9,10 @@ function Drawer({ repositionInputs = false, ...props }: React.ComponentProps<typ
   return <DrawerPrimitive.Root data-slot="drawer" repositionInputs={repositionInputs} {...props} />;
 }
 
+function DrawerNested({ repositionInputs = false, ...props }: React.ComponentProps<typeof DrawerPrimitive.NestedRoot>) {
+  return <DrawerPrimitive.NestedRoot repositionInputs={repositionInputs} {...props} />;
+}
+
 function DrawerTrigger({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Trigger>) {
   return <DrawerPrimitive.Trigger data-slot="drawer-trigger" {...props} />;
 }
@@ -92,6 +96,7 @@ function DrawerDescription({ className, ...props }: React.ComponentProps<typeof 
 
 export {
   Drawer,
+  DrawerNested,
   DrawerPortal,
   DrawerOverlay,
   DrawerTrigger,

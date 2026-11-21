@@ -5,11 +5,11 @@ import { WishCard, type Wish } from "../src/client/components/bisou/WishCard";
 import { JournalComments } from "../src/client/components/bisou/JournalComments";
 import { vi as vietnamese, type MessageKey } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
+import { JournalDetailDrawer } from "../src/client/components/bisou/JournalDetailDrawer";
 import { JournalDetailSheet } from "../src/client/components/bisou/JournalDetailSheet";
 import { WishDetailSheet } from "../src/client/components/bisou/WishDetailSheet";
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
 import { TodayPosts } from "../src/client/components/bisou/TodayPosts";
-import { Drawer } from "../src/client/components/ui/drawer";
 import { NoteParts } from "../src/client/components/bisou/NoteParts";
 import { NoteReply } from "../src/client/components/bisou/NoteReply";
 import { Journal } from "../src/client/screens/Journal";
@@ -200,8 +200,13 @@ it.each(["partner", "wish", "note"] as const)(
         const card = render().find((node) => node.type === EntryCard)! as ReactElement<
           ComponentProps<typeof EntryCard>
         >;
-        if (path === "details") card.props.onOpen!();
-        else (card.props.actions as ReactElement<{ onClick: () => void }>).props.onClick();
+        if (path === "details") {
+          card.props.onOpen!();
+          const detail = render().find((node) => node.type === JournalDetailDrawer) as ReactElement<
+            ComponentProps<typeof JournalDetailDrawer>
+          >;
+          detail.props.onOpenOptions!();
+        } else (card.props.actions as ReactElement<{ onClick: () => void }>).props.onClick();
         const actions = render().find(
           (node) =>
             node.type === EntryActions && (node.props as ComponentProps<typeof EntryActions>).entry?.id === shared.id,
@@ -282,20 +287,23 @@ it("Home opens the full shared note detail and closes back to the card", () => {
   };
   const card = render().find((node) => node.type === EntryCard)! as ReactElement<ComponentProps<typeof EntryCard>>;
   card.props.onOpen!();
-  const detail = render().find((node) => node.type === JournalDetailSheet)! as ReactElement<
-    ComponentProps<typeof JournalDetailSheet>
+  const detail = render().find((node) => node.type === JournalDetailDrawer)! as ReactElement<
+    ComponentProps<typeof JournalDetailDrawer>
   >;
-  expect(detail.props.entry.parts?.happened).toBe(note.happened);
-  expect(detail.props.entry.reply?.line).toBe(note.line);
-  const contents = nodes(JournalDetailSheet(detail.props));
+  expect(detail.props.entry?.parts?.happened).toBe(note.happened);
+  expect(detail.props.entry?.reply?.line).toBe(note.line);
+  const contents = nodes(JournalDetailSheet({ entry: detail.props.entry!, onOpenPhoto: detail.props.onOpenPhoto }));
   expect(
     (contents.find((node) => node.type === NoteParts)!.props as ComponentProps<typeof NoteParts>).preview,
   ).toBeUndefined();
   expect(
     (contents.find((node) => node.type === NoteReply)!.props as ComponentProps<typeof NoteReply>).preview,
   ).toBeUndefined();
-  render().find((node) => node.props.children === "common.close")!.props.onClick!();
-  expect((render().find((node) => node.type === Drawer)!.props as ComponentProps<typeof Drawer>).open).toBe(false);
+  detail.props.onClose();
+  expect(
+    (render().find((node) => node.type === JournalDetailDrawer)!.props as ComponentProps<typeof JournalDetailDrawer>)
+      .entry,
+  ).toBeNull();
 });
 
 it("long entry sheet opener does not claim to control the clamped preview", () => {
@@ -312,7 +320,7 @@ it.each([
 ] as const)("journal-comments AC5: the %s confirmation names the comment", (locale, label) => {
   copy.locale = locale;
   expect(
-    nodes(JournalComments({ entryId: "shared", userId: "an", onSignedOut: vi.fn() })).some(
+    nodes(JournalComments({ entryId: "shared", userId: "an", people: new Map(), onSignedOut: vi.fn() })).some(
       (node) => node.props.children === label,
     ),
   ).toBe(true);
