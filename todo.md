@@ -75,6 +75,9 @@ How might two partners keep their shared story (daily moments, milestones, and t
   - Outcome: a recap built from journal entries, events and received wishes.
 
 ## Phase 5: Daily connection
+- [x] **Journal comments**
+  - Goal: respond to a shared memory where it was recorded.
+  - Outcome: both partners can comment on any entry, manage their own comments and receive new-comment notifications ([journal comments](docs/product/journal-comments.md)).
 - [x] **Web Push**
   - Goal: the app reaches the partner without being opened.
   - Outcome: device opt-in notifications for partner journal entries and event reminders, quiet hours with batched night entries, and an installed-app invitation on Home. On iPhone it works only after Add to Home Screen; the Worker sends it, Cron Triggers are free.
@@ -115,7 +118,7 @@ What similar couple apps charge for: a daily question with answers hidden until 
 - Forms as their own pages: after the keyboard fix the sheets behave well enough on the iPhone.
 - AI coaching: cost and privacy.
 - Chat: Zalo or Messenger already does it.
-- Comments and reactions: only if the two of us ask for them; question answers have none by design.
+- Reactions: only if the two of us ask for them; question answers have none by design.
 - Guessing quizzes, streaks and scores in the garden: they turn care into a test.
 - Offline editing and sync: data lives on the server, only the app shell is cached.
 - End to end encryption: worth it only if the app goes public.

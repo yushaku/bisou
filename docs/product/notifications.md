@@ -13,7 +13,7 @@ A partner wants to know when the other wrote in the journal, answered today's ca
 ## User stories
 
 - US1 (partner): choose per device which kinds of notification I get, so that I am told only what I want. AC1, AC2, AC15, AC16, AC17, AC18, AC19, AC20
-- US2 (partner): be told when my partner wrote in the journal or answered today's card, so that I know without opening Bisou. AC3, AC4, AC5, AC6, AC12, AC13, AC14, AC22
+- US2 (partner): be told when my partner wrote in the journal, commented on an entry or answered today's card, so that I know without opening Bisou. AC3, AC4, AC5, AC6, AC12, AC13, AC14, AC22, AC25
 - US3 (partner): be reminded the day before and on the day of an event, so that I never miss a birthday or an anniversary. AC7, AC8, AC9, AC10, AC11, AC21
 - US4 (recipient of a kind note): be told when a note arrives and reminded once, so that I do not miss it. notes-journal AC23, notes-journal AC24
 
@@ -23,7 +23,7 @@ Opting in
 
 - R1. Bisou sends nothing to a device until the person turns notifications on there, and asks the system for permission only when the person chooses to turn them on.
 - R2. Each device is turned on or off on its own; what is set on one device changes nothing on another.
-- R3. There are two kinds, each with its own switch per device: partner's journal and event reminders; kind notes and the garden answer use the partner's journal switch, with no third kind.
+- R3. There are two kinds, each with its own switch per device: partner's journal and event reminders; kind notes, journal comments and the garden answer use the partner's journal switch, with no third kind.
 - R4. Only a partner in a couple gets notifications; a person not yet paired gets none.
 - R31. Every notification is in the recipient's app language, Vietnamese or English.
 - R37. Notifications are sent at any hour, with no quiet hours, and a notification still undelivered after 24 hours is dropped.
@@ -35,6 +35,7 @@ Partner's journal
 - R7. The author's own devices never get a notification of the author's own entry.
 - R8. The message never contains entry text, photos, the entry's day or whether it came from a wish; following it opens the journal.
 - R8a. When a partner first answers today's card, each device of the other partner with this kind on gets "Người ấy vừa trả lời thẻ hôm nay" / "Your partner answered today's card"; it never names the question, a deck or an answer, and following it opens Home; changing or deleting an answer, extra play and decision answers send nothing, and the author's own devices never get it.
+- R38. When a partner adds a [journal comment](journal-comments.md), each device of the other partner with the partner's journal switch on gets `<name> vừa bình luận bài nhật ký` / `<name> commented on a journal entry`, with no comment or entry text; following it opens the entry's full view, and editing or deleting a comment sends nothing.
 - R19. A new journal notification replaces an older one still showing on that device.
 
 Wish jar secrecy
@@ -77,7 +78,7 @@ Personal data
 ## Main flows and exceptions
 
 - Flow for US1: turn on from the Home invitation or from the settings, get a notification and follow it, turn a kind off, sign out; a refused or unavailable device says why.
-- Flow for US2: the other partner writes or answers; each device with the kind on gets one message that opens the journal or Home.
+- Flow for US2: the other partner writes, comments or answers; each device with the kind on gets one message that opens the journal, the full entry or Home.
 - Flow for US3: an event inside the window gets a day-before and a same-day reminder; an event added too late gets only the reminder still ahead.
 - Flow for US4: delivery sends the arrival message, an unopened note sends one reminder after 3 days; see [notes-journal](notes-journal.md).
 
@@ -105,6 +106,8 @@ Personal data
 - AC20 (R27, R28, R29, R30). Given a partner turns both kinds off on a device, then Bisou no longer keeps its reaching details or settings; while on, they go to no one but the device's delivery service.
 - AC21 (R10, R31). Given a birthday on 3 January and the recipient's app language English, then they get "Tomorrow: Bình's birthday" on 2 January at 20:00.
 - AC22 (R8a). Given a partner answers today's card, then the other partner's devices with this kind on get "Người ấy vừa trả lời thẻ hôm nay" and no other device does; following it opens Home; when the second partner answers, the first gets it; editing or deleting the answer or playing an extra card sends nothing.
+
+- AC25 (R38). Given a partner adds a journal comment, then only the other partner's devices with the partner's journal switch on get the message in their language with no comment or entry text, and following it opens the full entry; when the comment is edited or deleted, then nothing is sent.
 
 ## Glossary
 

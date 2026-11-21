@@ -30,7 +30,7 @@ A couple wants one place for their story: both partners write entries for a day,
 - R7. An entry's day is today unless the partner writing or changing it picks an earlier day, from 1 January 1900, also before the start date.
 - R8. An entry's day cannot be after today in the earliest time zone.
 - R9. A saved entry is visible to both partners at once; there are no drafts.
-- R11. Only the author can delete an entry, after confirming; it disappears for both, with its photos, for good; except an entry made from a closed kind note (R26).
+- R11. Only the author can delete an entry, after confirming; it disappears for both, with its photos and comments, for good; except an entry made from a closed kind note (R26).
 - R12. The feed shows both partners' entries grouped by day, most recent day first.
 - R13. Within a day, the most recently written entry comes first, each with its author's display name.
 - R14. Days without entries do not appear in the feed.
@@ -98,7 +98,7 @@ A couple wants one place for their story: both partners write entries for a day,
 ## Out of scope
 
 - Milestones and timeline.
-- Reactions, comments, drafts, search, videos; notifying the partner of a new entry is in [notifications](notifications.md).
+- Reactions, drafts, search, videos; comments live in [journal comments](journal-comments.md); notifying the partner of a new entry is in [notifications](notifications.md).
 - Kind notes before they are closed ([notes-journal](notes-journal.md) R32 to R34).
 - Undoing a delete, such as a recovery bin; export and full deletion come with account deletion (see [pairing](pairing.md)).
 - The journal when a partner leaves the couple; decide it with leaving, which pairing also leaves out.
