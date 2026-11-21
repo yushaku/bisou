@@ -389,6 +389,7 @@ describe("journal create and feed", () => {
       authorId: b.id,
       date: "2026-11-06",
       text: "Rain",
+      commentCount: 0,
       source: "partner",
       photoIds: [],
       createdAt: Date.now(),

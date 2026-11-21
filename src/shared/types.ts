@@ -140,8 +140,18 @@ export interface JournalEntry {
   note?: NoteInput & { id: string; recipientId: string; line: string };
   /** Ordered by position. */
   photoIds: string[];
+  /** Older cached entries may omit the count. */
+  commentCount?: number;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface JournalComment {
+  id: string;
+  authorId: string;
+  authorName: string | null;
+  text: string;
+  createdAt: number;
 }
 
 export interface JournalPage {

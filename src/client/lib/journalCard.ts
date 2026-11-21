@@ -23,6 +23,7 @@ export function toCard(e: JournalEntry, people: Map<string, Person>, t: Translat
       : undefined,
     date: e.date,
     author: people.get(e.authorId) ?? { name: displayName(undefined, t), tone: "secondary" },
+    commentCount: e.commentCount,
     body: e.note ? "" : e.text,
     photos: e.photoIds.map((id, i) => ({
       src: photoUrl(id, "thumb"),

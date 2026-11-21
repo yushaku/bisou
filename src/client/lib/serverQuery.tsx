@@ -59,7 +59,16 @@ const SERVER_ROOTS = ["journal", "wishes", "claims", "notes", "boxes", "garden"]
 async function refetchCachedQueries(client: QueryClient, predicate: (query: Query) => boolean, cancelRefetch: boolean) {
   // Persisted queries have data, but no fetch functions until their screens mount.
   const {
-    queries: { journal, gardenDeck, gardenStage, gardenDecisions, box, ...lists },
+    queries: {
+      journal,
+      gardenDeck,
+      gardenStage,
+      gardenDecisions,
+      box,
+      journalEntry: _journalEntry,
+      journalComments: _journalComments,
+      ...lists
+    },
   } = await import("./queries");
   await Promise.all(
     client
@@ -87,7 +96,7 @@ async function refetchCachedQueries(client: QueryClient, predicate: (query: Quer
           return;
         }
         if (!query.options.queryFn) {
-          if (root === "journal") {
+          if (root === "journal" && query.queryKey.length === 1) {
             await client.infiniteQuery({ ...journal, staleTime: 0 }).catch(noop);
             return;
           }
@@ -158,7 +167,14 @@ const PUSH_QUERY_ROOTS = new Map<string, string[]>([
 
 export async function refreshForPush(client: QueryClient, tag: string) {
   const roots = PUSH_QUERY_ROOTS.get(tag);
-  if (roots) await refetchCachedQueries(client, (query) => roots.some((root) => root === query.queryKey[0]), true);
+  if (roots)
+    await refetchCachedQueries(
+      client,
+      (query) =>
+        roots.some((root) => root === query.queryKey[0]) &&
+        (query.queryKey[0] !== "journal" || query.queryKey.length === 1 || query.isActive()),
+      true,
+    );
 }
 
 function RestoreGate({ fallback, children }: { fallback: ReactNode; children: ReactNode }) {

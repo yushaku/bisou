@@ -2,6 +2,7 @@ import { defined, noop } from "../../../shared/guards";
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
 import { Button } from "../ui/button";
+import { JournalComments } from "./JournalComments";
 import { JournalDetailSheet } from "./JournalDetailSheet";
 import { useJournal } from "../../lib/useJournal";
 import type { Couple, User } from "../../../shared/types";
@@ -58,7 +59,11 @@ export function TodayPosts({
               <DrawerTitle className="font-heading text-xl">{detail ? formatDay(detail.date, locale) : ""}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {detail && <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={noop} />}
+              {detail && (
+                <JournalDetailSheet entry={toCard(detail, people, t, locale)} onOpenPhoto={noop}>
+                  <JournalComments key={detail.id} entryId={detail.id} userId={user.id} onSignedOut={onSignedOut} />
+                </JournalDetailSheet>
+              )}
             </div>
             <Button variant="ghost" size="lg" onClick={() => setDetailId(null)}>
               {t("common.close")}

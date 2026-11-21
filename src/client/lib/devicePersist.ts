@@ -26,7 +26,8 @@ function firstPageOnly(data: unknown): unknown {
 }
 
 function shouldPersistQuery(query: Query): boolean {
-  return query.queryKey[0] !== "push" && query.state.data !== undefined;
+  const [root, part] = query.queryKey;
+  return root !== "push" && !(root === "journal" && part) && query.state.data !== undefined;
 }
 
 export function devicePersistOptions(

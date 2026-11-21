@@ -23,7 +23,7 @@ interface EntryActionsProps<T extends Pick<JournalEntry, "id" | "date" | "photoI
   entry: T | null;
   detail?: ReactNode;
   title?: string;
-  remove?: typeof api.deleteEntry;
+  remove?: (id: string, entry: T) => ReturnType<typeof api.deleteEntry>;
   own?: boolean;
   canDelete?: boolean;
   onClose: () => void;
@@ -64,7 +64,7 @@ export function EntryActions<T extends Pick<JournalEntry, "id" | "date" | "photo
     if (!online || deleting) return;
     setDeleting(true);
     setError(null);
-    const res = await removeEntry(e.id);
+    const res = await removeEntry(e.id, e);
     setDeleting(false);
     // Already gone (deleted on the other phone): the result the author wanted.
     if (res.ok || res.error?.error === "not_found") {

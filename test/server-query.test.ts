@@ -625,3 +625,36 @@ it("a query counts as failed only while it is not refetching", () => {
   expect(isFailed({ isError: true, isFetching: true })).toBe(false);
   expect(isFailed({ isError: false, isFetching: false })).toBe(false);
 });
+
+it("journal-comments AC4: a journal push refreshes both the feed count and an open entry's comments", async () => {
+  const writer = createServerQueryClient();
+  const reader = createServerQueryClient();
+  const entry: JournalEntry = {
+    id: "shared",
+    authorId: "an",
+    source: "partner",
+    date: "2026-11-20",
+    createdAt: 1,
+    updatedAt: 1,
+    photoIds: [],
+    text: "Story",
+    commentCount: 0,
+  };
+  const comment = { id: "new", authorId: "an", authorName: "An", text: "Reply", createdAt: 2 };
+  const feed = vi.spyOn(api, "journal").mockResolvedValue({ ok: true, data: { entries: [entry], nextCursor: null } });
+  const list = vi.spyOn(api, "journalComments").mockResolvedValue({ ok: true, data: { comments: [] } });
+  await writer.infiniteQuery(queries.journal);
+  await writer.query(queries.journalComments(entry.id));
+  hydrate(reader, dehydrate(writer));
+  const open = new QueryObserver(reader, queries.journalComments(entry.id));
+  const close = open.subscribe(() => {});
+  await open.refetch();
+  feed.mockResolvedValue({ ok: true, data: { entries: [{ ...entry, commentCount: 1 }], nextCursor: null } });
+  list.mockResolvedValue({ ok: true, data: { comments: [comment] } });
+  await refreshForPush(reader, "journal");
+  expect(reader.getQueryData(queries.journal.queryKey)?.pages[0]?.entries[0]?.commentCount).toBe(1);
+  expect(open.getCurrentResult().data?.comments).toEqual([comment]);
+  close();
+  writer.clear();
+  reader.clear();
+});

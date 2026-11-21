@@ -18,6 +18,10 @@ const hooks = vi.hoisted((): { active: boolean; index: number; values: unknown[]
   values: [],
   memory: null,
 }));
+vi.mock("wouter", async (original) => ({
+  ...(await original<typeof import("wouter")>()),
+  useSearch: () => "",
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useId: () => "test",

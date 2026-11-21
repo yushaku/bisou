@@ -12,6 +12,7 @@ export interface EntryRow {
   source: JournalEntry["source"];
   created_at: number;
   updated_at: number;
+  comment_count: number;
   note_id: string | null;
   recipient_id: string | null;
   happened: string;
@@ -21,7 +22,9 @@ export interface EntryRow {
   line: string | null;
 }
 
-export const ENTRY_SELECT = `SELECT e.*, n.recipient_id, n.happened, n.feel, n.need, n.hope, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id`;
+export const ENTRY_SELECT = `SELECT e.*,
+  (SELECT COUNT(*) FROM journal_comments WHERE entry_id = e.id) AS comment_count,
+  n.recipient_id, n.happened, n.feel, n.need, n.hope, n.line FROM journal_entries e LEFT JOIN notes n ON n.id = e.note_id`;
 
 export function validateEntry(raw: unknown, now: number): { input: EntryInput } | { error: ApiErrorCode } {
   if (
@@ -104,6 +107,7 @@ export async function entriesWithPhotos(db: D1Database, rows: EntryRow[]): Promi
         }
       : {}),
     photoIds: photos.get(row.id) ?? [],
+    commentCount: row.comment_count,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }));

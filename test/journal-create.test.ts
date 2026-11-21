@@ -55,6 +55,10 @@ const hooks = vi.hoisted((): Hooks => ({
   requests: new Map(),
 }));
 const notesRefresh = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("wouter", async (original) => ({
+  ...(await original<typeof import("wouter")>()),
+  useSearch: () => "",
+}));
 vi.mock("react", async (original) => ({
   ...(await original<typeof import("react")>()),
   useState: (initial: unknown) => {

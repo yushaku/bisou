@@ -16,7 +16,12 @@ function translate(locale: string, key: MessageKey, vars: Record<string, string 
 
 // Every push lives 24 hours (see pushJob); there are no quiet hours. Sending happens in the queue consumer (ADR 0010).
 
-export async function notifyJournal(env: Env, coupleId: string, authorId: string): Promise<void> {
+export async function notifyJournal(
+  env: Env,
+  coupleId: string,
+  authorId: string,
+  commentEntryId?: string,
+): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) {
     console.log("[bisou] push unavailable");
     return;
@@ -38,8 +43,12 @@ export async function notifyJournal(env: Env, coupleId: string, authorId: string
           row.id,
           "journal",
           {
-            title: translate(row.locale, "push.journal.one", { name: row.name ?? "" }),
-            url: "/journal",
+            title: commentEntryId
+              ? translate(row.locale, "push.journal.comment", {
+                  name: row.name?.trim() || translate(row.locale, "common.person"),
+                })
+              : translate(row.locale, "push.journal.one", { name: row.name ?? "" }),
+            url: commentEntryId ? `/journal?entry=${encodeURIComponent(commentEntryId)}` : "/journal",
             tag: "journal",
           },
           now,

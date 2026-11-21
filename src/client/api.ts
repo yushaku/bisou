@@ -19,6 +19,7 @@ import type {
   CoupleResponse,
   CoupleEventInput,
   EntryInput,
+  JournalComment,
   JournalEntry,
   JournalPage,
   Locale,
@@ -62,6 +63,9 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<Ap
   const error = json && typeof json === "object" && "error" in json ? (json as ApiError) : null;
   return { ok: false, status: res.status, error };
 }
+
+const journalEntryPath = (id: string) => `/api/journal/${encodeURIComponent(id)}`;
+const journalCommentsPath = (id: string) => `${journalEntryPath(id)}/comments`;
 
 export const api = {
   unlockBox: (id: string) => call<CardBoxDetail>("POST", `/api/boxes/${encodeURIComponent(id)}/unlock`),
@@ -144,6 +148,14 @@ export const api = {
   setStartDate: (startDate: string) => call<CoupleResponse>("PATCH", "/api/couple", { startDate }),
   journal: (cursor?: string) =>
     call<JournalPage>("GET", cursor ? `/api/journal?cursor=${encodeURIComponent(cursor)}` : "/api/journal"),
+  journalEntry: (id: string) => call<{ entry: JournalEntry }>("GET", journalEntryPath(id)),
+  journalComments: (id: string) => call<{ comments: JournalComment[] }>("GET", journalCommentsPath(id)),
+  createJournalComment: (id: string, text: string) =>
+    call<{ comment: JournalComment }>("POST", journalCommentsPath(id), { text }),
+  editJournalComment: (id: string, commentId: string, text: string) =>
+    call<{ ok: true }>("PUT", `${journalCommentsPath(id)}/${encodeURIComponent(commentId)}`, { text }),
+  deleteJournalComment: (id: string, commentId: string) =>
+    call<{ ok: true }>("DELETE", `${journalCommentsPath(id)}/${encodeURIComponent(commentId)}`),
   createEntry: (input: EntryInput) => call<{ entry: JournalEntry }>("POST", "/api/journal", input),
   updateEntry: (id: string, input: EntryInput) =>
     call<{ entry: JournalEntry }>("PUT", `/api/journal/${encodeURIComponent(id)}`, input),

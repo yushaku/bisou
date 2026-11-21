@@ -1,6 +1,7 @@
 import { defined } from "../../shared/guards";
 import { Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useSearch } from "wouter";
 import { useJournal } from "../lib/useJournal";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, JournalEntry } from "../../shared/types";
@@ -8,6 +9,7 @@ import { api, photoUrl } from "../api";
 import { toPeople } from "../components/bisou/CoupleAvatars";
 import { displayName } from "../lib/displayName";
 import { EmptyState } from "../components/bisou/EmptyState";
+import { JournalComments } from "../components/bisou/JournalComments";
 import { JournalDetailSheet } from "../components/bisou/JournalDetailSheet";
 import { EntryActions } from "../components/bisou/EntryActions";
 import { EntryCard } from "../components/bisou/EntryCard";
@@ -22,6 +24,9 @@ import { groupByDay } from "../lib/journalFeed";
 import { toCard } from "../lib/journalCard";
 import { remember, TabMemory } from "../lib/tabMemory";
 import { useCreateRequest } from "../lib/useTabNavigation";
+import { ApiQueryError } from "../lib/apiQueryError";
+import { queries } from "../lib/queries";
+import { useServerQuery } from "../lib/serverQuery";
 import { useOnline } from "../lib/useOnline";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
@@ -45,11 +50,14 @@ export function Journal({ couple, ...session }: JournalProps) {
   const { user, onSignedOut } = session;
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
-  const [section, setSection] = useState<"feed" | "notes">(() =>
+  const search = useSearch();
+  const linkedId = new URLSearchParams(search).get("entry") || null;
+  const [selectedSection, setSection] = useState<"feed" | "notes">(() =>
     typeof window !== "undefined" && new URLSearchParams(window.location.search).get("section") === "notes"
       ? "notes"
       : (memory?.journalSection ?? "feed"),
   );
+  const section = linkedId ? "feed" : selectedSection;
   useLayoutEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- runs again each time Activity reveals the tab, to pick up the section Home asked for
     if (memory?.journalSection === "notes") setSection("notes");
@@ -106,9 +114,30 @@ export function Journal({ couple, ...session }: JournalProps) {
   // Entry whose actions are open.
   const [acting, setActing] = useState<JournalEntry | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
-  const detail = feed?.entries.find((e) => e.id === detailId);
-  // The open entry left the feed (deleted on the other phone): close its sheet.
-  if (detailId && !detail) setDetailId(null);
+  const linkQuery = useMemo(
+    () => ({
+      ...queries.journalEntry(linkedId ?? ""),
+      enabled: linkedId !== null,
+      refetchOnMount: "always" as const,
+    }),
+    [linkedId],
+  );
+  const { data: linkedEntry, error: linkError, refresh: retryLink } = useServerQuery(linkQuery, onSignedOut);
+  const missingLink = linkError instanceof ApiQueryError && linkError.status === 404;
+  const feedDetail = feed?.entries.find((e) => e.id === detailId);
+  const detail = linkedId ? (missingLink ? undefined : linkedEntry?.entry) : feedDetail;
+  // The open entry left the feed (deleted on the other phone).
+  if (detailId && !feedDetail) setDetailId(null);
+  const clearEntryLink = () => {
+    if (!linkedId) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("entry");
+    history.replaceState(history.state, "", url);
+  };
+  const closeDetail = () => {
+    clearEntryLink();
+    setDetailId(null);
+  };
   const [closedEditing, setClosedEditing] = useState<
     (JournalEntry & { note: NonNullable<JournalEntry["note"]> }) | null
   >(null);
@@ -139,10 +168,8 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [viewer, setViewer] = useState<{ entry: JournalEntry; index: number; open: boolean } | null>(null);
   const viewed = viewer?.open ? viewer.entry.photoIds : null;
 
-  const deleteItem = (id: string) => {
-    const entry = feed?.entries.find((e) => e.id === id);
-    return entry?.note ? api.deleteNote(entry.note.id) : api.deleteEntry(id);
-  };
+  const deleteItem = (id: string, entry: JournalEntry) =>
+    entry.note ? api.deleteNote(entry.note.id) : api.deleteEntry(id);
   const onDeleted = (id: string) => {
     removeCachedEntry(id);
     toast.success(t("entry.deleted"));
@@ -193,6 +220,7 @@ export function Journal({ couple, ...session }: JournalProps) {
         value={section}
         onValueChange={(value) => {
           const next = value === "notes" ? "notes" : "feed";
+          clearEntryLink();
           setSection(next);
           remember(memory, { journalSection: next });
         }}
@@ -214,6 +242,24 @@ export function Journal({ couple, ...session }: JournalProps) {
           />
         </TabsContent>
         <TabsContent value="feed">
+          {linkedId && !detail && (
+            <div className="mb-4">
+              {linkError ? (
+                <EmptyState
+                  situation="error"
+                  title={t(missingLink ? "comments.entryMissing" : "comments.entryLoadError")}
+                  action={missingLink ? undefined : { label: t("journal.retry"), onClick: () => void retryLink() }}
+                />
+              ) : (
+                <p role="status" className="text-muted-foreground">
+                  {t("journal.loading")}
+                </p>
+              )}
+              <Button variant="ghost" onClick={closeDetail}>
+                {t("common.close")}
+              </Button>
+            </div>
+          )}
           {feed && online && stale && (
             <div role="status" className="mb-4 rounded-control bg-warning px-4 py-3 text-base text-warning-foreground">
               {t("journal.stale")}{" "}
@@ -271,7 +317,10 @@ export function Journal({ couple, ...session }: JournalProps) {
                         id={`entry-${e.id}`}
                         entry={card}
                         showDate={false}
-                        onOpen={() => setDetailId(e.id)}
+                        onOpen={() => {
+                          clearEntryLink();
+                          setDetailId(e.id);
+                        }}
                         onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
                         actions={
                           <Button
@@ -347,7 +396,7 @@ export function Journal({ couple, ...session }: JournalProps) {
             entry={detail ?? null}
             canDelete={detail?.authorId === user.id || !!detail?.note}
             remove={deleteItem}
-            onClose={() => setDetailId(null)}
+            onClose={closeDetail}
             onEdit={write}
             onDeleted={onDeleted}
             onSignedOut={onSignedOut}
@@ -356,10 +405,12 @@ export function Journal({ couple, ...session }: JournalProps) {
                 <JournalDetailSheet
                   entry={toCard(detail, people, t, locale)}
                   onOpenPhoto={(index) => {
-                    setDetailId(null);
+                    closeDetail();
                     setViewer({ entry: detail, index, open: true });
                   }}
-                />
+                >
+                  <JournalComments key={detail.id} entryId={detail.id} userId={user.id} onSignedOut={onSignedOut} />
+                </JournalDetailSheet>
               )
             }
           />

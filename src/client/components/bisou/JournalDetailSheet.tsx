@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/i18n";
 import { PersonAvatar } from "./CoupleAvatars";
@@ -5,7 +6,15 @@ import type { Entry } from "./EntryCard";
 import { NoteReply } from "./NoteReply";
 import { NoteParts } from "./NoteParts";
 
-export function JournalDetailSheet({ entry, onOpenPhoto }: { entry: Entry; onOpenPhoto: (index: number) => void }) {
+export function JournalDetailSheet({
+  entry,
+  onOpenPhoto,
+  children,
+}: {
+  entry: Entry;
+  onOpenPhoto: (index: number) => void;
+  children?: ReactNode;
+}) {
   const { t } = useI18n();
   return (
     <div className="flex flex-col gap-4 pb-4">
@@ -40,6 +49,7 @@ export function JournalDetailSheet({ entry, onOpenPhoto }: { entry: Entry; onOpe
           />
         </button>
       ))}
+      {children}
     </div>
   );
 }

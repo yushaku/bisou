@@ -1,3 +1,4 @@
+export const COMMENT_TEXT_MAX = 1000;
 export const ENTRY_TEXT_MAX = 2000;
 export const ENTRY_PHOTOS_MAX = 4;
 

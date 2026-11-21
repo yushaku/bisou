@@ -16,6 +16,7 @@ import {
 import { PENDING_PHOTO_TTL } from "../lib/time";
 import { purgePhotos } from "../lib/photos";
 import { notifyJournal } from "../lib/notify";
+import { journalComments } from "./journalComments";
 
 export const journal = new Hono<AppEnv & { Variables: { journalCoupleId: string } }>();
 const limitEntryBody = bodyLimit({
@@ -29,6 +30,8 @@ journal.use("*", async (c, next) => {
   c.set("journalCoupleId", mine.coupleId);
   await next();
 });
+
+journal.route("/:entryId/comments", journalComments);
 
 journal.get("/", async (c) => {
   const rawCursor = c.req.query("cursor");
@@ -56,6 +59,13 @@ journal.get("/", async (c) => {
     entries: await entriesWithPhotos(db, rows),
     nextCursor: results.length > FEED_PAGE_SIZE ? entryCursor(defined(rows[rows.length - 1])) : null,
   });
+});
+
+journal.get("/:id", async (c) => {
+  const row = await findEntry(c.env.DB, c.req.param("id"), c.get("user").id);
+  if (!row) return c.json({ error: "not_found" }, 404);
+  const [entry] = await entriesWithPhotos(c.env.DB, [row]);
+  return c.json({ entry });
 });
 
 journal.post("/", limitEntryBody, async (c) => {

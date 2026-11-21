@@ -6,7 +6,7 @@ import { queries } from "./queries";
 import { isFailed, useQuerySignOut } from "./serverQuery";
 
 export function updateJournalEntry(client: QueryClient, entry: JournalEntry) {
-  void client.cancelQueries({ queryKey: ["journal"] });
+  void client.cancelQueries({ queryKey: queries.journal.queryKey, exact: true });
   client.setQueryData<InfiniteData<JournalPage>>(queries.journal.queryKey, (old) =>
     old
       ? {
@@ -18,7 +18,9 @@ export function updateJournalEntry(client: QueryClient, entry: JournalEntry) {
 }
 
 export function deleteJournalEntry(client: QueryClient, id: string) {
-  void client.cancelQueries({ queryKey: ["journal"] });
+  void client.cancelQueries({ queryKey: queries.journal.queryKey, exact: true });
+  client.removeQueries({ queryKey: queries.journalComments(id).queryKey, exact: true });
+  client.removeQueries({ queryKey: queries.journalEntry(id).queryKey, exact: true });
   client.setQueryData<InfiniteData<JournalPage>>(
     queries.journal.queryKey,
     (old) =>

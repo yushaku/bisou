@@ -18,6 +18,14 @@ export const queries = {
   claims: queryOptions({ queryKey: ["claims"], queryFn: () => apiData(api.claims()) }),
   boxes: queryOptions({ queryKey: ["boxes"], queryFn: () => apiData(api.boxes()) }),
   box: (id: string) => queryOptions({ queryKey: ["boxes", id], queryFn: () => apiData(api.box(id)) }),
+  journalEntry: (id: string) =>
+    queryOptions({ queryKey: ["journal", "entry", id], queryFn: () => apiData(api.journalEntry(id)) }),
+  journalComments: (id: string) =>
+    queryOptions({
+      queryKey: ["journal", "comments", id],
+      queryFn: () => apiData(api.journalComments(id)),
+      refetchOnMount: "always",
+    }),
   journal: infiniteQueryOptions({
     queryKey: ["journal"],
     initialPageParam: undefined as string | undefined,

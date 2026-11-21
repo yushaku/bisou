@@ -1,4 +1,4 @@
-import { Flag, Gift } from "lucide-react";
+import { Flag, Gift, MessageCircle } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import type { NoteInput } from "../../../shared/types";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ export interface Entry {
   author: Person;
   body: string;
   photos: Photo[];
+  commentCount?: number;
   milestone?: string;
   source?: "partner" | "wish" | "note";
   parts?: NoteInput;
@@ -137,6 +138,13 @@ export function EntryCard({
         </Button>
       )}
       <PhotoGrid photos={entry.photos} onOpen={onOpenPhoto} className="relative px-1" />
+      {!!entry.commentCount && (
+        <Badge variant="secondary" className="pointer-events-none self-start">
+          <MessageCircle aria-hidden="true" />
+          <span className="sr-only">{t("comments.countLabel", { count: entry.commentCount })}</span>
+          <span aria-hidden="true">{entry.commentCount}</span>
+        </Badge>
+      )}
     </Card>
   );
 }
