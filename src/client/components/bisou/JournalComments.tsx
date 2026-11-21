@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Ellipsis, PencilLine, Trash2 } from "lucide-react";
+import { EllipsisVertical, PencilLine, Trash2 } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -21,6 +21,7 @@ import { formatDay, formatTime } from "@/lib/format";
 import { queries } from "@/lib/queries";
 import { useApiMutation, useServerQuery } from "@/lib/serverQuery";
 import { useOnline } from "@/lib/useOnline";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -161,7 +162,8 @@ export function JournalComments({
   function startPress(event: PointerEvent<HTMLDivElement>, comment: JournalComment) {
     if (event.pointerType !== "touch" || !event.isPrimary || saving) return;
     cancelPress();
-    const button = event.currentTarget.parentElement?.querySelector<HTMLButtonElement>("[data-comment-options]");
+    const button = event.currentTarget.querySelector<HTMLButtonElement>("[data-comment-options]");
+    if (event.target instanceof Node && button?.contains(event.target)) return;
     press.current = {
       pointer: event.pointerId,
       x: event.clientX,
@@ -279,7 +281,10 @@ export function JournalComments({
                     </span>
                     <div className="min-w-0 flex-1">
                       <div
-                        className="w-fit max-w-full rounded-xl bg-muted px-3 py-2 text-foreground"
+                        className={cn(
+                          "relative w-fit max-w-full rounded-xl bg-muted px-3 py-2 text-foreground",
+                          own && "pr-11",
+                        )}
                         data-vaul-no-drag={own ? "" : undefined}
                         onPointerDown={own ? (event) => startPress(event, comment) : undefined}
                         onPointerMove={
@@ -307,22 +312,12 @@ export function JournalComments({
                       >
                         <p className="font-semibold wrap-anywhere">{name}</p>
                         <p className="text-base wrap-anywhere whitespace-pre-wrap">{comment.text}</p>
-                      </div>
-                      <div className="flex items-center gap-1 px-3">
-                        <time
-                          dateTime={new Date(comment.createdAt).toISOString()}
-                          className="text-sm text-muted-foreground tabular-nums"
-                        >
-                          {t("comments.writtenAt", {
-                            date: formatDay(new Date(comment.createdAt), locale, "short"),
-                            time: formatTime(comment.createdAt, locale),
-                          })}
-                        </time>
                         {own && (
                           <Button
                             type="button"
                             size="icon"
                             variant="ghost"
+                            className="absolute -top-1 -right-1 text-muted-foreground"
                             data-comment-options
                             data-vaul-no-drag
                             aria-label={t("comments.options")}
@@ -330,10 +325,19 @@ export function JournalComments({
                             disabled={saving}
                             onClick={(event) => openActions(comment, event.currentTarget)}
                           >
-                            <Ellipsis aria-hidden="true" />
+                            <EllipsisVertical aria-hidden="true" />
                           </Button>
                         )}
                       </div>
+                      <time
+                        dateTime={new Date(comment.createdAt).toISOString()}
+                        className="mt-0.5 block px-3 text-xs text-muted-foreground tabular-nums"
+                      >
+                        {t("comments.writtenAt", {
+                          date: formatDay(new Date(comment.createdAt), locale, "short"),
+                          time: formatTime(comment.createdAt, locale),
+                        })}
+                      </time>
                     </div>
                   </li>
                 );
