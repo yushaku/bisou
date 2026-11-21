@@ -658,3 +658,55 @@ it("journal-comments AC4: a journal push refreshes both the feed count and an op
   writer.clear();
   reader.clear();
 });
+
+it.each(["mutation", "push"] as const)(
+  "journal-comments AC4: a %s supersedes a pending first comment read",
+  async (trigger) => {
+    const client = createServerQueryClient();
+    const comment = { id: "new", authorId: "an", authorName: "An", text: "Reply", createdAt: 2 };
+    type CommentResponse = Awaited<ReturnType<typeof api.journalComments>>;
+    let finishFirst!: (value: CommentResponse) => void;
+    const first = new Promise<CommentResponse>((resolve) => {
+      finishFirst = resolve;
+    });
+    const read = vi
+      .spyOn(api, "journalComments")
+      .mockReturnValueOnce(first)
+      .mockResolvedValue({ ok: true, data: { comments: [comment] } });
+    const options = queries.journalComments("shared");
+    const observer = new QueryObserver(client, options);
+    const close = observer.subscribe(() => {});
+    expect(read).toHaveBeenCalledTimes(1);
+    const mutation = client.getMutationCache().build(
+      client,
+      apiMutationOptions(client, async () => ({ ok: true as const, data: { comment } }), ["journal"]),
+    );
+    const refetch = vi.spyOn(client, "refetchQueries");
+    const refresh = trigger === "push" ? refreshForPush(client, "journal") : mutation.execute([]);
+    await vi.waitFor(() => expect(refetch).toHaveBeenCalled());
+    finishFirst({ ok: true, data: { comments: [] } });
+    await refresh;
+    await vi.waitFor(() => expect(observer.getCurrentResult().data?.comments).toEqual([comment]));
+    expect(read).toHaveBeenCalledTimes(2);
+    close();
+    client.clear();
+  },
+);
+
+it("journal-comments AC4: a fresh thread is reused on reopen and an inactive push defers its read", async () => {
+  const client = createServerQueryClient();
+  const read = vi.spyOn(api, "journalComments").mockResolvedValue({ ok: true, data: { comments: [] } });
+  const options = queries.journalComments("shared");
+  await client.query(options);
+  const observer = new QueryObserver(client, options);
+  const close = observer.subscribe(() => {});
+  expect(read).toHaveBeenCalledTimes(1);
+  close();
+  await refreshForPush(client, "journal");
+  expect(read).toHaveBeenCalledTimes(1);
+  expect(client.getQueryState(options.queryKey)?.isInvalidated).toBe(true);
+  const closeAgain = observer.subscribe(() => {});
+  await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(2));
+  closeAgain();
+  client.clear();
+});

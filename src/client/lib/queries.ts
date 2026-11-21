@@ -24,7 +24,6 @@ export const queries = {
     queryOptions({
       queryKey: ["journal", "comments", id],
       queryFn: () => apiData(api.journalComments(id)),
-      refetchOnMount: "always",
     }),
   journal: infiniteQueryOptions({
     queryKey: ["journal"],

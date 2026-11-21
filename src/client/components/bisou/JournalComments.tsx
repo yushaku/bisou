@@ -238,7 +238,7 @@ export function JournalComments({
           {!online && <p className="text-sm text-muted-foreground">{t("offline.save")}</p>}
           <DialogFooter>
             <Button variant="destructive" loading={deleting} disabled={!online} onClick={() => void remove()}>
-              {t("entry.deleteYes")}
+              {t("comments.delete")}
             </Button>
             <Button autoFocus disabled={deleting} onClick={() => setDeleteId(null)}>
               {t("entry.cancel")}

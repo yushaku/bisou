@@ -118,7 +118,6 @@ export function Journal({ couple, ...session }: JournalProps) {
     () => ({
       ...queries.journalEntry(linkedId ?? ""),
       enabled: linkedId !== null,
-      refetchOnMount: "always" as const,
     }),
     [linkedId],
   );

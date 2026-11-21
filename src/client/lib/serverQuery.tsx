@@ -165,16 +165,32 @@ const PUSH_QUERY_ROOTS = new Map<string, string[]>([
   ["notes", ["notes"]],
 ]);
 
+const isJournalDetail = (query: Query) => query.queryKey[0] === "journal" && query.queryKey.length > 1;
+
+function cancelInitialJournalReads(client: QueryClient) {
+  // A refetch joins a pending first read when there is no cached result to preserve.
+  return client.cancelQueries({
+    fetchStatus: "fetching",
+    predicate: (query) => isJournalDetail(query) && query.state.data === undefined,
+  });
+}
+
+async function refreshJournalDetails(client: QueryClient) {
+  await cancelInitialJournalReads(client);
+  await client.invalidateQueries({ predicate: isJournalDetail });
+}
+
 export async function refreshForPush(client: QueryClient, tag: string) {
   const roots = PUSH_QUERY_ROOTS.get(tag);
-  if (roots)
-    await refetchCachedQueries(
+  if (!roots) return;
+  await Promise.all([
+    refetchCachedQueries(
       client,
-      (query) =>
-        roots.some((root) => root === query.queryKey[0]) &&
-        (query.queryKey[0] !== "journal" || query.queryKey.length === 1 || query.isActive()),
+      (query) => roots.some((root) => root === query.queryKey[0]) && !isJournalDetail(query),
       true,
-    );
+    ),
+    tag === "journal" && refreshJournalDetails(client),
+  ]);
 }
 
 function RestoreGate({ fallback, children }: { fallback: ReactNode; children: ReactNode }) {
@@ -282,7 +298,8 @@ export function apiMutationOptions<A extends unknown[], T>(
 ) {
   return mutationOptions({
     mutationFn: (args: A) => apiData(run(...args)),
-    onSuccess: () => {
+    onSuccess: async () => {
+      if (roots.includes("journal")) await cancelInitialJournalReads(client);
       for (const root of roots) void client.invalidateQueries({ queryKey: [root] });
     },
   });

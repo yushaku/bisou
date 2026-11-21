@@ -2,6 +2,9 @@ import { isValidElement, type ReactNode, type ReactElement, type ComponentProps 
 import { afterEach, expect, it, vi } from "vitest";
 import { EntryCard, type Entry } from "../src/client/components/bisou/EntryCard";
 import { WishCard, type Wish } from "../src/client/components/bisou/WishCard";
+import { JournalComments } from "../src/client/components/bisou/JournalComments";
+import { vi as vietnamese, type MessageKey } from "../src/client/i18n/vi";
+import { en as english } from "../src/client/i18n/en";
 import { JournalDetailSheet } from "../src/client/components/bisou/JournalDetailSheet";
 import { WishDetailSheet } from "../src/client/components/bisou/WishDetailSheet";
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
@@ -49,8 +52,15 @@ afterEach(() => {
   hooks.index = 0;
   hooks.values = [];
   hooks.memory = null;
+  copy.locale = null;
 });
-vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ t: (key: string) => key, locale: "vi" }) }));
+const copy = vi.hoisted(() => ({ locale: null as "vi" | "en" | null }));
+vi.mock("../src/client/i18n", () => ({
+  useI18n: () => ({
+    t: (key: MessageKey) => (copy.locale ? (copy.locale === "vi" ? vietnamese : english)[key] : key),
+    locale: copy.locale ?? "vi",
+  }),
+}));
 vi.mock("../src/client/lib/useOnline", () => ({ useOnline: () => true }));
 interface Props {
   children?: ReactNode;
@@ -294,4 +304,16 @@ it("long entry sheet opener does not claim to control the clamped preview", () =
     nodes(EntryCard({ entry: long, onOpen })).find((node) => node.props.children === "entry.more")!;
   expect(more(vi.fn()).props["aria-controls"]).toBeUndefined();
   expect(more().props["aria-controls"]).toBe("test");
+});
+
+it.each([
+  ["vi", "Xoá bình luận"],
+  ["en", "Delete comment"],
+] as const)("journal-comments AC5: the %s confirmation names the comment", (locale, label) => {
+  copy.locale = locale;
+  expect(
+    nodes(JournalComments({ entryId: "shared", userId: "an", onSignedOut: vi.fn() })).some(
+      (node) => node.props.children === label,
+    ),
+  ).toBe(true);
 });
