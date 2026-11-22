@@ -24,10 +24,10 @@ export function TodayPosts({
   const { feed } = useJournal(onSignedOut);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [jumpToThread, setJumpToThread] = useState(false);
-  const countButton = useRef<HTMLButtonElement | null>(null);
-  const openEntry = (id: string, button: HTMLButtonElement | null = null) => {
-    countButton.current = button;
-    setJumpToThread(!!button);
+  const returnFocus = useRef<(() => void) | null>(null);
+  const openEntry = (id: string, restoreFocus: () => void, showComments = false) => {
+    returnFocus.current = restoreFocus;
+    setJumpToThread(showComments);
     setDetailId(id);
   };
   const detail = feed?.entries.find((entry) => entry.id === detailId && entry.note);
@@ -47,8 +47,8 @@ export function TodayPosts({
           key={entry.id}
           entry={toCard(entry, people, t, locale)}
           showDate={false}
-          onOpen={entry.note ? () => openEntry(entry.id) : undefined}
-          onOpenComments={entry.note ? (button) => openEntry(entry.id, button) : undefined}
+          onOpen={entry.note ? (restoreFocus) => openEntry(entry.id, restoreFocus) : undefined}
+          onOpenComments={entry.note ? (restoreFocus) => openEntry(entry.id, restoreFocus, true) : undefined}
         />
       ))}
       <JournalDetailDrawer
@@ -58,8 +58,8 @@ export function TodayPosts({
         jumpToThread={jumpToThread}
         onClose={() => setDetailId(null)}
         onReturnFocus={() => {
-          countButton.current?.focus({ preventScroll: true });
-          countButton.current = null;
+          returnFocus.current?.();
+          returnFocus.current = null;
         }}
         onOpenPhoto={noop}
         onSignedOut={onSignedOut}

@@ -165,31 +165,32 @@ const PUSH_QUERY_ROOTS = new Map<string, string[]>([
   ["notes", ["notes"]],
 ]);
 
-const isJournalDetail = (query: Query) => query.queryKey[0] === "journal" && query.queryKey.length > 1;
+const isJournal = (query: Query) => query.queryKey[0] === "journal";
+const isJournalDetail = (query: Query) => isJournal(query) && query.queryKey.length > 1;
 
 function cancelInitialJournalReads(client: QueryClient) {
-  // A refetch joins a pending first read when there is no cached result to preserve.
-  return client.cancelQueries({
-    fetchStatus: "fetching",
-    predicate: (query) => isJournalDetail(query) && query.state.data === undefined,
-  });
-}
-
-async function refreshJournalDetails(client: QueryClient) {
-  await cancelInitialJournalReads(client);
-  await client.invalidateQueries({ predicate: isJournalDetail });
+  // TanStack joins a first read with no cached result even when cancelRefetch is true.
+  const pending = {
+    fetchStatus: "fetching" as const,
+    predicate: (query: Query) => isJournal(query) && query.state.data === undefined,
+  };
+  if (client.getQueryCache().findAll(pending).length) return client.cancelQueries(pending);
 }
 
 export async function refreshForPush(client: QueryClient, tag: string) {
   const roots = PUSH_QUERY_ROOTS.get(tag);
   if (!roots) return;
+  if (tag === "journal") {
+    const pending = cancelInitialJournalReads(client);
+    if (pending) await pending;
+  }
   await Promise.all([
     refetchCachedQueries(
       client,
       (query) => roots.some((root) => root === query.queryKey[0]) && !isJournalDetail(query),
       true,
     ),
-    tag === "journal" && refreshJournalDetails(client),
+    tag === "journal" && client.invalidateQueries({ predicate: isJournalDetail }),
   ]);
 }
 

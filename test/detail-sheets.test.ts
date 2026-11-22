@@ -74,6 +74,11 @@ function nodes(node: ReactNode): ReactElement<Props>[] {
   if (!isValidElement<Props>(node)) return [];
   return [node, ...nodes(node.props.children)];
 }
+function clickEntry(node: ReactElement<Props>, currentTarget = { isConnected: true, focus: vi.fn() }) {
+  const click = node.props.onClick as (event: { currentTarget: typeof currentTarget }) => void;
+  click({ currentTarget });
+}
+
 const entry: Entry = {
   id: "entry",
   date: "2026-11-01",
@@ -103,9 +108,35 @@ it.each(["journal", "wish"])("opens the %s card only when an opener is provided"
     nodes(kind === "journal" ? EntryCard({ entry, onOpen }) : WishCard({ wish, onOpen }));
   expect(render().some((n) => n.type === "button")).toBe(false);
   const onOpen = vi.fn();
-  render(onOpen).find((n) => n.type === "button")!.props.onClick!();
+  clickEntry(render(onOpen).find((n) => n.type === "button")!);
   expect(onOpen).toHaveBeenCalledOnce();
 });
+it("restores focus to the opener or the card when a comment count disappears", () => {
+  const onOpen = vi.fn<(restoreFocus: () => void) => void>();
+  const onOpenComments = vi.fn<(restoreFocus: () => void) => void>();
+  const tree = nodes(EntryCard({ entry: { ...entry, commentCount: 1 }, onOpen, onOpenComments }));
+  const cardButton = tree.find((node) => node.props["aria-label"] === "entry.open")!;
+  const countButton = tree.find((node) => node.props["aria-label"] === "comments.countLabel")!;
+  const card = { isConnected: true, focus: vi.fn() };
+  const count = { isConnected: true, focus: vi.fn() };
+  const ref = (cardButton.props as Props & { ref: { current: typeof card } }).ref;
+  ref.current = card;
+
+  clickEntry(cardButton, card);
+  onOpen.mock.calls[0]![0]();
+  expect(card.focus).toHaveBeenCalledWith({ preventScroll: true });
+
+  clickEntry(countButton, count);
+  const restoreCountFocus = onOpenComments.mock.calls[0]![0];
+  restoreCountFocus();
+  expect(count.focus).toHaveBeenCalledOnce();
+
+  count.isConnected = false;
+  restoreCountFocus();
+  expect(card.focus).toHaveBeenCalledTimes(2);
+  expect(count.focus).toHaveBeenCalledOnce();
+});
+
 it("shows the written date only on back-filled journal details", () => {
   const render = (note?: string) => nodes(JournalDetailSheet({ entry: { ...entry, note }, onOpenPhoto: vi.fn() }));
   expect(render(entry.note).some((n) => n.props.children === entry.note)).toBe(true);
@@ -201,7 +232,7 @@ it.each(["partner", "wish", "note"] as const)(
           ComponentProps<typeof EntryCard>
         >;
         if (path === "details") {
-          card.props.onOpen!();
+          card.props.onOpen!(() => {});
           const detail = render().find((node) => node.type === JournalDetailDrawer) as ReactElement<
             ComponentProps<typeof JournalDetailDrawer>
           >;
@@ -238,7 +269,7 @@ it("note cards always offer visible reading when narrow wrapping can exceed the 
   const onOpen = vi.fn();
   const more = nodes(EntryCard({ entry: note, onOpen })).find((node) => node.props.children === "entry.more");
   expect(more).toBeDefined();
-  more!.props.onClick!();
+  clickEntry(more!);
   expect(onOpen).toHaveBeenCalledOnce();
   const full = nodes(EntryCard({ entry: note }));
   expect((full.find((node) => node.type === NoteParts)!.props as ComponentProps<typeof NoteParts>).preview).toBe(false);
@@ -286,7 +317,7 @@ it("Home opens the full shared note detail and closes back to the card", () => {
     );
   };
   const card = render().find((node) => node.type === EntryCard)! as ReactElement<ComponentProps<typeof EntryCard>>;
-  card.props.onOpen!();
+  card.props.onOpen!(() => {});
   const detail = render().find((node) => node.type === JournalDetailDrawer)! as ReactElement<
     ComponentProps<typeof JournalDetailDrawer>
   >;

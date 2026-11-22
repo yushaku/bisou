@@ -1,5 +1,5 @@
 import { Flag, Gift, MessageCircle } from "lucide-react";
-import { useId, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import type { NoteInput } from "../../../shared/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,14 +52,18 @@ export function EntryCard({
   showDate?: boolean;
   id?: string;
   actions?: ReactNode;
-  onOpen?: () => void;
-  onOpenComments?: (button: HTMLButtonElement) => void;
+  onOpen?: (restoreFocus: () => void) => void;
+  onOpenComments?: (restoreFocus: () => void) => void;
   onOpenPhoto?: (index: number) => void;
   className?: string;
 }) {
   const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const bodyId = useId();
+  const cardOpener = useRef<HTMLButtonElement>(null);
+  const restoreFocusFrom = (opener: HTMLButtonElement) => () => {
+    (opener.isConnected ? opener : cardOpener.current)?.focus({ preventScroll: true });
+  };
   const parts = entry.parts;
   const long = entry.body.length > CLAMP_AT;
 
@@ -74,7 +78,8 @@ export function EntryCard({
           type="button"
           className="absolute inset-0 rounded-xl focus-visible:ring-3 focus-visible:ring-ring"
           aria-label={t("entry.open", { name: entry.author.name, time: entry.time ?? "" })}
-          onClick={onOpen}
+          ref={cardOpener}
+          onClick={(event) => onOpen(restoreFocusFrom(event.currentTarget))}
         />
       )}
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -124,7 +129,7 @@ export function EntryCard({
                 className="relative mt-1 h-9"
                 aria-expanded={onOpen ? undefined : open}
                 aria-controls={onOpen ? undefined : bodyId}
-                onClick={onOpen ?? (() => setOpen((v) => !v))}
+                onClick={onOpen ? (event) => onOpen(restoreFocusFrom(event.currentTarget)) : () => setOpen((v) => !v)}
               >
                 {open ? t("entry.less") : t("entry.more")}
               </Button>
@@ -135,7 +140,11 @@ export function EntryCard({
 
       {entry.reply && <NoteReply reply={entry.reply} preview={!!onOpen} />}
       {parts && onOpen && (
-        <Button variant="link" className="relative h-11 self-start" onClick={onOpen}>
+        <Button
+          variant="link"
+          className="relative h-11 self-start"
+          onClick={(event) => onOpen(restoreFocusFrom(event.currentTarget))}
+        >
           {t("entry.more")}
         </Button>
       )}
@@ -147,7 +156,7 @@ export function EntryCard({
             variant="ghost"
             className="relative self-start text-muted-foreground tabular-nums"
             aria-label={t("comments.countLabel", { count: entry.commentCount })}
-            onClick={(event) => onOpenComments(event.currentTarget)}
+            onClick={(event) => onOpenComments(restoreFocusFrom(event.currentTarget))}
           >
             <MessageCircle aria-hidden="true" />
             <span aria-hidden="true">{entry.commentCount}</span>

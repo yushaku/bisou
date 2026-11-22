@@ -1,4 +1,10 @@
-import { useInfiniteQuery, useQueryClient, type InfiniteData, type QueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type InfiniteData,
+  type Query,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import type { JournalEntry, JournalPage } from "../../shared/types";
 import { addPage, removeEntry, upsertEntry } from "./journalFeed";
@@ -29,6 +35,15 @@ export function deleteJournalEntry(client: QueryClient, id: string) {
         pages: old.pages.map((page) => removeEntry(page, id)),
       },
   );
+}
+
+export async function refreshJournalDetails(client: QueryClient) {
+  const details = {
+    queryKey: queries.journal.queryKey,
+    predicate: (query: Query) => query.queryKey.length > 1,
+  };
+  await client.cancelQueries(details);
+  await client.invalidateQueries(details);
 }
 
 export function useJournal(onSignedOut: () => void) {

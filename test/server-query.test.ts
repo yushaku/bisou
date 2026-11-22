@@ -710,3 +710,49 @@ it("journal-comments AC4: a fresh thread is reused on reopen and an inactive pus
   closeAgain();
   client.clear();
 });
+
+it.each(["mutation", "push"] as const)(
+  "journal-comments AC4: a journal %s supersedes a pending first feed response",
+  async (trigger) => {
+    const client = createServerQueryClient();
+    const entry: JournalEntry = {
+      id: "shared",
+      authorId: "an",
+      source: "partner",
+      date: "2026-11-20",
+      createdAt: 1,
+      updatedAt: 1,
+      photoIds: [],
+      text: "Story",
+      commentCount: 0,
+    };
+    type FeedResponse = Awaited<ReturnType<typeof api.journal>>;
+    let finishFirst!: (value: FeedResponse) => void;
+    const first = new Promise<FeedResponse>((resolve) => {
+      finishFirst = resolve;
+    });
+    const read = vi
+      .spyOn(api, "journal")
+      .mockReturnValueOnce(first)
+      .mockResolvedValue({ ok: true, data: { entries: [{ ...entry, commentCount: 1 }], nextCursor: null } });
+    const observer = new InfiniteQueryObserver(client, queries.journal);
+    const close = observer.subscribe(() => {});
+    expect(read).toHaveBeenCalledTimes(1);
+    const mutation = client.getMutationCache().build(
+      client,
+      apiMutationOptions(client, async () => ({ ok: true as const, data: {} }), ["journal"]),
+    );
+    const refetch = vi.spyOn(client, "refetchQueries");
+    const refresh = trigger === "push" ? refreshForPush(client, "journal") : mutation.execute([]);
+    try {
+      await vi.waitFor(() => expect(refetch).toHaveBeenCalled());
+      finishFirst({ ok: true, data: { entries: [entry], nextCursor: null } });
+      await refresh;
+      await vi.waitFor(() => expect(observer.getCurrentResult().data?.pages[0]?.entries[0]?.commentCount).toBe(1));
+      expect(read).toHaveBeenCalledTimes(2);
+    } finally {
+      close();
+      client.clear();
+    }
+  },
+);

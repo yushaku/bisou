@@ -1,4 +1,6 @@
-import { flushQueryWork } from "./query-fixture";
+import { QueryObserver } from "@tanstack/react-query";
+import { queries } from "../src/client/lib/queries";
+import { flushQueryWork, testQueryClient } from "./query-fixture";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { Journal } from "../src/client/screens/Journal";
@@ -1125,3 +1127,30 @@ it.each(["vi", "en"])("closing and closed editing explain a refused empty messag
     refuse.mockRestore();
   }
 });
+
+it.each(["delete", "silent edit"] as const)(
+  "journal-comments AC4: pulling to refresh discovers a partner's %s in a closed thread",
+  async (change) => {
+    const reply = { id: "reply", authorId: "an", authorName: "An", text: "First", createdAt: 1 };
+    const initial = [reply, { ...reply, id: "other", text: "Second" }];
+    const updated = change === "delete" ? [reply] : [{ ...reply, text: "Edited" }, initial[1]!];
+    const read = vi
+      .spyOn(api, "journalComments")
+      .mockResolvedValueOnce({ ok: true, data: { comments: initial } })
+      .mockResolvedValue({ ok: true, data: { comments: updated } });
+    vi.spyOn(api, "journal").mockResolvedValue({ ok: true, data: { entries: [], nextCursor: null } });
+    const options = queries.journalComments("shared");
+    await testQueryClient.query(options);
+    const observer = new QueryObserver(testQueryClient, options);
+    const close = observer.subscribe(() => {});
+    close();
+    await journal()[0]!.props.onRefresh!();
+    expect(read).toHaveBeenCalledTimes(1);
+    const closeAgain = observer.subscribe(() => {});
+    try {
+      await vi.waitFor(() => expect(observer.getCurrentResult().data?.comments).toEqual(updated));
+    } finally {
+      closeAgain();
+    }
+  },
+);

@@ -1,8 +1,9 @@
 import { defined } from "../../shared/guards";
 import { Ellipsis, Plus } from "lucide-react";
 import { lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSearch } from "wouter";
-import { useJournal } from "../lib/useJournal";
+import { refreshJournalDetails, useJournal } from "../lib/useJournal";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, JournalEntry } from "../../shared/types";
 import { api, photoUrl } from "../api";
@@ -48,6 +49,7 @@ const PREFETCH_MARGIN = "0px 0px 800px 0px";
 export function Journal({ couple, ...session }: JournalProps) {
   const { user, onSignedOut } = session;
   const { t, locale } = useI18n();
+  const queryClient = useQueryClient();
   const memory = useContext(TabMemory);
   const search = useSearch();
   const linkedId = new URLSearchParams(search).get("entry") || null;
@@ -115,7 +117,7 @@ export function Journal({ couple, ...session }: JournalProps) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detailMenu, setDetailMenu] = useState(false);
   const [jumpToThread, setJumpToThread] = useState(false);
-  const countButton = useRef<HTMLButtonElement | null>(null);
+  const returnFocus = useRef<(() => void) | null>(null);
   const linkQuery = useMemo(
     () => ({
       ...queries.journalEntry(linkedId ?? ""),
@@ -135,10 +137,10 @@ export function Journal({ couple, ...session }: JournalProps) {
     url.searchParams.delete("entry");
     history.replaceState(history.state, "", url);
   };
-  const openEntry = (id: string, button: HTMLButtonElement | null = null) => {
+  const openEntry = (id: string, restoreFocus: () => void, showComments = false) => {
     clearEntryLink();
-    countButton.current = button;
-    setJumpToThread(!!button);
+    returnFocus.current = restoreFocus;
+    setJumpToThread(showComments);
     setDetailId(id);
   };
   const closeDetail = () => {
@@ -200,8 +202,12 @@ export function Journal({ couple, ...session }: JournalProps) {
   }, [feed]);
 
   const pullRefresh = useCallback(async () => {
-    await Promise.all([refresh(), section === "notes" ? notesRef.current?.refresh() : undefined]);
-  }, [refresh, section]);
+    await Promise.all([
+      refresh(),
+      refreshJournalDetails(queryClient),
+      section === "notes" ? notesRef.current?.refresh() : undefined,
+    ]);
+  }, [queryClient, refresh, section]);
 
   const retryFirst = () => {
     void refresh();
@@ -325,8 +331,8 @@ export function Journal({ couple, ...session }: JournalProps) {
                         id={`entry-${e.id}`}
                         entry={card}
                         showDate={false}
-                        onOpen={() => openEntry(e.id)}
-                        onOpenComments={(button) => openEntry(e.id, button)}
+                        onOpen={(restoreFocus) => openEntry(e.id, restoreFocus)}
+                        onOpenComments={(restoreFocus) => openEntry(e.id, restoreFocus, true)}
                         onOpenPhoto={(index) => setViewer({ entry: e, index, open: true })}
                         actions={
                           <Button
@@ -405,13 +411,13 @@ export function Journal({ couple, ...session }: JournalProps) {
             jumpToThread={!linkedId && jumpToThread}
             onClose={closeDetail}
             onReturnFocus={() => {
-              countButton.current?.focus({ preventScroll: true });
-              countButton.current = null;
+              returnFocus.current?.();
+              returnFocus.current = null;
             }}
             onOpenOptions={detail ? () => setDetailMenu(true) : undefined}
             onOpenPhoto={(index) => {
               if (!detail) return;
-              countButton.current = null;
+              returnFocus.current = null;
               closeDetail();
               setViewer({ entry: detail, index, open: true });
             }}
