@@ -362,6 +362,7 @@ export const vi = {
   "avatar.saveFailed": "Chưa lưu được ảnh. Thử lại nhé.",
   "avatar.decodeFailed": "Trình duyệt này chưa đọc được ảnh. Thử chọn ảnh JPEG hoặc PNG nhé.",
   "avatar.rateLimited": "Bạn đổi ảnh nhiều lần quá. Thử lại sau khoảng {wait} nhé.",
+  "avatar.view": "Xem ảnh của {name}",
   "events.edit": "Sửa sự kiện",
   "events.delete": "Xoá sự kiện",
   "events.deleteTitle": "Xoá “{title}”?",

@@ -191,8 +191,8 @@ it("notes AC9 AC16: a read-only note detail has its state title and Close, witho
 });
 
 const members = [
-  { id: "an", displayName: "An", birthDate: null, avatarId: null },
-  { id: "binh", displayName: "Bình", birthDate: null, avatarId: null },
+  { id: "an", email: "an@example.com", displayName: "An", birthDate: null, avatarId: null },
+  { id: "binh", email: "binh@example.com", displayName: "Bình", birthDate: null, avatarId: null },
 ];
 it.each(["partner", "wish", "note"] as const)(
   "journal AC23, AC24, AC25: %s feed options and details keep edit/delete permissions separate",

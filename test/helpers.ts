@@ -115,13 +115,15 @@ export async function login(email: string): Promise<{ cookie: string; res: Respo
 export interface TestUser {
   cookie: string;
   id: string;
+  email: string;
 }
 
 export async function user(name: string): Promise<TestUser> {
-  const { cookie, res } = await login(`${name.toLowerCase()}@example.com`);
+  const email = `${name.toLowerCase()}@example.com`;
+  const { cookie, res } = await login(email);
   const { user: u } = await res.json<{ user: { id: string } }>();
   await call("PATCH", "/api/me", { cookie, body: { displayName: name } });
-  return { cookie, id: u.id };
+  return { cookie, id: u.id, email };
 }
 
 export async function paired(): Promise<{ a: TestUser; b: TestUser; couple: Couple; code: string }> {

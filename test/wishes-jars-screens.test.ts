@@ -26,8 +26,8 @@ vi.mock("../src/client/components/ui/button", () => ({
 }));
 
 const members = [
-  { id: "an", displayName: "An", birthDate: null, avatarId: null },
-  { id: "binh", displayName: "Bình", birthDate: null, avatarId: null },
+  { id: "an", email: "an@example.com", displayName: "An", birthDate: null, avatarId: null },
+  { id: "binh", email: "binh@example.com", displayName: "Bình", birthDate: null, avatarId: null },
 ];
 const couple = { id: "couple", startDate: null, members, events: [] };
 const session = {

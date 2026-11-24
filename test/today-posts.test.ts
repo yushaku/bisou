@@ -8,8 +8,8 @@ import { createQueryFixture as createTabMemory } from "./query-fixture";
 import type { JournalEntry } from "../src/shared/types";
 
 const members = [
-  { id: "an", displayName: "An", birthDate: null, avatarId: null },
-  { id: "binh", displayName: "Bình", birthDate: null, avatarId: null },
+  { id: "an", email: "an@example.com", displayName: "An", birthDate: null, avatarId: null },
+  { id: "binh", email: "binh@example.com", displayName: "Bình", birthDate: null, avatarId: null },
 ];
 const couple = { id: "couple", startDate: null, members, events: [] };
 const user = { ...members[0]!, email: "an@example.com", locale: "vi" as const, createdAt: 1 };

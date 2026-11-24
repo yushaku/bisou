@@ -22,7 +22,7 @@ Bisou is private to exactly two partners. Their two accounts must first become o
 - R2. Once paired, neither partner can leave, unpair or join another couple.
 - R3. Only its members can see a couple; an outsider learns nothing about it.
 - R4. Right after the first sign in, before anything else (pairing included), a person must choose a display name of 1 to 40 characters (outer spaces ignored); they can change it at any time but never clear it.
-- R5. The partner sees the display name, never the email.
+- R5. Each partner sees the other's display name and email address; the couple and both accounts stay hidden from everyone else.
 - R6. An invite code has 6 characters from letters and digits that cannot be confused (no 0, O, 1, I, L).
 - R7. Case, spaces and dashes in a typed code do not matter.
 - R8. A code is valid for 24 hours from when it is made, and never after.
@@ -62,7 +62,7 @@ Bisou is private to exactly two partners. Their two accounts must first become o
 - AC12 (R17, R18). Given a start date of 12 February 2023 and today 5 November 2026, then the counter shows 1363 days and the next milestone is day 1400 on 12 December 2026, 37 days left.
 - AC13 (R18, R19). Given the same start date and today 12 February 2026, then the milestone is announced as today, the 3 year anniversary.
 - AC14 (R20). Given start date 29 February 2024 and today 20 February 2025, then the next milestone is the 1 year anniversary on 28 February 2025.
-- AC15 (R3, R5). Given A and B are a couple, then an outsider sees no couple, and B sees A's name, not A's email.
+- AC15 (R3, R5). Given A and B are a couple, then an outsider sees no couple, and B sees A's name and email.
 
 ## Glossary
 

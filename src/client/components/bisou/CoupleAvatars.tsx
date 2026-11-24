@@ -36,6 +36,8 @@ const SIZE = {
   sm: "size-8 text-sm",
   md: "size-11 text-base",
   lg: "size-16 text-xl",
+  xl: "size-48 text-5xl",
+  full: "size-full text-7xl",
 } as const;
 
 function initials(name: string): string {
@@ -68,20 +70,49 @@ export function CoupleAvatars({
   people,
   size = "md",
   className,
+  onSelect,
 }: {
   people: [Person, Person];
   size?: keyof typeof SIZE;
   className?: string;
+  /* When set, each avatar is a button that opens that person's photo. */
+  onSelect?: (person: Person) => void;
 }) {
   const { t } = useI18n();
+  const avatars = people.map((person, index) => (
+    <PersonAvatar
+      key={person.name}
+      person={person}
+      size={size}
+      className={cn(index === 1 && "-ml-2", "ring-3 ring-card")}
+    />
+  ));
+  if (!onSelect)
+    return (
+      <div
+        role="img"
+        aria-label={t("couple.and", { a: people[0].name, b: people[1].name })}
+        className={cn("flex items-center", className)}
+      >
+        {avatars}
+      </div>
+    );
   return (
-    <div
-      role="img"
-      aria-label={t("couple.and", { a: people[0].name, b: people[1].name })}
-      className={cn("flex items-center", className)}
-    >
-      <PersonAvatar person={people[0]} size={size} className="ring-3 ring-card" />
-      <PersonAvatar person={people[1]} size={size} className="-ml-2 ring-3 ring-card" />
+    <div className={cn("flex items-center", className)}>
+      {people.map((person, index) => (
+        <button
+          key={person.name}
+          type="button"
+          aria-label={t("avatar.view", { name: person.name })}
+          className={cn(
+            "relative shrink-0 press rounded-full outline-none after:absolute after:-inset-1.5 after:content-[''] focus-visible:ring-3 focus-visible:ring-ring",
+            index === 1 && "-ml-2",
+          )}
+          onClick={() => onSelect(person)}
+        >
+          <PersonAvatar person={person} size={size} className="ring-3 ring-card" />
+        </button>
+      ))}
     </div>
   );
 }

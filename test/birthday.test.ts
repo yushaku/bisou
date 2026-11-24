@@ -69,8 +69,8 @@ describe("birthdays", () => {
       expect(res.status).toBe(200);
       for (const who of [a, b]) {
         expect(await members(who)).toEqual([
-          { id: a.id, displayName: "An", birthDate: "1997-11-18", avatarId: null },
-          { id: b.id, displayName: "Minh", birthDate, avatarId: null },
+          { id: a.id, email: a.email, displayName: "An", birthDate: "1997-11-18", avatarId: null },
+          { id: b.id, email: b.email, displayName: "Minh", birthDate, avatarId: null },
         ]);
       }
     }
@@ -98,7 +98,7 @@ describe("birthdays", () => {
     const { a } = await paired();
     const plans = [
       await explain(
-        `SELECT u.id AS id, u.display_name AS display_name, u.birth_date AS birth_date, u.avatar_id
+        `SELECT u.id AS id, u.email AS email, u.display_name AS display_name, u.birth_date AS birth_date, u.avatar_id
         FROM couple_members m JOIN users u ON u.id = m.user_id
         WHERE m.couple_id = (SELECT couple_id FROM couple_members WHERE user_id = ?) ORDER BY m.joined_at, m.rowid`,
         a.id,

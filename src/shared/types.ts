@@ -92,6 +92,7 @@ export const DISPLAY_NAME_MAX = 40;
 
 export interface CoupleMember {
   id: string;
+  email: string;
   displayName: string | null;
   birthDate: string | null;
   avatarId: string | null;

@@ -363,6 +363,7 @@ export const en: Messages = {
   "avatar.saveFailed": "Could not save your photo. Please try again.",
   "avatar.decodeFailed": "This browser could not read your photo. Try a JPEG or PNG photo.",
   "avatar.rateLimited": "You've changed your photo too often. Try again in about {wait}.",
+  "avatar.view": "View {name}’s photo",
   "events.edit": "Edit event",
   "events.delete": "Delete event",
   "events.deleteTitle": "Delete “{title}”?",

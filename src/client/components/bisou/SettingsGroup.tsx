@@ -18,19 +18,28 @@ export function SettingsGroup({ title, children }: { title: string; children: Re
 
 export function SettingsRow({
   icon: Icon,
+  leading,
   label,
+  description,
   value,
   className,
   ...props
 }: Omit<ComponentProps<"button">, "children"> & {
-  icon: LucideIcon;
+  /* A leading glyph, or any custom node such as an avatar. */
+  icon?: LucideIcon;
+  leading?: ReactNode;
   label: string;
+  /* A quieter second line under the label. */
+  description?: string;
   value?: string;
 }) {
   const content = (
     <>
-      <Icon className="size-5 shrink-0" aria-hidden="true" />
-      <span className="shrink-0">{label}</span>
+      {leading ?? (Icon && <Icon className="size-5 shrink-0" aria-hidden="true" />)}
+      <span className="flex min-w-0 flex-col">
+        <span className="wrap-break-word">{label}</span>
+        {description && <span className="text-sm break-all text-muted-foreground">{description}</span>}
+      </span>
       {value && (
         <span className="ml-auto min-w-0 text-right text-sm wrap-break-word text-muted-foreground">{value}</span>
       )}

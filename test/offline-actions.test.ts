@@ -49,6 +49,9 @@ interface Props {
   disabled?: boolean;
   onClick?: () => void;
   onSubmit?: (event: { preventDefault: () => void }) => void;
+  label?: string;
+  description?: string;
+  value?: string;
 }
 function elements(node: ReactNode): ReactElement<Props>[] {
   if (Array.isArray(node)) return node.flatMap(elements);
@@ -221,6 +224,23 @@ it("notifications R26: sign out sends this endpoint before unsubscribing", async
   await vi.waitFor(() => expect(unsubscribe).toHaveBeenCalledOnce());
   expect(logout).toHaveBeenCalledWith("device");
 });
+it("pairing AC15: the couple row carries the partner's email under the name", () => {
+  vi.stubGlobal("navigator", { onLine: true });
+  const nodes = elements(
+    Settings({
+      user,
+      onUser: vi.fn(),
+      onSignedOut: vi.fn(),
+      couple: { id: "couple", startDate: null, members: [user, partner], events: [] },
+      onCouple: vi.fn(),
+    }),
+  );
+  const row = nodes.find((node) => node.props.label === "Bình")!;
+  expect(row.props.description).toBe("binh@example.com");
+  // A description is the quiet second line; the right hand value slot stays free.
+  expect(row.props.value).toBeUndefined();
+});
+
 it("notifications AC19: Home hides the invitation for an unpaired user", () => {
   vi.stubGlobal("navigator", { onLine: true });
   const nodes = elements(

@@ -3,6 +3,7 @@
 ## Workflow
 
 - Wants commits split into logically separated parts (per feature/concern) rather than one large commit. Confidence: 0.7
+- Keeps changes scoped: does not want unrelated tests handled/test-fixed when working on a UI change — only tests tied to the change at hand. Confidence: 0.65
 
 ## Communication
 

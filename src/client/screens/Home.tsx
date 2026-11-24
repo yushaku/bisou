@@ -15,6 +15,7 @@ import type { Couple, CoupleEvent } from "../../shared/types";
 import { api } from "../api";
 import { Celebration } from "../components/bisou/Celebration";
 import { CoupleAvatars, toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import { AvatarViewer } from "../components/bisou/AvatarViewer";
 import { DailyQuestion } from "../components/bisou/DailyQuestion";
 import { DaysCounter } from "../components/bisou/DaysCounter";
 import { StarredBlock } from "../components/bisou/StarredCards";
@@ -50,6 +51,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
   const openAdd = useCallback(() => setEditingEvent(null), []);
   useCreateRequest("event", openAdd);
   const [picking, setPicking] = useState(false);
+  const [zoomed, setZoomed] = useState<Person | null>(null);
   // Stays mounted after the first open so the sheet can animate closed.
   const [sheetLoaded, setSheetLoaded] = useState(false);
   const pick = () => {
@@ -80,7 +82,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
   return (
     <SignedInShell {...session} tab="home" onRefresh={onRefresh}>
       <div className="mb-4 flex items-center gap-3">
-        <CoupleAvatars people={people} size="sm" />
+        <CoupleAvatars people={people} size="sm" onSelect={setZoomed} />
         <p className="min-w-0 truncate text-base text-muted-foreground">
           {t("couple.and", { a: people[0].name, b: people[1].name })}
         </p>
@@ -158,6 +160,7 @@ export function Home({ couple, onCouple, onRefresh, celebrate, onCelebrated, ...
           />
         </Suspense>
       )}
+      <AvatarViewer person={zoomed} onClose={() => setZoomed(null)} />
       <Celebration
         open={celebrate}
         onOpenChange={(open) => {

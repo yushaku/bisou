@@ -43,7 +43,7 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
     db.prepare(`SELECT id, start_date FROM couples WHERE id = ${mine}`).bind(userId),
     db
       .prepare(
-        `SELECT u.id AS id, u.display_name AS display_name, u.birth_date AS birth_date, u.avatar_id FROM couple_members m JOIN users u ON u.id = m.user_id
+        `SELECT u.id AS id, u.email AS email, u.display_name AS display_name, u.birth_date AS birth_date, u.avatar_id FROM couple_members m JOIN users u ON u.id = m.user_id
          WHERE m.couple_id = ${mine} ORDER BY m.joined_at, m.rowid`,
       )
       .bind(userId),
@@ -62,12 +62,14 @@ export async function loadCouple(db: D1Database, userId: string, now: number): P
   const members = (
     (membersRes?.results ?? []) as {
       id: string;
+      email: string;
       display_name: string | null;
       birth_date: string | null;
       avatar_id: string | null;
     }[]
   ).map((m) => ({
     id: m.id,
+    email: m.email,
     displayName: m.display_name,
     birthDate: m.birth_date,
     avatarId: m.avatar_id,

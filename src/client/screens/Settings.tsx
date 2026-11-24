@@ -1,7 +1,7 @@
 import { defined, noop } from "../../shared/guards";
 import { MascotPicker } from "../components/bisou/MascotPicker";
 import { useOnline } from "../lib/useOnline";
-import { Bell, Cake, CalendarHeart, CircleCheck, CircleUserRound, Heart, LogOut, Mail, UserRound } from "lucide-react";
+import { Bell, Cake, CalendarHeart, CircleCheck, LogOut, Mail, UserRound } from "lucide-react";
 import { currentSubscription } from "../lib/push";
 import { lazy, Suspense, useEffect, useRef, useState, type SubmitEvent } from "react";
 import { toast } from "@/components/ui/ding-toaster";
@@ -9,7 +9,8 @@ import { useLocation } from "wouter";
 import { DISPLAY_NAME_MAX, type Couple, type Locale } from "../../shared/types";
 import { api } from "../api";
 import { BottomBar } from "../components/bisou/AppShell";
-import { CoupleAvatars, PersonAvatar, toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import { PersonAvatar, toPeople, type Person } from "../components/bisou/CoupleAvatars";
+import { AvatarViewer } from "../components/bisou/AvatarViewer";
 import { displayName } from "../lib/displayName";
 import type { CropRequest } from "../components/bisou/PhotoCropDialog";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
@@ -59,6 +60,7 @@ export function Settings({
   const [birthdayLoaded, setBirthdayLoaded] = useState(false);
   const dateButton = useRef<HTMLButtonElement>(null);
   const [sheet, setSheet] = useState<"profile" | "logout" | "avatar">("profile");
+  const [zoomed, setZoomed] = useState<Person | null>(null);
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
   const [dateLoaded, setDateLoaded] = useState(false);
@@ -82,7 +84,8 @@ export function Settings({
   const paired = (couple?.members.length ?? 0) >= 2;
   const partner = paired ? couple?.members.find((member) => member.id !== user.id) : null;
   const members = toPeople(couple?.members ?? [], user, t);
-  const people: [Person, Person] | null = paired ? [defined(members[0]), defined(members[1])] : null;
+  const partnerIndex = couple?.members.findIndex((member) => member.id !== user.id) ?? -1;
+  const partnerPerson = partnerIndex >= 0 ? members.at(partnerIndex) : undefined;
   const ownPerson = defined(toPeople([user], user, t)[0]);
 
   function openAvatar(button: HTMLButtonElement) {
@@ -225,7 +228,7 @@ export function Settings({
             className="min-h-11 min-w-11 shrink-0 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             onClick={(event) => openAvatar(event.currentTarget)}
           >
-            {people ? <CoupleAvatars people={people} /> : <PersonAvatar person={ownPerson} />}
+            <PersonAvatar person={ownPerson} />
           </button>
           <div className="min-w-0">
             <p className="font-heading text-xl wrap-break-word">{displayName(user, t)}</p>
@@ -234,13 +237,6 @@ export function Settings({
         </div>
         <Drawer open={open} onOpenChange={setOpen}>
           <SettingsGroup title={t("settings.account")}>
-            <SettingsRow
-              icon={CircleUserRound}
-              label={t("avatar.row")}
-              value={t(user.avatarId ? "avatar.set" : "settings.notSet")}
-              disabled={avatarBusy}
-              onClick={(event) => openAvatar(event.currentTarget)}
-            />
             {user.displayName && (
               <DrawerTrigger asChild>
                 <SettingsRow
@@ -268,7 +264,27 @@ export function Settings({
           </SettingsGroup>
           {paired && couple && (
             <SettingsGroup title={t("settings.couple")}>
-              <SettingsRow icon={Heart} label={t("settings.partner")} value={displayName(partner, t)} />
+              <SettingsRow
+                label={partnerPerson?.name ?? displayName(partner, t)}
+                description={partner?.email}
+                leading={
+                  partnerPerson && (
+                    <button
+                      type="button"
+                      aria-label={t("avatar.view", { name: partnerPerson.name })}
+                      className="shrink-0 press rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
+                      onClick={() => setZoomed(partnerPerson)}
+                    >
+                      <PersonAvatar person={partnerPerson} />
+                    </button>
+                  )
+                }
+              />
+              <SettingsRow
+                icon={Cake}
+                label={t("events.birthday", { name: partnerPerson?.name ?? displayName(partner, t) })}
+                value={partner?.birthDate ? formatDay(partner.birthDate, locale, "numeric") : t("settings.notSet")}
+              />
               <SettingsRow
                 ref={dateButton}
                 icon={CalendarHeart}
@@ -345,6 +361,7 @@ export function Settings({
               </DrawerHeader>
               {sheet === "avatar" ? (
                 <div className="flex flex-col gap-3">
+                  <PersonAvatar person={ownPerson} size="xl" className="mx-auto" />
                   <Button
                     aria-describedby={!online ? "settings-offline" : undefined}
                     disabled={!online}
@@ -397,9 +414,11 @@ export function Settings({
                   </Button>
                 </>
               )}
-              <Button variant="outline" className="mt-3 w-full" disabled={avatarBusy} onClick={() => setOpen(false)}>
-                {t(sheet === "logout" ? "settings.cancel" : "common.close")}
-              </Button>
+              {sheet === "logout" && (
+                <Button variant="outline" className="mt-3 w-full" onClick={() => setOpen(false)}>
+                  {t("settings.cancel")}
+                </Button>
+              )}
             </div>
           </DrawerContent>
         </Drawer>
@@ -455,6 +474,7 @@ export function Settings({
             />
           </Suspense>
         )}
+        <AvatarViewer person={zoomed} onClose={() => setZoomed(null)} />
       </main>
       {paired && <BottomBar {...navigation} />}
     </div>

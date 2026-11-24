@@ -87,7 +87,7 @@ describe("profile photo client", () => {
     };
     const members = [
       { ...user, avatarId: "old" },
-      { id: "b", displayName: "Binh", birthDate: null, avatarId: "partner" },
+      { id: "b", email: "binh@example.com", displayName: "Binh", birthDate: null, avatarId: "partner" },
     ];
     expect(toPeople(members, user, t).map((p) => [p.name, p.photoUrl, p.tone])).toEqual([
       ["An", "/api/avatars/a/new", "primary"],
@@ -95,7 +95,7 @@ describe("profile photo client", () => {
     ]);
     expect(toPeople(members, { ...user, avatarId: null }, t)[0]?.photoUrl).toBeUndefined();
     expect(toPeople([user], { ...user, displayName: null }, t)[0]).toMatchObject({ name: "an", initial: "A" });
-    expect(toPeople([{ ...members[1]!, displayName: null }], user, t)[0]).toMatchObject({
+    expect(toPeople([{ ...members[1]!, displayName: null, email: "" }], user, t)[0]).toMatchObject({
       name: messages["common.person"],
       initial: "Ấ",
     });
