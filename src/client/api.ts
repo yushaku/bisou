@@ -12,6 +12,7 @@ import type {
   PushDevice,
   PushSubscriptionInput,
   Wish,
+  SharedWish,
   SpinWish,
   Claim,
   WishInput,
@@ -131,6 +132,11 @@ export const api = {
   updateWish: (id: string, input: WishInput) =>
     call<{ wish: Wish }>("PUT", `/api/wishes/${encodeURIComponent(id)}`, input),
   deleteWish: (id: string) => call<{ ok: true }>("DELETE", `/api/wishes/${encodeURIComponent(id)}`),
+  sharedWishes: () => call<{ open: SharedWish[]; done: SharedWish[] }>("GET", "/api/shared-wishes"),
+  createSharedWish: (input: WishInput) => call<{ wish: SharedWish }>("POST", "/api/shared-wishes", input),
+  updateSharedWish: (id: string, input: WishInput) =>
+    call<{ wish: SharedWish }>("PUT", `/api/shared-wishes/${encodeURIComponent(id)}`, input),
+  deleteSharedWish: (id: string) => call<{ ok: true }>("DELETE", `/api/shared-wishes/${encodeURIComponent(id)}`),
   me: () => call<MeResponse>("GET", "/api/me"),
   updateMe: (patch: { displayName?: string; locale?: Locale; birthDate?: string | null }) =>
     call<{ user: User }>("PATCH", "/api/me", patch),

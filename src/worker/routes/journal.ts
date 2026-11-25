@@ -80,7 +80,7 @@ journal.post("/", limitEntryBody, async (c) => {
     const { results } = await db
       .prepare(
         `SELECT id FROM photos WHERE id IN (${photoIds.map(() => "?").join(",")})
-      AND uploader_id = ? AND couple_id = ? AND entry_id IS NULL AND wish_id IS NULL AND created_at > ?`,
+      AND uploader_id = ? AND couple_id = ? AND entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL AND created_at > ?`,
       )
       .bind(...photoIds, userId, coupleId, now - PENDING_PHOTO_TTL)
       .all();
@@ -98,7 +98,7 @@ journal.post("/", limitEntryBody, async (c) => {
       db
         .prepare(
           `UPDATE photos SET entry_id = ?, position = ?
-      WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND created_at > ?`,
+      WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL AND uploader_id = ? AND created_at > ?`,
         )
         .bind(id, position, photoId, userId, now - PENDING_PHOTO_TTL),
     ),
@@ -127,7 +127,7 @@ journal.put("/:id", limitEntryBody, async (c) => {
     const { results } = await db
       .prepare(
         `SELECT id FROM photos WHERE id IN (${photoIds.map(() => "?").join(",")})
-      AND couple_id = ? AND (entry_id = ? OR (entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND created_at > ?))`,
+      AND couple_id = ? AND (entry_id = ? OR (entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL AND uploader_id = ? AND created_at > ?))`,
       )
       .bind(...photoIds, current.couple_id, id, userId, now - PENDING_PHOTO_TTL)
       .all();
@@ -150,7 +150,7 @@ journal.put("/:id", limitEntryBody, async (c) => {
       db
         .prepare(
           `UPDATE photos SET entry_id = ?, position = ?
-      WHERE id = ? AND (entry_id = ? OR (entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND created_at > ?))
+      WHERE id = ? AND (entry_id = ? OR (entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL AND uploader_id = ? AND created_at > ?))
       AND EXISTS (SELECT 1 FROM journal_entries WHERE id = ? AND couple_id = ?)`,
         )
         .bind(id, position, photoId, id, userId, now - PENDING_PHOTO_TTL, id, current.couple_id),

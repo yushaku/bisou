@@ -64,7 +64,7 @@ wishes.get("/", async (c) => {
 
 // The same photo predicate guards every write inside the batch, including a racing expiry or attachment.
 const validPhoto = `(? IS NULL OR EXISTS (SELECT 1 FROM photos WHERE id = ? AND uploader_id = ? AND couple_id = ?
-  AND entry_id IS NULL AND ((wish_id IS NULL AND created_at > ?) OR wish_id = ?)))`;
+  AND entry_id IS NULL AND shared_wish_id IS NULL AND ((wish_id IS NULL AND created_at > ?) OR wish_id = ?)))`;
 
 const saveWish: Handler<WishEnv> = async (c) => {
   const updating = c.req.method === "PUT";
@@ -105,7 +105,7 @@ const saveWish: Handler<WishEnv> = async (c) => {
       .bind(id, photoId, id, owner, ...photoBinds),
     db
       .prepare(
-        `UPDATE photos SET wish_id = ? WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL
+        `UPDATE photos SET wish_id = ? WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL
       AND uploader_id = ? AND couple_id = ? AND created_at > ?
       AND EXISTS (SELECT 1 FROM wishes WHERE id = ? AND owner_id = ? AND status = 'open')`,
       )
@@ -247,7 +247,7 @@ wishes.post("/:id/received", limitBody, async (c) => {
     const { results } = await db
       .prepare(
         `SELECT id FROM photos WHERE id IN (${photoIds.map(() => "?").join(",")})
-      AND uploader_id = ? AND couple_id = ? AND entry_id IS NULL AND wish_id IS NULL AND created_at > ?`,
+      AND uploader_id = ? AND couple_id = ? AND entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL AND created_at > ?`,
       )
       .bind(...photoIds, owner, couple, now - PENDING_PHOTO_TTL)
       .all();
@@ -265,7 +265,7 @@ wishes.post("/:id/received", limitBody, async (c) => {
       db
         .prepare(
           `UPDATE photos SET entry_id = ?, position = ?
-      WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL AND uploader_id = ? AND couple_id = ? AND created_at > ?
+      WHERE id = ? AND entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL AND uploader_id = ? AND couple_id = ? AND created_at > ?
       AND EXISTS (SELECT 1 FROM journal_entries WHERE id = ?)`,
         )
         .bind(entryId, position, photoId, owner, couple, now - PENDING_PHOTO_TTL, entryId),
