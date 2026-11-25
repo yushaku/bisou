@@ -43,7 +43,7 @@ Cloudflare limits checked on 25 November 2026: Workers Logs is included in Free 
 
 ### Signals
 
-1. **Issues + source maps.** Set `observability.issues.enabled` and `upload_source_maps: true` in the Worker build. Issues groups uncaught exceptions, failed invocations, 5xx responses and error logs; the PO receives email when a new issue appears. Source maps must cover both Vite chunks and the Worker bundle.
+1. **Issues + source maps.** Set `observability.issues.enabled` and `upload_source_maps: true` in the Worker build. Issues groups uncaught exceptions, failed invocations, 5xx responses and error logs; the 5xx Monitor below sends the email. Source maps must cover both Vite chunks and the Worker bundle.
 2. **Structured logs.** One JSON object per log line with `event`, `level`, `requestId` (the Cloudflare `cf-ray`), `route` (matched path, never the raw URL), `method`, `status`, `durationMs`, `release` (git SHA injected at build), `errorCode`, and counts/topic/outcome where relevant. A logger in `src/worker/lib/` does the shaping; call sites stop building strings. No body, cookie, `Authorization`, email, push endpoint, `p256dh`, `auth`, title or note text. Error messages are scrubbed before they are logged.
 3. **Analytics Engine dataset `bisou_metrics`.** One binding, `METRICS`. Events:
    - `api_error`: route, method, status, errorCode, release; doubles: durationMs, count 1.
@@ -70,7 +70,7 @@ Cloudflare limits checked on 25 November 2026: Workers Logs is included in Free 
 
 ### Delivery phases
 
-1. **Safety and signal (shippable alone).** Fix OTP/email logging; enable Issues and source maps; add the JSON logger; send a test error and confirm email. No product behavior changes.
+1. **Safety and signal (shippable alone).** Fix OTP/email logging; enable Issues and source maps; add the JSON logger; send a test error, confirm it appears in Issues, and confirm the 5xx Monitor email. No product behavior changes.
 2. **Business metrics and alerts.** Add the Analytics Engine binding and the four events; add `enqueuedAt` to `PushJob` to measure queue lag; create the Monitors and document thresholds. This is the phase that makes a push or cron miss visible.
 3. **Client errors.** Add `/api/telemetry`, wire `ErrorBoundary` and `window.onerror`, rate-limit and scrub. Ship behind a release flag if needed.
 4. **SLO and runbook.** Record the targets above, the post-deploy watch (30 minutes), and a weekly review of Issues, push ratio, cron heartbeats and queue lag.
@@ -86,6 +86,6 @@ Cloudflare limits checked on 25 November 2026: Workers Logs is included in Free 
 
 ## PoC before implementation
 
-- **Question:** On Workers Free, with `observability.issues.enabled` and `upload_source_maps`, does a thrown 500 in staging appear as a grouped issue with a stack pointing at `src/worker/...` and an email within 2 minutes? Can a Monitor query the `bisou_metrics` Analytics Engine dataset and deliver an email within 5 minutes?
+- **Question:** On Workers Free, with `observability.issues.enabled` and `upload_source_maps`, does a thrown 500 in staging appear as a grouped issue with a stack pointing at `src/worker/...`, and does the 5xx Monitor email arrive within 5 minutes? Can a Monitor query the `bisou_metrics` Analytics Engine dataset and deliver an email within 5 minutes?
 - **Pass:** issue visible in under 2 minutes; correct file/line; email delivered; Monitor fires at the configured threshold; logs contain no cookie, body, OTP, email or push endpoint.
 - **Scope:** branch `poc/observability-issues`, staging only, throwaway, never merged; no production change.
