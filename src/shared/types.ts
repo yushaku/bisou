@@ -72,7 +72,8 @@ export type ApiErrorCode =
   | "wish_link_invalid"
   | "invalid_budget"
   | "already_claimed"
-  | "wish_received";
+  | "wish_received"
+  | "shared_wish_done";
 
 export interface ApiError {
   error: ApiErrorCode;
@@ -185,6 +186,20 @@ export interface Wish extends WishInput {
   priority: WishPriority;
   status: "open" | "received";
   receivedOn: string | null;
+  note: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SharedWish {
+  id: string;
+  creatorId: string;
+  title: string;
+  price: number | null;
+  link: string | null;
+  photoId: string | null;
+  status: "open" | "done";
+  doneOn: string | null;
   note: string | null;
   createdAt: number;
   updatedAt: number;

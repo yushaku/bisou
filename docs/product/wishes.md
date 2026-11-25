@@ -17,6 +17,8 @@ Partners have small wishes they are shy to say out loud, and each wants to surpr
 - US3 (claimer): secretly claim a wish and release it if plans change, so that I can plan the surprise. AC7, AC8, AC9
 - US4 (owner): keep spins and claims hidden from me, so that the surprise stays intact. AC10, AC18
 - US5 (owner): mark a wish received and see it become a shared memory, so that the moment is kept. AC11, AC12, AC17
+- US6 (partner): keep a shared jar with my partner of things we want to do together, so that both of us can add, change and delete them. AC19, AC20, AC21, AC22, AC23, AC27
+- US7 (partner): mark a shared wish done with a day, photos and a note, so that the moment becomes a shared memory. AC24, AC25, AC26
 
 ## Business rules
 
@@ -71,12 +73,31 @@ Wish details
 - R29. A partner can open a wish in their own jar to see its full title, a large photo, the price, the priority, its link, the day it was added and, for a received wish, its received day and note, with the same actions as the wish's own menu.
 - R31. Opening a wish's details leaves claims, both jars and the spin unchanged: the spinner still sees only what R12 allows, and no view shows a spin or claim (R17).
 
+Shared jar ("Hai đứa", [ADR 0017](../adr/0017-shared-wish-jar-in-its-own-table.md))
+
+- R32. A couple has one shared jar next to the two private jars; it belongs to the couple, not to a partner. Only the two partners see it; an outsider and an unpaired person learn nothing about it.
+- R33. Either partner adds a shared wish and sees, changes or deletes any shared wish of the couple, the other partner's included. Deleting asks for confirmation. Each wish shows who added it.
+- R34. A shared wish has a title of 1 to 100 characters (outer spaces ignored); a photo, a price (R4) and a web link are optional. It has no priority.
+- R35. A shared wish has at most one photo (R6). A partner keeps a photo already on a shared wish when changing it, but can attach only a photo they uploaded themselves.
+- R36. Shared wishes are separate from the private jars: they never count towards a private jar, the partner jar's empty or filled state, a spin or a claim, and no wish moves between a private and the shared jar.
+- R37. Shared wishes are deleted with the couple's data (see R23); their photos wait for leaving a couple.
+- R38. The wish jar tab opens on "Hai đứa"; a switch "Riêng" shows the two private jars as before (R25 to R28). The add button adds to the jar being shown.
+- R39. Either partner marks an open shared wish done, after confirming, with a day (default today, journal day rules), up to 4 photos of their own and an optional note. Nobody else's unsaved photo can be attached.
+- R40. Done makes one ordinary journal entry: author the partner who marked it, the day, the photos, and the text "Đã làm cùng nhau: <title>" (English "Done together: <title>") followed by the note, in that partner's app language and within 2000 characters. The entry is not marked as made from a wish; its text says where it came from. The other partner gets the usual journal notification and nothing else.
+- R41. A wish is done once: when both partners mark it at once, exactly one entry is made and the other gets "already done". A photo that fails to attach saves nothing.
+- R42. A done wish moves to the "Đã làm" list both partners see, newest first, with its day and note, and the marking partner sees a short celebration. It cannot be edited or marked again, only deleted after confirming; deleting it keeps the journal entry.
+- R44. At the top of "Hai đứa" both partners see the shared jar as the same jar picture as the private jars, with both partners' photos or initials, and under it one line with the exact counts: open shared wishes and, only when above zero, done ones ("5 điều ước · 2 đã làm" / "5 wishes · 2 done"). It fills like a private jar (R26): empty at none, steps up to full at about ten open wishes. Tapping it does nothing. Nothing about the private jars, spins or claims shows there (R17).
+- R43. When a partner adds a shared wish, the other partner is notified with its title ([notifications](notifications.md) R39); changing, deleting or marking one done sends nothing beyond the journal notification of R40.
+
 ## Main flows and exceptions
 
 - Flow for US1: the owner adds a wish with a title and optional extras and later changes or deletes it. Exception: an empty or over-long title, or a price of zero, is refused and nothing is saved.
 - Flow for US2: the spinner enters a budget and a wish comes up with its title, photo, price and link. Exceptions: an empty jar or a budget nothing fits is explained without hints; the 21st spin within 24 hours is refused.
 - Flow for US3: the spinner claims the wish landed on and may release it later; the claimer sees changes the owner made.
 - Flow for US5: the owner confirms a received wish with a day, photos and a note; it leaves the jar, a journal entry appears for both, and a claimer sees the claim as received.
+
+- Flow for US6: either partner adds a shared wish with a title and optional photo, link and price, sees who added each, and changes or deletes any after confirming. Exception: an empty or over-long title, or a price of zero, is refused and nothing is saved; a photo the other partner uploaded but has not saved cannot be attached.
+- Flow for US7: a partner confirms done with a day, photos and a note; the wish moves to Đã làm, a journal entry appears for both and the celebration plays. Exceptions: a day in the future, a text over 2000 characters, more than 4 photos or a photo that is not theirs saves nothing; a wish already done is refused.
 
 ## Acceptance criteria
 
@@ -98,6 +119,15 @@ Wish details
 - AC16 (R29). Given a wish with a title, price, dream priority and link, when B opens it, then B sees the full title, the price, the priority, the link and the day it was added, with the wish's own actions.
 - AC17 (R29). Given a wish received with a note, when B opens it among received wishes, then the details also show the received day and the note.
 - AC18 (R31, R12, R17). Given A spun and claimed a wish, then A's claim and A's spin look as before, B's jars look as before, and B's wish details show no sign of the claim.
+- AC19 (R32, R33). Given a couple, when A adds a shared wish, then B sees it with A as the one who added it, B can change it and delete it after confirming, and an outsider or unpaired person learns nothing.
+- AC20 (R34). Given a shared wish with only a title, then it saves with no priority; an empty title, 101 characters or a price of 0 VND are refused and nothing is saved.
+- AC21 (R35). Given A saved a shared wish with a photo, when B changes its title, then the photo stays; B cannot attach a photo A uploaded but did not save.
+- AC22 (R36). Given the couple has shared wishes, then both private jars, the partner jar's empty or filled state, spins and claims look as if there were none.
+- AC23 (R37, R38). Given the couple row is deleted, then its shared wishes are gone; given the tab is opened, then "Hai đứa" shows first and "Riêng" shows the two private jars unchanged.
+- AC24 (R39, R40). Given a shared wish "Đà Lạt", when B marks it done on 12 Feb with the note "Vui lắm", then both see B's entry on that day reading "Đã làm cùng nhau: Đà Lạt. Vui lắm", and A gets the usual journal notification only.
+- AC25 (R41). Given A and B mark the same wish done at once, then one entry exists and one of them is told it is already done; a photo that is not the marker's saves nothing and leaves the wish open.
+- AC26 (R42). Given a done shared wish, then both see it under Đã làm with its day and note, it cannot be changed, and deleting it after confirming keeps the journal entry.
+- AC27 (R44, R17). Given 0, 3 or 12 open shared wishes, then the shared jar looks empty, a little filled or full, and reads "0 điều ước", "3 điều ước" or "12 điều ước"; with 2 done wishes the line adds " · 2 đã làm"; tapping the jar changes nothing, and no private jar, spin or claim shows.
 
 ## Glossary
 
@@ -105,13 +135,15 @@ Wish details
 - **Spin** (quay hũ): the random pick within a budget.
 - **Claim** (nhận làm): the secret "I'll make it"; **release** (bỏ nhận) gives it back.
 - **Received** (đã nhận): the owner got the wish.
+- **Done** (đã làm): a shared wish both of you did; the shared jar's counterpart of received.
+- **Shared jar** (hũ chung, "Hai đứa"): the couple's jar of wishes both partners edit; **private jars** (hũ riêng, "Riêng") are the two owner jars.
 
 ## Out of scope
 
 - Wishes and claims when a partner leaves; decide with leaving (see [pairing](pairing.md)).
 - Export and full deletion; they come with account deletion.
 - Other currencies, a celebration for the claimer, undoing received.
-- Notifications about wishes, spins, claims or the jar: never sent ([notifications](notifications.md) R9); an entry made from a received wish notifies only as a journal entry.
+- Notifications about private wishes, spins, claims or the private jars: never sent ([notifications](notifications.md) R9); an entry made from a received wish notifies only as a journal entry. The one exception is a new shared wish, which notifies the other partner (R43).
 
 ## Open questions
 

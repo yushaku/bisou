@@ -103,7 +103,7 @@ export interface PushMessage {
   url: string;
   tag: string;
 }
-export type PushTopic = "journal" | "events" | "garden" | "notes";
+export type PushTopic = "journal" | "events" | "garden" | "notes" | "shared-wish";
 
 export interface PushResult {
   outcome: "sent" | "gone" | "retry" | "failed";

@@ -1,8 +1,8 @@
 import { useApiMutation } from "@/lib/serverQuery";
 import { useEffect, useId, useState } from "react";
 import { ENTRY_PHOTOS_MAX, ENTRY_TEXT_MAX, entryText } from "../../../shared/journal";
-import { receivedText } from "../../../shared/wishes";
-import type { JournalEntry, Wish } from "../../../shared/types";
+import { doneTogetherText, receivedText } from "../../../shared/wishes";
+import type { JournalEntry, SharedWish, Wish } from "../../../shared/types";
 import { api } from "@/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,8 @@ interface ComposeSheetProps {
   /* The shared entry to change (journal R28); omit to write a new one. */
   entry?: JournalEntry;
   receiving?: Wish;
+  /* A shared wish to mark done together: same form, saved through the shared route. */
+  doneTogether?: SharedWish;
   onSaved: (entry: JournalEntry) => void;
   onSignedOut: () => void;
 }
@@ -73,7 +75,7 @@ export function ComposeSheet({ open, onOpenChange, fromMenu, ...form }: ComposeS
       >
         {/* Keyed by entry, so switching between new and edit never carries a form over. */}
         <ComposeForm
-          key={form.receiving?.id ?? form.entry?.id ?? "new"}
+          key={form.receiving?.id ?? form.doneTogether?.id ?? form.entry?.id ?? "new"}
           {...form}
           onLock={setLock}
           onClose={requestClose}
@@ -116,6 +118,7 @@ interface ComposeFormProps extends Omit<ComposeSheetProps, "open" | "onOpenChang
 export function ComposeForm({
   entry,
   receiving,
+  doneTogether,
   partnerName,
   onSaved,
   onSignedOut,
@@ -127,6 +130,7 @@ export function ComposeForm({
   const createEntry = useApiMutation(api.createEntry, ["journal"]);
   const updateEntry = useApiMutation(api.updateEntry, ["journal"]);
   const receiveWish = useApiMutation(api.receiveWish, ["journal", "wishes", "claims"]);
+  const doneShared = useApiMutation(api.doneSharedWish, ["journal", "shared-wishes"]);
   const online = useOnline();
   const ids = useId();
   const [now] = useState(Date.now);
@@ -143,7 +147,13 @@ export function ComposeForm({
   useEffect(() => onLock(saving ? "saving" : dirty ? "dirty" : null), [dirty, saving, onLock]);
   useEffect(() => () => onLock(null), [onLock]);
 
-  const journalText = receiving ? receivedText(locale, receiving.title, text) : text;
+  // Marking a wish received or done confirms first and wraps the note in the wish's own sentence.
+  const marking = receiving ?? doneTogether;
+  const journalText = receiving
+    ? receivedText(locale, receiving.title, text)
+    : doneTogether
+      ? doneTogetherText(locale, doneTogether.title, text)
+      : text;
   const length = textLength(journalText);
   const block = preparing ? "photos" : saveBlock({ date, text: journalText, photos: queue.items }, now);
 
@@ -159,9 +169,11 @@ export function ComposeForm({
     const input = { date, text: entryText(text), photoIds: queue.items.map((i) => i.photoId ?? "") };
     const res = receiving
       ? await receiveWish(receiving.id, { date, note: text.trim(), photoIds: input.photoIds, locale })
-      : entry
-        ? await updateEntry(entry.id, input)
-        : await createEntry(input);
+      : doneTogether
+        ? await doneShared(doneTogether.id, { date, note: text.trim(), photoIds: input.photoIds, locale })
+        : entry
+          ? await updateEntry(entry.id, input)
+          : await createEntry(input);
     setConfirmReceiving(false);
     setSaving(false);
     if (res.ok) {
@@ -184,13 +196,23 @@ export function ComposeForm({
         onSubmit={(e) => {
           e.preventDefault();
           if (!online) return;
-          if (receiving) setConfirmReceiving(true);
+          if (marking) setConfirmReceiving(true);
           else void save();
         }}
         className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col"
       >
         <DrawerHeader className="shrink-0 flex-row items-center justify-between text-left">
-          <DrawerTitle>{t(receiving ? "received.action" : entry ? "compose.edit" : "compose.new")}</DrawerTitle>
+          <DrawerTitle>
+            {t(
+              receiving
+                ? "received.action"
+                : doneTogether
+                  ? "sharedWish.doneAction"
+                  : entry
+                    ? "compose.edit"
+                    : "compose.new",
+            )}
+          </DrawerTitle>
           <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>
             {t("common.close")}
           </Button>
@@ -198,12 +220,12 @@ export function ComposeForm({
 
         <ComposeBody>
           <p className="text-sm text-muted-foreground">{t("compose.withPartner", { partner: partnerName })}</p>
-          {receiving && <p className="font-heading text-xl">{receiving.title}</p>}
+          {marking && <p className="font-heading text-xl">{marking.title}</p>}
           <DayField
             value={date}
             now={now}
             disabled={saving}
-            label={receiving ? "received.day" : "compose.day"}
+            label={receiving ? "received.day" : doneTogether ? "sharedWish.doneDay" : "compose.day"}
             onChange={(value) => {
               setDate(value);
               change();
@@ -212,7 +234,7 @@ export function ComposeForm({
 
           <div className="flex flex-1 flex-col gap-2">
             <label htmlFor={`${ids}-text`} className="font-semibold">
-              {t(receiving ? "received.note" : "compose.text")}
+              {t(marking ? "received.note" : "compose.text")}
             </label>
             <Textarea
               id={`${ids}-text`}
@@ -228,7 +250,7 @@ export function ComposeForm({
             />
           </div>
 
-          {receiving && <p className="rounded-lg bg-muted p-3 text-sm whitespace-pre-line">{journalText}</p>}
+          {marking && <p className="rounded-lg bg-muted p-3 text-sm whitespace-pre-line">{journalText}</p>}
           <PhotoPicker
             queue={queue}
             onPreparingChange={setPreparing}
@@ -244,7 +266,9 @@ export function ComposeForm({
 
         <ComposeFooter>
           <Button type="submit" size="lg" loading={saving} disabled={!online || !!block}>
-            {saving ? t("compose.saving") : t(receiving ? "received.action" : "compose.save")}
+            {saving
+              ? t("compose.saving")
+              : t(receiving ? "received.action" : doneTogether ? "sharedWish.doneAction" : "compose.save")}
           </Button>
         </ComposeFooter>
       </form>
@@ -256,15 +280,15 @@ export function ComposeForm({
       >
         <DialogContent showCloseButton={!saving}>
           <DialogHeader>
-            <DialogTitle>{t("received.action")}</DialogTitle>
-            <DialogDescription>{t("received.confirm")}</DialogDescription>
+            <DialogTitle>{t(doneTogether ? "sharedWish.doneAction" : "received.action")}</DialogTitle>
+            <DialogDescription>{t(doneTogether ? "sharedWish.doneConfirm" : "received.confirm")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" disabled={saving} onClick={() => setConfirmReceiving(false)}>
               {t("common.close")}
             </Button>
             <Button disabled={!online} loading={saving} onClick={() => void save()}>
-              {t("received.save")}
+              {t(doneTogether ? "sharedWish.doneSave" : "received.save")}
             </Button>
           </DialogFooter>
         </DialogContent>

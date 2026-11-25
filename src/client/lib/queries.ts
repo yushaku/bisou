@@ -14,6 +14,7 @@ export const queries = {
     queryOptions({ queryKey: ["garden", "decisions", id], queryFn: () => apiData(api.gardenStageDecisions(id)) }),
   gardenStars: queryOptions({ queryKey: ["garden", "stars"], queryFn: () => apiData(api.gardenStars()) }),
   wishes: queryOptions({ queryKey: ["wishes"], queryFn: () => apiData(api.wishes()) }),
+  sharedWishes: queryOptions({ queryKey: ["shared-wishes"], queryFn: () => apiData(api.sharedWishes()) }),
   notes: queryOptions({ queryKey: ["notes"], queryFn: () => apiData(api.notes()) }),
   claims: queryOptions({ queryKey: ["claims"], queryFn: () => apiData(api.claims()) }),
   boxes: queryOptions({ queryKey: ["boxes"], queryFn: () => apiData(api.boxes()) }),

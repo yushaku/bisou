@@ -1,7 +1,7 @@
 import { defined } from "../../shared/guards";
 import { ArrowLeft, Check, Ellipsis, ListFilter, PencilLine, Plus, Trash2 } from "lucide-react";
-import { lazy, Suspense, useContext, useLayoutEffect, useState } from "react";
-import { Link } from "wouter";
+import { lazy, Suspense, useContext, useEffect, useLayoutEffect, useState } from "react";
+import { Link, useLocation, useSearch } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import { toast } from "@/components/ui/ding-toaster";
 import type { Couple, Wish } from "../../shared/types";
@@ -27,8 +27,10 @@ import { useOnline } from "../lib/useOnline";
 import { wishErrorKey, wishJarLevels } from "../lib/wishes";
 import { useCreateRequest } from "../lib/useTabNavigation";
 import { readCreateRequest } from "../lib/navigation";
+import { useSharedWishes } from "../lib/useSharedWishes";
 import { useWishJar } from "../lib/useWishJar";
 import { remember, TabMemory } from "../lib/tabMemory";
+import { SharedWishes } from "./SharedWishes";
 import { SignedInShell, type SessionProps } from "./SignedInShell";
 
 const WishSheet = lazy(() => import("../components/bisou/WishSheet").then((m) => ({ default: m.WishSheet })));
@@ -52,6 +54,23 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [view, setView] = useState<Section | "spin">(() =>
     request === "spin" ? "spin" : (memory?.wishesSection ?? "jar"),
   );
+  // "Hai đứa" opens first; a spin shortcut or a link to the private jars opens "Riêng".
+  const search = useSearch();
+  const [location, navigate] = useLocation();
+  const [jarView, setJarView] = useState<"shared" | "private">(() =>
+    request === "spin"
+      ? "private"
+      : new URLSearchParams(search).get("section") === "shared"
+        ? "shared"
+        : (memory?.wishesJar ?? "shared"),
+  );
+  // A push tap on an open window lands here with ?section=shared, even from the private jars.
+  useEffect(() => {
+    if (new URLSearchParams(search).get("section") !== "shared") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a push tap on an already open window changes only the URL
+    setJarView("shared");
+    navigate(location, { replace: true });
+  }, [search, location, navigate]);
   const [filter, setFilter] = useState<Filter>(() => memory?.wishesFilter ?? "all");
   const partnerName = displayName(
     couple.members.find((m) => m.id !== session.user.id),
@@ -64,10 +83,13 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [receiving, setReceiving] = useState<Wish | null>(null);
   const [celebrate, setCelebrate] = useState(false);
   const { jar, setJar, failed, refresh } = useWishJar(session.onSignedOut);
+  // Both lists load here, so the shell refreshes the jar that is open.
+  const sharedJar = useSharedWishes(session.onSignedOut);
   const levels = wishJarLevels(jar);
   useLayoutEffect(() => {
+    remember(memory, { wishesJar: jarView });
     remember(memory, view === "spin" ? { wishesFilter: filter } : { wishesSection: view, wishesFilter: filter });
-  }, [view, filter, memory]);
+  }, [view, filter, jarView, memory]);
   const [fromMenu, setFromMenu] = useState(false);
   const [editing, setEditing] = useState<Wish | null | undefined>(undefined);
   const [acting, setActing] = useState<Wish | null>(null);
@@ -81,8 +103,13 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useCreateRequest("spin", () => setView("spin"));
+  useCreateRequest("spin", () => {
+    setJarView("private");
+    setView("spin");
+  });
+  // The add button adds to the jar that is open; the shared jar handles its own request.
   useCreateRequest("wishes", () => {
+    if (jarView !== "private") return;
     setFromMenu(true);
     setView("jar");
     setEditing(null);
@@ -125,170 +152,191 @@ export function Wishes({ couple, ...session }: SessionProps & { couple: Couple }
   );
 
   return (
-    <SignedInShell {...session} tab="wishes" onRefresh={refresh}>
-      {view === "spin" ? (
-        <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}>
-          <ArrowLeft aria-hidden="true" />
-          {t("wishes.back")}
-        </Button>
-      ) : (
+    <SignedInShell {...session} tab="wishes" onRefresh={jarView === "shared" ? sharedJar.refresh : refresh}>
+      {jarView === "private" && view === "spin" ? (
+        // The spin view has no tab list, so it sits outside the tabs and their panels.
         <>
-          <section aria-label={t("nav.wishes")} className="mb-4 grid grid-cols-2 gap-2">
-            <WishJar person={myJar} level={levels.mine} mine onOpen={() => setView("jar")} />
-            <WishJar
-              person={partnerJar}
-              level={levels.partner}
-              empty={!failed && jar?.partnerJarEmpty === true}
-              onOpen={() => setView("spin")}
-            />
-          </section>
-          <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
-            <TabsList className="w-full">
-              {(Object.keys(SECTIONS) as Section[]).map((id) => (
-                <TabsTrigger key={id} value={id}>
-                  {t(SECTIONS[id])}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <TabsContent value="jar">
-              <div className="mb-4 flex items-center gap-3">
-                <p className="min-w-0 flex-1 text-sm text-muted-foreground">{t("wishes.private")}</p>
-                {jar && jar.open.length + jar.received.length > 0 && (
-                  <>
-                    <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
-                      {/* Icon only; a dot marks a filter other than All. The chevron is hidden. */}
-                      <SelectTrigger
-                        size="sm"
-                        aria-label={`${t("wishes.filter")}: ${t(FILTERS[filter])}`}
-                        className="relative size-9 shrink-0 justify-center p-0 [&>svg:last-child]:hidden"
-                      >
-                        <ListFilter className="size-4" aria-hidden="true" />
-                        {filter !== "all" && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary"
-                          />
-                        )}
-                      </SelectTrigger>
-                      <SelectContent position="popper" align="end">
-                        {(Object.keys(FILTERS) as Filter[]).map((id) => (
-                          <SelectItem key={id} value={id}>
-                            {t(FILTERS[id])}
-                            <span className="text-muted-foreground tabular-nums">
-                              {id === "all" ? jar.open.length + jar.received.length : jar[id].length}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
-              </div>
-              {failed && (
-                <div role="alert" className="mb-4 text-destructive">
-                  {t("wishes.loadError")}{" "}
-                  <Button variant="outline" onClick={() => void refresh()}>
-                    {t("journal.retry")}
-                  </Button>
-                </div>
-              )}
-              {!jar && !failed && (
-                <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3">
-                  <Skeleton className="h-28" />
-                  <Skeleton className="h-28" />
-                </div>
-              )}
-              {jar &&
-                (jar.open.length + jar.received.length === 0 ? (
-                  <EmptyState
-                    title={t("empty.wishes")}
-                    description={t("wishes.private")}
-                    action={{
-                      label: t("wishes.add"),
-                      onClick: () => {
-                        setFromMenu(false);
-                        setEditing(null);
-                      },
-                      icon: Plus,
-                    }}
+          <Button variant="ghost" className="mb-3 self-start" onClick={() => setView("jar")}>
+            <ArrowLeft aria-hidden="true" />
+            {t("wishes.back")}
+          </Button>
+          <SpinCard
+            partnerName={partnerName}
+            partnerJarEmpty={jar?.partnerJarEmpty === true}
+            onSignedOut={session.onSignedOut}
+            onViewClaims={() => setView("claims")}
+          />
+        </>
+      ) : (
+        <Tabs value={jarView} onValueChange={(value) => setJarView(value === "private" ? "private" : "shared")}>
+          <TabsList className="mb-4 w-full" aria-label={t("sharedWish.switch")}>
+            {/* The same segmented tabs as the journal's; the pseudo-element grows each hit area to 44px. */}
+            <TabsTrigger value="shared" className="before:absolute before:inset-x-0 before:-inset-y-1.5">
+              {t("sharedWish.shared")}
+            </TabsTrigger>
+            <TabsTrigger value="private" className="before:absolute before:inset-x-0 before:-inset-y-1.5">
+              {t("sharedWish.private")}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="shared">
+            <SharedWishes couple={couple} user={session.user} onSignedOut={session.onSignedOut} shared={sharedJar} />
+          </TabsContent>
+          <TabsContent value="private">
+            {view === "spin" ? null : (
+              <>
+                <section aria-label={t("nav.wishes")} className="mb-4 grid grid-cols-2 gap-2">
+                  <WishJar person={myJar} level={levels.mine} mine onOpen={() => setView("jar")} />
+                  <WishJar
+                    person={partnerJar}
+                    level={levels.partner}
+                    empty={!failed && jar?.partnerJarEmpty === true}
+                    onOpen={() => setView("spin")}
                   />
-                ) : (
-                  <>
-                    {filter === "received" && jar.received.length === 0 && <EmptyState title={t("received.empty")} />}
-                    {filter === "open" && jar.open.length === 0 && (
-                      <EmptyState
-                        title={t("empty.wishes")}
-                        action={{
-                          label: t("wishes.add"),
-                          onClick: () => {
-                            setFromMenu(false);
-                            setEditing(null);
-                          },
-                          icon: Plus,
-                        }}
-                      />
-                    )}
-                    <div className="flex flex-col gap-3 pb-6">
-                      {filter !== "received" &&
-                        jar.open.map((wish) => (
-                          <WishCard
-                            key={wish.id}
-                            wish={wish}
-                            onOpen={() => {
-                              setDetail(true);
-                              setActing(wish);
-                              setDeleting(false);
-                              setError(null);
-                            }}
-                            actions={optionsButton(wish)}
-                          />
-                        ))}
-                      {filter !== "open" &&
-                        jar.received.map((wish) => (
-                          <WishCard
-                            key={wish.id}
-                            wish={wish}
-                            onOpen={() => {
-                              setDetail(true);
-                              setActing(wish);
-                              setDeleting(false);
-                              setError(null);
-                            }}
-                            actions={optionsButton(wish)}
-                          >
-                            {wish.receivedOn && (
-                              <p className="mt-1 flex items-start gap-1.5 text-sm text-muted-foreground">
-                                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
-                                  <Check className="size-3" strokeWidth={3} aria-hidden="true" />
-                                </span>
-                                {t("received.on", { date: formatDay(wish.receivedOn, locale) })}
-                              </p>
-                            )}
-                            {wish.note && <p className="mt-1 text-sm whitespace-pre-line">{wish.note}</p>}
-                          </WishCard>
-                        ))}
-                      {filter === "received" && jar.received.length > 0 && (
-                        <Button asChild variant="outline">
-                          <Link href="/journal">{t("received.journal")}</Link>
-                        </Button>
+                </section>
+                <Tabs value={view} onValueChange={(value) => setView(value as Section)} className="mb-4">
+                  <TabsList className="w-full">
+                    {(Object.keys(SECTIONS) as Section[]).map((id) => (
+                      <TabsTrigger key={id} value={id}>
+                        {t(SECTIONS[id])}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  <TabsContent value="jar">
+                    <div className="mb-4 flex items-center gap-3">
+                      <p className="min-w-0 flex-1 text-sm text-muted-foreground">{t("wishes.private")}</p>
+                      {jar && jar.open.length + jar.received.length > 0 && (
+                        <>
+                          <Select value={filter} onValueChange={(value) => setFilter(value as Filter)}>
+                            {/* Icon only; a dot marks a filter other than All. The chevron is hidden. */}
+                            <SelectTrigger
+                              size="sm"
+                              aria-label={`${t("wishes.filter")}: ${t(FILTERS[filter])}`}
+                              className="relative size-9 shrink-0 justify-center p-0 [&>svg:last-child]:hidden"
+                            >
+                              <ListFilter className="size-4" aria-hidden="true" />
+                              {filter !== "all" && (
+                                <span
+                                  aria-hidden="true"
+                                  className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary"
+                                />
+                              )}
+                            </SelectTrigger>
+                            <SelectContent position="popper" align="end">
+                              {(Object.keys(FILTERS) as Filter[]).map((id) => (
+                                <SelectItem key={id} value={id}>
+                                  {t(FILTERS[id])}
+                                  <span className="text-muted-foreground tabular-nums">
+                                    {id === "all" ? jar.open.length + jar.received.length : jar[id].length}
+                                  </span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </>
                       )}
                     </div>
-                  </>
-                ))}
-            </TabsContent>
-            <TabsContent value="claims">
-              <ClaimsList onSignedOut={session.onSignedOut} />
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
-      {view === "spin" && (
-        <SpinCard
-          partnerName={partnerName}
-          partnerJarEmpty={jar?.partnerJarEmpty === true}
-          onSignedOut={session.onSignedOut}
-          onViewClaims={() => setView("claims")}
-        />
+                    {failed && (
+                      <div role="alert" className="mb-4 text-destructive">
+                        {t("wishes.loadError")}{" "}
+                        <Button variant="outline" onClick={() => void refresh()}>
+                          {t("journal.retry")}
+                        </Button>
+                      </div>
+                    )}
+                    {!jar && !failed && (
+                      <div aria-busy="true" aria-label={t("loading")} className="flex flex-col gap-3">
+                        <Skeleton className="h-28" />
+                        <Skeleton className="h-28" />
+                      </div>
+                    )}
+                    {jar &&
+                      (jar.open.length + jar.received.length === 0 ? (
+                        <EmptyState
+                          title={t("empty.wishes")}
+                          description={t("wishes.private")}
+                          action={{
+                            label: t("wishes.add"),
+                            onClick: () => {
+                              setFromMenu(false);
+                              setEditing(null);
+                            },
+                            icon: Plus,
+                          }}
+                        />
+                      ) : (
+                        <>
+                          {filter === "received" && jar.received.length === 0 && (
+                            <EmptyState title={t("received.empty")} />
+                          )}
+                          {filter === "open" && jar.open.length === 0 && (
+                            <EmptyState
+                              title={t("empty.wishes")}
+                              action={{
+                                label: t("wishes.add"),
+                                onClick: () => {
+                                  setFromMenu(false);
+                                  setEditing(null);
+                                },
+                                icon: Plus,
+                              }}
+                            />
+                          )}
+                          <div className="flex flex-col gap-3 pb-6">
+                            {filter !== "received" &&
+                              jar.open.map((wish) => (
+                                <WishCard
+                                  key={wish.id}
+                                  wish={wish}
+                                  onOpen={() => {
+                                    setDetail(true);
+                                    setActing(wish);
+                                    setDeleting(false);
+                                    setError(null);
+                                  }}
+                                  actions={optionsButton(wish)}
+                                />
+                              ))}
+                            {filter !== "open" &&
+                              jar.received.map((wish) => (
+                                <WishCard
+                                  key={wish.id}
+                                  wish={wish}
+                                  onOpen={() => {
+                                    setDetail(true);
+                                    setActing(wish);
+                                    setDeleting(false);
+                                    setError(null);
+                                  }}
+                                  actions={optionsButton(wish)}
+                                >
+                                  {wish.receivedOn && (
+                                    <p className="mt-1 flex items-start gap-1.5 text-sm text-muted-foreground">
+                                      <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
+                                        <Check className="size-3" strokeWidth={3} aria-hidden="true" />
+                                      </span>
+                                      {t("received.on", { date: formatDay(wish.receivedOn, locale) })}
+                                    </p>
+                                  )}
+                                  {wish.note && <p className="mt-1 text-sm whitespace-pre-line">{wish.note}</p>}
+                                </WishCard>
+                              ))}
+                            {filter === "received" && jar.received.length > 0 && (
+                              <Button asChild variant="outline">
+                                <Link href="/journal">{t("received.journal")}</Link>
+                              </Button>
+                            )}
+                          </div>
+                        </>
+                      ))}
+                  </TabsContent>
+                  <TabsContent value="claims">
+                    <ClaimsList onSignedOut={session.onSignedOut} />
+                  </TabsContent>
+                </Tabs>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       )}
       {editing !== undefined && (
         <Suspense fallback={null}>

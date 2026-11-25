@@ -49,8 +49,8 @@ export async function sweepPhotos(env: Env, now: number): Promise<number> {
   // Expire the selected rows atomically so an already validated save cannot attach them during R2 deletion.
   const { results: rows } = await env.DB.prepare(
     `UPDATE photos SET created_at = 0
-    WHERE id IN (SELECT id FROM photos WHERE entry_id IS NULL AND wish_id IS NULL AND created_at <= ? LIMIT 500)
-    AND entry_id IS NULL AND wish_id IS NULL RETURNING id, couple_id`,
+    WHERE id IN (SELECT id FROM photos WHERE entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL AND created_at <= ? LIMIT 500)
+    AND entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL RETURNING id, couple_id`,
   )
     .bind(now - PENDING_PHOTO_TTL)
     .all<{ id: string; couple_id: string }>();
@@ -62,7 +62,7 @@ export async function sweepPhotos(env: Env, now: number): Promise<number> {
     const ids = rows.slice(offset, offset + 100).map((row) => row.id);
     deletes.push(
       env.DB.prepare(
-        `DELETE FROM photos WHERE id IN (${ids.map(() => "?").join(",")}) AND entry_id IS NULL AND wish_id IS NULL`,
+        `DELETE FROM photos WHERE id IN (${ids.map(() => "?").join(",")}) AND entry_id IS NULL AND wish_id IS NULL AND shared_wish_id IS NULL`,
       ).bind(...ids),
     );
   }

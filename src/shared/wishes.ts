@@ -49,3 +49,8 @@ export function receivedText(locale: Locale, title: string, note: string): strin
   const trimmed = note.trim();
   return `${locale === "vi" ? "Đã nhận: " : "Received: "}${title}${trimmed ? `. ${trimmed}` : ""}`;
 }
+
+export function doneTogetherText(locale: Locale, title: string, note: string): string {
+  const trimmed = note.trim();
+  return `${locale === "vi" ? "Đã làm cùng nhau: " : "Done together: "}${title}${trimmed ? `. ${trimmed}` : ""}`;
+}

@@ -3,12 +3,13 @@ import { createContext } from "react";
 export interface TabMemoryValue {
   journalSection: "feed" | "notes";
   returnFocus: string | null;
+  wishesJar: "shared" | "private";
   wishesSection: "jar" | "claims";
   wishesFilter: "all" | "open" | "received";
 }
 
 export function createTabMemory(): TabMemoryValue {
-  return { journalSection: "feed", returnFocus: null, wishesSection: "jar", wishesFilter: "all" };
+  return { journalSection: "feed", returnFocus: null, wishesJar: "shared", wishesSection: "jar", wishesFilter: "all" };
 }
 
 /** Records navigation state for a later screen. The memory is a shared mutable store kept alive across tabs. */

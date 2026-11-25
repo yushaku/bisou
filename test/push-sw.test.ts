@@ -51,6 +51,19 @@ it("notifications AC3, R19: shows the title and replacement tag with a journal d
     data: { url: "/journal" },
   });
 });
+it("shared wishes: a shared-wish push replaces by its own tag and opens Hai đứa", async () => {
+  const sw = worker();
+  const url = "/wishes?section=shared";
+  await sw.dispatch("push", {
+    data: { json: () => ({ title: "An added a shared wish: Pizza", tag: "shared-wish", url }) },
+  });
+  expect(sw.showNotification).toHaveBeenCalledWith("An added a shared wish: Pizza", {
+    tag: "shared-wish",
+    renotify: true,
+    icon: "/icons/icon-192.png",
+    data: { url },
+  });
+});
 it("an unreadable push still shows a Bisou notification", async () => {
   const sw = worker();
   await sw.dispatch("push", {

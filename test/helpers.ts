@@ -38,6 +38,7 @@ export async function resetDb() {
     env.DB.prepare("DELETE FROM wish_spins"),
     env.DB.prepare("DELETE FROM wish_claims"),
     env.DB.prepare("DELETE FROM wishes"),
+    env.DB.prepare("DELETE FROM shared_wishes"),
     env.DB.prepare("DELETE FROM journal_entries"),
     env.DB.prepare("DELETE FROM join_attempts"),
     env.DB.prepare("DELETE FROM pair_codes"),

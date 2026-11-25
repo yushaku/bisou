@@ -13,7 +13,7 @@ A partner wants to know when the other wrote in the journal, answered today's ca
 ## User stories
 
 - US1 (partner): choose per device which kinds of notification I get, so that I am told only what I want. AC1, AC2, AC15, AC16, AC17, AC18, AC19, AC20
-- US2 (partner): be told when my partner wrote in the journal, commented on an entry or answered today's card, so that I know without opening Bisou. AC3, AC4, AC5, AC6, AC12, AC13, AC14, AC22, AC25
+- US2 (partner): be told when my partner wrote in the journal, commented on an entry or answered today's card, or added a shared wish, so that I know without opening Bisou. AC3, AC4, AC5, AC6, AC12, AC13, AC14, AC22, AC25, AC26
 - US3 (partner): be reminded the day before and on the day of an event, so that I never miss a birthday or an anniversary. AC7, AC8, AC9, AC10, AC11, AC21
 - US4 (recipient of a kind note): be told when a note arrives and reminded once, so that I do not miss it. notes-journal AC23, notes-journal AC24
 
@@ -40,7 +40,8 @@ Partner's journal
 
 Wish jar secrecy
 
-- R9. No notification ever tells anything about a wish, a spin, a claim, a release or a partner's jar ([wishes](wishes.md) R10, R17); an entry made from a received wish shows only as R5.
+- R9. No notification ever tells anything about a private wish, a spin, a claim, a release or a partner's jar ([wishes](wishes.md) R10, R17); an entry made from a received wish shows only as R5. The one exception is the shared-jar creation notification (R39).
+- R39. When a partner adds a [shared wish](wishes.md) (R33), each device of the other partner with the partner's journal switch on gets `<name> vừa thêm một điều ước chung: <title>` / `<name> added a shared wish: <title>`, with the wish title cut to about 60 characters; following it opens the wish jar tab on "Hai đứa", even if the tab last showed "Riêng". Changing or deleting a shared wish sends nothing; marking one done sends only the usual journal notification (R5). The author's own devices never get it. A newer shared-wish notification replaces an older one still showing on that device, but strict order is not guaranteed when delivery is retried.
 
 Event reminders
 
@@ -108,6 +109,7 @@ Personal data
 - AC22 (R8a). Given a partner answers today's card, then the other partner's devices with this kind on get "Người ấy vừa trả lời thẻ hôm nay" and no other device does; following it opens Home; when the second partner answers, the first gets it; editing or deleting the answer or playing an extra card sends nothing.
 
 - AC25 (R38). Given a partner adds a journal comment, then only the other partner's devices with the partner's journal switch on get the message in their language with no comment or entry text, and following it opens the full entry; when the comment is edited or deleted, then nothing is sent.
+- AC26 (R39, R9). Given A adds a shared wish "Đà Lạt", then B's devices with the partner's journal switch on get "An vừa thêm một điều ước chung: Đà Lạt" and following it opens Hai đứa; A's devices, B's devices with the switch off, and any edit or delete of the wish send nothing.
 
 ## Glossary
 

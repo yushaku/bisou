@@ -54,7 +54,7 @@ export function createServerQueryClient() {
   });
 }
 
-const SERVER_ROOTS = ["journal", "wishes", "claims", "notes", "boxes", "garden"];
+const SERVER_ROOTS = ["journal", "wishes", "shared-wishes", "claims", "notes", "boxes", "garden"];
 
 async function refetchCachedQueries(client: QueryClient, predicate: (query: Query) => boolean, cancelRefetch: boolean) {
   // Persisted queries have data, but no fetch functions until their screens mount.
@@ -160,7 +160,8 @@ export async function refreshServerData(client: QueryClient) {
 }
 
 const PUSH_QUERY_ROOTS = new Map<string, string[]>([
-  ["journal", ["journal", "wishes", "claims"]],
+  ["journal", ["journal", "wishes", "shared-wishes", "claims"]],
+  ["shared-wish", ["shared-wishes"]],
   ["garden", ["garden"]],
   ["notes", ["notes"]],
 ]);
