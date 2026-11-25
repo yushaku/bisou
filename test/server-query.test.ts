@@ -477,7 +477,7 @@ it("every content push tag emitted by the Worker refreshes a cached query root",
   tags.delete("bisou");
   expect(tags.size).toBeGreaterThan(0);
   const client = createServerQueryClient();
-  const requests = ["journal", "wishes", "claims", "garden", "notes", "boxes"].map((root) => ({
+  const requests = ["journal", "wishes", "shared-wishes", "claims", "garden", "notes", "boxes"].map((root) => ({
     root,
     request: vi.fn(async () => "cached"),
   }));
@@ -766,5 +766,16 @@ it("shared wishes: a restored list refetches on foreground and on a journal push
   expect(request).toHaveBeenCalledOnce();
   await refreshForPush(client, "journal");
   expect(request).toHaveBeenCalledTimes(2);
+  client.clear();
+});
+
+it("a shared-wish push refreshes only the shared list", async () => {
+  const client = createServerQueryClient();
+  const requests = Object.fromEntries(
+    ["shared-wishes", "wishes", "journal"].map((root) => [root, vi.fn(async () => root)]),
+  );
+  for (const [root, queryFn] of Object.entries(requests)) await client.query({ queryKey: [root], queryFn });
+  await refreshForPush(client, "shared-wish");
+  expect(Object.values(requests).map((request) => request.mock.calls.length)).toEqual([2, 1, 1]);
   client.clear();
 });

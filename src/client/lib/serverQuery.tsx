@@ -161,6 +161,7 @@ export async function refreshServerData(client: QueryClient) {
 
 const PUSH_QUERY_ROOTS = new Map<string, string[]>([
   ["journal", ["journal", "wishes", "shared-wishes", "claims"]],
+  ["shared-wish", ["shared-wishes"]],
   ["garden", ["garden"]],
   ["notes", ["notes"]],
 ]);

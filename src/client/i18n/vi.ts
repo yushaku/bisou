@@ -669,6 +669,7 @@ export const vi = {
   "sharedWish.countOpen": "{n} điều ước",
   "sharedWish.countOpenOne": "{n} điều ước",
   "sharedWish.countDone": "{n} đã làm",
+  "push.sharedWish.one": "{name} vừa thêm một điều ước chung: {title}",
 } as const satisfies Record<string, string>;
 
 export type MessageKey = keyof typeof vi;

@@ -87,6 +87,7 @@ Shared jar ("Hai đứa", [ADR 0017](../adr/0017-shared-wish-jar-in-its-own-tabl
 - R41. A wish is done once: when both partners mark it at once, exactly one entry is made and the other gets "already done". A photo that fails to attach saves nothing.
 - R42. A done wish moves to the "Đã làm" list both partners see, newest first, with its day and note, and the marking partner sees a short celebration. It cannot be edited or marked again, only deleted after confirming; deleting it keeps the journal entry.
 - R44. At the top of "Hai đứa" both partners see the shared jar as the same jar picture as the private jars, with both partners' photos or initials, and under it one line with the exact counts: open shared wishes and, only when above zero, done ones ("5 điều ước · 2 đã làm" / "5 wishes · 2 done"). It fills like a private jar (R26): empty at none, steps up to full at about ten open wishes. Tapping it does nothing. Nothing about the private jars, spins or claims shows there (R17).
+- R43. When a partner adds a shared wish, the other partner is notified with its title ([notifications](notifications.md) R39); changing, deleting or marking one done sends nothing beyond the journal notification of R40.
 
 ## Main flows and exceptions
 
@@ -142,7 +143,7 @@ Shared jar ("Hai đứa", [ADR 0017](../adr/0017-shared-wish-jar-in-its-own-tabl
 - Wishes and claims when a partner leaves; decide with leaving (see [pairing](pairing.md)).
 - Export and full deletion; they come with account deletion.
 - Other currencies, a celebration for the claimer, undoing received.
-- Notifications about wishes, spins, claims or the jar: never sent ([notifications](notifications.md) R9); an entry made from a received wish notifies only as a journal entry.
+- Notifications about private wishes, spins, claims or the private jars: never sent ([notifications](notifications.md) R9); an entry made from a received wish notifies only as a journal entry. The one exception is a new shared wish, which notifies the other partner (R43).
 
 ## Open questions
 

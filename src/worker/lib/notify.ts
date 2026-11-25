@@ -60,6 +60,52 @@ export async function notifyJournal(
   }
 }
 
+// A shared wish title is cut for the lock screen: 60 code points, the last one an ellipsis when cut.
+export const SHARED_WISH_PUSH_TITLE_MAX = 60;
+
+export async function notifySharedWish(env: Env, coupleId: string, creatorId: string, title: string): Promise<void> {
+  if (!env.VAPID_PRIVATE_KEY) {
+    console.log("[bisou] push unavailable");
+    return;
+  }
+  try {
+    const letters = Array.from(title);
+    const shown =
+      letters.length > SHARED_WISH_PUSH_TITLE_MAX
+        ? `${letters.slice(0, SHARED_WISH_PUSH_TITLE_MAX - 1).join("")}…`
+        : title;
+    const { results } = await env.DB.prepare(
+      `SELECT s.id, u.locale,
+      (SELECT display_name FROM users WHERE id = ?) AS name
+      FROM push_subscriptions s JOIN users u ON u.id = s.user_id
+      WHERE s.user_id = (SELECT user_id FROM couple_members WHERE couple_id = ? AND user_id <> ?) AND s.journal = 1`,
+    )
+      .bind(creatorId, coupleId, creatorId)
+      .all<{ id: string; locale: string; name: string | null }>();
+    const now = Date.now();
+    await enqueuePush(
+      env,
+      results.map((row) =>
+        pushJob(
+          row.id,
+          "shared-wish",
+          {
+            title: translate(row.locale, "push.sharedWish.one", {
+              name: row.name?.trim() || translate(row.locale, "common.person"),
+              title: shown,
+            }),
+            url: "/wishes?section=shared",
+            tag: "shared-wish",
+          },
+          now,
+        ),
+      ),
+    );
+  } catch {
+    console.error("[bisou] shared wish push failed");
+  }
+}
+
 export async function notifyGarden(env: Env, coupleId: string, authorId: string): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) {
     console.log("[bisou] push unavailable");

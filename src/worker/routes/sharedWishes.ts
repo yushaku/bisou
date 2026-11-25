@@ -5,7 +5,7 @@ import { defined, isRecord } from "../../shared/guards";
 import { doneTogetherText, validateWish } from "../../shared/wishes";
 import { isLocale } from "../../shared/types";
 import { entriesWithPhotos, findEntry, validateEntry } from "../lib/journal";
-import { notifyJournal } from "../lib/notify";
+import { notifyJournal, notifySharedWish } from "../lib/notify";
 import { findSharedWish, SHARED_WISH_SELECT, toSharedWish, type SharedWishRow } from "../lib/sharedWishes";
 import { purgePhotos } from "../lib/photos";
 import { PENDING_PHOTO_TTL } from "../lib/time";
@@ -107,6 +107,8 @@ const saveSharedWish: Handler<SharedEnv> = async (c) => {
   await purgePhotos(c.env, defined(detached).results as { id: string; couple_id: string }[]);
   const row = await findSharedWish(db, id, couple);
   if (!row) return c.json({ error: "not_found" }, 404);
+  // Only a new wish tells the partner; a change or a delete stays quiet.
+  if (!updating) c.executionCtx.waitUntil(notifySharedWish(c.env, couple, user, row.title));
   return c.json({ wish: toSharedWish(row) }, updating ? 200 : 201);
 };
 sharedWishes.post("/", limitBody, saveSharedWish);

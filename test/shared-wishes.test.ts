@@ -514,6 +514,73 @@ describe("marking a shared wish done", () => {
   });
 });
 
+describe("push on a new shared wish", () => {
+  async function setup() {
+    const { a, b } = await paired();
+    await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale: "vi" } });
+    const own = await device("own");
+    const partner = await device("partner");
+    const off = await device("off", { journal: false, reminders: true });
+    await subscribe(a, own);
+    await subscribe(b, partner);
+    await subscribe(b, off);
+    return { a, b, own, partner, send: mockPush() };
+  }
+
+  it("goes only to the other partner's devices with the journal switch on, in their language", async () => {
+    const { a, b, partner, send } = await setup();
+    expect((await create(a, { title: "Đà Lạt" })).status).toBe(201);
+    await waitForBackground();
+    expect(send.sent).toHaveLength(1);
+    expect(send.sent[0]!.endpoint).toBe(partner.body.endpoint);
+    expect(await decrypt(send.sent[0]!.body, partner)).toEqual({
+      title: "An vừa thêm một điều ước chung: Đà Lạt",
+      url: "/wishes?section=shared",
+      tag: "shared-wish",
+    });
+    expect(send.sent[0]!.headers.get("topic")).toBe("shared-wish");
+    await call("PATCH", "/api/me", { cookie: b.cookie, body: { locale: "en" } });
+    await create(a, { title: "Pizza" });
+    await waitForBackground();
+    expect(await decrypt(send.sent[1]!.body, partner)).toMatchObject({ title: "An added a shared wish: Pizza" });
+  });
+
+  it("cuts a long title to about 60 characters, and the wish keeps its full title", async () => {
+    const { a, partner, send } = await setup();
+    const title = "ê".repeat(100);
+    const wish = await created(a, { title });
+    await waitForBackground();
+    const { title: shown } = await decrypt(send.sent[0]!.body, partner);
+    expect(shown).toBe(`An vừa thêm một điều ước chung: ${"ê".repeat(59)}…`);
+    expect(wish.title).toBe(title);
+    await create(a, { title: "x".repeat(60) });
+    await waitForBackground();
+    expect((await decrypt(send.sent[1]!.body, partner)).title).toBe(
+      `An vừa thêm một điều ước chung: ${"x".repeat(60)}`,
+    );
+  });
+
+  it("is sent for create only: not for edit, delete, a refused create, or by the other partner to the creator's own devices", async () => {
+    const { a, b, own, partner, send } = await setup();
+    const wish = await created(a);
+    await waitForBackground();
+    expect(send.sent).toHaveLength(1);
+    expect((await create(a, { title: "" })).status).toBe(400);
+    expect(
+      (await call("PUT", `/api/shared-wishes/${wish.id}`, { cookie: b.cookie, body: { title: "Edit" } })).status,
+    ).toBe(200);
+    expect((await call("DELETE", `/api/shared-wishes/${wish.id}`, { cookie: b.cookie })).status).toBe(200);
+    await waitForBackground();
+    expect(send.sent).toHaveLength(1);
+    // The creator's own device is never a recipient; the other partner's create reaches it instead.
+    await create(b, { title: "Phở" });
+    await waitForBackground();
+    expect(send.sent).toHaveLength(2);
+    expect(send.sent[1]!.endpoint).toBe(own.body.endpoint);
+    expect(send.sent.filter((m) => m.endpoint === partner.body.endpoint)).toHaveLength(1);
+  });
+});
+
 let second = 0;
 // A second, separate couple.
 async function paired2(): Promise<TestUser> {

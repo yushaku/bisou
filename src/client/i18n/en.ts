@@ -670,4 +670,5 @@ export const en: Messages = {
   "sharedWish.countOpen": "{n} wishes",
   "sharedWish.countOpenOne": "{n} wish",
   "sharedWish.countDone": "{n} done",
+  "push.sharedWish.one": "{name} added a shared wish: {title}",
 };
