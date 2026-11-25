@@ -17,7 +17,7 @@ Partners have small wishes they are shy to say out loud, and each wants to surpr
 - US3 (claimer): secretly claim a wish and release it if plans change, so that I can plan the surprise. AC7, AC8, AC9
 - US4 (owner): keep spins and claims hidden from me, so that the surprise stays intact. AC10, AC18
 - US5 (owner): mark a wish received and see it become a shared memory, so that the moment is kept. AC11, AC12, AC17
-- US6 (partner): keep a shared jar with my partner of things we want to do together, so that both of us can add, change and delete them. AC19, AC20, AC21, AC22, AC23
+- US6 (partner): keep a shared jar with my partner of things we want to do together, so that both of us can add, change and delete them. AC19, AC20, AC21, AC22, AC23, AC27
 
 ## Business rules
 
@@ -81,6 +81,7 @@ Shared jar ("Hai đứa", [ADR 0017](../adr/0017-shared-wish-jar-in-its-own-tabl
 - R36. Shared wishes are separate from the private jars: they never count towards a private jar, the partner jar's empty or filled state, a spin or a claim, and no wish moves between a private and the shared jar.
 - R37. Shared wishes are deleted with the couple's data (see R23); their photos wait for leaving a couple.
 - R38. The wish jar tab opens on "Hai đứa"; a switch "Riêng" shows the two private jars as before (R25 to R28). The add button adds to the jar being shown.
+- R44. At the top of "Hai đứa" both partners see the shared jar as the same jar picture as the private jars, with both partners' photos or initials, and under it one line with the exact counts: open shared wishes and, only when above zero, done ones ("5 điều ước · 2 đã làm" / "5 wishes · 2 done"). It fills like a private jar (R26): empty at none, steps up to full at about ten open wishes. Tapping it does nothing. Nothing about the private jars, spins or claims shows there (R17).
 
 ## Main flows and exceptions
 
@@ -116,6 +117,7 @@ Shared jar ("Hai đứa", [ADR 0017](../adr/0017-shared-wish-jar-in-its-own-tabl
 - AC21 (R35). Given A saved a shared wish with a photo, when B changes its title, then the photo stays; B cannot attach a photo A uploaded but did not save.
 - AC22 (R36). Given the couple has shared wishes, then both private jars, the partner jar's empty or filled state, spins and claims look as if there were none.
 - AC23 (R37, R38). Given the couple row is deleted, then its shared wishes are gone; given the tab is opened, then "Hai đứa" shows first and "Riêng" shows the two private jars unchanged.
+- AC27 (R44, R17). Given 0, 3 or 12 open shared wishes, then the shared jar looks empty, a little filled or full, and reads "0 điều ước", "3 điều ước" or "12 điều ước"; with 2 done wishes the line adds " · 2 đã làm"; tapping the jar changes nothing, and no private jar, spin or claim shows.
 
 ## Glossary
 

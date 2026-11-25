@@ -648,6 +648,22 @@ export const vi = {
   "crop.skip": "Bỏ ảnh này",
   "wishes.mine": "Hũ của mình",
   "wishes.add": "Thêm điều ước",
+  "sharedWish.shared": "Hai đứa",
+  "sharedWish.private": "Riêng",
+  "sharedWish.switch": "Chọn hũ điều ước",
+  "sharedWish.intro": "Những điều hai đứa muốn làm cùng nhau. Cả hai cùng thấy và cùng sửa.",
+  "sharedWish.empty": "Chưa có điều ước chung nào.",
+  "sharedWish.addedBy": "{name} thêm",
+  "sharedWish.add": "Thêm điều ước chung",
+  "sharedWish.field": "Điều hai đứa muốn làm",
+  "sharedWish.deleteConfirm": "Xóa “{title}” khỏi hũ của hai đứa? Không lấy lại được.",
+  "sharedWish.loadError": "Chưa mở được hũ của hai đứa. Thử lại nhé.",
+  "sharedWish.alreadyDone": "Điều ước này đã làm rồi.",
+  "sharedWish.doneOn": "Đã làm ngày {date}",
+  "sharedWish.jarTitle": "Hũ của hai đứa",
+  "sharedWish.countOpen": "{n} điều ước",
+  "sharedWish.countOpenOne": "{n} điều ước",
+  "sharedWish.countDone": "{n} đã làm",
 } as const satisfies Record<string, string>;
 
 export type MessageKey = keyof typeof vi;

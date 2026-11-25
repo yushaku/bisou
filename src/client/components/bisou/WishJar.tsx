@@ -1,35 +1,38 @@
 import { useId } from "react";
 import { useI18n } from "../../i18n";
 import type { JarLevel } from "../../lib/wishes";
-import { PersonAvatar, type Person } from "./CoupleAvatars";
+import { CoupleAvatars, PersonAvatar, type Person } from "./CoupleAvatars";
 
-export function WishJar({
-  person,
-  level,
-  mine = false,
-  empty = false,
-  onOpen,
-}: {
-  person: Person;
+type WishJarProps = {
   level: JarLevel;
-  mine?: boolean;
   empty?: boolean;
-  onOpen: () => void;
-}) {
+} & (
+  | { person: Person; mine?: boolean; onOpen: () => void; people?: never; title?: never; label?: never }
+  /* The couple's shared jar: both avatars, a given title, and nothing to open. */
+  | { people: [Person, Person]; title: string; label: string; person?: never; mine?: never; onOpen?: never }
+);
+
+export function WishJar({ person, people, title, label, level, mine = false, empty = false, onOpen }: WishJarProps) {
   const id = useId();
   const { t } = useI18n();
+  const Frame = onOpen ? "button" : "div";
+  const name = person?.name ?? "";
   return (
-    <button
-      type="button"
-      aria-label={t(mine ? "wishes.jarMine" : "wishes.jarPartner", { name: person.name })}
-      aria-describedby={empty ? `${id}-empty` : undefined}
-      aria-disabled={empty || undefined}
-      onClick={() => {
-        if (!empty) onOpen();
-      }}
+    <Frame
+      {...(onOpen
+        ? {
+            type: "button" as const,
+            "aria-label": t(mine ? "wishes.jarMine" : "wishes.jarPartner", { name }),
+            "aria-describedby": empty ? `${id}-empty` : undefined,
+            "aria-disabled": empty || undefined,
+            onClick: () => {
+              if (!empty) onOpen();
+            },
+          }
+        : { role: "img", "aria-label": label })}
       className="flex min-w-0 flex-col items-center rounded-xl py-1 text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-disabled:cursor-default"
     >
-      <span className="w-full font-heading text-lg wrap-break-word">{t("wishes.jarTitle", { name: person.name })}</span>
+      <span className="w-full font-heading text-lg wrap-break-word">{title ?? t("wishes.jarTitle", { name })}</span>
       <span className={`jar-wrap relative block w-35 max-w-full ${empty ? "[&>svg]:opacity-50" : ""}`}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -195,7 +198,11 @@ export function WishJar({
           </span>
         )}
       </span>
-      <PersonAvatar person={person} size="sm" className="mt-0.5" />
-    </button>
+      {people ? (
+        <CoupleAvatars people={people} size="sm" className="mt-0.5" />
+      ) : (
+        <PersonAvatar person={person} size="sm" className="mt-0.5" />
+      )}
+    </Frame>
   );
 }

@@ -756,3 +756,15 @@ it.each(["mutation", "push"] as const)(
     }
   },
 );
+
+it("shared wishes: a restored list refetches on foreground and on a journal push", async () => {
+  const client = createServerQueryClient();
+  const request = vi.spyOn(api, "sharedWishes").mockResolvedValue({ ok: true, data: { open: [], done: [] } });
+  // Persisted data has no fetch function until the screen mounts; the list registry supplies it.
+  client.setQueryData(queries.sharedWishes.queryKey, { open: [], done: [] });
+  await refreshServerData(client);
+  expect(request).toHaveBeenCalledOnce();
+  await refreshForPush(client, "journal");
+  expect(request).toHaveBeenCalledTimes(2);
+  client.clear();
+});

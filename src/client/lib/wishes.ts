@@ -5,13 +5,18 @@ import type { PhotoState } from "./compose";
 
 export type JarLevel = 0 | 1 | 2 | 3 | 4;
 
+/** How full a jar looks for its open wishes: empty at none, full from ten (wishes R26). */
+export function jarLevel(openCount: number): JarLevel {
+  return openCount === 0 ? 0 : openCount <= 2 ? 1 : openCount <= 5 ? 2 : openCount <= 9 ? 3 : 4;
+}
+
 export function wishJarLevels(jar: { open: { length: number }; partnerJarEmpty: boolean } | null): {
   mine: JarLevel;
   partner: JarLevel;
 } {
   const count = jar?.open.length ?? 0;
   return {
-    mine: count === 0 ? 0 : count <= 2 ? 1 : count <= 5 ? 2 : count <= 9 ? 3 : 4,
+    mine: jarLevel(count),
     partner: jar && !jar.partnerJarEmpty ? 2 : 0,
   };
 }
@@ -41,6 +46,8 @@ export function wishErrorKey(code?: ApiErrorCode): MessageKey {
       return "compose.photoExpired";
     case "not_found":
       return "compose.gone";
+    case "shared_wish_done":
+      return "sharedWish.alreadyDone";
     case "wish_received":
       return "wish.alreadyReceived";
     default:

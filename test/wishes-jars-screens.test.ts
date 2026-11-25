@@ -1,22 +1,27 @@
 import { createElement as h, type ComponentProps, type ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { afterEach, expect, it, vi } from "vitest";
+import { api } from "../src/client/api";
 import { Router } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import { Journal } from "../src/client/screens/Journal";
 import { Home } from "../src/client/screens/Home";
 import { Wishes } from "../src/client/screens/Wishes";
 import { I18nProvider } from "../src/client/i18n";
-import { TabMemory } from "../src/client/lib/tabMemory";
+import { TabMemory, type TabMemoryValue } from "../src/client/lib/tabMemory";
 import { createQueryFixture as createTabMemory } from "./query-fixture";
 
 const buttons = vi.hoisted(() => new Map<string, () => void>());
+const refreshes = vi.hoisted(() => [] as (() => Promise<void>)[]);
 vi.mock("wouter/use-browser-location", async (original) => ({
   ...(await original<typeof import("wouter/use-browser-location")>()),
   useHistoryState: vi.fn(() => null),
 }));
 vi.mock("../src/client/screens/SignedInShell", () => ({
-  SignedInShell: ({ children }: { children: ReactNode }) => children,
+  SignedInShell: ({ children, onRefresh }: { children: ReactNode; onRefresh?: () => Promise<void> }) => {
+    if (onRefresh) refreshes.push(onRefresh);
+    return children;
+  },
 }));
 vi.mock("../src/client/components/ui/button", () => ({
   Button: ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => {
@@ -36,12 +41,22 @@ const session = {
   onSignedOut: () => {},
 };
 
-function render(screen: ReactNode) {
-  vi.stubGlobal("localStorage", { getItem: () => "vi" });
+function render(
+  screen: ReactNode,
+  memoryPatch: Partial<TabMemoryValue> = { wishesJar: "private" },
+  ssrSearch = "",
+  language = "vi",
+) {
+  vi.stubGlobal("localStorage", { getItem: () => language });
   return renderToString(
     h(Router, {
       ssrPath: "/wishes",
-      children: h(I18nProvider, null, h(TabMemory.Provider, { value: createTabMemory() }, screen)),
+      ssrSearch,
+      children: h(
+        I18nProvider,
+        null,
+        h(TabMemory.Provider, { value: Object.assign(createTabMemory(), memoryPatch) }, screen),
+      ),
     }),
   );
 }
@@ -51,6 +66,7 @@ afterEach(() => {
   vi.mocked(useHistoryState).mockReturnValue(null);
   vi.unstubAllGlobals();
   buttons.clear();
+  refreshes.length = 0;
 });
 
 it.each([0, 1])("wishes R25: puts my jar on the left for partner %i", (index) => {
@@ -63,12 +79,41 @@ it.each([0, 1])("wishes R25: puts my jar on the left for partner %i", (index) =>
   ]);
 });
 
+it("shared wishes: the tab opens on Hai đứa and hides the private jars until Riêng is chosen", () => {
+  const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>), {});
+  expect(html).toContain("Hai đứa");
+  expect(html).toContain("Riêng");
+  expect(html).toMatch(/<button[^>]*role="tab"[^>]*aria-selected="true"[^>]*>Hai đứa/);
+  expect(html).toContain("Những điều hai đứa muốn làm cùng nhau");
+  expect(html).not.toContain("Hũ của An, mở hũ của mình");
+});
+
+it("shared wishes: Riêng shows the private jars and the switch stays above them", () => {
+  const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>));
+  expect(html).toMatch(/<button[^>]*role="tab"[^>]*aria-selected="true"[^>]*>Riêng/);
+  expect(html).toContain("Hũ của An, mở hũ của mình");
+  expect(html.indexOf("Hai đứa")).toBeLessThan(html.indexOf("Hũ của An, mở hũ của mình"));
+});
+
+it("shared wishes: a link with section=shared selects Hai đứa even when the last view was private", () => {
+  const html = render(
+    h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>),
+    { wishesJar: "private" },
+    "section=shared",
+  );
+  expect(html).toContain("Những điều hai đứa muốn làm cùng nhau");
+  expect(html).not.toContain("Hũ của An, mở hũ của mình");
+});
+
 it("returns to my jar from a spin opened by a link", () => {
   vi.mocked(useHistoryState).mockReturnValue({ create: "spin", shortcut: true });
   const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>));
   const back = [...buttons].find(([label]) => label.includes("Về hũ của mình"));
   expect(back).toBeDefined();
   expect(html).not.toContain("Hũ của An, mở hũ của mình");
+  // The spin view has no tab list, so nothing may be a tab panel or point at a tab that is not there.
+  expect(html).not.toContain('role="tabpanel"');
+  for (const [, id] of html.matchAll(/aria-(?:labelledby|controls)="([^"]+)"/g)) expect(html).toContain(`id="${id}"`);
 });
 
 it("wishes R25: leaves both jars off Home", () => {
@@ -297,4 +342,96 @@ it.each([
   expect(html.indexOf("An")).toBeLessThan(html.indexOf("What happened "));
   expect(html.indexOf("Bình", html.indexOf("My hope"))).toBeLessThan(html.indexOf("I will listen carefully."));
   expect(html).toContain("rounded-xl bg-muted p-4");
+});
+
+it.each([
+  ["shared", "sharedWishes", "wishes"],
+  ["private", "wishes", "sharedWishes"],
+] as const)("pull to refresh on %s reloads the jar that is shown", async (jar, refreshed, untouched) => {
+  const empty = { open: [], done: [], received: [], partnerJarEmpty: true };
+  const shown = vi.spyOn(api, refreshed).mockResolvedValue({ ok: true, data: empty });
+  const other = vi.spyOn(api, untouched).mockResolvedValue({ ok: true, data: empty });
+  render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>), { wishesJar: jar });
+  await refreshes.at(-1)!();
+  expect(shown).toHaveBeenCalledOnce();
+  expect(other).not.toHaveBeenCalled();
+  vi.restoreAllMocks();
+});
+
+it("the jar switch reuses the journal's tabs, with 44px hit areas and a real panel for the shown tab", () => {
+  const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>), {});
+  const tabs = [...html.matchAll(/<button[^>]*role="tab"[^>]*>/g)].map((match) => match[0]).slice(0, 2);
+  expect(tabs).toHaveLength(2);
+  for (const tab of tabs) expect(tab).toContain("before:-inset-y-1.5");
+  const selected = tabs.find((tab) => tab.includes('aria-selected="true"'))!;
+  const panel = /aria-controls="([^"]+)"/.exec(selected)![1]!;
+  expect(html).toMatch(
+    new RegExp(`<div[^>]*role="tabpanel"[^>]*id="${panel}"|<div[^>]*id="${panel}"[^>]*role="tabpanel"`),
+  );
+  expect(html).toContain('role="tablist"');
+  expect(html).not.toContain("radiogroup");
+});
+
+const jarBase = { link: null, photoId: null, price: null, createdAt: 1, updatedAt: 1 };
+const sharedWishes = (open: number, done: number) => ({
+  open: Array.from({ length: open }, (_, n) => ({
+    ...jarBase,
+    id: `o${n}`,
+    creatorId: "an",
+    title: `Wish ${n}`,
+    status: "open" as const,
+    doneOn: null,
+    note: null,
+  })),
+  done: Array.from({ length: done }, (_, n) => ({
+    ...jarBase,
+    id: `d${n}`,
+    creatorId: "binh",
+    title: `Done ${n}`,
+    status: "done" as const,
+    doneOn: "2026-11-01",
+    note: null,
+  })),
+});
+
+it.each([
+  [0, 0, 0, "0 điều ước"],
+  [3, 0, 2, "3 điều ước"],
+  [5, 2, 2, "5 điều ước · 2 đã làm"],
+  [10, 1, 4, "10 điều ước · 1 đã làm"],
+  [14, 0, 4, "14 điều ước"],
+] as const)(
+  "shared wishes R44: the shared jar for %i open and %i done wishes is level %i and reads %s",
+  (open, done, level, line) => {
+    const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>), {
+      wishesJar: "shared",
+      sharedWishes: sharedWishes(open, done),
+    } as Partial<TabMemoryValue>);
+    expect(html).toContain("Hũ của hai đứa");
+    expect(html).toContain(`data-level="${level}"`);
+    expect(html).toContain(`>${line}</p>`);
+    // The jar does nothing when tapped, so it is not a button, and the private jars are not shown.
+    expect(html).not.toMatch(/<button[^>]*aria-label="Hũ của hai đứa/);
+    expect(html).not.toContain("Hũ của An, mở hũ của mình");
+  },
+);
+
+it("shared wishes R44: the count line is English with a singular", () => {
+  const props = { ...session, user: { ...session.user, locale: "en" as const }, couple } satisfies ComponentProps<
+    typeof Wishes
+  >;
+  const one = render(
+    h(Wishes, props),
+    { wishesJar: "shared", sharedWishes: sharedWishes(1, 0) } as Partial<TabMemoryValue>,
+    "",
+    "en",
+  );
+  expect(one).toContain(">1 wish</p>");
+  const many = render(
+    h(Wishes, props),
+    { wishesJar: "shared", sharedWishes: sharedWishes(5, 2) } as Partial<TabMemoryValue>,
+    "",
+    "en",
+  );
+  expect(many).toContain(">5 wishes · 2 done</p>");
 });

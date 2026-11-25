@@ -10,6 +10,11 @@ import type { ReactNode } from "react";
 import type { Photo } from "./PhotoGrid";
 
 export type Wish = SharedWish & { photo?: Photo };
+/** What a card shows; a shared wish has no priority. */
+export type CardWish = Pick<SharedWish, "id" | "title" | "price" | "link" | "photoId"> & {
+  priority?: SharedWish["priority"];
+  photo?: Photo;
+};
 
 const PRIORITY: Record<Wish["priority"], MessageKey> = {
   1: "wish.priority1",
@@ -38,7 +43,7 @@ export function WishCard({
   children,
   onOpen,
 }: {
-  wish: Wish;
+  wish: CardWish;
   className?: string;
   actions?: ReactNode;
   children?: ReactNode;
@@ -79,7 +84,7 @@ export function WishCard({
         {wish.price !== null && (
           <p className="mt-0.5 font-heading text-lg tabular-nums">{formatVnd(wish.price, locale)}</p>
         )}
-        <WishPriority priority={wish.priority} />
+        {wish.priority && <WishPriority priority={wish.priority} />}
         {children}
       </div>
       {(wish.link || actions) && (

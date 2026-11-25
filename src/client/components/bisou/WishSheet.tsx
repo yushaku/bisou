@@ -1,7 +1,7 @@
 import { useOnline } from "@/lib/useOnline";
 import { X } from "lucide-react";
 import { useId, useState, type SubmitEvent } from "react";
-import type { Wish, WishPriority } from "../../../shared/types";
+import type { SharedWish, Wish, WishPriority } from "../../../shared/types";
 import { api } from "@/api";
 import { useApiMutation } from "@/lib/serverQuery";
 import { Button } from "@/components/ui/button";
@@ -24,29 +24,29 @@ import { MoneyInput } from "./MoneyInput";
 import { PhotoPicker } from "./PhotoPicker";
 import { useUploadQueue } from "./useUploadQueue";
 
-export function WishSheet({
-  wish,
-  onClose,
-  onSaved,
-  onSignedOut,
-  fromMenu,
-}: {
+type WishSheetProps = {
   fromMenu?: boolean;
-  wish: Wish | null;
   onClose: () => void;
-  onSaved: (wish: Wish) => void;
   onSignedOut: () => void;
-}) {
+} & (
+  | { shared?: false; wish: Wish | null; onSaved: (wish: Wish) => void }
+  /* The couple's shared jar: no priority, saved through the shared routes. */
+  | { shared: true; wish: SharedWish | null; onSaved: (wish: SharedWish) => void }
+);
+
+export function WishSheet({ wish, onClose, onSaved, onSignedOut, fromMenu, shared }: WishSheetProps) {
   const { t, locale } = useI18n();
   const createWish = useApiMutation(api.createWish, ["wishes"]);
   const updateWish = useApiMutation(api.updateWish, ["wishes", "claims"]);
+  const createShared = useApiMutation(api.createSharedWish, ["shared-wishes"]);
+  const updateShared = useApiMutation(api.updateSharedWish, ["shared-wishes"]);
   const online = useOnline();
   const offlineId = useId();
   const ids = useId();
   const [title, setTitle] = useState(wish?.title ?? "");
   const [price, setPrice] = useState(formatNumber(wish?.price ?? 0, locale));
   const [link, setLink] = useState(wish?.link ?? "");
-  const [priority, setPriority] = useState<WishPriority>(wish?.priority ?? 2);
+  const [priority, setPriority] = useState<WishPriority>(wish && "priority" in wish ? wish.priority : 2);
   const [dirty, setDirty] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -57,7 +57,7 @@ export function WishSheet({
     title,
     price: parseVnd(price) || null,
     link: link.trim() || null,
-    priority,
+    ...(shared ? {} : { priority }),
     photoId: queue.items[0]?.photoId ?? null,
   };
   const block = preparing ? "compose.waitPhotos" : wishSaveBlock(input, queue.items);
@@ -76,11 +76,18 @@ export function WishSheet({
     e.preventDefault();
     if (!online || block || saving) return;
     setSaving(true);
-    const res = wish ? await updateWish(wish.id, input) : await createWish(input);
+    const res = shared
+      ? wish
+        ? await updateShared(wish.id, input)
+        : await createShared(input)
+      : wish
+        ? await updateWish(wish.id, input)
+        : await createWish(input);
     setSaving(false);
     if (res.ok) {
       queue.saved();
-      onSaved(res.data.wish);
+      // The props' union ties the saved wish to `shared`; TypeScript cannot follow it through the response.
+      (onSaved as (saved: Wish | SharedWish) => void)(res.data.wish);
       onClose();
     } else if (res.status === 401) onSignedOut();
     else setError(t(wishErrorKey(res.error?.error)));
@@ -114,7 +121,9 @@ export function WishSheet({
         >
           <form onSubmit={(e) => void save(e)} className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col">
             <DrawerHeader className="flex-row items-center gap-2 px-5 pt-2 pb-3 text-left">
-              <DrawerTitle className="flex-1 font-heading text-2xl">{t(wish ? "wish.edit" : "wishes.add")}</DrawerTitle>
+              <DrawerTitle className="flex-1 font-heading text-2xl">
+                {t(wish ? "wish.edit" : shared ? "sharedWish.add" : "wishes.add")}
+              </DrawerTitle>
               <Button
                 type="button"
                 variant="ghost"
@@ -127,7 +136,7 @@ export function WishSheet({
               </Button>
             </DrawerHeader>
             <fieldset disabled={saving} className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
-              <Label htmlFor={`${ids}-title`}>{t("wish.title")}</Label>
+              <Label htmlFor={`${ids}-title`}>{t(shared ? "sharedWish.field" : "wish.title")}</Label>
               <Input
                 id={`${ids}-title`}
                 autoFocus
@@ -159,24 +168,26 @@ export function WishSheet({
                 }}
                 aria-invalid={block === "wish.linkInvalid"}
               />
-              <fieldset className="flex flex-col gap-2">
-                <legend className="mb-2 font-semibold">{t("wish.priority")}</legend>
-                {([1, 2, 3] as const).map((n) => (
-                  <label key={n} className="flex min-h-11 items-center gap-3 rounded-control border px-3">
-                    <input
-                      type="radio"
-                      name={`${ids}-priority`}
-                      checked={priority === n}
-                      onChange={() => {
-                        setPriority(n);
-                        change();
-                      }}
-                      className="accent-primary"
-                    />
-                    {t(n === 1 ? "wish.priority1" : n === 2 ? "wish.priority2" : "wish.priority3")}
-                  </label>
-                ))}
-              </fieldset>
+              {!shared && (
+                <fieldset className="flex flex-col gap-2">
+                  <legend className="mb-2 font-semibold">{t("wish.priority")}</legend>
+                  {([1, 2, 3] as const).map((n) => (
+                    <label key={n} className="flex min-h-11 items-center gap-3 rounded-control border px-3">
+                      <input
+                        type="radio"
+                        name={`${ids}-priority`}
+                        checked={priority === n}
+                        onChange={() => {
+                          setPriority(n);
+                          change();
+                        }}
+                        className="accent-primary"
+                      />
+                      {t(n === 1 ? "wish.priority1" : n === 2 ? "wish.priority2" : "wish.priority3")}
+                    </label>
+                  ))}
+                </fieldset>
+              )}
               <PhotoPicker queue={queue} onPreparingChange={setPreparing} max={1} saving={saving} onChange={change} />
             </fieldset>
             <div className="flex flex-col gap-2 border-t bg-popover px-5 pt-3 pb-5">
