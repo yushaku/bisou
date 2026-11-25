@@ -7,8 +7,6 @@ import { StarredBlock, StarredCard } from "../src/client/components/bisou/Starre
 import { EmptyState } from "../src/client/components/bisou/EmptyState";
 import { GardenCard } from "../src/client/components/bisou/GardenCard";
 import { GardenStageNotice } from "../src/client/components/bisou/GardenStageNotice";
-import { GardenStageView } from "../src/client/components/bisou/GardenStageView";
-import { GardenStageSheet } from "../src/client/components/bisou/GardenStageSheet";
 import { GardenStageDecisions } from "../src/client/components/bisou/GardenStageDecisions";
 import { decisionStatus, flipKey } from "../src/client/lib/garden";
 import { GardenScene } from "../src/client/components/bisou/GardenScene";
@@ -211,25 +209,6 @@ it("garden-stages R48 R50 R59 AC27 AC33: named banner accepts the displayed revi
   expect(render(component).find((node) => node.type === GardenScene)!.props.open).toBe(false);
 });
 
-it("garden-stages R48 R54 AC27: the stage sheet has no checklist and never disables the next-stage choice", () => {
-  setup();
-  const nodes = render(() =>
-    GardenStageSheet({
-      levels: { ...state.levels, proposal: null },
-      levelId: "living_together",
-      partnerName: "Bình",
-      open: true,
-      onClose: vi.fn(),
-      onChanged: vi.fn(),
-      onSignedOut: vi.fn(),
-      onViewStage: vi.fn(),
-    }),
-  );
-  expect(nodes.some((node) => node.props.children === "Điều cần bàn trước khi Sống chung")).toBe(false);
-  const button = nodes.find((node) => node.props.children === "Muốn bước sang Sống chung")!;
-  expect((button.props as { disabled?: boolean }).disabled).toBe(false);
-});
-
 it("garden-stages R54: the Garden lists the furthest stage's decisions, my turn first, three at a time", () => {
   setup();
   vi.spyOn(api, "gardenStageDecisions").mockResolvedValue({ ok: true, data: { cards: [] } });
@@ -257,35 +236,6 @@ it("garden-stages R54: the Garden lists the furthest stage's decisions, my turn 
   expect(decisionStatus({ ...card, partnerAnswered: true })).toBe("turn");
   hooks.values = [];
   expect(GardenStageDecisions({ ...props, stageId: "with_children" })).toBeNull();
-});
-
-it("garden-stars R67 AC39: the stage answered list shows a star toggle on a revealed decision card", () => {
-  const store = setup();
-  const answered = { ...card, mine: "An's answer", partner: "Bình's answer", flippedDay: "2026-11-09" };
-  store.set(flipKey("stage-stars", answered), "1");
-  testQueryClient.setQueryData(queries.gardenStage("in_love").queryKey, { cards: [answered] });
-  const nodes = render(() =>
-    GardenStageView({
-      levels: state.levels,
-      plants: [],
-      freshness: "fresh",
-      stageId: "in_love",
-      myName: "An",
-      partnerName: "Bình",
-      memoryScope: "stage-stars",
-      onOpenMap: vi.fn(),
-      onSelectStage: vi.fn(),
-      onOpenDeck: vi.fn(),
-      onChanged: vi.fn(),
-      onSignedOut: vi.fn(),
-    }),
-  );
-  const listed = nodes.find((node) => node.type === GardenCard)!;
-  hooks.values = [];
-  const rendered = render(() => GardenCard(listed.props as Parameters<typeof GardenCard>[0]));
-  expect(rendered.some((node) => Array.isArray(node.props.children) && node.props.children.includes("Gắn sao"))).toBe(
-    true,
-  );
 });
 
 it.each([

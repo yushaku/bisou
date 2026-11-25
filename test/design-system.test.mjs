@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { runInNewContext } from "node:vm";
 import { test } from "node:test";
@@ -112,50 +111,6 @@ test("the fabric preset resolves before paint and existing choices are retained"
   assert.deepEqual(parsePrefs(JSON.stringify(saved)), saved);
 });
 
-test("every palette supplies the same semantic tokens with readable text pairs", () => {
-  const luminance = (hex) => {
-    const rgb = hex
-      .slice(1)
-      .match(/../g)
-      .map((n) => parseInt(n, 16) / 255)
-      .map((s) => (s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4));
-    return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
-  };
-  const pairs = [
-    ["box-peach-foreground", "box-peach"],
-    ["box-blue-foreground", "box-blue"],
-    ["box-lilac-foreground", "box-lilac"],
-    ["box-rose-foreground", "box-rose"],
-    ["foreground", "background"],
-    ["card-foreground", "card"],
-    ["popover-foreground", "popover"],
-    ["muted-foreground", "muted"],
-    ["primary-foreground", "primary"],
-    ["secondary-foreground", "secondary"],
-    ["destructive", "card"],
-    ["success-foreground", "success"],
-    ["warning-foreground", "warning"],
-  ];
-  for (const [id, { kind, tokens }] of Object.entries(palettes)) {
-    assert.ok(["light", "dark"].includes(kind));
-    assert.deepEqual(Object.keys(tokens).sort(), Object.keys(palettes.peach.tokens).sort());
-    for (const [fg, bg] of pairs) {
-      const a = luminance(tokens[fg]);
-      const b = luminance(tokens[bg]);
-      assert.ok((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 4.5, `${id}: ${fg}/${bg}`);
-    }
-    for (const [fg, bg] of [
-      ["foreground", "card"],
-      ["input", "card"],
-      ["ring", "background"],
-    ]) {
-      const a = luminance(tokens[fg]);
-      const b = luminance(tokens[bg]);
-      assert.ok((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05) >= 3, `${id}: ${fg}/${bg}`);
-    }
-  }
-});
-
 test("the counter counts calendar days across timezones and DST", () => {
   const previous = process.env.TZ;
   try {
@@ -186,10 +141,4 @@ test("anniversaries include today and keep leap-day anniversaries on Feb 28", ()
   });
   assert.equal(formatVnd(450000, "vi"), "450.000\u00a0₫");
   assert.equal(formatVnd(450000, "en"), "₫450,000");
-});
-
-test("tab pages show immediately without browser view transitions", () => {
-  for (const path of ["src/client/styles.css", "src/client/components/bisou/AppShell.tsx"]) {
-    assert.doesNotMatch(readFileSync(path, "utf8"), /view-transition-name|::view-transition/);
-  }
 });

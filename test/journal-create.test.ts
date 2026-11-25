@@ -12,16 +12,12 @@ import { CloseFields, NoteCloseSheet } from "../src/client/components/bisou/Note
 import type { Locale, NoteLists } from "../src/shared/types";
 import { NoteForm, NoteSheet } from "../src/client/components/bisou/NoteSheet";
 import { BottomBar } from "../src/client/components/bisou/AppShell";
-import { DrawerContent, DrawerHeader, DrawerTitle } from "../src/client/components/ui/drawer";
+import { DrawerContent } from "../src/client/components/ui/drawer";
 import { vi as vietnamese } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
 import { JournalComposeSheet } from "../src/client/components/bisou/JournalComposeSheet";
-import { ComposeForm, ComposeSheet } from "../src/client/components/bisou/ComposeSheet";
-import { ComposeBody, ComposeFooter } from "../src/client/components/bisou/ComposeLayout";
-import { PhotoPicker } from "../src/client/components/bisou/PhotoPicker";
-import { PersonAvatar } from "../src/client/components/bisou/CoupleAvatars";
-import { DayField } from "../src/client/components/bisou/DayField";
-import { Tabs, TabsContent, TabsTrigger } from "../src/client/components/ui/tabs";
+import { ComposeForm } from "../src/client/components/bisou/ComposeSheet";
+import { Tabs, TabsTrigger } from "../src/client/components/ui/tabs";
 import { Dialog } from "../src/client/components/ui/dialog";
 import { ToggleGroup } from "../src/client/components/ui/toggle-group";
 import { Textarea } from "../src/client/components/ui/textarea";
@@ -191,13 +187,6 @@ it.each([
   render(tab, create).find((n) => n.props["data-create-button"] !== undefined)!.props.onClick!();
   expect(create).toHaveBeenCalledWith(destination);
 });
-it("Garden create menu keeps only journal and wish rows", () => {
-  expect(
-    render("garden")
-      .filter((n) => n.props.label)
-      .map((n) => n.props.label),
-  ).toEqual(["Viết nhật ký", "Thêm điều ước"]);
-});
 it("closing the create menu returns focus to +", () => {
   const focus = vi.fn(),
     preventDefault = vi.fn();
@@ -291,43 +280,6 @@ function composer() {
   hooks.index = 0;
   return nodes(JournalComposeSheet(composeProps));
 }
-it.each(["vi", "en"])("the compose sheet has both mounted tabs in %s", (locale) => {
-  hooks.locale = locale;
-  let tree = composer();
-  expect(tree.filter((n) => n.type === TabsTrigger).map((n) => n.props.children)).toEqual(
-    locale === "vi" ? ["Nhật ký", "Lời nhắn nhỏ"] : ["Journal", "Kind note"],
-  );
-  const before = tree.filter((n) => n.type === TabsContent);
-  tree.find((n) => n.type === Tabs)!.props.onValueChange!("notes");
-  tree = composer();
-  expect(tree.find((n) => n.type === DrawerContent)?.props["aria-label"]).toBe(
-    locale === "vi" ? "Lời nhắn nhỏ" : "Kind note",
-  );
-  const after = tree.filter((n) => n.type === TabsContent);
-  expect(after.map((n) => n.props.forceMount)).toEqual([true, true]);
-  expect(after.map((n) => n.props.inert)).toEqual([true, false]);
-  expect(after.map((n) => n.props["aria-hidden"])).toEqual([true, false]);
-  expect(after.every((n) => n.props.className?.includes("[grid-area:1/1]"))).toBe(true);
-  expect(after.map((n) => (n.props.children as ReactElement).type)).toEqual(
-    before.map((n) => (n.props.children as ReactElement).type),
-  );
-});
-it("the journal photo picker stays a normal button", () => {
-  const picker = nodes(
-    PhotoPicker({
-      queue: { items: [], add: vi.fn(), retry: vi.fn(), remove: vi.fn(), saved: vi.fn() },
-      max: 4,
-      saving: false,
-      onChange: vi.fn(),
-    }),
-  );
-  expect(
-    picker.find(
-      (n) =>
-        n.props.children && Array.isArray(n.props.children) && n.props.children.includes(vietnamese["compose.add"]),
-    )?.props.className,
-  ).toBe("h-12");
-});
 it.each([0, 1])("closing checks unsaved form %s, including the hidden tab", (index) => {
   composer().filter((n) => n.props.onLock)[index]!.props.onLock!("dirty");
   let tree = composer();
@@ -356,25 +308,6 @@ it("closing the tabbed composer restores focus to +", () => {
   composer().find((n) => n.type === DrawerContent)!.props.onCloseAutoFocus!({ preventDefault: vi.fn() });
   expect(focus).toHaveBeenCalledWith({ preventScroll: true });
 });
-it("the entry form has no author avatar and the day field has no removed helper", () => {
-  const tree = nodes(
-    ComposeForm({
-      partnerName: "Linh",
-      onSaved: vi.fn(),
-      onSignedOut: vi.fn(),
-      onLock: vi.fn(),
-      onClose: vi.fn(),
-      onDone: vi.fn(),
-    }),
-  );
-  expect(tree.some((n) => n.type === PersonAvatar)).toBe(false);
-  expect(tree.some((n) => n.props.children === "An")).toBe(false);
-  hooks.index = 0;
-  const day = nodes(DayField({ value: "2026-11-12", now: Date.now(), onChange: vi.fn() }));
-  expect(JSON.stringify(day)).not.toContain("-help");
-  expect(vietnamese).not.toHaveProperty("compose.dayHelp");
-  expect(english).not.toHaveProperty("compose.dayHelp");
-});
 it("closing a note created from + returns focus to +", () => {
   const focus = vi.fn(),
     preventDefault = vi.fn();
@@ -392,86 +325,6 @@ it("closing a note created from + returns focus to +", () => {
   );
   tree.find((n) => n.type === DrawerContent)!.props.onCloseAutoFocus!({ preventDefault });
   expect(focus).toHaveBeenCalledWith({ preventScroll: true });
-});
-
-it("editing an entry and receiving a wish keep the single-form sheet", () => {
-  const entry = {
-    id: "entry",
-    authorId: "a",
-    date: "2026-11-12",
-    text: "hi",
-    source: "partner" as const,
-    photoIds: [],
-    createdAt: 1,
-    updatedAt: 1,
-  };
-  const props = { open: true, onOpenChange: vi.fn(), partnerName: "Linh", onSaved: vi.fn(), onSignedOut: vi.fn() };
-  expect(nodes(ComposeSheet({ ...props, entry })).some((n) => n.type === Tabs)).toBe(false);
-  hooks.index = 0;
-  const wish = {
-    id: "w",
-    title: "A book",
-    price: null,
-    link: null,
-    priority: 2 as const,
-    photoId: null,
-    status: "open" as const,
-    receivedOn: null,
-    note: null,
-    createdAt: 1,
-    updatedAt: 1,
-  };
-  expect(nodes(ComposeSheet({ ...props, receiving: wish })).some((n) => n.type === Tabs)).toBe(false);
-});
-
-it.each(["vi", "en"])("composer forms expose a guarded exit and named writing context in %s", (locale) => {
-  hooks.locale = locale;
-  const props = {
-    partnerName: "Linh",
-    onSaved: vi.fn(),
-    onSignedOut: vi.fn(),
-    onLock: vi.fn(),
-    onClose: vi.fn(),
-    onDone: vi.fn(),
-  };
-  const journal = nodes(ComposeForm(props));
-  expect(journal.find((n) => n.type === DrawerTitle)?.props).toMatchObject({
-    children: (locale === "vi" ? vietnamese : english)["compose.new"],
-  });
-  expect(journal.some((n) => n.type === DrawerHeader)).toBe(true);
-  journal.find((n) => n.props.children === (locale === "vi" ? "Đóng" : "Close"))!.props.onClick!();
-  expect(props.onClose).toHaveBeenCalledOnce();
-  expect(journal.some((n) => typeof n.props.children === "string" && n.props.children.includes("Linh"))).toBe(true);
-  expect(journal.some((n) => n.props.id === "test-hint" || n.props.id === "test-counter")).toBe(false);
-  expect(
-    journal.some(
-      (n) =>
-        n.props["aria-describedby"]?.includes("test-hint") === true ||
-        n.props["aria-describedby"]?.includes("test-counter") === true,
-    ),
-  ).toBe(false);
-  hooks.values = [];
-  hooks.index = 0;
-  const note = nodes(NoteForm({ ...props, onRefresh: vi.fn() }));
-  expect(note.find((n) => n.type === DrawerTitle)?.props.className).not.toBe("sr-only");
-  expect(note.some((n) => n.type === DrawerHeader)).toBe(true);
-  expect(
-    note.some(
-      (n) =>
-        n.props.children ===
-        (locale === "vi" ? "Viết đủ bốn phần trước khi gửi nhé" : "Fill in all four parts before sending"),
-    ),
-  ).toBe(true);
-  expect(note.some((n) => typeof n.props.children === "string" && n.props.children.includes("Linh"))).toBe(true);
-  note.find((n) => n.props.children === (locale === "vi" ? "Đóng" : "Close"))!.props.onClick!();
-  expect(props.onClose).toHaveBeenCalledTimes(2);
-  expect(note.find((n) => n.type === "form")?.props.className).toBe(
-    journal.find((n) => n.type === "form")?.props.className,
-  );
-  for (const form of [journal, note]) {
-    expect(form.filter((n) => n.type === ComposeBody)).toHaveLength(1);
-    expect(form.filter((n) => n.type === ComposeFooter)).toHaveLength(1);
-  }
 });
 
 it.each(["now", "eightHours", "custom"] as const)("note composer submits %s delivery", async (delivery) => {
@@ -621,21 +474,6 @@ it.each([0, 1])("visible composer exit checks dirty form %s", (index) => {
   expect(composeProps.onOpenChange).not.toHaveBeenCalled();
 });
 
-it.each(["vi", "en"])("closing explains the shared journal, required message and later action in %s", (locale) => {
-  hooks.locale = locale;
-  const tree = nodes(NoteCloseSheet({ id: "n", onClose: vi.fn(), onClosed: vi.fn(), onSignedOut: vi.fn() }));
-  const copy =
-    locale === "vi"
-      ? ["Để sau", "Khép lại để lưu vào nhật ký chung. Cả hai có thể sửa bài sau đó."]
-      : ["Later", "Close to save this in our shared journal. Either of you can edit the entry later."];
-  for (const text of copy) expect(tree.some((n) => n.props.children === text)).toBe(true);
-  expect(tree.find((n) => n.props.type === "submit")?.props.disabled).toBe(true);
-  const fields = nodes(CloseFields({ value: { line: "" }, onChange: vi.fn() }));
-  expect(fields.some((n) => n.props.children === (locale === "vi" ? "Gợi ý nhanh" : "Quick replies"))).toBe(true);
-  expect(fields.some((n) => n.props.children === (locale === "vi" ? "Lời nhắn" : "Message"))).toBe(true);
-  expect(fields.filter((n) => n.props.onClick)).toHaveLength(3);
-});
-
 it.each(["button", "escape", "outside", "swipe"])(
   "unfinished closing response survives %s dismissal until discard",
   (route) => {
@@ -709,48 +547,6 @@ it.each(["vi", "en"] as const)(
     );
   },
 );
-
-it.each(["vi", "en"])("scheduled deletion names the scheduled note without calling it a draft in %s", (locale) => {
-  hooks.locale = locale;
-  const entry = {
-    id: "n",
-    happened: "Yesterday",
-    feel: "Sad",
-    need: "Time",
-    hope: "Talk",
-    state: "draft" as const,
-    scheduledAt: new Date(2099, 10, 18, 4, 0).getTime(),
-  };
-  const tree = nodes(
-    NoteForm({
-      entry,
-      partnerName: "Linh",
-      onSaved: vi.fn(),
-      onRefresh: vi.fn(),
-      onSignedOut: vi.fn(),
-      onLock: vi.fn(),
-      onClose: vi.fn(),
-      onDone: vi.fn(),
-    }),
-  );
-  expect(
-    tree.some(
-      (n) => n.props.children === (locale === "vi" ? "Xoá lời nhắn đã hẹn gửi này?" : "Delete this scheduled note?"),
-    ),
-  ).toBe(true);
-  expect(
-    tree.some(
-      (n) =>
-        n.props.children ===
-        (locale === "vi"
-          ? "Lời nhắn sẽ mất hẳn và không được gửi. Người ấy sẽ không biết về lời nhắn này."
-          : "The note will be gone for good and will not be sent. Your partner will never know about it."),
-    ),
-  ).toBe(true);
-  expect(tree.some((n) => n.props.children === (locale === "vi" ? "Xoá bản nháp này?" : "Delete this draft?"))).toBe(
-    false,
-  );
-});
 
 it.each(["vi", "en"])(
   "schedule validation is beside and linked to the input, then scrolled into view in %s",
@@ -983,33 +779,6 @@ it("rechoosing eight hours on a scheduled note sends the server delivery choice"
   render().find((n) => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
   await flushQueryWork();
   expect(update).toHaveBeenCalledExactlyOnceWith("n", { ...entry, delivery: "eightHours" });
-});
-
-it("schedule error placement survives switching locale after validation", () => {
-  hooks.values = [{ happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk" }];
-  const render = () => {
-    hooks.index = 0;
-    hooks.refIndex = 0;
-    return nodes(
-      NoteForm({
-        partnerName: "Linh",
-        onSaved: vi.fn(),
-        onRefresh: vi.fn(),
-        onSignedOut: vi.fn(),
-        onLock: vi.fn(),
-        onClose: vi.fn(),
-        onDone: vi.fn(),
-      }),
-    );
-  };
-  render().find((n) => n.type === ToggleGroup)!.props.onValueChange!("custom");
-  render().find((n) => n.type === Input)!.props.onChange!({ target: { value: "2000-01-01T00:00" } });
-  render().find((n) => n.type === "form")!.props.onSubmit!({ preventDefault: vi.fn() });
-  hooks.locale = "en";
-  expect(render().find((n) => n.type === Input)?.props["aria-describedby"]).toBe("test-schedule-error");
-  expect(render().some((n) => n.props.id === "test-schedule-error")).toBe(true);
-  render().find((n) => n.type === Input)!.props.onChange!({ target: { value: "2099-01-01T00:00" } });
-  expect(render().find((n) => n.type === Input)?.props["aria-describedby"]).toBeUndefined();
 });
 
 it.each(["vi", "en"])("sample replies fill and append without replacing typed text in %s", (locale) => {

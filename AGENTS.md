@@ -9,6 +9,11 @@ Do not read or search files under these directories unless I explicitly ask: nod
 - Migrations are additive only.
 - Merging into `main` and pushing it releases production through GitHub Actions;
 
+## Tests
+
+- Test business behaviour: API calls and payloads, state, storage and cache, permissions, offline gating, validation, focus and timers.
+- Assert on handlers, data and outcomes. Rendered copy, classes, layout, order, `aria-*`, assets, colours and snapshots stay untested; review those by eye against [DESIGN.md](DESIGN.md).
+
 ## Design system
 
 - Read [DESIGN.md](DESIGN.md) before creating or changing UI, components, tokens, assets, or user-facing copy. 

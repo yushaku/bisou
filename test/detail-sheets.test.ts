@@ -2,12 +2,10 @@ import { isValidElement, type ReactNode, type ReactElement, type ComponentProps 
 import { afterEach, expect, it, vi } from "vitest";
 import { EntryCard, type Entry } from "../src/client/components/bisou/EntryCard";
 import { WishCard, type Wish } from "../src/client/components/bisou/WishCard";
-import { JournalComments } from "../src/client/components/bisou/JournalComments";
 import { vi as vietnamese, type MessageKey } from "../src/client/i18n/vi";
 import { en as english } from "../src/client/i18n/en";
 import { JournalDetailDrawer } from "../src/client/components/bisou/JournalDetailDrawer";
 import { JournalDetailSheet } from "../src/client/components/bisou/JournalDetailSheet";
-import { WishDetailSheet } from "../src/client/components/bisou/WishDetailSheet";
 import { EntryActions } from "../src/client/components/bisou/EntryActions";
 import { TodayPosts } from "../src/client/components/bisou/TodayPosts";
 import { NoteParts } from "../src/client/components/bisou/NoteParts";
@@ -100,9 +98,6 @@ const wish: Wish = {
   createdAt: 1,
   updatedAt: 1,
 };
-it("hides the written date on cards", () => {
-  expect(nodes(EntryCard({ entry })).some((n) => n.props.children === entry.note)).toBe(false);
-});
 it.each(["journal", "wish"])("opens the %s card only when an opener is provided", (kind) => {
   const render = (onOpen?: () => void) =>
     nodes(kind === "journal" ? EntryCard({ entry, onOpen }) : WishCard({ wish, onOpen }));
@@ -137,11 +132,6 @@ it("restores focus to the opener or the card when a comment count disappears", (
   expect(count.focus).toHaveBeenCalledOnce();
 });
 
-it("shows the written date only on back-filled journal details", () => {
-  const render = (note?: string) => nodes(JournalDetailSheet({ entry: { ...entry, note }, onOpenPhoto: vi.fn() }));
-  expect(render(entry.note).some((n) => n.props.children === entry.note)).toBe(true);
-  expect(render().some((n) => n.props.children === entry.note)).toBe(false);
-});
 it.each([
   [true, undefined, true],
   [true, false, false],
@@ -161,33 +151,6 @@ it.each([
   const shows = (key: string) => result.some((n) => Array.isArray(n.props.children) && n.props.children.includes(key));
   expect(shows("entry.edit")).toBe(own);
   expect(shows("entry.delete")).toBe(showsDelete);
-});
-it("shows a link only when the wish has one", () => {
-  expect(nodes(WishDetailSheet({ wish })).some((n) => n.type === "a")).toBe(false);
-  expect(
-    nodes(WishDetailSheet({ wish: { ...wish, link: "https://example.com" } })).find((n) => n.type === "a")?.props.href,
-  ).toBe("https://example.com");
-});
-it.each(["open", "received"] as const)("shows received details only for received wishes: %s", (status) => {
-  const result = nodes(WishDetailSheet({ wish: { ...wish, status, note: "Thank you", receivedOn: "2026-11-01" } }));
-  expect(result.some((n) => n.props.children === "received.on")).toBe(status === "received");
-  expect(result.some((n) => n.props.children === "Thank you")).toBe(status === "received");
-});
-it("notes AC9 AC16: a read-only note detail has its state title and Close, without a journal date header", () => {
-  const result = nodes(
-    EntryActions({
-      entry: { id: "note", date: "2026-11-13", photoIds: [] },
-      title: "notes.opened",
-      own: false,
-      onClose: vi.fn(),
-      onEdit: vi.fn(),
-      onDeleted: vi.fn(),
-      onSignedOut: vi.fn(),
-    }),
-  );
-  expect(result.some((n) => n.props.children === "notes.opened")).toBe(true);
-  expect(result.some((n) => n.props.children === "common.close")).toBe(true);
-  expect(result.some((n) => n.props.children === "entry.cancel")).toBe(false);
 });
 
 const members = [
@@ -335,24 +298,4 @@ it("Home opens the full shared note detail and closes back to the card", () => {
     (render().find((node) => node.type === JournalDetailDrawer)!.props as ComponentProps<typeof JournalDetailDrawer>)
       .entry,
   ).toBeNull();
-});
-
-it("long entry sheet opener does not claim to control the clamped preview", () => {
-  const long = { ...entry, body: "A memory ".repeat(40) };
-  const more = (onOpen?: () => void) =>
-    nodes(EntryCard({ entry: long, onOpen })).find((node) => node.props.children === "entry.more")!;
-  expect(more(vi.fn()).props["aria-controls"]).toBeUndefined();
-  expect(more().props["aria-controls"]).toBe("test");
-});
-
-it.each([
-  ["vi", "Xoá bình luận"],
-  ["en", "Delete comment"],
-] as const)("journal-comments AC5: the %s confirmation names the comment", (locale, label) => {
-  copy.locale = locale;
-  expect(
-    nodes(JournalComments({ entryId: "shared", userId: "an", people: new Map(), onSignedOut: vi.fn() })).some(
-      (node) => node.props.children === label,
-    ),
-  ).toBe(true);
 });

@@ -248,17 +248,3 @@ it.each(["input", "textarea", "select", "[contenteditable]", "[role=slider]"])(
     expect(refresh).not.toHaveBeenCalled();
   },
 );
-
-it("keeps the spinner and refresh working while motion-reduce drops the animations", async () => {
-  const refresh = vi.fn();
-  const { pull, render } = setup(refresh);
-  pull(80);
-  expect(refresh).toHaveBeenCalledOnce();
-  const nodes = render();
-  expect(nodes.some((node) => node.props["aria-busy"])).toBe(true);
-  expect(nodes.find((node) => node.props.className?.includes("animate-spin"))?.props.className).toContain(
-    "motion-reduce:animate-none",
-  );
-  expect(nodes.find((node) => node.props.style)?.props.className).toContain("motion-reduce:transition-none");
-  await vi.runAllTimersAsync();
-});

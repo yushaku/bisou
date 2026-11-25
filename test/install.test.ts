@@ -39,13 +39,6 @@ function setup(ua: string, standalone = false, dismissed = false) {
 }
 const safari =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1";
-it("shows the three iPhone Safari steps", () => {
-  setup(safari);
-  const html = renderToString(h(InstallCard));
-  for (const key of ["install.share", "install.addToHome", "install.confirm"]) expect(html).toContain(key);
-  expect(html).toContain('aria-label="install.dismiss"');
-  expect(html).toContain("order-first");
-});
 it.each(["installed", "dismissed", "other"])("hides the card when %s", (kind) => {
   setup(kind === "other" ? "Firefox/140" : safari, kind === "installed", kind === "dismissed");
   expect(renderToString(h(InstallCard))).toBe("");

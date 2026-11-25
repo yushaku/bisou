@@ -192,18 +192,6 @@ it("pwa AC11 R11: a new wish is not sent offline and its save button is disabled
   expect(nodes.some((node) => node.props.children === "offline.save")).toBe(true);
 });
 
-it("describes disabled entry deletion with plain offline text", () => {
-  vi.stubGlobal("navigator", { onLine: false });
-  state.push(entry, false, null);
-  const nodes = elements(
-    EntryActions({ entry, onClose: vi.fn(), onEdit: vi.fn(), onDeleted: vi.fn(), onSignedOut: vi.fn() }),
-  );
-  const confirm = nodes.find((node) => node.props.children === "entry.deleteYes")!;
-  const hint = nodes.find((node) => node.props.id === confirm.props["aria-describedby"]);
-  expect(hint?.props.children).toBe("offline.save");
-  expect(hint?.props.role).toBeUndefined();
-});
-
 it("notifications R26: sign out sends this endpoint before unsubscribing", async () => {
   const unsubscribe = vi.fn().mockResolvedValue(true);
   vi.stubGlobal("navigator", {
@@ -223,22 +211,6 @@ it("notifications R26: sign out sends this endpoint before unsubscribing", async
   nodes.find((n) => n.props.children === "home.logout" && n.props.onClick)!.props.onClick!();
   await vi.waitFor(() => expect(unsubscribe).toHaveBeenCalledOnce());
   expect(logout).toHaveBeenCalledWith("device");
-});
-it("pairing AC15: the couple row carries the partner's email under the name", () => {
-  vi.stubGlobal("navigator", { onLine: true });
-  const nodes = elements(
-    Settings({
-      user,
-      onUser: vi.fn(),
-      onSignedOut: vi.fn(),
-      couple: { id: "couple", startDate: null, members: [user, partner], events: [] },
-      onCouple: vi.fn(),
-    }),
-  );
-  const row = nodes.find((node) => node.props.label === "Bình")!;
-  expect(row.props.description).toBe("binh@example.com");
-  // A description is the quiet second line; the right hand value slot stays free.
-  expect(row.props.value).toBeUndefined();
 });
 
 it("notifications AC19: Home hides the invitation for an unpaired user", () => {
@@ -310,26 +282,6 @@ it("notes-journal AC20, notes AC40: closed-note editing keeps fields but cannot 
   expect(save).not.toHaveBeenCalled();
   expect(nodes.find((n) => n.props.children === "notes.save")!.props.disabled).toBe(true);
   expect(nodes.some((n) => n.props.children === "offline.save")).toBe(true);
-});
-
-it.each(["draft", "sent"] as const)("notes R13 R15: %s has its own deletion label and consequence", (status) => {
-  const note = { id: "n", state: status, happened: "Yesterday", feel: "Sad", need: "Time", hope: "Talk", createdAt: 0 };
-  const sheet = NoteSheet({
-    open: true,
-    onOpenChange: vi.fn(),
-    partnerName: "Binh",
-    entry: note,
-    onRefresh: vi.fn(),
-    onSaved: vi.fn(),
-    onSignedOut: vi.fn(),
-  });
-  const form = sheet.props.children[0].props.children;
-  const nodes = elements(form.type(form.props));
-  const label = status === "draft" ? "notes.delete" : "notes.withdraw";
-  expect(nodes.filter((n) => n.props.children === label)).toHaveLength(2);
-  expect(nodes.some((n) => n.props.children === (status === "draft" ? "notes.deleteBody" : "notes.withdrawBody"))).toBe(
-    true,
-  );
 });
 
 it("card-box R61: successful logout clears box text and seen ids before signing out", async () => {

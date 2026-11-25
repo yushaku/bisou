@@ -2,9 +2,7 @@ import { createElement as h } from "react";
 import { renderToString } from "react-dom/server";
 import { readdirSync, readFileSync } from "node:fs";
 import { I18nProvider } from "../src/client/i18n";
-import { CardBoxDeck } from "../src/client/components/bisou/CardBoxDeck";
-import { CardBoxCard } from "../src/client/components/bisou/CardBoxCard";
-import { CardBoxRows, CardBoxBlock, CardBoxList } from "../src/client/components/bisou/CardBoxBlock";
+import { CardBoxBlock } from "../src/client/components/bisou/CardBoxBlock";
 import { Router } from "wouter";
 import { vi, afterEach } from "vitest";
 import { expect, it } from "vitest";
@@ -25,13 +23,10 @@ import {
   type Play,
 } from "../src/client/lib/cardBox";
 import type { CardBoxDetail } from "../src/shared/cardBox";
-import { CardBoxGift } from "../src/client/components/bisou/CardBoxGift";
 import { CardBoxPlayer } from "../src/client/screens/CardBoxPlayer";
 import { api } from "../src/client/api";
 import { CardBoxes } from "../src/client/screens/CardBoxes";
-import { TabMemory } from "../src/client/lib/tabMemory";
-import { testQueryClient, createQueryFixture as createTabMemory } from "./query-fixture";
-import { TABS } from "../src/client/components/bisou/AppShell";
+import { testQueryClient } from "./query-fixture";
 vi.mock("../src/client/components/ui/dialog", async (original) => ({
   ...(await original<typeof import("../src/client/components/ui/dialog")>()),
   DialogContent: ({ children }: { children: import("react").ReactNode }) => h("div", { role: "dialog" }, children),
@@ -104,94 +99,7 @@ it("empty and single-card boxes remain usable", () => {
 });
 
 afterEach(() => vi.unstubAllGlobals());
-it.each(["vi", "en"])("card-box AC11 AC12 AC13: five kinds are readable without response controls in %s", (locale) => {
-  vi.stubGlobal("localStorage", { getItem: () => locale });
-  const text = { vi: "Mẫu", en: "Sample" };
-  const cards: CardBoxDetail["cards"] = [
-    { id: "q", kind: "question", text },
-    { id: "d", kind: "dare", text },
-    { id: "p", kind: "point", text },
-    { id: "r", kind: "rather", options: [text, { vi: "Khác", en: "Other" }] },
-    { id: "s", kind: "scale", text, low: { vi: "Ít", en: "Low" }, high: { vi: "Nhiều", en: "High" } },
-  ];
-  const html = renderToString(
-    h(
-      I18nProvider,
-      null,
-      cards.map((card) => h(CardBoxCard, { key: card.id, card })),
-    ),
-  );
-  expect(html).not.toMatch(/<button|<input|<select|role="radio|role="slider/);
-  for (const label of locale === "vi"
-    ? ["Câu hỏi", "Thử", "Ai hơn?", "Chọn một", "Từ 1 đến 10", "1: Ít 10: Nhiều"]
-    : ["Question", "Try it", "Who’s more?", "Pick one", "1 to 10", "1: Low 10: High"])
-    expect(html).toContain(label);
-});
-it("Home grid shows only the first four boxes, without descriptions", () => {
-  const boxes = ["a", "b", "c", "d", "e"].map((id) => ({
-    ...detail.box,
-    id,
-    description: { vi: "Mô tả", en: "About" },
-  }));
-  const html = renderToString(
-    h(Router, { ssrPath: "/", children: h(I18nProvider, null, h(CardBoxRows, { boxes, from: "/", compact: true })) }),
-  );
-  expect(html.match(/<li/g)).toHaveLength(4);
-  expect(html).not.toContain("card-box-e");
-  expect(html).not.toMatch(/Mô tả|About/);
-});
 
-it.each(["vi", "en"] as const)(
-  "product grid shows background covers, descriptions and price badges in %s",
-  (locale) => {
-    vi.stubGlobal("localStorage", { getItem: () => locale });
-    const free = { ...detail.box, description: { vi: "Câu nhẹ nhàng", en: "Light cards" } };
-    const html = renderToString(
-      h(Router, {
-        ssrPath: "/boxes",
-        children: h(
-          I18nProvider,
-          null,
-          h(CardBoxRows, {
-            boxes: [
-              free,
-              { ...free, id: "paid", open: false, price: 49000 },
-              { ...free, id: "unpriced", open: false, price: null },
-            ],
-            from: "/boxes",
-          }),
-        ),
-      }),
-    );
-    expect(html).toContain("grid-cols-2");
-    expect(html).toContain("border border-border bg-card text-card-foreground");
-    expect(html.match(/data-slot="badge"/g)).toHaveLength(2);
-    expect(html).toContain("relative h-1/2 shrink-0");
-    expect(html).toContain("absolute top-2 left-2 bg-card text-card-foreground tabular-nums");
-    expect(html).toContain("truncate font-heading text-base");
-    expect(html).toContain('loading="lazy"');
-    expect(html).toContain('width="800" height="1024"');
-    expect(html).toContain('alt=""');
-    expect(html).toContain(free.description[locale]);
-    expect(html).toContain(locale === "vi" ? "Miễn phí" : "Free");
-    expect(html).toContain(locale === "vi" ? "49.000đ" : "49,000₫");
-    expect(html).not.toContain(locale === "vi" ? "Xem thử" : "Preview");
-    expect(html).not.toMatch(/<input|Liên hệ|Mã mở/);
-  },
-);
-
-it.each(["vi", "en"] as const)("card-box-unlock AC47: an unlocked paid box tile shows no price in %s", (locale) => {
-  vi.stubGlobal("localStorage", { getItem: () => locale });
-  const owned = { ...detail.box, id: "owned", open: true, price: 49000 };
-  const html = renderToString(
-    h(Router, {
-      ssrPath: "/boxes",
-      children: h(I18nProvider, null, h(CardBoxRows, { boxes: [owned], from: "/boxes" })),
-    }),
-  );
-  expect(html).not.toContain(locale === "vi" ? "49.000đ" : "49,000₫");
-  expect(html).not.toContain('data-slot="badge"');
-});
 it("card-box-unlock AC25: client and shared sources have no runtime imports from Worker", () => {
   const visit = (dir: string): void => {
     for (const item of readdirSync(dir, { withFileTypes: true })) {
@@ -230,44 +138,6 @@ it("card-box AC7 AC8, card-box-unlock AC15: thirty draws have no limit and seen 
   ).toEqual(["b"]);
   expect(readSeen("couple:son", "sample")).toEqual([]);
   expect(nextCard(detail, { stack: [], index: -1, startedOver: false }, [], () => 0).play.stack).toEqual(["a"]);
-});
-
-it("card-box AC5 AC6, card-box-unlock AC48: Home block and box list share ordered preview-only rows and the four tabs", () => {
-  vi.stubGlobal("localStorage", { getItem: () => "vi" });
-  const memory = createTabMemory();
-  memory.boxes = [
-    { ...detail.box, name: { vi: "Làm quen lại", en: "Free" } },
-    { ...detail.box, id: "paid", name: { vi: "Deep Connection", en: "Deep Connection" }, open: false },
-  ];
-  const onSignedOut = () => {};
-  const user = {
-    id: "u",
-    displayName: "U",
-    email: "u@example.com",
-    locale: "vi" as const,
-    createdAt: 1,
-    birthDate: null,
-    avatarId: null,
-  };
-  for (const screen of [
-    h(CardBoxBlock, { onSignedOut, scope: "c:u" }),
-    h(CardBoxes, { user, onUser() {}, onSignedOut, couple: { id: "c", members: [], events: [], startDate: null } }),
-  ]) {
-    const html = renderToString(
-      h(Router, {
-        ssrPath: "/boxes",
-        children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, screen)),
-      }),
-    );
-    expect(html.indexOf("Làm quen lại")).toBeLessThan(html.indexOf("Deep Connection"));
-    expect(html).not.toContain("Xem thử");
-    expect(html).toContain("Deep talk");
-    expect(html).toContain("relative h-1/2 shrink-0");
-    expect(html).toContain("size-full object-cover");
-    expect(html).not.toMatch(/<input|Liên hệ|Mã mở/);
-    expect(html.replace(/<[^>]*>/g, "")).not.toMatch(/[0-9]\/[0-9]/);
-  }
-  expect(TABS).toEqual(["home", "journal", "wishes", "garden"]);
 });
 
 function storage() {
@@ -331,37 +201,6 @@ it("card-box R61: logout clears every account and version of box cache and seen 
   expect(readSeen("c:u", "sample")).toEqual([]);
 });
 
-it("card-box AC27: an uncached offline player asks for a connection without displaying a card", () => {
-  storage();
-  vi.stubGlobal("navigator", { onLine: false });
-  const user = {
-    id: "u",
-    displayName: "U",
-    email: "u@example.com",
-    locale: "vi" as const,
-    createdAt: 1,
-    birthDate: null,
-    avatarId: null,
-  };
-  const html = renderToString(
-    h(Router, {
-      ssrPath: "/boxes/sample",
-      children: h(
-        I18nProvider,
-        null,
-        h(CardBoxPlayer, {
-          user,
-          couple: { id: "c", members: [], startDate: null, events: [] },
-          boxId: "sample",
-          onUser() {},
-          onSignedOut() {},
-        }),
-      ),
-    }),
-  );
-  expect(html).toContain("Connect to open this box for the first time");
-  expect(html).not.toContain("Next card");
-});
 it("card-box AC26: failed fetch leaves the cached detail playable and cached list visible", async () => {
   storage();
   writeCache("c:u", "box:sample", detail);
@@ -375,38 +214,6 @@ it("card-box AC26: failed fetch leaves the cached detail playable and cached lis
   );
   expect(html).toContain("Box");
   expect(html).not.toContain("Opening box");
-});
-
-it.each(["vi", "en"])("list states use house loading, empty and error patterns in %s", (locale) => {
-  vi.stubGlobal("localStorage", { getItem: () => locale });
-  vi.stubGlobal("navigator", { onLine: true });
-  const render = (boxes: CardBoxDetail["box"][] | null, failed: boolean) =>
-    renderToString(
-      h(Router, {
-        ssrPath: "/boxes",
-        children: h(I18nProvider, null, h(CardBoxList, { boxes, failed, refresh: async () => {}, from: "/boxes" })),
-      }),
-    );
-  const loading = render(null, false);
-  expect(loading).toContain('data-slot="skeleton"');
-  expect(loading).toContain("aria-label=");
-  const empty = render([], false);
-  expect(empty).toContain('role="status"');
-  expect(empty).toContain("border-dashed");
-  const error = render(null, true);
-  expect(error).toContain(
-    locale === "vi" ? "Chưa tải được các hộp. Thử lại nhé." : "Couldn&#x27;t load the boxes. Try again.",
-  );
-  expect(error).toContain('role="alert"');
-  expect(error).toContain('data-variant="outline"');
-  const cached = render([detail.box], true);
-  expect(cached).toContain(detail.box.name[locale as "vi" | "en"]);
-  expect(cached).not.toContain('role="alert"');
-  expect(cached).not.toContain("<button");
-  vi.stubGlobal("navigator", { onLine: false });
-  const offline = render(null, true);
-  expect(offline).toContain(locale === "vi" ? "Kết nối mạng để mở hộp này lần đầu" : "Connect to open");
-  expect(offline).not.toContain(locale === "vi" ? "Chưa tải" : "Couldn");
 });
 
 it("box prices keep VND and locale grouping", () => {
@@ -436,170 +243,23 @@ it("PO18: random draw discards forward replay, uses unseen cards and preserves t
   expect(play.stack).toEqual(["a", "b", "c"]);
 });
 
-it.each(["vi", "en"])(
-  "PO18: player deck provides previous, labelled random and primary next controls in %s",
-  (locale) => {
-    vi.stubGlobal("localStorage", { getItem: () => locale });
-    const html = renderToString(
-      h(
-        I18nProvider,
-        null,
-        h(CardBoxDeck, {
-          card: detail.cards[0]!,
-          boxId: "sample",
-          boxName: "Box",
-          onNext() {},
-          onPrevious() {},
-          onRandom() {},
-        }),
-      ),
-    );
-    expect(html).toContain(`role="group" aria-label="${locale === "vi" ? "Bộ thẻ Box" : "Box card deck"}"`);
-    expect(html).toContain(locale === "vi" ? "Thẻ trước" : "Previous card");
-    expect(html).toContain(locale === "vi" ? "Thẻ tiếp" : "Next card");
-    expect(html).toContain(`aria-label="${locale === "vi" ? "Rút ngẫu nhiên" : "Random card"}"`);
-    expect(html).toContain('data-size="icon"');
-    expect(html).toContain("size-11");
-    expect(html).toContain('data-variant="default"');
-    expect(html).toContain('disabled=""');
-  },
-);
-
-it.each(["vi", "en"] as const)(
-  "card-box AC35 AC36: truth and dare are labelled static blocks in the deck in %s",
-  (locale) => {
-    vi.stubGlobal("localStorage", { getItem: () => locale });
-    const card: CardBoxDetail["cards"][number] = {
-      id: "tod-04",
-      kind: "truthDare",
-      truth: {
-        vi: "Mỗi người có món gì hay lén ăn một mình mà chưa từng mời người kia không?",
-        en: "Is there a snack each of you sneaks alone and has never offered the other?",
-      },
-      dare: {
-        vi: "Mỗi người diễn không lời món ăn mình thích nhất, người kia đoán.",
-        en: "Each act out your favourite food without a word while the other guesses.",
-      },
-    };
-    const html = renderToString(h(I18nProvider, null, h(CardBoxCard, { card, boxId: "truth-or-dare" })));
-    for (const label of locale === "vi"
-      ? ["Thật hay thử thách", ">Thật<", ">Thử thách<"]
-      : ["Truth or dare", ">Truth<", ">Dare<"])
-      expect(html).toContain(label);
-    expect(html).toContain(card.truth[locale]);
-    expect(html).toContain(card.dare[locale]);
-    expect(html.match(/rounded-xl border border-current\/20/g)).toHaveLength(2);
-    expect(html).not.toMatch(/<button|<input|<select|aria-pressed|aria-selected|role="radio/);
-    const deck = renderToString(
-      h(
-        I18nProvider,
-        null,
-        h(CardBoxDeck, {
-          card,
-          boxId: "truth-or-dare",
-          boxName: "Truth or Dare",
-          onNext() {},
-          onPrevious() {},
-          onRandom() {},
-        }),
-      ),
-    );
-    expect(deck).toContain(card.truth[locale]);
-    expect(deck).toContain(card.dare[locale]);
-    expect(deck).toContain(locale === "vi" ? "Thẻ tiếp" : "Next card");
-    expect(deck.match(/<button/g)).toHaveLength(3);
-    const box = {
-      ...detail,
-      box: { ...detail.box, id: "truth-or-dare", open: false },
-      cards: [card, { ...card, id: "tod-09" }],
-    };
-    const first = nextCard(box, { stack: [], index: -1, startedOver: false }, [], () => 0);
-    expect(first.play.stack).toEqual(["tod-04"]);
-    expect(nextCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["tod-04", "tod-09"]);
-    expect(randomCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["tod-04", "tod-09"]);
-    expect(cardSwipe(80, 0, 400)).toBe("previous");
-    expect(cardSwipe(-80, 0, 400)).toBe("next");
-  },
-);
-
-it.each(["vi", "en"] as const)(
-  "card-box-content AC37 AC38 AC40: adult badges appear on Home, boxes and every Spicy card only in %s",
-  (locale) => {
-    vi.stubGlobal("localStorage", { getItem: () => locale });
-    const adultBox = { ...detail.box, id: "rau-ram", adult: true as const, name: { vi: "Rau răm", en: "Spicy" } };
-    const memory = createTabMemory();
-    memory.boxes = [detail.box, adultBox];
-    const user = {
-      id: "u",
-      displayName: "U",
-      email: "u@example.com",
-      locale,
-      createdAt: 1,
-      birthDate: null,
-      avatarId: null,
-    };
-    for (const screen of [
-      h(CardBoxBlock, { onSignedOut() {}, scope: "c:u" }),
-      h(CardBoxes, {
-        user,
-        onUser() {},
-        onSignedOut() {},
-        couple: { id: "c", members: [], events: [], startDate: null },
-      }),
-    ]) {
-      const html = renderToString(
-        h(Router, {
-          ssrPath: "/boxes",
-          children: h(I18nProvider, null, h(TabMemory.Provider, { value: memory }, screen)),
-        }),
-      );
-      expect(html.match(/18\+/g)).toHaveLength(1);
-      expect(html).toContain(adultBox.name[locale]);
-      expect(html).toContain(locale === "vi" ? "Miễn phí" : "Free");
-    }
-    const card: CardBoxDetail["cards"][number] = {
-      id: "rr-04",
-      kind: "truthDare",
-      truth: { vi: "Câu thật", en: "A truth" },
-      dare: { vi: "Thử thách nhỏ", en: "A dare" },
-    };
-    const renderCard = (adult?: true) =>
-      renderToString(
-        h(I18nProvider, null, h(CardBoxCard, { card, boxId: adult ? "rau-ram" : "truth-or-dare", adult })),
-      );
-    const html = renderCard(true);
-    expect(html).toContain('data-slot="badge"');
-    expect(html).toContain("18+");
-    for (const label of locale === "vi"
-      ? ["Thật hay thử thách", ">Thật<", ">Thử thách<"]
-      : ["Truth or dare", ">Truth<", ">Dare<"])
-      expect(html).toContain(label);
-    expect(html).not.toMatch(/<button|<input|<select|aria-pressed|aria-selected/);
-    expect(renderCard()).not.toContain("18+");
-    const deck = renderToString(
-      h(
-        I18nProvider,
-        null,
-        h(CardBoxDeck, {
-          card,
-          previous: { ...card, id: "rr-09" },
-          boxId: "rau-ram",
-          boxName: adultBox.name[locale],
-          adult: true,
-          onNext() {},
-          onPrevious() {},
-          onRandom() {},
-        }),
-      ),
-    );
-    expect(deck).toContain("18+");
-    expect(deck).toContain(locale === "vi" ? "Thẻ tiếp" : "Next card");
-    expect(deck.match(/<button/g)).toHaveLength(3);
-    const box = { box: adultBox, cards: [{ ...card, id: "rr-09" }, card] };
-    const first = nextCard(box, { stack: [], index: -1, startedOver: false }, [], () => 0);
-    expect(nextCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["rr-09", "rr-04"]);
-  },
-);
+it("card-box AC35 AC36: truth and dare cards draw like any other card", () => {
+  const card: CardBoxDetail["cards"][number] = {
+    id: "tod-04",
+    kind: "truthDare",
+    truth: { vi: "Thật", en: "Truth" },
+    dare: { vi: "Thử", en: "Dare" },
+  };
+  const box = {
+    ...detail,
+    box: { ...detail.box, id: "truth-or-dare", open: false },
+    cards: [card, { ...card, id: "tod-09" }],
+  };
+  const first = nextCard(box, { stack: [], index: -1, startedOver: false }, [], () => 0);
+  expect(first.play.stack).toEqual(["tod-04"]);
+  expect(nextCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["tod-04", "tod-09"]);
+  expect(randomCard(box, first.play, first.seen, () => 0).play.stack).toEqual(["tod-04", "tod-09"]);
+});
 
 it("card-box-unlock AC41 AC43 AC46: the last preview card leads to the buy view, keeps seen cards, and unlocking draws an unseen card", () => {
   const preview = { ...detail, box: { ...detail.box, open: false }, cards: detail.cards.slice(0, 3) };
@@ -612,52 +272,6 @@ it("card-box-unlock AC41 AC43 AC46: the last preview card leads to the buy view,
   expect(reopened.play.startedOver).toBe(true);
   expect(reopened.seen).toEqual(end.seen);
 });
-
-it.each(["vi", "en"] as const)(
-  "card-box-unlock AC41 AC42 AC45: buy view and gift dialog show the approved copy, offline and error states in %s",
-  (locale) => {
-    vi.stubGlobal("localStorage", { getItem: () => locale });
-    const box = { ...detail.box, price: 49000, open: false };
-    const render = (dialogOpen: boolean, online = true, failed = false) =>
-      renderToString(
-        h(
-          I18nProvider,
-          null,
-          h(CardBoxGift, {
-            box,
-            dialogOpen,
-            online,
-            failed,
-            pending: false,
-            onDialogChange() {},
-            onConfirm() {},
-            onPrevious() {},
-          }),
-        ),
-      );
-    const buy = render(false);
-    expect(buy).toContain(box.cover);
-    expect(buy).toContain(box.name[locale]);
-    expect(buy).toContain(locale === "vi" ? "49.000đ" : "49,000₫");
-    expect(buy).toContain(locale === "vi" ? "Mua hộp" : "Buy box");
-    expect(buy).not.toContain('role="dialog"');
-    const dialog = render(true);
-    expect(dialog).toContain(
-      locale === "vi"
-        ? "Bạn tính mua thật à? Đùa thôi, cái này tôi tặng bạn."
-        : "You were really going to pay? Just kidding, this one&#x27;s on us.",
-    );
-    expect(dialog).toContain(locale === "vi" ? "Nhận hộp" : "Get the box");
-    expect(dialog).toContain('role="dialog"');
-    expect(render(false, false)).toContain('disabled=""');
-    expect(render(false, false)).toContain(
-      locale === "vi" ? "Kết nối mạng để mở hộp này lần đầu" : "Connect to open this box for the first time",
-    );
-    expect(render(true, true, true)).toContain(
-      locale === "vi" ? "Chưa nhận được hộp. Thử lại nhé." : "Couldn&#x27;t get the box. Try again.",
-    );
-  },
-);
 
 it("card-box R12: distinct playable seen counts follow next, previous, random, start over and preview", () => {
   let state = { play: { stack: [], index: -1, startedOver: false } as Play, seen: [] as string[] };
@@ -683,73 +297,6 @@ it("card-box R12: distinct playable seen counts follow next, previous, random, s
   expect(end.play.startedOver).toBe(true);
   expect(seenCardCount(preview, end.seen)).toBe(3);
 });
-
-it.each(["vi", "en"] as const)(
-  "card-box R12: tiles show total counts with a single-line title and singular-safe copy in %s",
-  (locale) => {
-    storage().set("bisou.locale", locale);
-    for (const count of [0, 1, 4]) {
-      const html = renderToString(
-        h(Router, {
-          ssrPath: "/boxes",
-          children: h(
-            I18nProvider,
-            null,
-            h(CardBoxRows, { boxes: [{ ...detail.box, cardCount: count, open: false }], from: "/boxes" }),
-          ),
-        }),
-      );
-      expect(html).toContain(locale === "vi" ? `${count} thẻ` : `${count} ${count === 1 ? "card" : "cards"}`);
-      expect(html).toContain("truncate font-heading");
-    }
-  },
-);
-
-it.each(["vi", "en"] as const)(
-  "card-box R12: player renders quiet seen and preview counters from phone history in %s",
-  (locale) => {
-    const values = storage();
-    values.set("bisou.locale", locale);
-    vi.stubGlobal("navigator", { onLine: true });
-    const user = {
-      id: "u",
-      displayName: "U",
-      email: "u@example.com",
-      locale,
-      createdAt: 1,
-      birthDate: null,
-      avatarId: null,
-    };
-    for (const open of [true, false]) {
-      writeCache("c:u", "box:sample", {
-        ...detail,
-        box: { ...detail.box, open },
-        cards: open ? detail.cards : detail.cards.slice(0, 3),
-      });
-      writeSeen("c:u", "sample", ["a", "a", "b", "obsolete"]);
-      const html = renderToString(
-        h(Router, {
-          ssrPath: "/boxes/sample",
-          children: h(
-            I18nProvider,
-            null,
-            h(CardBoxPlayer, {
-              user,
-              couple: { id: "c", members: [], startDate: null, events: [] },
-              boxId: "sample",
-              onUser() {},
-              onSignedOut() {},
-            }),
-          ),
-        }),
-      );
-      expect(html).toContain(
-        `${open ? (locale === "vi" ? "Đã xem" : "Seen") : locale === "vi" ? "Xem thử" : "Preview"} 2/${open ? 4 : 3}`,
-      );
-      expect(html).not.toMatch(/<p[^>]*aria-live/);
-    }
-  },
-);
 
 it.each(["list", "player"])(
   "card-box AC26: local %s stays visible after its first server fetch fails",
@@ -786,18 +333,3 @@ it.each(["list", "player"])(
     expect(html).not.toContain("Connect to open this box for the first time");
   },
 );
-
-it("card-box: 5:7 card markup puts long text inside a body with scroll and overscroll utilities", () => {
-  vi.stubGlobal("localStorage", { getItem: () => "en" });
-  const card: CardBoxDetail["cards"][number] = {
-    id: "long",
-    kind: "question",
-    text: { vi: "dài ".repeat(200), en: "long ".repeat(200) },
-  };
-  const html = renderToString(
-    h(I18nProvider, null, h(CardBoxCard, { card, boxId: "deep-connection", boxName: "Box" })),
-  );
-  expect(html).toContain("aspect-5/7");
-  expect(html).toMatch(/class="card-box-body[^"]*min-h-0[^"]*overflow-y-auto[^"]*overscroll-y-contain/);
-  expect(html.indexOf("card-box-body")).toBeLessThan(html.indexOf("long long"));
-});

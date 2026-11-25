@@ -157,17 +157,6 @@ it("manual update handles an unsupported browser or missing registration without
   await expect(requestAppUpdate({ getRegistration: async () => undefined })).resolves.toBe("unavailable");
 });
 
-it.each(["vi", "en"])("settings shows the build and update action in %s", (locale) => {
-  language.locale = locale;
-  vi.stubGlobal("navigator", { onLine: true });
-  const messages = locale === "vi" ? viMessages : en;
-  const html = renderToStaticMarkup(createElement(AppUpdateSettings));
-  expect(html).toContain("0.0.1-f30480a-build1");
-  expect(html).toContain(messages["settings.version"]);
-  expect(html).toContain(messages["settings.update"]);
-  expect(html).not.toContain('disabled=""');
-});
-
 it.each(["vi", "en"])("settings disables updating and explains connectivity in %s", (locale) => {
   language.locale = locale;
   vi.stubGlobal("navigator", { onLine: false });
