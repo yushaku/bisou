@@ -52,7 +52,7 @@ Each scenario has `seed-stage-<scenario>-a@example.com` (Vietnamese) and `-b@exa
 
 ## Deploy
 
-Pushing `main` releases production through GitHub Actions after typecheck, tests, build and a pending-migration check. Additive D1 migrations run before the Worker deploys; destructive ones need the Product Owner's approval. Pushes that only touch Markdown or `docs/` skip the deploy; docs changes publish the docs site. To retry a release, run **Deploy production** from **Actions** on `main`.
+Pushing `main` releases production through GitHub Actions after typecheck, tests, build and a pending-migration check. Pull requests also scan the migrations they add, so a destructive one fails review instead of blocking `main`. Additive D1 migrations run before the Worker deploys; destructive ones need the Product Owner's approval. After deploy a smoke test calls `/api/me` (expects 401) and `/` (expects 200); if it fails the release rolls back to the previous Worker version. Pushes that only touch Markdown or `docs/` skip the deploy; docs changes publish the docs site. To retry a release, run **Deploy production** from **Actions** on `main`.
 
 The GitHub `production` environment needs the `CLOUDFLARE_API_TOKEN` secret (Worker, D1 and **Workers R2 Storage: Read** permissions) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
