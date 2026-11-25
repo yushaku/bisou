@@ -26,7 +26,7 @@ vi.mock("react", async (original) => ({
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("../src/client/i18n", () => ({ useI18n: () => ({ locale: "en", t: (key: string) => key }) }));
-vi.mock("wouter", () => ({ useLocation: () => ["/", vi.fn()], Link: "a" }));
+vi.mock("wouter", () => ({ useLocation: () => ["/", vi.fn()], useSearch: () => "", Link: "a" }));
 vi.mock("wouter/use-browser-location", () => ({ useHistoryState: () => null }));
 vi.mock("../src/client/lib/useTabNavigation", () => ({ useCreateRequest: vi.fn(), useTabNavigation: () => ({}) }));
 vi.mock("../src/client/lib/useWishJar", () => ({ useWishJar: () => ({ jar: null }) }));
@@ -110,7 +110,7 @@ it.each([false, true])("entry deletion respects connectivity: online=%s", async 
 it.each([false, true])("wish deletion respects connectivity: online=%s", async (online) => {
   vi.stubGlobal("navigator", { onLine: online });
   const remove = vi.spyOn(api, "deleteWish").mockResolvedValue({ ok: false, status: 0, error: null });
-  state.push("jar", "all", null, false, false, undefined, wish, wish, false, true, false, null);
+  state.push("jar", "private", "all", null, false, false, undefined, wish, wish, false, true, false, null);
   const nodes = elements(
     Wishes({
       user,
