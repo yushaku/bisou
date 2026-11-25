@@ -10,7 +10,7 @@
       "url": "git@github.com:yushaku/bisou.git",
       "provider": "github",
       "link_mode": "local-only",
-      "revision": "9b6a930f2f92e74e4b7a38a9ab473daf8be29e34"
+      "revision": "71ab0202b612eef35dbef2f295c2e4f0e52c10f9"
     }
   },
   "components": [
@@ -73,7 +73,7 @@
       "id": "actions",
       "type": "backend",
       "label": "GitHub Actions",
-      "sublabel": "typecheck · test · build",
+      "sublabel": "verify · migrate · deploy · smoke",
       "tag": "env: production",
       "pos": [
         600,
@@ -86,14 +86,20 @@
       "sources": [
         {
           "path": ".github/workflows/deploy.yml",
-          "line": 21,
-          "end_line": 58,
-          "label": "deploy job"
+          "line": 20,
+          "end_line": 77,
+          "label": "verify, deploy, smoke, rollback"
+        },
+        {
+          "path": ".github/workflows/verify.yml",
+          "line": 14,
+          "end_line": 54,
+          "label": "reusable verify gate"
         },
         {
           "path": "scripts/check-migrations.mjs",
-          "line": 101,
-          "end_line": 117,
+          "line": 105,
+          "end_line": 141,
           "label": "blocks destructive migrations"
         }
       ]
@@ -115,7 +121,7 @@
         {
           "path": ".github/workflows/pages.yml",
           "line": 23,
-          "end_line": 50,
+          "end_line": 49,
           "label": "build and deploy"
         }
       ]
@@ -285,8 +291,8 @@
         },
         {
           "path": ".github/workflows/deploy.yml",
-          "line": 49,
-          "end_line": 50
+          "line": 51,
+          "end_line": 52
         },
         {
           "path": "src/worker/routes/cardBoxes.ts",
@@ -424,7 +430,7 @@
     {
       "from": "actions",
       "to": "worker",
-      "label": "wrangler deploy",
+      "label": "deploy · smoke · rollback",
       "variant": "emphasis"
     },
     {
@@ -484,10 +490,12 @@
       "title": "Release",
       "items": [
         "Pushing main runs Deploy production, unless only *.md or docs/ changed",
-        "typecheck, test and build, then check:migrations",
-        "Destructive migrations stop the release for PO review",
-        "D1 migrations apply before the Worker deploys",
-        "Docs changes publish the docs site; other branches and PRs run CI only"
+        "One Verify workflow: lint, knip, format, typecheck, test, build, upload dist",
+        "PRs also scan the migrations they add; destructive ones stop review",
+        "D1 migrations apply before the Worker deploys, from the verified dist",
+        "After deploy /api/me must answer 401 and / 200, else the Worker rolls back",
+        "Docs changes publish the docs site; other branches and PRs run CI only",
+        "Dependabot opens weekly npm and GitHub Actions updates"
       ]
     },
     {
