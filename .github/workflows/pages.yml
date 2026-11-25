@@ -7,7 +7,6 @@ on:
       - "docs/**"
       - "README.md"
       - "DESIGN.md"
-      - "CHANGELOG.md"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,7 +29,7 @@ jobs:
       - name: Stage docs
         run: |
           mkdir site
-          cp -r docs README.md DESIGN.md CHANGELOG.md site/
+          cp -r docs README.md DESIGN.md site/
           printf 'title: Bisou docs\n' > site/_config.yml
       - uses: actions/configure-pages@v6
       - uses: actions/jekyll-build-pages@v1

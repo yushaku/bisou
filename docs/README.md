@@ -45,5 +45,4 @@ Published at https://yushaku.github.io/bisou/docs/ by `.github/workflows/pages.y
 ## Other
 
 - [Design system](../DESIGN.md)
-- [Changelog](../CHANGELOG.md)
 - [Legacy architecture notes](architecture.md) (read-only, code wins)
