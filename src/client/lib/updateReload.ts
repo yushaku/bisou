@@ -1,49 +1,33 @@
-export const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000;
-
-/** Ask the browser for a new deploy at most once per interval, however often the app returns to the front. */
-export function shouldCheckForUpdate(lastCheck: number | null, now: number, interval = UPDATE_CHECK_INTERVAL): boolean {
-  return lastCheck === null || now - lastCheck >= interval;
-}
-
-/*
- * A new service worker takes control as soon as it installs. The page that is already open keeps
- * running the old code: reloading it while it is on screen would be a second boot right after launch.
- * The reload waits until the app is hidden. If the old code asks for a lazy chunk the new deploy
- * removed, the reload happens at once, since nothing else can fix it.
- */
-export function createUpdatePolicy(reload: () => void) {
-  let pending = false;
+/* Skip the first install, which needs no reload, and reload once for subsequent takeovers. */
+export function reloadOnNewVersion(worker: ServiceWorkerContainer, reload: () => void) {
+  let hadController = Boolean(worker.controller);
   let reloading = false;
-  const apply = () => {
-    if (reloading) return;
-    reloading = true;
-    reload();
-  };
-  return {
-    updateReady(visible: boolean) {
-      if (visible) pending = true;
-      else apply();
-    },
-    visibilityChanged(visible: boolean) {
-      if (pending && !visible) apply();
-    },
-    chunkLoadFailed() {
-      if (pending) apply();
-    },
-  };
+  worker.addEventListener("controllerchange", () => {
+    if (hadController && !reloading) {
+      reloading = true;
+      reload();
+    }
+    hadController = true;
+  });
 }
 
-/* Skip the first install (no previous controller), which needs no reload. */
-export function reloadOnNewVersion(
-  worker: ServiceWorkerContainer,
-  reload: () => void,
+export function watchForUpdates(
+  registration: Pick<ServiceWorkerRegistration, "update">,
   doc: Pick<Document, "addEventListener" | "visibilityState"> = document,
+  win: Pick<Window, "addEventListener"> = window,
 ) {
-  const hadController = Boolean(worker.controller);
-  const policy = createUpdatePolicy(reload);
-  worker.addEventListener("controllerchange", () => {
-    if (hadController) policy.updateReady(doc.visibilityState === "visible");
-  });
-  doc.addEventListener("visibilitychange", () => policy.visibilityChanged(doc.visibilityState === "visible"));
-  return policy;
+  let checking = false;
+  const check = async () => {
+    if (checking || doc.visibilityState !== "visible") return;
+    checking = true;
+    try {
+      await registration.update();
+    } catch {
+      // Offline or unavailable: retry on the next resume or reconnection.
+    } finally {
+      checking = false;
+    }
+  };
+  doc.addEventListener("visibilitychange", () => void check());
+  win.addEventListener("online", () => void check());
 }

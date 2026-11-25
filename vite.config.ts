@@ -80,7 +80,7 @@ export default defineConfig({
         },
         workbox: {
           importScripts: ["/push-sw.js"],
-          // A new deploy takes over at once; updateReload.ts reloads the open page only when it is hidden.
+          // A new deploy takes over at once; updateReload.ts reloads the open page.
           skipWaiting: true,
           clientsClaim: true,
           // App shell only (fonts included, for offline): never cache the API.

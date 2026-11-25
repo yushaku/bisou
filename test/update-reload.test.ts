@@ -1,75 +1,79 @@
 import { expect, it, vi } from "vitest";
-import {
-  createUpdatePolicy,
-  reloadOnNewVersion,
-  shouldCheckForUpdate,
-  UPDATE_CHECK_INTERVAL,
-} from "../src/client/lib/updateReload";
+import { reloadOnNewVersion, watchForUpdates } from "../src/client/lib/updateReload";
 
-function setup(controller: unknown, visibilityState: DocumentVisibilityState) {
+function setup(controller: unknown) {
   const worker = Object.assign(new EventTarget(), { controller }) as unknown as ServiceWorkerContainer;
-  const doc = Object.assign(new EventTarget(), { visibilityState }) as unknown as Document;
   const reload = vi.fn();
-  const policy = reloadOnNewVersion(worker, reload, doc);
+  reloadOnNewVersion(worker, reload);
+  return { reload, takeover: () => worker.dispatchEvent(new Event("controllerchange")) };
+}
+
+it("pwa AC8 R8: a new version taking control reloads the visible app immediately, once", () => {
+  const t = setup({});
+  t.takeover();
+  expect(t.reload).toHaveBeenCalledOnce();
+  t.takeover();
+  expect(t.reload).toHaveBeenCalledOnce();
+});
+
+it("pwa AC8 R8: first install skips reload, but a later update in the same page reloads", () => {
+  const t = setup(null);
+  t.takeover();
+  expect(t.reload).not.toHaveBeenCalled();
+  t.takeover();
+  expect(t.reload).toHaveBeenCalledOnce();
+});
+
+function setupChecks() {
+  const doc = Object.assign(new EventTarget(), { visibilityState: "visible" });
+  const win = new EventTarget();
+  const update = vi.fn<() => Promise<ServiceWorkerRegistration>>().mockResolvedValue({} as ServiceWorkerRegistration);
+  watchForUpdates({ update }, doc as Document, win);
   return {
-    reload,
-    policy,
-    takeover: () => worker.dispatchEvent(new Event("controllerchange")),
-    show: (state: DocumentVisibilityState) => {
-      Object.assign(doc, { visibilityState: state });
+    update,
+    online: () => win.dispatchEvent(new Event("online")),
+    show: (visibilityState: DocumentVisibilityState) => {
+      doc.visibilityState = visibilityState;
       doc.dispatchEvent(new Event("visibilitychange"));
     },
   };
 }
 
-it("pwa AC8 R8: a new version taking control does not reload an app that is on screen", () => {
-  const t = setup({}, "visible");
-  t.takeover();
-  expect(t.reload).not.toHaveBeenCalled();
-});
-
-it("pwa AC8 R8: the pending update is applied once, when the app is hidden", () => {
-  const t = setup({}, "visible");
-  t.takeover();
+it("checks on every resume, including two openings within an hour", async () => {
+  const t = setupChecks();
+  t.show("hidden");
+  expect(t.update).not.toHaveBeenCalled();
+  t.show("visible");
+  expect(t.update).toHaveBeenCalledOnce();
+  await Promise.resolve();
   t.show("hidden");
   t.show("visible");
+  expect(t.update).toHaveBeenCalledTimes(2);
+});
+
+it("checks on reconnection without overlapping a resume check", async () => {
+  const t = setupChecks();
+  t.show("visible");
+  t.online();
+  expect(t.update).toHaveBeenCalledOnce();
+  await Promise.resolve();
+  t.online();
+  expect(t.update).toHaveBeenCalledTimes(2);
+});
+
+it("retries a failed update check on the next resume", async () => {
+  const t = setupChecks();
+  t.update.mockRejectedValueOnce(new Error("offline"));
+  t.show("visible");
+  await Promise.resolve();
   t.show("hidden");
-  expect(t.reload).toHaveBeenCalledOnce();
+  t.show("visible");
+  expect(t.update).toHaveBeenCalledTimes(2);
 });
 
-it("pwa AC8 R8: a new version taking control while the app is hidden reloads at once, once", () => {
-  const t = setup({}, "hidden");
-  t.takeover();
-  t.takeover();
-  expect(t.reload).toHaveBeenCalledOnce();
-});
-
-it("pwa AC8 R8: hiding the app with no update waiting does not reload", () => {
-  const t = setup({}, "visible");
+it("does not check for updates on reconnection while hidden", () => {
+  const t = setupChecks();
   t.show("hidden");
-  expect(t.reload).not.toHaveBeenCalled();
-});
-
-it("pwa AC8 R8: the first install, with no previous controller, never reloads", () => {
-  const t = setup(null, "hidden");
-  t.takeover();
-  t.show("hidden");
-  expect(t.reload).not.toHaveBeenCalled();
-});
-
-it("pwa AC8 R8: a missing lazy chunk reloads only when an update is waiting", () => {
-  const none = createUpdatePolicy(vi.fn());
-  const reload = vi.fn();
-  const waiting = createUpdatePolicy(reload);
-  none.chunkLoadFailed();
-  waiting.updateReady(true);
-  waiting.chunkLoadFailed();
-  waiting.chunkLoadFailed();
-  expect(reload).toHaveBeenCalledOnce();
-});
-
-it("pwa R8: checks for a new deploy at most once an hour", () => {
-  expect(shouldCheckForUpdate(null, 5)).toBe(true);
-  expect(shouldCheckForUpdate(1000, 1000 + UPDATE_CHECK_INTERVAL - 1)).toBe(false);
-  expect(shouldCheckForUpdate(1000, 1000 + UPDATE_CHECK_INTERVAL)).toBe(true);
+  t.online();
+  expect(t.update).not.toHaveBeenCalled();
 });
