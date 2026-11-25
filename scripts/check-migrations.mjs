@@ -102,10 +102,49 @@ export function detectDestructiveSql(sql) {
   return findings;
 }
 
+export function parseChangedMigrations(output) {
+  const names = output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^migrations\/[^/]+\.sql$/.test(line))
+    .map((line) => line.slice("migrations/".length));
+  return [...new Set(names)];
+}
+
+function checkMigrationFiles(dir, names) {
+  const violations = [];
+  for (const name of names) {
+    const path = join(dir, name);
+    for (const { line, reason } of detectDestructiveSql(readFileSync(path, "utf8"))) {
+      violations.push(`${path}:${line}: ${reason}`);
+    }
+  }
+  if (violations.length)
+    throw new Error(`${violations.join("\n")}\nDestructive migrations require PO review; nothing was applied`);
+  return names;
+}
+
+function checkChanged(base) {
+  const output = execFileSync(
+    "git",
+    ["diff", "--name-only", "--diff-filter=ACMR", `${base}...HEAD`, "--", "migrations"],
+    { encoding: "utf8" },
+  );
+  const names = checkMigrationFiles("migrations", parseChangedMigrations(output));
+  console.log(`Checked ${names.length} changed migrations: ${names.join(", ") || "none"}`);
+}
+
 function main(args) {
+  if (args[0] === "--changed") {
+    if (args.length !== 2) throw new Error("Usage: node scripts/check-migrations.mjs --changed <base-ref>");
+    checkChanged(args[1]);
+    return;
+  }
   const fixture = args[0] === "--fixture" && args.length === 3;
   if (args.length && !fixture)
-    throw new Error("Usage: node scripts/check-migrations.mjs [--fixture listing.txt migrations-dir]");
+    throw new Error(
+      "Usage: node scripts/check-migrations.mjs [--changed <base-ref> | --fixture listing.txt migrations-dir]",
+    );
   const output = fixture
     ? readFileSync(args[1], "utf8")
     : execFileSync(
@@ -113,16 +152,7 @@ function main(args) {
         ["exec", "wrangler", "d1", "migrations", "list", "bisou", "--remote", "--config", "wrangler.jsonc"],
         { encoding: "utf8", env: { ...process.env, CI: "true", NO_COLOR: "1" }, stdio: ["ignore", "pipe", "inherit"] },
       );
-  const names = parsePendingMigrations(output);
-  const violations = [];
-  for (const name of names) {
-    const path = join(fixture ? args[2] : "migrations", name);
-    for (const { line, reason } of detectDestructiveSql(readFileSync(path, "utf8"))) {
-      violations.push(`${path}:${line}: ${reason}`);
-    }
-  }
-  if (violations.length)
-    throw new Error(`${violations.join("\n")}\nDestructive migrations require PO review; nothing was applied`);
+  const names = checkMigrationFiles(fixture ? args[2] : "migrations", parsePendingMigrations(output));
   console.log(`Checked ${names.length} pending migrations: ${names.join(", ") || "none"}`);
 }
 

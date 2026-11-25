@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { detectDestructiveSql, parsePendingMigrations } from "./check-migrations.mjs";
+import { detectDestructiveSql, parseChangedMigrations, parsePendingMigrations } from "./check-migrations.mjs";
 
 test("reports destructive statements with their source lines", () => {
   const sql = `-- header
@@ -114,6 +114,24 @@ test("fails closed on empty, changed, truncated, unsafe or contradictory listing
   ]) {
     assert.throws(() => parsePendingMigrations(output), /migration/i);
   }
+});
+
+test("reads changed migration files from git diff output, ignoring other paths and duplicates", () => {
+  assert.deepEqual(
+    parseChangedMigrations(
+      [
+        "docs/README.md",
+        "migrations/0018_add_index.sql",
+        "migrations/0018_add_index.sql",
+        "fixtures/0001_auth.sql",
+        "migrations/nested/0019_bad.sql",
+        "scripts/check-migrations.mjs",
+        "migrations/0020_drop_table.sql",
+        "",
+      ].join("\n"),
+    ),
+    ["0018_add_index.sql", "0020_drop_table.sql"],
+  );
 });
 
 test("fixture CLI checks only pending files and fails with file and line before any remote call", () => {

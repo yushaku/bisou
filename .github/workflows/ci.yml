@@ -9,34 +9,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Branch pushes and their pull request share one group, so only one verify runs.
+  group: ci-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    env:
-      CI: "true"
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 11
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Lint
-        run: pnpm lint
-      - name: Knip
-        run: pnpm knip
-      - name: Format
-        run: pnpm format:check
-      - name: Typecheck
-        run: pnpm typecheck
-      - name: Test
-        run: pnpm test
-      - name: Build
-        run: pnpm build
+    uses: ./.github/workflows/verify.yml
+    with:
+      base-ref: ${{ github.base_ref }}

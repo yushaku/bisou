@@ -1,0 +1,54 @@
+name: Verify
+
+on:
+  workflow_call:
+    inputs:
+      base-ref:
+        description: Base branch used by the changed-migration check (pull requests only)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history so `git diff origin/<base>...HEAD` can find the merge base.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Knip
+        run: pnpm knip
+      - name: Format
+        run: pnpm format:check
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Check changed migrations
+        if: inputs.base-ref != ''
+        run: node scripts/check-migrations.mjs --changed "origin/${{ inputs.base-ref }}"
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      # The deploy job ships exactly what CI verified instead of building twice.
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+          if-no-files-found: error
