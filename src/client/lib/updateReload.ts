@@ -31,3 +31,29 @@ export function watchForUpdates(
   doc.addEventListener("visibilitychange", () => void check());
   win.addEventListener("online", () => void check());
 }
+
+export async function requestAppUpdate(
+  container: Pick<ServiceWorkerContainer, "getRegistration"> | undefined = "serviceWorker" in navigator
+    ? navigator.serviceWorker
+    : undefined,
+): Promise<"current" | "updated" | "unavailable"> {
+  const registration = await container?.getRegistration();
+  if (!registration) return "unavailable";
+  const previous = registration.active;
+  await registration.update();
+  const next = registration.installing ?? registration.waiting;
+  if (!next) return registration.active === previous ? "current" : "updated";
+
+  // update() can finish before the new app shell has downloaded.
+  await new Promise<void>((resolve, reject) => {
+    const changed = () => {
+      if (next.state !== "activated" && next.state !== "redundant") return;
+      next.removeEventListener("statechange", changed);
+      if (next.state === "activated") resolve();
+      else reject(new Error("App update failed to install"));
+    };
+    next.addEventListener("statechange", changed);
+    changed();
+  });
+  return "updated";
+}

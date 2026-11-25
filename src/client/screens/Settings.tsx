@@ -15,6 +15,7 @@ import { displayName } from "../lib/displayName";
 import type { CropRequest } from "../components/bisou/PhotoCropDialog";
 import { SubPageHeader } from "../components/bisou/SubPageHeader";
 import { SettingsGroup, SettingsRow } from "../components/bisou/SettingsGroup";
+import { AppUpdateSettings } from "../components/bisou/AppUpdateSettings";
 import { AppearanceSettings } from "../components/bisou/ThemeControls";
 import { Button } from "../components/ui/button";
 import {
@@ -318,6 +319,7 @@ export function Settings({
               />
             </div>
           )}
+          <AppUpdateSettings />
           <div className="overflow-hidden rounded-xl edge bg-card">
             <DrawerTrigger asChild>
               <SettingsRow

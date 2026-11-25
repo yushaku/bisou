@@ -1,5 +1,19 @@
-import { expect, it, vi } from "vitest";
-import { reloadOnNewVersion, watchForUpdates } from "../src/client/lib/updateReload";
+import { afterEach, expect, it, vi } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { AppUpdateSettings } from "../src/client/components/bisou/AppUpdateSettings";
+import { en } from "../src/client/i18n/en";
+import { vi as viMessages } from "../src/client/i18n/vi";
+import { reloadOnNewVersion, requestAppUpdate, watchForUpdates } from "../src/client/lib/updateReload";
+
+const language = vi.hoisted(() => ({ locale: "vi" }));
+vi.mock("../src/client/i18n", () => ({
+  useI18n: () => ({ t: (key: keyof typeof en) => (language.locale === "vi" ? viMessages : en)[key] }),
+}));
+vi.mock("../src/client/lib/useOnline", () => ({ useOnline: () => navigator.onLine }));
+vi.mock("../src/client/lib/devicePersist", () => ({ BUILD_ID: "0.0.1-f30480a-build1" }));
+
+afterEach(() => vi.unstubAllGlobals());
 
 function setup(controller: unknown) {
   const worker = Object.assign(new EventTarget(), { controller }) as unknown as ServiceWorkerContainer;
@@ -76,4 +90,89 @@ it("does not check for updates on reconnection while hidden", () => {
   t.show("hidden");
   t.online();
   expect(t.update).not.toHaveBeenCalled();
+});
+
+function manualUpdate(next: ServiceWorker | null = null) {
+  const registration = {
+    active: {},
+    installing: next,
+    waiting: null,
+    update: vi.fn().mockResolvedValue(undefined),
+  };
+  const container = {
+    getRegistration: vi.fn().mockResolvedValue(registration),
+  };
+  return { registration, container };
+}
+
+it("manual update checks the server and reports the current version when nothing changed", async () => {
+  const t = manualUpdate();
+  await expect(requestAppUpdate(t.container)).resolves.toBe("current");
+  expect(t.registration.update).toHaveBeenCalledOnce();
+});
+
+it("manual update waits for the new app shell to activate before reporting completion", async () => {
+  const next = Object.assign(new EventTarget(), { state: "installing" });
+  const t = manualUpdate(next as ServiceWorker);
+  const done = vi.fn();
+  const result = requestAppUpdate(t.container).then(done);
+  await vi.waitFor(() => expect(t.registration.update).toHaveBeenCalledOnce());
+  next.state = "installed";
+  next.dispatchEvent(new Event("statechange"));
+  await Promise.resolve();
+  expect(done).not.toHaveBeenCalled();
+  next.state = "activated";
+  next.dispatchEvent(new Event("statechange"));
+  await result;
+  expect(done).toHaveBeenCalledWith("updated");
+});
+
+it("manual update reports a version that activated while the check was in flight", async () => {
+  const t = manualUpdate();
+  t.registration.update.mockImplementation(async () => {
+    t.registration.active = {};
+  });
+  await expect(requestAppUpdate(t.container)).resolves.toBe("updated");
+});
+
+it("manual update fails when precaching the new app shell fails", async () => {
+  const next = Object.assign(new EventTarget(), { state: "installing" });
+  const t = manualUpdate(next as ServiceWorker);
+  const result = expect(requestAppUpdate(t.container)).rejects.toThrow("failed to install");
+  await vi.waitFor(() => expect(t.registration.update).toHaveBeenCalledOnce());
+  next.state = "redundant";
+  next.dispatchEvent(new Event("statechange"));
+  await result;
+});
+
+it("manual update propagates network errors so the UI can offer a retry", async () => {
+  const t = manualUpdate();
+  t.registration.update.mockRejectedValue(new Error("offline"));
+  await expect(requestAppUpdate(t.container)).rejects.toThrow("offline");
+});
+
+it("manual update handles an unsupported browser or missing registration without waiting forever", async () => {
+  vi.stubGlobal("navigator", {});
+  await expect(requestAppUpdate()).resolves.toBe("unavailable");
+  await expect(requestAppUpdate({ getRegistration: async () => undefined })).resolves.toBe("unavailable");
+});
+
+it.each(["vi", "en"])("settings shows the build and update action in %s", (locale) => {
+  language.locale = locale;
+  vi.stubGlobal("navigator", { onLine: true });
+  const messages = locale === "vi" ? viMessages : en;
+  const html = renderToStaticMarkup(createElement(AppUpdateSettings));
+  expect(html).toContain("0.0.1-f30480a-build1");
+  expect(html).toContain(messages["settings.version"]);
+  expect(html).toContain(messages["settings.update"]);
+  expect(html).not.toContain('disabled=""');
+});
+
+it.each(["vi", "en"])("settings disables updating and explains connectivity in %s", (locale) => {
+  language.locale = locale;
+  vi.stubGlobal("navigator", { onLine: false });
+  const html = renderToStaticMarkup(createElement(AppUpdateSettings));
+  expect(html).toContain('disabled=""');
+  expect(html).toContain((locale === "vi" ? viMessages : en)["settings.updateOffline"]);
+  expect(html).toContain('aria-describedby="app-update-hint"');
 });
