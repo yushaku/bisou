@@ -137,6 +137,8 @@ export const api = {
   updateSharedWish: (id: string, input: WishInput) =>
     call<{ wish: SharedWish }>("PUT", `/api/shared-wishes/${encodeURIComponent(id)}`, input),
   deleteSharedWish: (id: string) => call<{ ok: true }>("DELETE", `/api/shared-wishes/${encodeURIComponent(id)}`),
+  doneSharedWish: (id: string, input: ReceiveWishInput) =>
+    call<{ wish: SharedWish; entry: JournalEntry }>("POST", `/api/shared-wishes/${encodeURIComponent(id)}/done`, input),
   me: () => call<MeResponse>("GET", "/api/me"),
   updateMe: (patch: { displayName?: string; locale?: Locale; birthDate?: string | null }) =>
     call<{ user: User }>("PATCH", "/api/me", patch),

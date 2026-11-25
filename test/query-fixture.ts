@@ -1,6 +1,6 @@
 import { QueryClient, type InfiniteData } from "@tanstack/react-query";
 import type { CardBoxSummary } from "../src/shared/cardBox";
-import type { Claim, JournalPage, NoteLists, Wish } from "../src/shared/types";
+import type { Claim, JournalPage, NoteLists, SharedWish, Wish } from "../src/shared/types";
 import { createTabMemory } from "../src/client/lib/tabMemory";
 
 export const testQueryClient = new QueryClient({
@@ -24,6 +24,12 @@ export function createQueryFixture() {
     },
     set wishes(data: { open: Wish[]; received: Wish[]; partnerJarEmpty: boolean } | null) {
       testQueryClient.setQueryData(["wishes"], data);
+    },
+    get sharedWishes(): { open: SharedWish[]; done: SharedWish[] } | null {
+      return testQueryClient.getQueryData(["shared-wishes"]) ?? null;
+    },
+    set sharedWishes(data: { open: SharedWish[]; done: SharedWish[] } | null) {
+      testQueryClient.setQueryData(["shared-wishes"], data);
     },
     get boxes(): CardBoxSummary[] | null {
       return testQueryClient.getQueryData<{ boxes: CardBoxSummary[] }>(["boxes"])?.boxes ?? null;

@@ -1,10 +1,13 @@
 import { env } from "cloudflare:workers";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SharedWish, Wish } from "../src/shared/types";
 import { sweepPhotos } from "../src/worker/lib/cleanup";
-import { call, paired, resetDb, upload, user, type TestUser } from "./helpers";
+import type { JournalEntry } from "../src/shared/types";
+import { call, paired, resetDb, upload, user, waitForBackground, type TestUser } from "./helpers";
+import { decrypt, device, mockPush, subscribe } from "./push-helpers";
 
 beforeEach(resetDb);
+afterEach(() => vi.restoreAllMocks());
 
 const create = async (who: TestUser, body: unknown = { title: "Đà Lạt" }) =>
   call("POST", "/api/shared-wishes", { cookie: who.cookie, body });
@@ -230,6 +233,284 @@ describe("shared wish photos", () => {
     expect((await call("DELETE", `/api/shared-wishes/${wish.id}`, { cookie: b.cookie })).status).toBe(200);
     expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos WHERE id = ?").bind(photoId).first("n")).toBe(0);
     expect((await call("GET", `/api/photos/${photoId}/thumb`, { cookie: a.cookie })).status).toBe(404);
+  });
+});
+
+describe("marking a shared wish done", () => {
+  const done = (who: TestUser, id: string, body: Record<string, unknown> = {}) =>
+    call("POST", `/api/shared-wishes/${id}/done`, {
+      cookie: who.cookie,
+      body: { date: "2023-02-12", note: "Vui lắm", photoIds: [], locale: "vi", ...body },
+    });
+  const entries = async (who: TestUser) =>
+    (await (await call("GET", "/api/journal", { cookie: who.cookie })).json<{ entries: JournalEntry[] }>()).entries;
+
+  it("makes one ordinary journal entry by the caller, both see it, and the wish moves to the done list", async () => {
+    const { a, b } = await paired();
+    const wish = await created(a, { title: "Đà Lạt" });
+    const res = await done(b, wish.id);
+    expect(res.status).toBe(201);
+    const body = await res.json<{ wish: SharedWish; entry: JournalEntry }>();
+    expect(body.wish).toMatchObject({ id: wish.id, status: "done", doneOn: "2023-02-12", note: "Vui lắm" });
+    expect(body.entry).toMatchObject({ authorId: b.id, date: "2023-02-12", source: "partner" });
+    expect(body.entry.text).toBe("Đã làm cùng nhau: Đà Lạt. Vui lắm");
+    for (const who of [a, b]) {
+      expect((await entries(who)).map((e) => e.id)).toEqual([body.entry.id]);
+    }
+    const jar = await list(a);
+    expect(jar.open).toEqual([]);
+    expect(jar.done.map((w) => w.id)).toEqual([wish.id]);
+  });
+
+  it("writes the text in the caller's app language, with or without a note", async () => {
+    const { a } = await paired();
+    const wish = await created(a, { title: "Pizza" });
+    const res = await done(a, wish.id, { locale: "en", note: "" });
+    expect((await res.json<{ entry: JournalEntry }>()).entry.text).toBe("Done together: Pizza");
+    const second = await created(a, { title: "Phở" });
+    const fallback = await done(a, second.id, { locale: "xx", note: "Ngon" });
+    expect((await fallback.json<{ entry: JournalEntry }>()).entry.text).toBe("Đã làm cùng nhau: Phở. Ngon");
+  });
+
+  it("is done once: a repeat is 409 and both partners at once make exactly one entry", async () => {
+    const { a, b } = await paired();
+    const wish = await created(a);
+    const [one, two] = await Promise.all([done(a, wish.id), done(b, wish.id)]);
+    expect([one.status, two.status].sort()).toEqual([201, 409]);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(1);
+    const repeat = await done(a, wish.id);
+    expect(repeat.status).toBe(409);
+    expect(await repeat.json()).toEqual({ error: "shared_wish_done" });
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(1);
+  });
+
+  it("refuses an outsider, another couple, an unknown wish and invalid input, and leaves the wish open", async () => {
+    const { a } = await paired();
+    const wish = await created(a);
+    expect((await done(await user("Outside"), wish.id)).status).toBe(404);
+    expect((await done(await paired2(), wish.id)).status).toBe(404);
+    expect((await done(a, "missing")).status).toBe(404);
+    for (const [body, error] of [
+      [{ date: "2023-02-29" }, "invalid_entry_date"],
+      [{ date: "9999-12-31" }, "invalid_entry_date"],
+      [{ note: "x".repeat(2001) }, "entry_text_too_long"],
+      [{ note: 5 }, "invalid_body"],
+      [{ photoIds: ["a", "b", "c", "d", "e"] }, "too_many_photos"],
+      [{ photoIds: ["nope"] }, "photo_invalid"],
+    ] as const) {
+      const res = await done(a, wish.id, body);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error });
+    }
+    expect((await list(a)).open).toHaveLength(1);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(0);
+  });
+
+  it("counts the prefix and title inside the 2000 code point limit", async () => {
+    const { a } = await paired();
+    const wish = await created(a, { title: "Pizza" });
+    const prefix = Array.from("Done together: Pizza. ").length;
+    expect((await done(a, wish.id, { locale: "en", note: "x".repeat(2000 - prefix + 1) })).status).toBe(400);
+    expect((await done(a, wish.id, { locale: "en", note: "x".repeat(2000 - prefix) })).status).toBe(201);
+  });
+
+  it("attaches up to 4 of the caller's photos, and a raced or foreign photo rolls everything back", async () => {
+    const { a, b } = await paired();
+    const wish = await created(a);
+    const mine = [await upload(b), await upload(b)];
+    const theirs = await upload(a);
+    const expired = await upload(b);
+    await env.DB.prepare("UPDATE photos SET created_at = 1 WHERE id = ?").bind(expired).run();
+    for (const photoIds of [
+      [mine[0]!, theirs],
+      [mine[0]!, expired],
+    ]) {
+      const bad = await done(b, wish.id, { photoIds });
+      expect(bad.status).toBe(400);
+      expect(await bad.json()).toEqual({ error: "photo_invalid" });
+    }
+    expect((await list(a)).open).toHaveLength(1);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(0);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM photos WHERE entry_id IS NOT NULL").first("n")).toBe(0);
+    const ok = await done(b, wish.id, { photoIds: mine });
+    expect(ok.status).toBe(201);
+    expect((await ok.json<{ entry: JournalEntry }>()).entry.photoIds).toEqual(mine);
+  });
+
+  it("keeps the wish's own photo on the done list", async () => {
+    const { a } = await paired();
+    const photoId = await upload(a);
+    const wish = await created(a, { title: "Ảnh", photoId });
+    expect((await done(a, wish.id)).status).toBe(201);
+    expect((await list(a)).done[0]).toMatchObject({ id: wish.id, photoId });
+  });
+
+  it("cannot be edited afterwards, but deleting it keeps the journal entry", async () => {
+    const { a, b } = await paired();
+    const wish = await created(a);
+    const { entry } = await (await done(b, wish.id)).json<{ entry: JournalEntry }>();
+    expect(
+      (await call("PUT", `/api/shared-wishes/${wish.id}`, { cookie: a.cookie, body: { title: "Changed" } })).status,
+    ).toBe(409);
+    expect((await call("DELETE", `/api/shared-wishes/${wish.id}`, { cookie: a.cookie })).status).toBe(200);
+    expect((await list(b)).done).toEqual([]);
+    expect((await entries(b)).map((e) => e.id)).toEqual([entry.id]);
+  });
+
+  // Runs `between` right before, or after, the done route's one D1 batch, to exercise a racing partner.
+  function aroundDoneBatch(hooks: { before?: () => Promise<unknown>; after?: () => Promise<unknown> }) {
+    const real = env.DB.batch.bind(env.DB);
+    vi.spyOn(env.DB, "batch").mockImplementation(async (statements) => {
+      await hooks.before?.();
+      const result = await real(statements);
+      await hooks.after?.();
+      return result;
+    });
+  }
+
+  it("lists the done wishes newest done first, whatever order they were created in", async () => {
+    const { a } = await paired();
+    const first = await created(a, { title: "A" });
+    const second = await created(a, { title: "B" });
+    await env.DB.prepare("UPDATE shared_wishes SET created_at = 1 WHERE id = ?").bind(first.id).run();
+    await env.DB.prepare("UPDATE shared_wishes SET created_at = 2 WHERE id = ?").bind(second.id).run();
+    expect((await done(a, second.id)).status).toBe(201);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect((await done(a, first.id)).status).toBe(201);
+    expect((await list(a)).done.map((w) => w.title)).toEqual(["A", "B"]);
+  });
+
+  it("writes the title the wish has when it is committed, even if a partner renames it meanwhile", async () => {
+    const { a, b } = await paired();
+    const wish = await created(a, { title: "A" });
+    let renamed = false;
+    aroundDoneBatch({
+      before: async () => {
+        if (renamed) return;
+        renamed = true;
+        expect(
+          (await call("PUT", `/api/shared-wishes/${wish.id}`, { cookie: b.cookie, body: { title: "Updated A" } }))
+            .status,
+        ).toBe(200);
+      },
+    });
+    const res = await done(a, wish.id);
+    expect(res.status).toBe(201);
+    const body = await res.json<{ wish: SharedWish; entry: JournalEntry }>();
+    expect(body.wish.title).toBe("Updated A");
+    expect(body.entry.text).toBe("Đã làm cùng nhau: Updated A. Vui lắm");
+    expect((await list(b)).done[0]?.title).toBe("Updated A");
+  });
+
+  it("returns the wish as committed when a partner changes its price or photo just before the batch", async () => {
+    const { a, b } = await paired();
+    const oldPhoto = await upload(a);
+    const newPhoto = await upload(b);
+    const wish = await created(a, { title: "Pizza", price: 100, photoId: oldPhoto });
+    let edited = false;
+    aroundDoneBatch({
+      before: async () => {
+        if (edited) return;
+        edited = true;
+        const res = await call("PUT", `/api/shared-wishes/${wish.id}`, {
+          cookie: b.cookie,
+          body: { title: "Pizza", price: 200, photoId: newPhoto },
+        });
+        expect(res.status).toBe(200);
+      },
+    });
+    const res = await done(a, wish.id);
+    expect(res.status).toBe(201);
+    const body = await res.json<{ wish: SharedWish }>();
+    expect(body.wish).toMatchObject({ price: 200, photoId: newPhoto, status: "done" });
+    expect(body.wish).toEqual((await list(b)).done[0]);
+  });
+
+  it("keeps the 2000 limit on the committed title when a partner renames it to a longer one", async () => {
+    const { a, b } = await paired();
+    const wish = await created(a, { title: "A" });
+    let renamed = false;
+    aroundDoneBatch({
+      before: async () => {
+        if (renamed) return;
+        renamed = true;
+        await call("PUT", `/api/shared-wishes/${wish.id}`, { cookie: b.cookie, body: { title: "y".repeat(100) } });
+      },
+    });
+    const res = await done(a, wish.id, { locale: "en", note: "x".repeat(1970) });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "entry_text_too_long" });
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(0);
+    expect((await list(a)).open).toHaveLength(1);
+  });
+
+  it("answers and notifies even if the wish is deleted right after the done batch commits", async () => {
+    const { a, b } = await paired();
+    const partner = await device("partner");
+    await subscribe(a, partner);
+    const send = mockPush();
+    const wish = await created(b);
+    await waitForBackground();
+    send.sent.length = 0;
+    aroundDoneBatch({
+      after: async () => {
+        await env.DB.prepare("DELETE FROM shared_wishes WHERE id = ?").bind(wish.id).run();
+      },
+    });
+    const res = await done(b, wish.id);
+    expect(res.status).toBe(201);
+    const body = await res.json<{ wish: SharedWish; entry: JournalEntry }>();
+    expect(body.wish).toMatchObject({ id: wish.id, status: "done", doneOn: "2023-02-12", note: "Vui lắm" });
+    expect(body.entry.text).toBe("Đã làm cùng nhau: Đà Lạt. Vui lắm");
+    await waitForBackground();
+    expect(send.sent).toHaveLength(1);
+    expect(await decrypt(send.sent[0]!.body, partner)).toMatchObject({ tag: "journal" });
+    expect((await entries(a)).map((e) => e.id)).toEqual([body.entry.id]);
+  });
+
+  it("rolls back when a photo becomes unavailable after validation, and the other upload stays reusable", async () => {
+    const { a, b } = await paired();
+    const wish = await created(a);
+    const keep = await upload(b);
+    const lost = await upload(b);
+    let expired = false;
+    aroundDoneBatch({
+      before: async () => {
+        if (expired) return;
+        expired = true;
+        await env.DB.prepare("UPDATE photos SET created_at = 1 WHERE id = ?").bind(lost).run();
+      },
+    });
+    const bad = await done(b, wish.id, { photoIds: [keep, lost] });
+    expect(bad.status).toBe(400);
+    expect(await bad.json()).toEqual({ error: "photo_invalid" });
+    expect((await list(a)).open).toHaveLength(1);
+    expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM journal_entries").first("n")).toBe(0);
+    expect(await env.DB.prepare("SELECT entry_id FROM photos WHERE id = ?").bind(keep).first("entry_id")).toBeNull();
+    vi.restoreAllMocks();
+    const ok = await done(b, wish.id, { photoIds: [keep] });
+    expect(ok.status).toBe(201);
+    expect((await ok.json<{ entry: JournalEntry }>()).entry.photoIds).toEqual([keep]);
+  });
+
+  it("sends only the usual journal push to the other partner", async () => {
+    const { a, b } = await paired();
+    const own = await device("own");
+    const partner = await device("partner");
+    await subscribe(a, own);
+    await subscribe(b, partner);
+    const send = mockPush();
+    const wish = await created(a);
+    await waitForBackground();
+    send.sent.length = 0;
+    expect((await done(b, wish.id)).status).toBe(201);
+    await waitForBackground();
+    expect(send.sent).toHaveLength(1);
+    expect(send.sent[0]!.endpoint).toBe(own.body.endpoint);
+    expect(await decrypt(send.sent[0]!.body, own)).toMatchObject({ title: "Minh vừa viết nhật ký", tag: "journal" });
+    expect((await done(b, wish.id)).status).toBe(409);
+    await waitForBackground();
+    expect(send.sent).toHaveLength(1);
   });
 });
 

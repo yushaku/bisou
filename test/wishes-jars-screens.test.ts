@@ -88,6 +88,26 @@ it("shared wishes: the tab opens on Hai đứa and hides the private jars until 
   expect(html).not.toContain("Hũ của An, mở hũ của mình");
 });
 
+it("shared wishes: lists open wishes with who added them, and a Đã làm list with its day and note", () => {
+  const base = { link: null, photoId: null, price: null, createdAt: 1, updatedAt: 1 };
+  const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>), {
+    wishesJar: "shared",
+    sharedWishes: {
+      open: [{ ...base, id: "1", creatorId: "binh", title: "Đà Lạt", status: "open", doneOn: null, note: null }],
+      done: [
+        { ...base, id: "2", creatorId: "an", title: "Ăn lẩu", status: "done", doneOn: "2026-11-01", note: "Cay quá" },
+      ],
+    },
+  } as Partial<TabMemoryValue>);
+  expect(html).toContain("Đà Lạt");
+  expect(html).toContain("Bình thêm");
+  expect(html).toContain("An thêm");
+  expect(html).toContain("Đã làm</h2>");
+  expect(html).toContain("Ăn lẩu");
+  expect(html).toContain("Cay quá");
+  expect(html).not.toContain("Mức mong muốn");
+});
+
 it("shared wishes: Riêng shows the private jars and the switch stays above them", () => {
   const html = render(h(Wishes, { ...session, couple } satisfies ComponentProps<typeof Wishes>));
   expect(html).toMatch(/<button[^>]*role="tab"[^>]*aria-selected="true"[^>]*>Riêng/);
