@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PushJob } from "../src/worker/lib/pushQueue";
 import { enqueuePush } from "../src/worker/lib/pushQueue";
-import { call, paired, resetDb, waitForBackground } from "./helpers";
+import { jsonLogLines, call, paired, resetDb, waitForBackground } from "./helpers";
 import { decrypt, device, mockPush, runPushCron, runPushQueue, stored, subscribe } from "./push-helpers";
 
 const NOW = Date.parse("2026-11-07T08:00:00Z");
@@ -90,7 +90,10 @@ describe("producers enqueue jobs", () => {
     vi.spyOn(env.PUSH_QUEUE, "sendBatch").mockRejectedValue(new Error("secret https://fcm.googleapis.com/x"));
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     await enqueuePush(env, [job("a"), job("b")]);
-    expect(error.mock.calls).toEqual([["[bisou] push enqueue failed", "journal", 2]]);
+    expect(jsonLogLines(error.mock.calls)).toMatchObject([
+      { event: "push_enqueue_failed", level: "error", topic: "journal", count: 2 },
+    ]);
+    expect(JSON.stringify(error.mock.calls)).not.toContain("https://fcm.googleapis.com/x");
   });
 
   it("without the VAPID key nothing is enqueued", async () => {
@@ -156,7 +159,7 @@ describe("consumer", () => {
       error = vi.spyOn(console, "error");
     const [result] = await runPushQueue([job(id)]);
     expect(result!.retries).toEqual([{ msgId: "msg-0", delaySeconds: 30 }]);
-    const logs = JSON.stringify([log.mock.calls, error.mock.calls]);
+    const logs = JSON.stringify(jsonLogLines([...log.mock.calls, ...error.mock.calls]));
     for (const secret of [d.body.endpoint, d.body.keys.auth, d.body.keys.p256dh, "connect failed"])
       expect(logs).not.toContain(secret);
   });
@@ -231,8 +234,17 @@ describe("consumer", () => {
     ]);
     expect(peak).toBe(3);
     expect(result!.explicitAcks).toHaveLength(5);
-    expect(log.mock.calls).toEqual([
-      ["[bisou] push batch", JSON.stringify({ sent: 3, gone: 0, retried: 0, dropped: 2, failed: 0 })],
+    expect(jsonLogLines(log.mock.calls)).toMatchObject([
+      {
+        event: "push_batch",
+        level: "info",
+        requestId: expect.any(String),
+        sent: 3,
+        gone: 0,
+        retried: 0,
+        dropped: 2,
+        failed: 0,
+      },
     ]);
   });
 });

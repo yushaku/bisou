@@ -4,7 +4,7 @@ import { PHOTO_SIZES, PHOTO_UPLOAD_MAX_BYTES } from "../src/shared/journal";
 import { app } from "../src/worker/app";
 import { PENDING_PHOTO_TTL } from "../src/worker/lib/time";
 import { checkPhotoBytes, purgePhotos } from "../src/worker/lib/photos";
-import { call, explain, jpeg, ORIGIN, paired, photoForm, resetDb, upload, user, webp } from "./helpers";
+import { jsonLogLines, call, explain, jpeg, ORIGIN, paired, photoForm, resetDb, upload, user, webp } from "./helpers";
 
 const full = () => jpeg({ width: 1440, height: 1440 });
 const thumb = () => jpeg({ width: 480, height: 480 });
@@ -410,7 +410,7 @@ describe("private photo upload and serving", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
     await purgePhotos(env, rows);
-    expect(log).toHaveBeenCalledWith("[bisou] photo purge failed", 1);
+    expect(jsonLogLines(log.mock.calls)).toMatchObject([{ event: "photo_purge_failed", level: "error", count: 1 }]);
     expect(await env.DB.prepare("SELECT id FROM photos WHERE id = ?").bind(id).first("id")).toBe(id);
     for (const size of ["full", "thumb"]) expect(await env.PHOTOS.head(key(couple.id, id, size))).not.toBeNull();
     await purgePhotos(env, rows);

@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/worker/app";
-import { call, paired, resetDb, user, waitForBackground } from "./helpers";
+import { jsonLogLines, call, paired, resetDb, user, waitForBackground } from "./helpers";
 import { decrypt, device, mockPush, stored, subscribe } from "./push-helpers";
 
 beforeEach(async () => {
@@ -214,7 +214,7 @@ describe("partner journal pushes", () => {
       if ([401, 403, 404, 410].includes(status)) expect(row).toBeNull();
       else if (status === 201) expect(row).toMatchObject({ failures: 0, last_success_at: expect.any(Number) });
       else expect(row?.failures).toBe(1);
-      const logs = JSON.stringify([log.mock.calls, error.mock.calls]);
+      const logs = JSON.stringify(jsonLogLines([...log.mock.calls, ...error.mock.calls]));
       for (const secret of [d.body.endpoint, d.body.keys.auth, d.body.keys.p256dh, "private"])
         expect(logs).not.toContain(secret);
     },

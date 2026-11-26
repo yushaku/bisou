@@ -1,3 +1,4 @@
+import { log } from "../lib/logger";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { AVATAR_MAX_BYTES, AVATAR_SIDE } from "../../shared/avatar";
@@ -104,7 +105,7 @@ me.put(
       try {
         await c.env.PHOTOS.delete(key);
       } catch {
-        console.error("[bisou] avatar rollback failed");
+        log("error", "avatar_rollback_failed");
       }
       throw error;
     }

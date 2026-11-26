@@ -9,21 +9,19 @@ import { themeHead } from "./scripts/theme-bootstrap.ts";
 import palettes from "./src/client/theme/palettes.json" with { type: "json" };
 import pkg from "./package.json" with { type: "json" };
 
-// Cache buster for data saved on the device (ADR 0014): package version, commit and build time,
-// so every build discards what an older one saved.
-function buildId(): string {
-  let commit = process.env.GITHUB_SHA?.slice(0, 7) ?? "";
-  if (!commit) {
-    try {
-      commit = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] })
-        .toString()
-        .trim();
-    } catch {
-      commit = "nogit";
-    }
+function gitRelease(): string {
+  const ciSha = process.env.GITHUB_SHA;
+  if (ciSha && /^[\da-f]{40}$/i.test(ciSha)) return ciSha.slice(0, 7);
+  try {
+    return execSync("git rev-parse --short=7 HEAD", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+  } catch {
+    return "dev";
   }
-  return `${pkg.version}-${commit}-${Date.now().toString(36)}`;
 }
+
+const release = gitRelease();
 
 // `pnpm dev` (scripts/dev-seed-garden.mjs) points the Worker at a local config and state directory.
 function localCloudflareOptions() {
@@ -35,7 +33,13 @@ function localCloudflareOptions() {
 }
 
 export default defineConfig({
-  define: { __BISOU_BUILD__: JSON.stringify(buildId()) },
+  define: {
+    // Cache buster for data saved on the device (ADR 0014).
+    __BISOU_BUILD__: JSON.stringify(
+      `${pkg.version}-${release === "dev" ? "nogit" : release}-${Date.now().toString(36)}`,
+    ),
+    __BISOU_RELEASE__: JSON.stringify(release),
+  },
   // `pnpm dev:phone` serves the dev server through a cloudflared quick tunnel.
   server: { allowedHosts: [".trycloudflare.com"] },
   // Deps used only inside lazy chunks (compose, crop, calendar). Pre-bundled at startup so the

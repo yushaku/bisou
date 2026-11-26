@@ -1,3 +1,4 @@
+import { log } from "../lib/logger";
 import { defined } from "../../shared/guards";
 import { vnDay } from "../../shared/days";
 import { notifyNote } from "../lib/notify";
@@ -96,7 +97,7 @@ const save: Handler<NoteEnv> = async (c) => {
   }
   if (delivery.immediate)
     c.executionCtx.waitUntil(
-      notifyNote(c.env, user, row.recipient_id).catch(() => console.error("[bisou] note push failed")),
+      notifyNote(c.env, user, row.recipient_id).catch(() => log("error", "push_enqueue_failed", { topic: "notes" })),
     );
   return c.json({ note: toWritten(row) }, updating ? 200 : 201);
 };

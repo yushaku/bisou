@@ -1,5 +1,7 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
+import { routePath } from "hono/route";
 import type { AppEnv } from "./env";
+import { log, withLogContext } from "./lib/logger";
 import { originGuard } from "./middleware/csrf";
 import { requireSession } from "./middleware/session";
 import { auth } from "./routes/auth";
@@ -20,10 +22,32 @@ import { cardBoxes } from "./routes/cardBoxes";
 // One route module per area.
 export const app = new Hono<AppEnv>().basePath("/api");
 
-app.use("*", async (c, next) => {
-  await next();
-  if (!c.res.headers.has("Cache-Control")) c.header("Cache-Control", "no-store");
-});
+app.use("*", (c: Context<AppEnv>, next) =>
+  withLogContext({ requestId: c.req.header("cf-ray"), route: routePath(c, -1), method: c.req.method }, async () => {
+    const startedAt = Date.now();
+    let error: unknown;
+    let threw: boolean;
+    try {
+      await next();
+      error = c.error;
+      threw = error !== undefined;
+    } catch (reason) {
+      // Hono only sends Error instances to onError.
+      error = reason;
+      threw = true;
+      c.res = c.json({ error: "server_error" }, 500);
+    }
+    if (!c.res.headers.has("Cache-Control")) c.header("Cache-Control", "no-store");
+    if (threw || c.res.status >= 500) {
+      log("error", "api_error", {
+        status: c.res.status,
+        durationMs: Date.now() - startedAt,
+        errorCode: threw ? "server_error" : "http_5xx",
+        error,
+      });
+    }
+  }),
+);
 app.use("*", originGuard);
 app.use("*", requireSession);
 
@@ -42,7 +66,4 @@ app.route("/notes", notes);
 app.route("/boxes", cardBoxes);
 
 app.notFound((c) => c.json({ error: "not_found" }, 404));
-app.onError((err, c) => {
-  console.error("[bisou] unhandled error", err);
-  return c.json({ error: "server_error" }, 500);
-});
+app.onError((_error, c) => c.json({ error: "server_error" }, 500));

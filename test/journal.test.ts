@@ -4,7 +4,7 @@ import type { EntryInput, JournalEntry, JournalPage } from "../src/shared/types"
 import { HOUR, PENDING_PHOTO_TTL } from "../src/worker/lib/time";
 import { photoKey } from "../src/worker/lib/photos";
 import { app } from "../src/worker/app";
-import { call, ORIGIN, paired, resetDb, testContext, upload, user, type TestUser } from "./helpers";
+import { jsonLogLines, call, ORIGIN, paired, resetDb, testContext, upload, user, type TestUser } from "./helpers";
 
 const NOW = Date.parse("2026-11-07T09:00:00Z");
 const input = (overrides: Partial<EntryInput> = {}): EntryInput => ({
@@ -256,7 +256,7 @@ describe("journal edit and delete", () => {
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
     expect((await call("DELETE", `/api/journal/${entry.id}`, { cookie: a.cookie })).status).toBe(200);
-    expect(log).toHaveBeenCalledWith("[bisou] photo purge failed", 1);
+    expect(jsonLogLines(log.mock.calls)).toMatchObject([{ event: "photo_purge_failed", level: "error", count: 1 }]);
     for (const size of ["full", "thumb"])
       await error(await call("GET", `/api/photos/${photoId}/${size}`, { cookie: b.cookie }), 404, "not_found");
     expect(

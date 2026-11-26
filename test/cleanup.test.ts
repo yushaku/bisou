@@ -4,7 +4,7 @@ import worker from "../src/worker/index";
 import { runCleanup, sweepPhotos } from "../src/worker/lib/cleanup";
 import { DAY, HOUR, MINUTE, PENDING_PHOTO_TTL } from "../src/worker/lib/time";
 import { photoKey } from "../src/worker/lib/photos";
-import { call, paired, resetDb, upload } from "./helpers";
+import { jsonLogLines, call, paired, resetDb, upload } from "./helpers";
 
 const NOW = new Date("2026-11-05T20:00:00Z").getTime();
 
@@ -190,9 +190,9 @@ describe("scheduled handler", () => {
     await Promise.all(pending);
 
     await expectOnlyLiveRowsLeft();
-    const lines = log.mock.calls.filter((args) => args[0] === "[bisou] cleanup");
-    expect(lines).toHaveLength(1);
-    expect(JSON.parse(String(lines[0]?.[1]))).toEqual({
+    const [rows, photos] = jsonLogLines(log.mock.calls);
+    expect(rows).toMatchObject({ event: "cleanup", outcome: "success", requestId: expect.any(String) });
+    expect(rows?.counts).toEqual({
       otp_codes: 2,
       sessions: 2,
       otp_requests: 2,
@@ -201,7 +201,7 @@ describe("scheduled handler", () => {
       wish_spins: 0,
       wish_notices: 0,
     });
-    expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 0);
+    expect(photos).toMatchObject({ event: "photo_cleanup", count: 0, requestId: rows?.requestId });
   });
 });
 
@@ -281,9 +281,17 @@ describe("scheduled photo sweep", () => {
         else expect(object).toBeNull();
       }
     }
-    expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 3);
+    expect(
+      jsonLogLines(log.mock.calls)
+        .filter((line) => line.event === "photo_cleanup")
+        .at(-1),
+    ).toMatchObject({ count: 3 });
     await scheduled();
-    expect(log).toHaveBeenLastCalledWith("[bisou] photo cleanup", 0);
+    expect(
+      jsonLogLines(log.mock.calls)
+        .filter((line) => line.event === "photo_cleanup")
+        .at(-1),
+    ).toMatchObject({ count: 0 });
   });
 
   it("sweeps photos even when D1 row cleanup fails and logs each outcome", async () => {
@@ -293,8 +301,12 @@ describe("scheduled photo sweep", () => {
     vi.spyOn(env.DB, "batch").mockRejectedValueOnce(new Error("unavailable"));
     await scheduled();
     expect(await keys("SELECT id AS k FROM photos")).toEqual(["attached", "recent"]);
-    expect(error).toHaveBeenCalledWith("[bisou] cleanup failed");
-    expect(log).toHaveBeenCalledWith("[bisou] photo cleanup", 3);
+    expect(jsonLogLines(error.mock.calls)).toMatchObject([{ event: "cleanup", level: "error", outcome: "failure" }]);
+    expect(
+      jsonLogLines(log.mock.calls)
+        .filter((line) => line.event === "photo_cleanup")
+        .at(-1),
+    ).toMatchObject({ count: 3 });
     expect(await count("otp_codes")).toBe(3);
   });
 
@@ -304,7 +316,9 @@ describe("scheduled photo sweep", () => {
     vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     await scheduled();
-    expect(error).toHaveBeenCalledWith("[bisou] photo cleanup failed");
+    expect(jsonLogLines(error.mock.calls)).toMatchObject([
+      { event: "photo_cleanup", level: "error", outcome: "failure" },
+    ]);
     await expectOnlyLiveRowsLeft();
     expect(await count("photos")).toBe(5);
     await scheduled();
@@ -326,11 +340,19 @@ describe("scheduled photo sweep", () => {
     await scheduled();
     expect(await count("photos")).toBe(1);
     expect(deleted.mock.calls[0]?.[0]).toHaveLength(1000);
-    expect(log).toHaveBeenLastCalledWith("[bisou] photo cleanup", 500);
+    expect(
+      jsonLogLines(log.mock.calls)
+        .filter((line) => line.event === "photo_cleanup")
+        .at(-1),
+    ).toMatchObject({ count: 500 });
     await scheduled();
     expect(await count("photos")).toBe(0);
     expect(deleted.mock.calls[1]?.[0]).toHaveLength(2);
-    expect(log).toHaveBeenLastCalledWith("[bisou] photo cleanup", 1);
+    expect(
+      jsonLogLines(log.mock.calls)
+        .filter((line) => line.event === "photo_cleanup")
+        .at(-1),
+    ).toMatchObject({ count: 1 });
   });
 });
 

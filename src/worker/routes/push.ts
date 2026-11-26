@@ -8,10 +8,6 @@ import { fromBase64Url } from "../lib/crypto";
 import { isPushEndpoint, publicKeyFromJwk } from "../lib/webpush";
 
 export const push = new Hono<AppEnv>();
-push.onError((_error, c) => {
-  console.error("[bisou] push subscription failed");
-  return c.json({ error: "server_error" }, 500);
-});
 push.use("*", bodyLimit({ maxSize: 4096, onError: (c) => c.json({ error: "body_too_large" }, 413) }));
 
 push.get("/", async (c) => {

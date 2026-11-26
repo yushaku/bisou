@@ -1,3 +1,4 @@
+import { log } from "./logger";
 import { defined } from "../../shared/guards";
 import { en } from "../../client/i18n/en";
 import { vi, type MessageKey } from "../../client/i18n/vi";
@@ -23,7 +24,7 @@ export async function notifyJournal(
   commentEntryId?: string,
 ): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) {
-    console.log("[bisou] push unavailable");
+    log("info", "push_unavailable");
     return;
   }
   try {
@@ -56,7 +57,7 @@ export async function notifyJournal(
       ),
     );
   } catch {
-    console.error("[bisou] journal push failed");
+    log("error", "push_enqueue_failed", { topic: "journal" });
   }
 }
 
@@ -65,7 +66,7 @@ export const SHARED_WISH_PUSH_TITLE_MAX = 60;
 
 export async function notifySharedWish(env: Env, coupleId: string, creatorId: string, title: string): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) {
-    console.log("[bisou] push unavailable");
+    log("info", "push_unavailable");
     return;
   }
   try {
@@ -102,13 +103,13 @@ export async function notifySharedWish(env: Env, coupleId: string, creatorId: st
       ),
     );
   } catch {
-    console.error("[bisou] shared wish push failed");
+    log("error", "push_enqueue_failed", { topic: "shared-wish" });
   }
 }
 
 export async function notifyGarden(env: Env, coupleId: string, authorId: string): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) {
-    console.log("[bisou] push unavailable");
+    log("info", "push_unavailable");
     return;
   }
   try {
@@ -132,7 +133,7 @@ export async function notifyGarden(env: Env, coupleId: string, authorId: string)
       ),
     );
   } catch {
-    console.error("[bisou] garden push failed");
+    log("error", "push_enqueue_failed", { topic: "garden" });
   }
 }
 
@@ -155,7 +156,7 @@ export function reminderMessage(titles: string[], locale: Locale, offset: 0 | 1)
 
 export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 1): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) {
-    console.log("[bisou] push unavailable");
+    log("info", "push_unavailable");
     return;
   }
   const { results } = await env.DB.prepare(
@@ -199,11 +200,11 @@ export async function remindEvents(env: Env, scheduledTime: number, offset: 0 | 
         .all<{ id: string }>();
       for (const row of devices.results) jobs.push(pushJob(row.id, "events", message));
     } catch {
-      console.error("[bisou] push failed", "events", 0);
+      log("error", "push_failed", { topic: "events", status: 0 });
     }
   }
   await enqueuePush(env, jobs);
-  console.log("[bisou] event pushes queued", jobs.length);
+  log("info", "push_queued", { topic: "events", count: jobs.length });
 }
 
 async function pushNotesToRecipient(
@@ -232,7 +233,7 @@ async function pushNotesToRecipient(
     );
   });
   await enqueuePush(env, jobs);
-  console.log("[bisou] note pushes queued", jobs.length);
+  log("info", "push_queued", { topic: "notes", count: jobs.length });
 }
 export async function notifyNote(env: Env, writer: string, recipient: string): Promise<void> {
   if (!env.VAPID_PRIVATE_KEY) return;
@@ -257,7 +258,7 @@ export async function remindNotes(env: Env, scheduledTime: number): Promise<void
     try {
       await pushNotesToRecipient(env, group.writer, recipient, group.count, true);
     } catch {
-      console.error("[bisou] note push failed");
+      log("error", "push_enqueue_failed", { topic: "notes" });
     }
   }
 }

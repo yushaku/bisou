@@ -1,3 +1,4 @@
+import { log } from "./logger";
 import { defined } from "../../shared/guards";
 import type { Env } from "../env";
 import { notifyNote } from "./notify";
@@ -70,7 +71,7 @@ export async function sendScheduledNotes(env: Env, now: number): Promise<void> {
     try {
       await notifyNote(env, row.writer_id, row.recipient_id);
     } catch {
-      console.error("[bisou] scheduled note push failed");
+      log("error", "scheduled_note_push_failed", { topic: "notes" });
     }
   }
 }

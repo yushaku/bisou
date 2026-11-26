@@ -1,9 +1,19 @@
 import { env } from "cloudflare:workers";
 import { expect, vi } from "vitest";
+import { isRecord } from "../src/shared/guards";
 import type { Couple } from "../src/shared/types";
 import worker from "../src/worker/index";
 
 export const ORIGIN = "https://bisou.example";
+
+export function jsonLogLines(calls: unknown[][]) {
+  return calls.map(([line, ...extra]) => {
+    expect(extra).toEqual([]);
+    if (!isRecord(line) || Array.isArray(line)) throw new Error("Expected one structured log entry");
+    expect(Object.values(line)).not.toContain(undefined);
+    return line;
+  });
+}
 
 const background: Promise<unknown>[] = [];
 export const testContext = {

@@ -1,5 +1,6 @@
 import type { Locale } from "../../shared/types";
 import type { Env } from "../env";
+import { log } from "./logger";
 
 const RESEND_URL = "https://api.resend.com/emails";
 const FROM = "Bisou <no-reply@mail.yuchi-education.com>";
@@ -32,17 +33,15 @@ function buildOtpMail(code: string, locale: Locale): { subject: string; text: st
   return { subject: t.subject(code), text, html };
 }
 
-export type SendResult = "sent" | "logged" | "failed";
+export type SendResult = "sent" | "unavailable" | "failed";
 
-/** Sends the code through Resend, or logs it when no API key is configured (local dev). */
 export async function sendOtpMail(env: Env, to: string, code: string, locale: Locale): Promise<SendResult> {
   if (!env.RESEND_API_KEY) {
-    if (env.ENVIRONMENT === "development") {
-      console.log(`[bisou] RESEND_API_KEY missing, login code for ${to}: ${code}`);
-    } else {
-      console.log("[bisou] RESEND_API_KEY missing, mail unavailable");
-    }
-    return "logged";
+    log("info", "mail_unavailable", {
+      errorCode: "resend_key_missing",
+      devOtp: env.ENVIRONMENT === "development" ? { email: to, code } : undefined,
+    });
+    return "unavailable";
   }
   const mail = buildOtpMail(code, locale);
   try {
@@ -52,12 +51,12 @@ export async function sendOtpMail(env: Env, to: string, code: string, locale: Lo
       body: JSON.stringify({ from: FROM, to: [to], subject: mail.subject, text: mail.text, html: mail.html }),
     });
     if (!res.ok) {
-      console.error(`[bisou] Resend error ${res.status}`);
+      log("error", "mail_failed", { errorCode: "resend_response", status: res.status });
       return "failed";
     }
     return "sent";
   } catch {
-    console.error("[bisou] Resend request failed");
+    log("error", "mail_failed", { errorCode: "resend_request_failed" });
     return "failed";
   }
 }

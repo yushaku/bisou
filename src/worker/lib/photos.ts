@@ -1,3 +1,4 @@
+import { log } from "./logger";
 import { defined } from "../../shared/guards";
 import type { PhotoSize } from "../../shared/types";
 import type { Env } from "../env";
@@ -48,7 +49,7 @@ export async function purgeAvatars(env: Env, userId: string, completedId?: strin
       cursor = page.truncated ? page.cursor : undefined;
     } while (cursor);
   } catch {
-    console.error("[bisou] avatar purge failed");
+    log("error", "avatar_purge_failed");
   }
 }
 
@@ -193,6 +194,6 @@ export async function purgePhotos(env: Env, rows: { id: string; couple_id: strin
       .bind(...rows.map((row) => row.id))
       .run();
   } catch {
-    console.error("[bisou] photo purge failed", rows.length);
+    log("error", "photo_purge_failed", { count: rows.length });
   }
 }

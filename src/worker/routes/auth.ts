@@ -4,6 +4,7 @@ import type { AppEnv } from "../env";
 import { generateOtpCode, hashOtp, sha256Hex, verifyOtp } from "../lib/crypto";
 import { normalizeEmail } from "../lib/email";
 import { sendOtpMail } from "../lib/mail";
+import { log } from "../lib/logger";
 import { clearSessionCookie, createSession, readSessionToken, setSessionCookie } from "../lib/session";
 import { HOUR, OTP_MAX_ATTEMPTS, OTP_MAX_PER_HOUR, OTP_MIN_INTERVAL, OTP_TTL } from "../lib/time";
 import { findOrCreateUser } from "../lib/users";
@@ -70,7 +71,7 @@ auth.post("/request", async (c) => {
 
   const result = await sendOtpMail(c.env, email, code, lang);
   const response: RequestCodeResponse = { ok: true };
-  if (result === "logged" && c.env.ENVIRONMENT === "development") {
+  if (result === "unavailable" && c.env.ENVIRONMENT === "development") {
     response.devNote = "RESEND_API_KEY is not set: the code was printed to the dev server log.";
   }
   return c.json(response);
@@ -128,7 +129,7 @@ auth.post("/verify", async (c) => {
   const user = await findOrCreateUser(c.env, email, lang, now);
   const token = await createSession(c.env, user.id, now);
   setSessionCookie(c, token);
-  if (devLogin) console.log(`[bisou] dev login code used for ${email}`);
+  if (devLogin) log("info", "dev_login");
   return c.json({ user });
 });
 

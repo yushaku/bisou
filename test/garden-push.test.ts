@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { gateIds, type GardenDeckState, type GardenState } from "../src/shared/garden";
-import { call, paired, resetDb, waitForBackground, type TestUser } from "./helpers";
+import { jsonLogLines, call, paired, resetDb, waitForBackground, type TestUser } from "./helpers";
 import { decrypt, device, mockPush, subscribe } from "./push-helpers";
 
 const DAY = Date.parse("2026-11-09T15:00:00+07:00");
@@ -129,7 +129,7 @@ it("garden R13 R36 R37: request and failed-push logs never include questions, an
   await save(a, id, "VERY SECRET BODY");
   await save(b, id, "OTHER SECRET BODY");
   await waitForBackground();
-  const output = JSON.stringify([...log.mock.calls, ...error.mock.calls]);
+  const output = JSON.stringify(jsonLogLines([...log.mock.calls, ...error.mock.calls]));
   expect(output).not.toContain("SECRET BODY");
   expect(output).not.toContain(a.id);
   expect(output).not.toContain(b.id);

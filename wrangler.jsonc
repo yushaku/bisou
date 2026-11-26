@@ -4,7 +4,12 @@
   "main": "./src/worker/index.ts",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true, "issues": { "enabled": true } },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "invocation_logs": true },
+    "issues": { "enabled": true },
+    "traces": { "enabled": true, "head_sampling_rate": 1 }
+  },
   // Every minute: scheduled notes go out each minute, other jobs slot by Vietnam hour in src/worker/index.ts.
   "triggers": { "crons": ["* * * * *"] },
   "assets": {

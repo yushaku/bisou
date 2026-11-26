@@ -1,3 +1,4 @@
+import { log } from "./logger";
 import { defined } from "../../shared/guards";
 import type { Env } from "../env";
 import { fromBase64Url, toBase64Url } from "./crypto";
@@ -166,7 +167,7 @@ export async function sendPush(
     return { outcome: "gone" };
   }
   await env.DB.prepare("UPDATE push_subscriptions SET failures = failures + 1 WHERE id = ?").bind(row.id).run();
-  console.error("[bisou] push failed", options.topic, status);
+  log("error", "push_failed", { topic: options.topic, status });
   const retry = thrown || status === 429 || status >= 500;
   return retry ? { outcome: "retry", ...(retryAfter === undefined ? {} : { retryAfter }) } : { outcome: "failed" };
 }

@@ -1,5 +1,6 @@
 import { defined } from "../../shared/guards";
 import type { Env } from "../env";
+import { log } from "./logger";
 import { sendPush, type PushMessage, type PushResult, type PushRow, type PushTopic } from "./webpush";
 
 // ADR 0010: one job is one device. A job never holds an endpoint, key, user id or locale.
@@ -27,7 +28,7 @@ export async function enqueuePush(env: Env, jobs: PushJob[]): Promise<void> {
     try {
       await env.PUSH_QUEUE.sendBatch(chunk.map((body) => ({ body })));
     } catch {
-      console.error("[bisou] push enqueue failed", defined(chunk[0]).topic, chunk.length);
+      log("error", "push_enqueue_failed", { topic: defined(chunk[0]).topic, count: chunk.length });
     }
   }
 }
@@ -73,14 +74,5 @@ export async function consumePushBatch(batch: MessageBatch<PushJob>, env: Env): 
       }
     }),
   );
-  console.log(
-    "[bisou] push batch",
-    JSON.stringify({
-      sent: counts.sent,
-      gone: counts.gone,
-      retried: counts.retried,
-      dropped: counts.dropped,
-      failed: counts.failed,
-    }),
-  );
+  log("info", "push_batch", counts);
 }

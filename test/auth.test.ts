@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { app } from "../src/worker/app";
 import { hashOtp, sha256Hex } from "../src/worker/lib/crypto";
 import { DAY, MINUTE } from "../src/worker/lib/time";
-import { call, codeFromMail, login, mockResend, ORIGIN, sessionCookie, user } from "./helpers";
+import { jsonLogLines, call, codeFromMail, login, mockResend, ORIGIN, sessionCookie, user } from "./helpers";
 
 const T0 = new Date("2026-11-04T08:00:00Z").getTime();
 
@@ -119,7 +119,7 @@ describe("POST /api/auth/request", () => {
     expect((await requestCode("hour@example.com")).res.status).toBe(200);
   });
 
-  it("logs the code instead of mailing when RESEND_API_KEY is missing, with a dev note only in development", async () => {
+  it("logs email and code and returns a dev note only in development without Resend", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { default: worker } = await import("../src/worker/index");
@@ -138,15 +138,34 @@ describe("POST /api/auth/request", () => {
     const dev = await send("development", "dev@example.com");
     expect(dev.status).toBe(200);
     const devBody = await dev.json<{ ok: boolean; devNote?: string }>();
-    expect(devBody.devNote).toContain("RESEND_API_KEY");
-    expect(log.mock.calls.flat().join(" ")).toMatch(/dev@example\.com: \d{6}/);
+    expect(devBody.devNote).toBeDefined();
+    expect(jsonLogLines(log.mock.calls)).toMatchObject([
+      { event: "mail_unavailable", level: "info", email: "dev@example.com", code: expect.stringMatching(/^\d{6}$/) },
+    ]);
+    const [entry] = jsonLogLines(log.mock.calls);
+    const verified = await worker.fetch(
+      new Request("https://bisou.example/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: "https://bisou.example" },
+        body: JSON.stringify({ email: "dev@example.com", code: entry?.code }),
+      }) as Request<unknown, IncomingRequestCfProperties>,
+      { ...env, RESEND_API_KEY: undefined, ENVIRONMENT: "development", DEV_LOGIN_CODE: undefined },
+      ctx,
+    );
+    expect(verified.status).toBe(200);
+    expect(sessionCookie(verified)).toMatch(/^bisou_session=.+$/);
 
     log.mockClear();
     for (const environment of ["production", "test"]) {
       const res = await send(environment, `${environment}@example.com`);
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({ ok: true });
-      const output = log.mock.calls.flat().join(" ");
+      const lines = jsonLogLines(log.mock.calls);
+      expect(lines).toMatchObject([{ event: "mail_unavailable", level: "info" }]);
+      expect(lines[0]).not.toHaveProperty("email");
+      expect(lines[0]).not.toHaveProperty("code");
+      const output = JSON.stringify(lines);
+      log.mockClear();
       expect(output).not.toContain(`${environment}@example.com`);
       expect(output).not.toMatch(/\b\d{6}\b/);
     }
@@ -162,8 +181,15 @@ describe("POST /api/auth/request", () => {
     const res = await call("POST", "/api/auth/request", { body: { email: "private@example.com" } });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
-    const output = error.mock.calls.flat().map(String).join(" ");
-    expect(output).toContain(failure === "response" ? "400" : "failed");
+    expect(jsonLogLines(error.mock.calls)).toMatchObject([
+      {
+        event: "mail_failed",
+        level: "error",
+        status: failure === "response" ? 400 : null,
+        errorCode: failure === "response" ? "resend_response" : "resend_request_failed",
+      },
+    ]);
+    const output = JSON.stringify(error.mock.calls);
     expect(output).not.toContain("private@example.com");
     expect(output).not.toContain("123456");
     expect(output).not.toContain("secret body");
@@ -201,7 +227,8 @@ describe("POST /api/auth/verify", () => {
       expect(user.email).toBe(email);
       expect(await env.DB.prepare("SELECT user_id FROM sessions").first("user_id")).toBe(user.id);
       expect((await call("GET", "/api/me", { cookie: sessionCookie(res) })).status).toBe(200);
-      expect(log).toHaveBeenCalledExactlyOnceWith(`[bisou] dev login code used for ${email}`);
+      expect(jsonLogLines(log.mock.calls)).toMatchObject([{ event: "dev_login", level: "info" }]);
+      expect(JSON.stringify(log.mock.calls)).not.toMatch(/dev-login@example\.com|111111/);
       expect(await env.DB.prepare("SELECT COUNT(*) AS n FROM otp_codes").first("n")).toBe(0);
       expect(await (await verify()).json()).toEqual({ error: "code_expired" });
     });

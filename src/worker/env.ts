@@ -12,7 +12,7 @@ export interface Env {
   DEV_LOGIN_CODE?: string;
   /** Secret: HMAC key for one-time codes. */
   OTP_PEPPER?: string;
-  /** Secret: Resend API key. Missing locally, then codes are logged. */
+  /** Secret: Resend API key. When absent, only development logs login codes. */
   RESEND_API_KEY?: string;
   /** Secret: P-256 VAPID private JWK JSON. */
   VAPID_PRIVATE_KEY?: string;
