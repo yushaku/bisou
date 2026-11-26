@@ -18,7 +18,7 @@ import { focusCreateButton } from "@/lib/useTabNavigation";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "./BrandMark";
 
-export const TABS = ["home", "journal", "wishes", "garden"] as const;
+const TABS = ["home", "journal", "wishes", "garden"] as const;
 export type TabId = (typeof TABS)[number];
 
 const TAB_META: Record<TabId, { icon: LucideIcon; label: MessageKey }> = {
@@ -210,7 +210,7 @@ interface BottomBarProps {
   onCreate: (destination: CreateDestination) => void;
 }
 
-export function pillColumn(tab: TabId): number {
+function pillColumn(tab: TabId): number {
   const index = TABS.indexOf(tab);
   return index < 2 ? index : index + 1;
 }
