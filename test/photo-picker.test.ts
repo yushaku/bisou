@@ -119,7 +119,7 @@ it("shows upload errors with retry-all and keeps an indexed icon retry on each f
     expect.objectContaining({ id: "picker-toast", action: expect.objectContaining({ label: "journal.retry" }) }),
   );
   const action = vi.mocked(toast.error).mock.calls.at(-1)![1]!.action!;
-  action.onClick();
+  void action.onClick();
   expect(vi.mocked(uploads.retry).mock.calls).toEqual([["a"], ["b"]]);
   expect(nodes.some((node) => node.props.children === "compose.photoFailed")).toBe(false);
   expect(nodes.find((node) => node.props["aria-label"] === 'compose.retryPhoto {"index":2}')).toBeDefined();
@@ -167,7 +167,7 @@ it("retry-all uses the current failures after a failed photo is removed", () => 
   const action = vi.mocked(toast.error).mock.calls.at(-1)![1]!.action!;
   uploads.items = [photo("b", "failed")];
   render(uploads);
-  action.onClick();
+  void action.onClick();
   expect(vi.mocked(uploads.retry).mock.calls).toEqual([["b"]]);
 });
 

@@ -172,9 +172,12 @@ export default defineConfig(
     },
   },
   {
-    // The worker logs through console (Workers observability); log is part of its contract.
-    files: ["src/worker/**/*.ts"],
-    rules: { "no-console": ["error", { allow: ["log", "warn", "error", "info"] }] },
+    files: ["src/worker/**"],
+    rules: { "no-console": ["error", {}] },
+  },
+  {
+    files: ["src/worker/lib/logger.ts"],
+    rules: { "no-console": "off" },
   },
   {
     // CLI scripts print to stdout by design.
