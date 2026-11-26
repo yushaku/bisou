@@ -37,7 +37,11 @@ export type SendResult = "sent" | "logged" | "failed";
 /** Sends the code through Resend, or logs it when no API key is configured (local dev). */
 export async function sendOtpMail(env: Env, to: string, code: string, locale: Locale): Promise<SendResult> {
   if (!env.RESEND_API_KEY) {
-    console.log(`[bisou] RESEND_API_KEY missing, login code for ${to}: ${code}`);
+    if (env.ENVIRONMENT === "development") {
+      console.log(`[bisou] RESEND_API_KEY missing, login code for ${to}: ${code}`);
+    } else {
+      console.log("[bisou] RESEND_API_KEY missing, mail unavailable");
+    }
     return "logged";
   }
   const mail = buildOtpMail(code, locale);
@@ -48,12 +52,12 @@ export async function sendOtpMail(env: Env, to: string, code: string, locale: Lo
       body: JSON.stringify({ from: FROM, to: [to], subject: mail.subject, text: mail.text, html: mail.html }),
     });
     if (!res.ok) {
-      console.error(`[bisou] Resend error ${res.status}: ${await res.text()}`);
+      console.error(`[bisou] Resend error ${res.status}`);
       return "failed";
     }
     return "sent";
-  } catch (err) {
-    console.error("[bisou] Resend request failed", err);
+  } catch {
+    console.error("[bisou] Resend request failed");
     return "failed";
   }
 }

@@ -141,9 +141,32 @@ describe("POST /api/auth/request", () => {
     expect(devBody.devNote).toContain("RESEND_API_KEY");
     expect(log.mock.calls.flat().join(" ")).toMatch(/dev@example\.com: \d{6}/);
 
-    const prod = await send("production", "prod@example.com");
-    expect(await prod.json()).toEqual({ ok: true });
+    log.mockClear();
+    for (const environment of ["production", "test"]) {
+      const res = await send(environment, `${environment}@example.com`);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ ok: true });
+      const output = log.mock.calls.flat().join(" ");
+      expect(output).not.toContain(`${environment}@example.com`);
+      expect(output).not.toMatch(/\b\d{6}\b/);
+    }
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it.each(["response", "throw"])("does not log Resend %s details", async (failure) => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      if (failure === "throw") throw new Error("private@example.com 123456 secret body");
+      return new Response("private@example.com 123456 secret body", { status: 400 });
+    });
+    const res = await call("POST", "/api/auth/request", { body: { email: "private@example.com" } });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: true });
+    const output = error.mock.calls.flat().map(String).join(" ");
+    expect(output).toContain(failure === "response" ? "400" : "failed");
+    expect(output).not.toContain("private@example.com");
+    expect(output).not.toContain("123456");
+    expect(output).not.toContain("secret body");
   });
 });
 
@@ -272,7 +295,7 @@ describe("POST /api/auth/verify", () => {
   });
 
   it("drops Secure only for local development over http (Safari rejects Secure cookies on http://localhost)", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const mail = mockResend();
     const { default: worker } = await import("../src/worker/index");
     const ctx = { waitUntil: () => {}, passThroughOnException: () => {}, props: {} } as unknown as ExecutionContext;
     const loginAt = async (base: string, environment: string, email: string) => {
@@ -283,12 +306,11 @@ describe("POST /api/auth/verify", () => {
             headers: { "Content-Type": "application/json", Origin: base },
             body: JSON.stringify(body),
           }) as Request<unknown, IncomingRequestCfProperties>,
-          { ...env, RESEND_API_KEY: undefined, ENVIRONMENT: environment },
+          { ...env, ENVIRONMENT: environment },
           ctx,
         );
       await post("/api/auth/request", { email });
-      const match = new RegExp(`${email.replace(".", "\\.")}: (\\d{6})`).exec(log.mock.calls.flat().join(" "));
-      const res = await post("/api/auth/verify", { email, code: match![1] });
+      const res = await post("/api/auth/verify", { email, code: codeFromMail(mail.sent.at(-1)) });
       expect(res.status).toBe(200);
       return res.headers.get("Set-Cookie")!;
     };
