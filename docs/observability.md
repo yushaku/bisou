@@ -1,5 +1,7 @@
-# Workers Issues
+# Workers observability
 
-In the Cloudflare dashboard, create a Workers Issues notification for Bisou, set the occurrence threshold to 1, and send it to the PO's email address.
+Workers Issues groups backend errors. Configure email delivery through a Cloudflare Monitor that checks for at least one error-level log in five minutes. Use the first run of the alert setup script to check delivery with a temporary Worker. [ADR 0018 alert setup PoC](adr/0018-backend-observability.md#alert-setup-poc)
 
-To check delivery, follow the [ADR 0018 PoC](adr/0018-backend-observability.md#poc-before-phase-3): deploy a throwaway Worker under a separate name with a temporary unhandled error, then request it and confirm that the issue appears and the email arrives. Remove the test Worker afterwards; do not add a test-error endpoint to production.
+Remove the test Worker afterwards. Do not add a test-error endpoint to production.
+
+`wrangler.jsonc` enables Workers traces at a sampling rate of 1. On Free, Workers Logs, Workers Traces and Issues share the 0.5 GB daily ingest allowance starting 1 December 2026. The ingest Monitor threshold is about 0.25 GB per day. Lower trace sampling if it fires. [Cloudflare Observability pricing](https://developers.cloudflare.com/observability/pricing/)
