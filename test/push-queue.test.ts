@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PushJob } from "../src/worker/lib/pushQueue";
 import { enqueuePush } from "../src/worker/lib/pushQueue";
 import { jsonLogLines, call, paired, resetDb, waitForBackground } from "./helpers";
-import { decrypt, device, mockPush, runPushCron, runPushQueue, stored, subscribe } from "./push-helpers";
+import { decrypt, device, mockPush, requestUrl, runPushCron, runPushQueue, stored, subscribe } from "./push-helpers";
 
 const NOW = Date.parse("2026-11-07T08:00:00Z");
 const DAY = 86400 * 1000;
@@ -206,6 +206,58 @@ describe("consumer", () => {
     expect(await stored(d.body.endpoint)).toBeNull();
   });
 
+  it("reports one batch event with all outcomes, topic counts and p95 lag", async () => {
+    const { a } = await paired();
+    const devices = await Promise.all([201, 410, 503, 400].map((status) => device(String(status))));
+    const ids: string[] = [];
+    for (const d of devices) {
+      await subscribe(a, d);
+      ids.push((await row(d)).id);
+    }
+    const message = { title: "private title", body: "private message text", url: "/journal", tag: "journal" };
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const status = Number(requestUrl(input).split("/").at(-1));
+      return new Response(null, { status });
+    });
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const [result] = await runPushQueue([
+      job(ids[0]!, { message, expiresAt: NOW + DAY - 40 }),
+      job(ids[1]!, { message, expiresAt: NOW + DAY - 20_000, topic: "notes" }),
+      job(ids[2]!, { message, expiresAt: NOW + DAY - 300, topic: "events" }),
+      job("missing-device", { message, expiresAt: NOW + DAY - 90, topic: "notes" }),
+      job(ids[3]!, { message, expiresAt: NOW + DAY - 500, topic: "shared-wish" }),
+    ]);
+    expect(result?.explicitAcks.sort()).toEqual(["msg-0", "msg-1", "msg-3", "msg-4"]);
+    expect(result?.retries).toEqual([{ msgId: "msg-2", delaySeconds: 30 }]);
+    const entries = jsonLogLines(log.mock.calls);
+    expect(entries).toMatchObject([
+      {
+        event: "queue_batch",
+        level: "info",
+        topicCounts: { journal: 1, notes: 2, events: 1, "shared-wish": 1 },
+        batchSize: 5,
+        sent: 1,
+        gone: 1,
+        retried: 1,
+        dropped: 1,
+        failed: 1,
+        lagP95Ms: 20_000,
+        requestId: expect.stringMatching(/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/),
+        release: "dev",
+      },
+    ]);
+    expect(jsonLogLines(error.mock.calls).map((entry) => entry.requestId)).toEqual([
+      entries[0]?.requestId,
+      entries[0]?.requestId,
+    ]);
+    const batchLog = JSON.stringify(entries);
+    for (const value of [message.title, message.body, "missing-device", ...ids]) expect(batchLog).not.toContain(value);
+    for (const { body } of devices) {
+      for (const value of [body.endpoint, body.keys.auth, body.keys.p256dh]) expect(batchLog).not.toContain(value);
+    }
+  });
+
   it("handles the messages of a batch in parallel and logs counts only", async () => {
     const { a, b } = await paired();
     const ids: string[] = [];
@@ -229,14 +281,15 @@ describe("consumer", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const [result] = await runPushQueue([
       ...ids.map((id) => job(id)),
-      job("missing"),
+      job("missing", { topic: "private@example.com" as PushJob["topic"] }),
       job("old", { expiresAt: NOW - 1 }),
     ]);
     expect(peak).toBe(3);
     expect(result!.explicitAcks).toHaveLength(5);
-    expect(jsonLogLines(log.mock.calls)).toMatchObject([
+    const entries = jsonLogLines(log.mock.calls);
+    expect(entries).toMatchObject([
       {
-        event: "push_batch",
+        event: "queue_batch",
         level: "info",
         requestId: expect.any(String),
         sent: 3,
@@ -246,5 +299,6 @@ describe("consumer", () => {
         failed: 0,
       },
     ]);
+    expect(entries[0]?.topicCounts).toEqual({ journal: 4 });
   });
 });

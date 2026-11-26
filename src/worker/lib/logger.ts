@@ -32,6 +32,9 @@ interface LogFields {
   outcome?: "success" | "failure";
   count?: number;
   cleanup?: CleanupCounts;
+  topicCounts?: ReadonlyMap<PushTopic, number>;
+  batchSize?: number;
+  lagP95Ms?: number | null;
   sent?: number;
   gone?: number;
   retried?: number;
@@ -96,6 +99,10 @@ export function log(level: "info" | "warn" | "error", event: string, fields: Log
       wish_spins: cleanup.wish_spins,
       wish_notices: cleanup.wish_notices,
     },
+    topicCounts:
+      fields.topicCounts && Object.fromEntries([...fields.topicCounts].filter(([topic]) => pushTopics.has(topic))),
+    batchSize: fields.batchSize,
+    lagP95Ms: fields.lagP95Ms,
     sent: fields.sent,
     gone: fields.gone,
     retried: fields.retried,

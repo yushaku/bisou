@@ -33,8 +33,6 @@ export async function enqueuePush(env: Env, jobs: PushJob[]): Promise<void> {
   }
 }
 
-type Outcome = PushResult["outcome"] | "dropped";
-
 async function deliver(env: Env, job: PushJob): Promise<PushResult | { outcome: "dropped" }> {
   const now = Date.now();
   if (now >= job.expiresAt) return { outcome: "dropped" };
@@ -46,13 +44,19 @@ async function deliver(env: Env, job: PushJob): Promise<PushResult | { outcome: 
 }
 
 export async function consumePushBatch(batch: MessageBatch<PushJob>, env: Env): Promise<void> {
-  const counts: Record<Outcome | "retried", number> = { sent: 0, gone: 0, retried: 0, dropped: 0, failed: 0, retry: 0 };
+  const now = Date.now();
+  const counts = { sent: 0, gone: 0, retried: 0, dropped: 0, failed: 0 };
+  const topicCounts = new Map<PushTopic, number>();
+  const lags: number[] = [];
   await Promise.allSettled(
     batch.messages.map(async (message) => {
+      const job = message.body;
+      lags.push(now - (job.expiresAt - PUSH_LIFETIME_MS));
+      topicCounts.set(job.topic, (topicCounts.get(job.topic) ?? 0) + 1);
       let result: PushResult | { outcome: "dropped" };
       // A thrown error (D1, not the push service) is retried like a transient failure.
       try {
-        result = await deliver(env, message.body);
+        result = await deliver(env, job);
       } catch {
         result = { outcome: "retry" };
       }
@@ -65,7 +69,7 @@ export async function consumePushBatch(batch: MessageBatch<PushJob>, env: Env): 
         ("retryAfter" in result ? result.retryAfter : undefined) ??
         BACKOFF_SECONDS[message.attempts - 1] ??
         defined(BACKOFF_SECONDS.at(-1));
-      if (message.attempts <= MAX_RETRIES && Date.now() + delay * 1000 < message.body.expiresAt) {
+      if (message.attempts <= MAX_RETRIES && Date.now() + delay * 1000 < job.expiresAt) {
         counts.retried++;
         message.retry({ delaySeconds: delay });
       } else {
@@ -74,5 +78,11 @@ export async function consumePushBatch(batch: MessageBatch<PushJob>, env: Env): 
       }
     }),
   );
-  log("info", "push_batch", counts);
+  lags.sort((a, b) => a - b);
+  log("info", "queue_batch", {
+    ...counts,
+    topicCounts,
+    batchSize: batch.messages.length,
+    lagP95Ms: lags[Math.ceil(lags.length * 0.95) - 1] ?? null,
+  });
 }
