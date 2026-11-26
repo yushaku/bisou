@@ -1,91 +1,109 @@
 # ADR 0018: Backend observability stays Cloudflare-native, with alerts on errors, cron and push
 
-Status: accepted (November 2026)
+Status: accepted (November 2026), revised 26 November 2026 before implementation
 
 ## Context
 
 The PO asked whether the backend has observability and said it is needed. It has some: `wrangler.jsonc` sets `observability.enabled`, so Workers Logs and built-in metrics exist, and routes log failures with `console.error` (`src/worker/app.ts`, `src/worker/lib/pushQueue.ts`, `src/worker/lib/notify.ts`, `src/worker/lib/webpush.ts`, `src/worker/index.ts`).
 
 It is not enough to operate the app:
-- Workers Issues is not enabled: failures are not grouped and nobody is notified. Source maps are not uploaded, so a stack points into the built bundle.
+- Workers Issues is not enabled: failures are not grouped and nobody is notified.
 - Logs are free-text `[bisou] ...` lines with no request id, route, status, duration or release; they cannot be queried or aggregated reliably.
 - No alert or SLO exists. `push_subscriptions.failures` and `last_success_at` are written but never read; a push outage is invisible until a partner reports it.
-- Cron has no heartbeat: a missed 07:00, 08:00 or 20:00 slot is only discovered later.
+- Cron has no heartbeat. `src/worker/index.ts` runs `sendScheduledNotes` every minute and the 07, 08, 20 and 03 Vietnam-hour jobs; each swallows its error after one `console.error`. A missed run is only discovered later.
 - Client errors never leave the device; `ErrorBoundary` only calls `console.error`.
 - `src/worker/lib/mail.ts` logs the email and the login code when `RESEND_API_KEY` is missing. If the secret were missing in production, logs would contain one-time codes.
 
-Bisou is one Worker on Workers Free: a few hundred API requests a day, two people per couple, 5 USD/month would be a real cost. Notifications are a core feature (ADR 0007, ADR 0010), so losing a push or a reminder matters more than a slow page.
+Bisou is one Worker on Workers Free: a few hundred API requests a day, two people per couple, 5 USD/month would be a real cost. Notifications are a core feature (ADR 0007, ADR 0010, ADR 0012), so losing a push or a reminder matters more than a slow page.
 
 Targets, agreed with the PO:
 
-| Target | Value |
-|---|---|
-| API server errors | 5xx ≤ 1% of requests per 15 minutes; alert at ≥ 3 in 5 minutes |
-| Cron | every expected 07/08/20/03 slot runs; alert when a slot is > 10 minutes late |
-| Push | ≥ 98% delivered per day; alert when failed+gone > 5% over 15 minutes (minimum 20 attempts) |
-| Queue | p95 lag from enqueue to consume < 60 s; alert when > 5 minutes |
-| API latency | p95 < 800 ms; push enqueue p95 < 2 s |
-| Retention | 7 days for logs/traces (Cloudflare), 90 days for aggregated metrics (Analytics Engine) |
-| Cost | 0 USD/month; revisit only when a quota is reached |
-| Privacy | metadata only: no email, cookie, request body, push endpoint/keys, journal/note text, or raw user/couple id |
+| Target | Value | How it is watched |
+|---|---|---|
+| API server errors | 5xx ≤ 1% of requests per 15 minutes | Issues notification on the first occurrence of a new issue |
+| Cron | every expected run happens: `notes` each minute, 07/08/20/03 hourly slots | External heartbeat; alert when a slot is > 10 minutes late |
+| Push | ≥ 98% delivered per day | Monitor: failed+gone > 5% over 1 hour with at least 10 attempts, and a daily check against 98% |
+| Queue | p95 lag from enqueue to consume < 60 s | Monitor: lag p95 > 5 minutes, or no consumer batch for 15 minutes while jobs were enqueued |
+| API latency | p95 < 800 ms; push enqueue p95 < 2 s | Dashboard only, no alert |
+| Retention | 7 days for logs; aggregated metrics as long as the chosen store keeps them (see PoC) | |
+| Cost | 0 USD/month; revisit only when a quota is reached | |
+| Privacy | metadata only: no email, cookie, request body, push endpoint/keys, journal/note text, or raw user/couple id | |
 
-Cloudflare limits checked on 25 November 2026: Workers Logs is included in Free and Paid. Free is 200,000 log events/day with 3-day retention today; from 1 December 2026 it moves to the shared Observability allowance of 0.5 GB/day with 7-day retention. Workers Issues is in that allowance. Analytics Engine Free includes 100,000 data points written/day and 10,000 read queries/day; written data is kept for three months. Workers Paid is 5 USD/month with 50 GB/cycle and 10 GB-month storage. Cloudflare Alerts/Monitors can query SQL API datasets on a schedule and deliver email or webhooks on every plan.
+The push threshold uses 1 hour because the original 15 minutes with 20 attempts is rarely reached at this traffic outside the 20:00 slot.
+
+Cloudflare facts, checked on 26 November 2026 from Cloudflare docs and changelog:
+- Workers Issues groups uncaught exceptions, failed invocations, 5xx responses and error-level logs (`observability.issues.enabled`). Issues can notify on a threshold; a threshold of 1 notifies on the first occurrence.
+- Wrangler uploads Worker source maps by default from 4.150.0. The repo requires `^4.166.0`.
+- Alerts → Monitors (2 October 2026) evaluate SQL API queries on a schedule (threshold, anomaly detection, SLO) and deliver to email or webhook. The SQL API is in beta; its datasets include Workers logs. Whether a Monitor can read a Workers Analytics Engine dataset is not confirmed.
+- From 1 December 2026 Workers Logs moves to the unified observability pricing ($0.25/GB ingested, $0.10/GB-month stored beyond the allowance). Analytics Engine Free includes 100,000 writes/day and keeps data for three months.
+- Cron Triggers have had reported dispatch incidents (Cloudflare community, October 2026) where the handler never ran. Nothing inside the Worker can report a run that never started.
 
 ## Options considered
 
-**A. Cloudflare-native (chosen).** Enable Issues and source maps, standardize JSON logs, write a small Analytics Engine dataset for push/cron/queue events, and add Monitors that email the PO. Client errors arrive through a small Worker endpoint later. No new dependency, no third party, 0 USD.
+**A. Cloudflare-native plus an external heartbeat (chosen).** Issues for errors, structured JSON logs, Monitors for push and queue, and a free external heartbeat service for cron. No new npm dependency, 0 USD.
 
-**B. Sentry for errors and performance.** `@sentry/cloudflare` plus `@sentry/react` gives grouping, releases, client stack traces and 30-day retention on the Developer plan (0 USD, one user, 5,000 errors/month; Team 26 USD/month). Rejected for now: it adds dependencies and a vendor while still requiring Cloudflare-native alerts for cron, Queue and push; the 0 USD single-user plan fits, but the app does not yet have enough error volume to justify the extra surface. Revisit if client errors need release-by-release grouping or 30-day retention.
+**B. Sentry for errors and performance.** `@sentry/cloudflare` plus `@sentry/react` gives grouping, releases, client stack traces and 30-day retention on the Developer plan (0 USD, one user, 5,000 errors/month; Team 26 USD/month). Rejected for now: it adds dependencies and a vendor while still needing something else for cron, Queue and push. Revisit if client errors need release-by-release grouping or 30-day retention.
 
-**C. OpenTelemetry export to an external backend.** Workers can export logs and traces over OTel; a Tail Worker or Observability export sends them to Grafana Cloud, Better Stack or Datadog. Rejected for now: another account, secret and billing, plus retention/cost that needs its own PoC, for a system with one runtime.
+**C. OpenTelemetry export to an external backend.** Workers can export logs and traces over OTel to Grafana Cloud, Better Stack or Datadog. Rejected for now: another account, secret and billing, plus retention/cost that needs its own PoC, for a system with one runtime.
+
+**Cron alerts inside Cloudflare only** were considered and rejected: a Monitor or a self-check in the same cron cannot report that the cron itself stopped dispatching.
 
 ## Decision
 
 ### Signals
 
-1. **Issues + source maps.** Set `observability.issues.enabled` and `upload_source_maps: true` in the Worker build. Issues groups uncaught exceptions, failed invocations, 5xx responses and error logs; the 5xx Monitor below sends the email. Source maps must cover both Vite chunks and the Worker bundle.
-2. **Structured logs.** One JSON object per log line with `event`, `level`, `requestId` (the Cloudflare `cf-ray`), `route` (matched path, never the raw URL), `method`, `status`, `durationMs`, `release` (git SHA injected at build), `errorCode`, and counts/topic/outcome where relevant. A logger in `src/worker/lib/` does the shaping; call sites stop building strings. No body, cookie, `Authorization`, email, push endpoint, `p256dh`, `auth`, title or note text. Error messages are scrubbed before they are logged.
-3. **Analytics Engine dataset `bisou_metrics`.** One binding, `METRICS`. Events:
-   - `api_error`: route, method, status, errorCode, release; doubles: durationMs, count 1.
-   - `cron_run`: slot (`07`, `08`, `20`, `03`), outcome, release; doubles: durationMs, count 1.
-   - `push_result`: topic, outcome (`sent`, `gone`, `retry`, `dropped`, `failed`), release; doubles: count.
-   - `queue_batch`: release; doubles: batchSize, sent, gone, retried, dropped, failed, lagP95Ms.
-   - `client_error` (phase 3): route, errorName, release, userAgentFamily; doubles: count.
-   Analytics Engine is aggregate data, not a log sink: no ids and no free text.
-4. **Alerts by email.** Cloudflare Monitors query the dataset (or Workers metrics where a dataset is not needed):
-   - `5xx ≥ 3 in 5 minutes` on `api_error`, plus Issues for grouping.
-   - `push failure ratio > 5% in 15 minutes` with at least 20 attempts.
-   - `cron_run count = 0` for an expected slot 10 minutes after it was due.
-   - `queue_batch lagP95Ms > 300000` (5 minutes) or no consumer batch in 15 minutes.
-   Each alert carries the route/topic/slot, release and counts only. Webhook delivery can be added later without changing the signals.
-5. **Client errors (phase 3).** `POST /api/telemetry` behind the session, body limit 2 KB, 20 reports per user per minute, same-origin guard. Fields: route, error name, a normalized stack hash, release, browser family. No user text, URL query, email, user id or couple id. The endpoint writes `client_error` to Analytics Engine; it is not a general log collector.
+1. **Issues.** Set `observability.issues.enabled`. Configure an Issues notification to the PO's email with threshold 1. This replaces the separate 5xx Monitor of the first version. Source maps rely on Wrangler's default upload; the PoC checks that a stack points at `src/worker/...`.
+2. **Structured logs.** One JSON object per log line with `event`, `level`, `requestId`, `route` (matched path, never the raw URL), `method`, `status`, `durationMs`, `release` (git SHA injected at build), `errorCode`, and counts/topic/outcome where relevant. `requestId` is `cf-ray` for HTTP requests, and `crypto.randomUUID()` for cron and queue invocations, which have no request header. A logger in `src/worker/lib/` does the shaping; call sites stop building strings. No body, cookie, `Authorization`, email, push endpoint, `p256dh`, `auth`, title or note text. Error messages are scrubbed before they are logged.
+3. **Business events.** Emitted as structured log events first:
+   - `cron_run`: slot (`notes`, `07`, `08`, `20`, `03`), outcome, durationMs, release.
+   - `queue_batch`: topic counts, batchSize, sent, gone, retried, dropped, failed, lagP95Ms, release.
+   - `client_error` (phase 3): route, errorName, stackHash, release, userAgentFamily.
+   Queue lag is computed from the existing `PushJob.expiresAt`: `now - (expiresAt - PUSH_LIFETIME_MS)`. No new field in `PushJob`, so jobs already in the queue at deploy time still work. One `queue_batch` event per batch replaces the separate `push_result` event of the first version; topic counts stay inside it.
+   If the PoC shows Monitors cannot query these log events, or retention is too short for the daily 98% check, the same events are also written to an Analytics Engine dataset `bisou_metrics` (binding `METRICS`), with no ids and no free text.
+4. **Alerts by email.**
+   - Errors: Issues notification (signal 1).
+   - Push: Monitor, failed+gone > 5% over 1 hour with at least 10 attempts.
+   - Queue: Monitor, `lagP95Ms > 300000`, or no `queue_batch` for 15 minutes after jobs were enqueued.
+   - Cron: healthchecks.io free plan, one check per slot (`notes` each minute, `07`, `08`, `20`, `03` daily) with a 10-minute grace period. The Worker pings the check URL after each run. A failed run pings the `/fail` URL. The ping carries no data. Check URLs are kept in a Worker secret, not in the repository.
+   Each alert carries the route/topic/slot, release and counts only.
+5. **Client errors (phase 3).** `POST /api/telemetry` behind the session, body limit 2 KB, same-origin guard, at most 20 reports per user per minute through the Workers Rate Limiting binding. Fields: route, error name, a normalized stack hash, release, browser family. No user text, URL query, email, user id or couple id. Client source maps are uploaded in this phase, not before.
 
 ### Safety and privacy
 
-- Fix `mail.ts` first: never log the email or the code unless `ENVIRONMENT === "development"` and the request is local. In production, log only that mail is unavailable, without the recipient or code.
-- Use hashed ids only if correlation becomes necessary: HMAC with a secret salt, never a raw id. Phase 1 needs no user/couple identifiers at all.
+- Fix `mail.ts` first: never log the email or the code unless `ENVIRONMENT === "development"`. In production, log only that mail is unavailable, without the recipient or code.
+- Use hashed ids only if correlation becomes necessary: HMAC with a secret salt, never a raw id. Phases 1 and 2 need no user/couple identifiers.
 - Do not log request bodies, cookies, headers, push endpoints, keys, payloads, titles, journal/note content, or raw IP.
-- Cloudflare is the only processor of telemetry. No Sentry/OTel destination is added by this decision.
-- Alerts go to the PO's email; up to 20 recipients are supported if a second person joins operations.
+- Telemetry processors: Cloudflare for logs, issues and metrics; healthchecks.io receives only a timed ping per cron slot, from the Worker's IP, with no application data.
+- Alerts go to the PO's email.
 
 ### Delivery phases
 
-1. **Safety and signal (shippable alone).** Fix OTP/email logging; enable Issues and source maps; add the JSON logger; send a test error, confirm it appears in Issues, and confirm the 5xx Monitor email. No product behavior changes.
-2. **Business metrics and alerts.** Add the Analytics Engine binding and the four events; add `enqueuedAt` to `PushJob` to measure queue lag; create the Monitors and document thresholds. This is the phase that makes a push or cron miss visible.
-3. **Client errors.** Add `/api/telemetry`, wire `ErrorBoundary` and `window.onerror`, rate-limit and scrub. Ship behind a release flag if needed.
-4. **SLO and runbook.** Record the targets above, the post-deploy watch (30 minutes), and a weekly review of Issues, push ratio, cron heartbeats and queue lag.
+1. **Safety and errors (shippable alone, no PoC needed).** Fix OTP/email logging; enable Issues with a threshold-1 email notification; send a test error and confirm the email arrives.
+2. **PoC** (below), half a day.
+3. **Logs, cron and push alerts.** JSON logger, `cron_run` and `queue_batch` events, healthchecks.io pings, Monitors for push and queue. Analytics Engine only if the PoC requires it. This phase makes a push or cron miss visible.
+4. **Client errors.** `/api/telemetry`, `ErrorBoundary` and `window.onerror`, rate limit, client source maps.
+5. **SLO and runbook.** Record the targets above, the 30-minute post-deploy watch, and a weekly review of Issues, push ratio, cron checks and queue lag.
 
 ### Consequences
 
-- The PO learns about a broken push, a missed cron slot or a 5xx burst by email instead of a partner message.
-- Logs stay for 7 days and metrics for 90 days; there is no full request tracing and no third-party error UI.
-- On Free, observability ingestion stops at 0.5 GB/day (from 1 December 2026) and Analytics Engine at 100,000 writes/day. Current traffic is far below both; if either is reached, sample logs or pay 5 USD/month for Workers Paid.
-- The Team plan is not needed at this volume; Sentry can be added later for client grouping without changing the backend signals.
-- Alerts are configured in the Cloudflare dashboard, not in this repository. The ADR records the thresholds; a screenshot or exported configuration should be attached to the runbook so the setup can be recreated.
-- `failures` and `last_success_at` become useful: the dashboard can read them, and push alerts use the same outcomes.
+- The PO learns about a new error, a broken push, a missed cron slot or a stalled queue by email instead of a partner message.
+- One external account (healthchecks.io) is added for cron only. If it is down, alerts for cron stop; the app is not affected.
+- Logs stay 7 days. There is no full request tracing and no third-party error UI.
+- Monitors run on a beta SQL API. If it changes, the push and queue alerts need to be re-created; the log events stay the same.
+- Alerts are configured in the Cloudflare and healthchecks.io dashboards, not in this repository. The runbook stores screenshots or exported configuration so the setup can be recreated.
+- `failures` and `last_success_at` in `push_subscriptions` become readable through the same outcomes used by the push alert.
 
-## PoC before implementation
+## Diagrams
 
-- **Question:** On Workers Free, with `observability.issues.enabled` and `upload_source_maps`, does a thrown 500 in staging appear as a grouped issue with a stack pointing at `src/worker/...`, and does the 5xx Monitor email arrive within 5 minutes? Can a Monitor query the `bisou_metrics` Analytics Engine dataset and deliver an email within 5 minutes?
-- **Pass:** issue visible in under 2 minutes; correct file/line; email delivered; Monitor fires at the configured threshold; logs contain no cookie, body, OTP, email or push endpoint.
-- **Scope:** branch `poc/observability-issues`, staging only, throwaway, never merged; no production change.
+- [Current observability (C4 container)](../diagrams/observability-current.html)
+- [Target observability (C4 container)](../diagrams/observability-target.html)
+
+## PoC before phase 3
+
+- **Questions:**
+  1. Can a Monitor query JSON fields of Workers logs (`event = "queue_batch"`, summing counts) and email within 5 minutes of crossing a threshold?
+  2. Can a Monitor query an Analytics Engine dataset? Only needed if question 1 fails.
+  3. How long are Workers logs queryable on the current plan, and is that enough for the daily 98% push check?
+  4. Does a thrown 500 appear as an issue with a stack at `src/worker/...` and trigger the threshold-1 email?
+- **Pass:** 1 or 2 works with email delivered; 3 gives at least 1 day; 4 gives the right file/line and an email within 5 minutes; logs contain no cookie, body, OTP, email or push endpoint.
+- **Scope:** branch `poc/observability`, staging Worker only, throwaway, never merged; no production change.
