@@ -83,5 +83,4 @@ Cloudflare facts, checked on 26 November 2026 from Cloudflare docs and changelog
 
 ## Diagrams
 
-- [Current observability (C4 container)](../diagrams/observability-current.html)
-- [Target observability (C4 container)](../diagrams/observability-target.html)
+- [Bisou observability](../diagrams/observability.html)
