@@ -12,7 +12,7 @@ import { Button } from "../ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "../ui/skeleton";
 import { EmptyState } from "./EmptyState";
-export function CardBoxRows({ boxes, from, compact }: { boxes: CardBoxSummary[]; from: string; compact?: boolean }) {
+function CardBoxRows({ boxes, from, compact }: { boxes: CardBoxSummary[]; from: string; compact?: boolean }) {
   const { t, locale } = useI18n();
   const memory = useContext(TabMemory);
   return (
