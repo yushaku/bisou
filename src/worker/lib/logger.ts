@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { CleanupCounts } from "./cleanup";
+import type { CronSlot } from "./cron";
 import type { PushTopic } from "./webpush";
 
 declare const __BISOU_RELEASE__: string;
@@ -27,6 +28,7 @@ interface LogFields {
   error?: unknown;
   devOtp?: { email: string; code: string };
   topic?: PushTopic;
+  slot?: CronSlot;
   outcome?: "success" | "failure";
   count?: number;
   cleanup?: CleanupCounts;
@@ -82,6 +84,7 @@ export function log(level: "info" | "warn" | "error", event: string, fields: Log
     email: devOtp?.email,
     code: devOtp?.code,
     topic: fields.topic && pushTopics.has(fields.topic) ? fields.topic : undefined,
+    slot: fields.slot,
     outcome: fields.outcome,
     count: fields.count,
     counts: cleanup && {

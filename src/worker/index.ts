@@ -6,6 +6,7 @@ import { vnHour } from "../shared/days";
 import { remindNotes, remindEvents } from "./lib/notify";
 import { consumePushBatch, type PushJob } from "./lib/pushQueue";
 import { log, withLogContext } from "./lib/logger";
+import { runCronSlot } from "./lib/cron";
 
 // Static assets (the SPA) are served by Workers assets; only /api/* reaches this Worker
 // (see assets.run_worker_first in wrangler.jsonc).
@@ -22,25 +23,19 @@ export default {
   // Check scheduled notes every minute; other jobs keep their hourly Vietnam slots.
   scheduled(controller, env, ctx) {
     withLogContext({ requestId: crypto.randomUUID() }, () => {
-      ctx.waitUntil(
-        sendScheduledNotes(env, controller.scheduledTime).catch(() => log("error", "scheduled_notes_failed")),
-      );
-      if (new Date(controller.scheduledTime).getUTCMinutes() !== 0) return;
-      switch (vnHour(controller.scheduledTime)) {
+      const { scheduledTime } = controller;
+      ctx.waitUntil(runCronSlot(env, "notes", () => sendScheduledNotes(env, scheduledTime)));
+      if (new Date(scheduledTime).getUTCMinutes() !== 0) return;
+      const hour = vnHour(scheduledTime);
+      switch (hour) {
         case 8:
         case 20:
           ctx.waitUntil(
-            remindEvents(env, controller.scheduledTime, vnHour(controller.scheduledTime) === 20 ? 1 : 0).catch(() =>
-              log("error", "event_reminders_failed", { topic: "events" }),
-            ),
+            runCronSlot(env, hour === 20 ? "20" : "08", () => remindEvents(env, scheduledTime, hour === 20 ? 1 : 0)),
           );
           return;
         case 7:
-          ctx.waitUntil(
-            remindNotes(env, controller.scheduledTime).catch(() =>
-              log("error", "note_reminders_failed", { topic: "notes" }),
-            ),
-          );
+          ctx.waitUntil(runCronSlot(env, "07", () => remindNotes(env, scheduledTime)));
           return;
         case 3:
           break;
@@ -48,14 +43,16 @@ export default {
           return;
       }
       ctx.waitUntil(
-        Promise.allSettled([
-          runCleanup(env.DB, controller.scheduledTime),
-          sweepPhotos(env, controller.scheduledTime),
-        ]).then(([rows, photos]) => {
+        runCronSlot(env, "03", async () => {
+          const [rows, photos] = await Promise.allSettled([
+            runCleanup(env.DB, scheduledTime),
+            sweepPhotos(env, scheduledTime),
+          ]);
           if (rows.status === "fulfilled") log("info", "cleanup", { outcome: "success", cleanup: rows.value });
           else log("error", "cleanup", { outcome: "failure" });
           if (photos.status === "fulfilled") log("info", "photo_cleanup", { outcome: "success", count: photos.value });
           else log("error", "photo_cleanup", { outcome: "failure" });
+          return rows.status === "fulfilled" && photos.status === "fulfilled" ? "success" : "failure";
         }),
       );
     });

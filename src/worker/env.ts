@@ -16,6 +16,8 @@ export interface Env {
   RESEND_API_KEY?: string;
   /** Secret: P-256 VAPID private JWK JSON. */
   VAPID_PRIVATE_KEY?: string;
+  /** Secret: JSON map from cron slot to Healthchecks.io ping URL. */
+  HEALTHCHECKS_URLS?: string;
 }
 
 export interface SessionInfo {

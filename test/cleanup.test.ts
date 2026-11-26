@@ -190,7 +190,9 @@ describe("scheduled handler", () => {
     await Promise.all(pending);
 
     await expectOnlyLiveRowsLeft();
-    const [rows, photos] = jsonLogLines(log.mock.calls);
+    const entries = jsonLogLines(log.mock.calls);
+    const rows = entries.find((entry) => entry.event === "cleanup");
+    const photos = entries.find((entry) => entry.event === "photo_cleanup");
     expect(rows).toMatchObject({ event: "cleanup", outcome: "success", requestId: expect.any(String) });
     expect(rows?.counts).toEqual({
       otp_codes: 2,
@@ -301,7 +303,10 @@ describe("scheduled photo sweep", () => {
     vi.spyOn(env.DB, "batch").mockRejectedValueOnce(new Error("unavailable"));
     await scheduled();
     expect(await keys("SELECT id AS k FROM photos")).toEqual(["attached", "recent"]);
-    expect(jsonLogLines(error.mock.calls)).toMatchObject([{ event: "cleanup", level: "error", outcome: "failure" }]);
+    expect(jsonLogLines(error.mock.calls).find((entry) => entry.event === "cleanup")).toMatchObject({
+      level: "error",
+      outcome: "failure",
+    });
     expect(
       jsonLogLines(log.mock.calls)
         .filter((line) => line.event === "photo_cleanup")
@@ -316,9 +321,10 @@ describe("scheduled photo sweep", () => {
     vi.spyOn(env.PHOTOS, "delete").mockRejectedValueOnce(new Error("unavailable"));
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     await scheduled();
-    expect(jsonLogLines(error.mock.calls)).toMatchObject([
-      { event: "photo_cleanup", level: "error", outcome: "failure" },
-    ]);
+    expect(jsonLogLines(error.mock.calls).find((entry) => entry.event === "photo_cleanup")).toMatchObject({
+      level: "error",
+      outcome: "failure",
+    });
     await expectOnlyLiveRowsLeft();
     expect(await count("photos")).toBe(5);
     await scheduled();
